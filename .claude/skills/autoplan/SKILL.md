@@ -1,0 +1,1 @@
+/Users/chernikov/.claude/skills/gstack/autoplan/SKILL.md

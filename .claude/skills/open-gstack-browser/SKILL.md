@@ -1,0 +1,1 @@
+/Users/chernikov/.claude/skills/gstack/open-gstack-browser/SKILL.md

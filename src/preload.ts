@@ -1,0 +1,71 @@
+// See the Electron documentation for details on how to use preload scripts:
+// https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
+import { contextBridge, ipcRenderer } from 'electron';
+import { IPC } from './shared/ipc-channels';
+import type {
+  CacheScanResult,
+  CleanResult,
+  ProcessEntry,
+  KillResult,
+  BackupResult,
+  WeatherData,
+  CurrencyRate,
+} from './shared/types';
+import type { TempDirInfo, PcCleanResult } from './main/services/pcClean'
+import type { ParsedEcpInfo } from './main/services/ecpParser'
+
+const api = {
+  platform: process.platform,
+  onec: {
+    scanCache: (): Promise<CacheScanResult> => ipcRenderer.invoke(IPC.CACHE_SCAN),
+    cleanCache: (paths: string[]): Promise<CleanResult> => ipcRenderer.invoke(IPC.CACHE_CLEAN, paths),
+    listProcesses: (): Promise<ProcessEntry[]> => ipcRenderer.invoke(IPC.PROC_LIST),
+    killProcesses: (pids: number[]): Promise<KillResult> => ipcRenderer.invoke(IPC.PROC_KILL, pids),
+    pickDatabaseFile: (): Promise<string | null> => ipcRenderer.invoke(IPC.BACKUP_PICK_DB),
+    pickBackupDir: (): Promise<string | null> => ipcRenderer.invoke(IPC.BACKUP_PICK_DIR),
+    backupDatabase: (src: string, dest: string): Promise<BackupResult> =>
+      ipcRenderer.invoke(IPC.BACKUP_RUN, src, dest),
+    getBackupConfig: (): Promise<any> => ipcRenderer.invoke(IPC.BACKUP_GET_CONFIG),
+    saveBackupConfig: (config: any): Promise<void> => ipcRenderer.invoke(IPC.BACKUP_SAVE_CONFIG, config)
+  },
+  widgets: {
+    getWeather: (): Promise<WeatherData> => ipcRenderer.invoke(IPC.WEATHER_GET),
+    getRates: (codes?: string[]): Promise<CurrencyRate[]> => ipcRenderer.invoke(IPC.CURRENCY_GET, codes),
+    getRateOnDate: (code: string, date: string): Promise<CurrencyRate | null> =>
+      ipcRenderer.invoke(IPC.CURRENCY_ON_DATE, code, date)
+  },
+  pc: {
+    scan: (): Promise<TempDirInfo[]> => ipcRenderer.invoke(IPC.PC_SCAN),
+    clean: (ids: string[]): Promise<PcCleanResult> => ipcRenderer.invoke(IPC.PC_CLEAN, ids),
+    checkBrowsers: (ids: string[]): Promise<string[]> => ipcRenderer.invoke(IPC.PC_CHECK_BROWSERS, ids)
+  },
+  ecp: {
+    pickPfx: (): Promise<string | null> => ipcRenderer.invoke(IPC.ECP_PICK_PFX),
+    parsePfx: (filePath: string, password: string): Promise<ParsedEcpInfo> =>
+      ipcRenderer.invoke(IPC.ECP_PARSE_PFX, filePath, password),
+    pickFileToSign: (): Promise<string | null> => ipcRenderer.invoke(IPC.ECP_PICK_FILE_TO_SIGN),
+    pickSigFile: (): Promise<string | null> => ipcRenderer.invoke(IPC.ECP_PICK_SIG_FILE),
+    signFile: (pfxPath: string, password: string, filePath: string): Promise<{ success: boolean; sigPath?: string; error?: string }> =>
+      ipcRenderer.invoke(IPC.ECP_SIGN_FILE, pfxPath, password, filePath),
+    verifySig: (filePath: string, sigPath: string): Promise<{ success: boolean; signer?: string; signedAt?: string; error?: string }> =>
+      ipcRenderer.invoke(IPC.ECP_VERIFY_SIG, filePath, sigPath)
+  },
+  safe: {
+    isAvailable: (): Promise<boolean> => ipcRenderer.invoke(IPC.SAFE_AVAILABLE),
+    encrypt: (plainText: string): Promise<string> => ipcRenderer.invoke(IPC.SAFE_ENCRYPT, plainText),
+    decrypt: (encryptedHex: string): Promise<string> => ipcRenderer.invoke(IPC.SAFE_DECRYPT, encryptedHex)
+  },
+  pdf: {
+    generate: (htmlContent: string, fileName: string): Promise<boolean> =>
+      ipcRenderer.invoke(IPC.PDF_GENERATE, htmlContent, fileName)
+  },
+  notification: {
+    show: (title: string, body: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.NOTIFY_SHOW, title, body)
+  }
+}
+
+contextBridge.exposeInMainWorld('bx', api)
+
+export type BxApi = typeof api
+

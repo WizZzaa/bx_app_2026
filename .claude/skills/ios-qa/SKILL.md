@@ -1,0 +1,1 @@
+/Users/chernikov/.claude/skills/gstack/ios-qa/SKILL.md

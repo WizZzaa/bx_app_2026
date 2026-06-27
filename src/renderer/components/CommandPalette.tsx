@@ -1,0 +1,112 @@
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Icon from '../lib/ui/Icon';
+
+interface Cmd {
+  id: string;
+  label: string;
+  icon: string;
+  to: string;
+  group: 'Действие' | 'Раздел';
+  keywords?: string;
+}
+
+const COMMANDS: Cmd[] = [
+  // Быстрые действия
+  { id: 'a-task',   label: 'Новая задача',      icon: 'plus', to: '/planner',  group: 'Действие', keywords: 'добавить канбан доска' },
+  { id: 'a-op',     label: 'Новая операция',    icon: 'plus', to: '/finance',  group: 'Действие', keywords: 'доход расход деньги' },
+  { id: 'a-emp',    label: 'Новый сотрудник',   icon: 'plus', to: '/hr',       group: 'Действие', keywords: 'кадры зарплата' },
+  { id: 'a-ai',     label: 'Спросить AI',       icon: 'ai',   to: '/ai',       group: 'Действие', keywords: 'консультант вопрос налоги' },
+  // Разделы
+  { id: 'n-dash',   label: 'Дашборд',           icon: 'dashboard', to: '/',          group: 'Раздел', keywords: 'главная рабочий стол' },
+  { id: 'n-plan',   label: 'Планировщик',       icon: 'planner',   to: '/planner',   group: 'Раздел', keywords: 'задачи канбан календарь' },
+  { id: 'n-calc',   label: 'Калькуляторы',      icon: 'calc',      to: '/calc',      group: 'Раздел', keywords: 'ндс ндфл пени' },
+  { id: 'n-tools',  label: 'Утилиты',           icon: 'tools',     to: '/tools',     group: 'Раздел', keywords: 'инструменты 1с очистка' },
+  { id: 'n-ref',    label: 'Справочники',       icon: 'reference', to: '/reference', group: 'Раздел', keywords: 'ставки счета нсбу' },
+  { id: 'n-srv',    label: 'Сервисы',           icon: 'services',  to: '/services',  group: 'Раздел', keywords: 'госпорталы ссылки банки' },
+  { id: 'n-news',   label: 'Новости',           icon: 'news',      to: '/news',      group: 'Раздел' },
+  { id: 'n-kb',     label: 'База знаний',       icon: 'knowledge', to: '/knowledge', group: 'Раздел', keywords: 'статьи гайды' },
+  { id: 'n-tpl',    label: 'Шаблоны',           icon: 'templates', to: '/templates', group: 'Раздел', keywords: 'договор акт приказ' },
+  { id: 'n-hr',     label: 'Сотрудники',        icon: 'hr',        to: '/hr',        group: 'Раздел', keywords: 'кадры зарплата зп' },
+  { id: 'n-fin',    label: 'Финансы',           icon: 'finance',   to: '/finance',   group: 'Раздел', keywords: 'доходы расходы прибыль' },
+  { id: 'n-ecp',    label: 'ЭЦП',               icon: 'ecp',       to: '/ecp',       group: 'Раздел', keywords: 'ключ подпись e-imzo' },
+  { id: 'n-inn',    label: 'Проверка ИНН',      icon: 'search',    to: '/check-inn', group: 'Раздел' },
+  { id: 'n-ai',     label: 'AI-Консультант',    icon: 'ai',        to: '/ai',        group: 'Раздел' },
+  { id: 'n-set',    label: 'Настройки',         icon: 'settings',  to: '/settings',  group: 'Раздел' },
+];
+
+export default function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const navigate = useNavigate();
+  const [q, setQ] = useState('');
+  const [sel, setSel] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const results = useMemo(() => {
+    const ql = q.trim().toLowerCase();
+    if (!ql) return COMMANDS;
+    return COMMANDS.filter(c => c.label.toLowerCase().includes(ql) || (c.keywords ?? '').includes(ql));
+  }, [q]);
+
+  useEffect(() => { if (open) { setQ(''); setSel(0); setTimeout(() => inputRef.current?.focus(), 30); } }, [open]);
+  useEffect(() => { setSel(0); }, [q]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setSel(s => Math.min(s + 1, results.length - 1)); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); setSel(s => Math.max(s - 1, 0)); }
+      if (e.key === 'Enter') { e.preventDefault(); const c = results[sel]; if (c) run(c); }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, results, sel]);
+
+  useEffect(() => {
+    const el = listRef.current?.querySelector(`[data-i="${sel}"]`);
+    el?.scrollIntoView({ block: 'nearest' });
+  }, [sel]);
+
+  function run(c: Cmd) { navigate(c.to); onClose(); }
+
+  if (!open) return null;
+
+  let lastGroup = '';
+  return (
+    <div className="fixed inset-0 z-[90] flex items-start justify-center bg-black/50 backdrop-blur-sm pt-[12vh]" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bx-animate-fade w-[560px] max-w-[92vw] bg-[#141820] border border-[#2a3447] rounded-2xl shadow-2xl overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#1e2535]">
+          <Icon name="search" className="w-4 h-4 text-slate-500" />
+          <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)}
+            placeholder="Перейти к разделу или действию…"
+            className="flex-1 bg-transparent text-slate-200 text-sm focus:outline-none placeholder:text-slate-600" />
+          <kbd className="text-[10px] text-slate-600 border border-[#2a3447] rounded px-1.5 py-0.5">esc</kbd>
+        </div>
+        <div ref={listRef} className="max-h-80 overflow-y-auto py-2">
+          {results.length === 0 && <p className="text-xs text-slate-600 text-center py-8">Ничего не найдено</p>}
+          {results.map((c, i) => {
+            const showGroup = c.group !== lastGroup; lastGroup = c.group;
+            return (
+              <React.Fragment key={c.id}>
+                {showGroup && <p className="text-[10px] uppercase tracking-wide text-slate-600 px-4 pt-2 pb-1">{c.group}</p>}
+                <button data-i={i}
+                  onMouseEnter={() => setSel(i)} onClick={() => run(c)}
+                  className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${sel === i ? 'bg-blue-600/20' : 'hover:bg-[#1e2535]'}`}>
+                  <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${sel === i ? 'bg-blue-600/30 text-blue-300' : 'bg-[#1e2535] text-slate-400'}`}><Icon name={c.icon} className="w-4 h-4" /></span>
+                  <span className={`text-sm ${sel === i ? 'text-white' : 'text-slate-300'}`}>{c.label}</span>
+                  {sel === i && <span className="ml-auto text-slate-600"><Icon name="arrowR" className="w-4 h-4" /></span>}
+                </button>
+              </React.Fragment>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-3 px-4 py-2 border-t border-[#1e2535] text-[10px] text-slate-600">
+          <span><kbd className="border border-[#2a3447] rounded px-1">↑</kbd> <kbd className="border border-[#2a3447] rounded px-1">↓</kbd> навигация</span>
+          <span><kbd className="border border-[#2a3447] rounded px-1">↵</kbd> выбрать</span>
+          <span className="ml-auto">⌘K / Ctrl+K — открыть</span>
+        </div>
+      </div>
+    </div>
+  );
+}
