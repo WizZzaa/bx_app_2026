@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Row } from './CalcRow';
 
 // Пени по НК РУз: 0.033% за каждый день просрочки (ст. 120 НК РУз)
 // Также можно считать через ставку ЦБ: Долг × ставка_ЦБ / 365 × дни
@@ -102,15 +103,6 @@ export default function PenaltyCalc() {
       <p className="text-[11px] text-slate-600">
         Ст. 120 НК РУз: пени = 0.033% за каждый день просрочки. Альтернатива: ставка ЦБ / 365 × дни.
       </p>
-    </div>
-  );
-}
-
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className={`text-sm font-semibold ${highlight ? 'text-blue-400' : 'text-slate-200'}`}>{value}</span>
     </div>
   );
 }

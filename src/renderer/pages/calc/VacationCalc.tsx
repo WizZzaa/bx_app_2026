@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Row } from './CalcRow';
 
 // Отпускные РУз: средний заработок × количество дней отпуска
 // Среднедневной = (Сумма за 12 мес / 12) / среднее кол-во рабочих дней в месяце
@@ -79,15 +80,6 @@ export default function VacationCalc() {
       <p className="text-[11px] text-slate-600">
         Расчёт по ст. 158 ТК РУз. Среднедневной по календарным: доход/365, по рабочим: (доход/12)/25.4.
       </p>
-    </div>
-  );
-}
-
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className={`text-sm font-semibold ${highlight ? 'text-blue-400' : 'text-slate-200'}`}>{value}</span>
     </div>
   );
 }

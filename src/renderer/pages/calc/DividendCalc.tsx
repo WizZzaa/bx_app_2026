@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Row } from './CalcRow';
 
 // Дивиденды РУз: ст. 382 НК РУз
 // Резиденты: 5%  (физ. лица РУз)
@@ -92,15 +93,6 @@ export default function DividendCalc() {
         Ст. 382 НК РУз. Резиденты — 5%. Нерезиденты — 10% (или ставка СИДН, если она ниже).
         Налог удерживается у источника выплаты (ООО / АО).
       </p>
-    </div>
-  );
-}
-
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className={`text-sm font-semibold ${highlight ? 'text-blue-400' : 'text-slate-200'}`}>{value}</span>
     </div>
   );
 }

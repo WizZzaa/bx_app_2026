@@ -61,8 +61,10 @@ export default function Calc() {
       {/* Правая панель — активный калькулятор */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-lg mx-auto px-6 py-6">
-          <div className="flex items-center gap-2 mb-6">
-            <span className="text-2xl">{tab.icon}</span>
+          <div className="flex items-center gap-3 mb-6">
+            <span className="w-10 h-10 rounded-xl bg-blue-600/15 text-blue-400 flex items-center justify-center flex-shrink-0">
+              <Icon name={tab.icon} className="w-5 h-5" />
+            </span>
             <div>
               <h2 className="text-lg font-semibold text-white">{tab.label}</h2>
               <p className="text-xs text-slate-500">Законодательство РУз</p>

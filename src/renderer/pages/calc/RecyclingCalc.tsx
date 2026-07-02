@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Row } from './CalcRow';
 
 // Утилизационный сбор РУз: Постановление Президента РУз № ПП-3292 (2017) и изменения
 // Формула: Базовая ставка × коэффициент объёма двигателя × коэффициент возраста
@@ -116,15 +117,6 @@ export default function RecyclingCalc() {
         ПП РУз № ПП-3292, с изм. Базовая ставка 3 300 000 UZS (2024–2026).
         Уплачивается до регистрации ТС в ГИБДД. Уточняйте актуальные коэффициенты на сайте ГНК.
       </p>
-    </div>
-  );
-}
-
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className={`text-sm font-semibold ${highlight ? 'text-blue-400' : 'text-slate-200'}`}>{value}</span>
     </div>
   );
 }

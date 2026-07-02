@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Row } from './CalcRow';
 
 const VAT_RATE = 12;
 
@@ -58,15 +59,6 @@ export default function VatCalc() {
       </div>
 
       <p className="text-[11px] text-slate-600">Ставка НДС в Узбекистане — 12% (ст. 258 НК РУз)</p>
-    </div>
-  );
-}
-
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className={`text-sm font-semibold ${highlight ? 'text-blue-400' : 'text-slate-200'}`}>{value}</span>
     </div>
   );
 }

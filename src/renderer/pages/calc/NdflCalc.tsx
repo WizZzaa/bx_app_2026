@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Row } from './CalcRow';
 import { useEconomicIndicators } from '../../lib/useEconomicIndicators'
 
 // НДФЛ РУз: плоская ставка 12% (с 2019 г., ст. 366 НК РУз)
@@ -72,13 +73,4 @@ export default function NdflCalc() {
       <p className="text-[11px] text-slate-600">Ставка 12% — плоская, ст. 366 НК РУз. Льготы: ст. 378–380 НК РУз.</p>
     </div>
   )
-}
-
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className={`text-sm font-semibold ${highlight ? 'text-blue-400' : 'text-slate-200'}`}>{value}</span>
-    </div>
-  );
 }

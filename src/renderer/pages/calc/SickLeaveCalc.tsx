@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Row } from './CalcRow';
 
 // Больничные РУз: % от среднего заработка в зависимости от стажа
 // Ст. 284 ТК РУз + Положение о порядке назначения пособий
@@ -89,15 +90,6 @@ export default function SickLeaveCalc() {
       </div>
 
       <p className="text-[11px] text-slate-600">Ст. 284 ТК РУз. Минимум — среднедневной МРОТ × дни. Финансируется из ГФСН.</p>
-    </div>
-  );
-}
-
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className={`text-sm font-semibold ${highlight ? 'text-blue-400' : 'text-slate-200'}`}>{value}</span>
     </div>
   );
 }
