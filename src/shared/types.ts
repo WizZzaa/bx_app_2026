@@ -48,6 +48,7 @@ export interface WeatherData {
   icon: string;
   humidity: number;
   wind: number;
+  condition: 'sunny' | 'partly_cloudy' | 'cloudy' | 'rainy' | 'storm' | 'snow' | 'fog';
 }
 
 export interface CurrencyRate {

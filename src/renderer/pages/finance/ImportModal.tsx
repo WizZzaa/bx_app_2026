@@ -76,7 +76,7 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
     
     const toSave = selectedIndices.map(idx => ({
       ...items[idx],
-      category: itemCategories[idx] || null
+      category: itemCategories[idx] || undefined
     }))
     
     await onSave(toSave)

@@ -25,11 +25,24 @@ function bridge(): WidgetBridge | undefined {
 const FLAGS: Record<string, string> = { USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' };
 
 // --- Прямой fetch (для браузерного preview, где нет Electron) ---
-const WMO: Record<number, { desc: string; icon: string }> = {
-  0: { desc: 'Ясно', icon: '☀️' }, 1: { desc: 'Преим. ясно', icon: '🌤' },
-  2: { desc: 'Переменная облачность', icon: '⛅' }, 3: { desc: 'Пасмурно', icon: '☁️' },
-  45: { desc: 'Туман', icon: '🌫' }, 61: { desc: 'Дождь', icon: '🌧' },
-  71: { desc: 'Снег', icon: '🌨' }, 95: { desc: 'Гроза', icon: '⛈' },
+type Condition = 'sunny' | 'partly_cloudy' | 'cloudy' | 'rainy' | 'storm' | 'snow' | 'fog'
+const WMO: Record<number, { desc: string; icon: string; condition: Condition }> = {
+  0:  { desc: 'Ясно',                  icon: '☀️', condition: 'sunny' },
+  1:  { desc: 'Преим. ясно',           icon: '🌤', condition: 'partly_cloudy' },
+  2:  { desc: 'Переменная облачность',  icon: '⛅', condition: 'partly_cloudy' },
+  3:  { desc: 'Пасмурно',              icon: '☁️', condition: 'cloudy' },
+  45: { desc: 'Туман',                 icon: '🌫', condition: 'fog' },
+  48: { desc: 'Изморозь',              icon: '🌫', condition: 'fog' },
+  51: { desc: 'Морось',                icon: '🌦', condition: 'rainy' },
+  61: { desc: 'Дождь',                 icon: '🌧', condition: 'rainy' },
+  63: { desc: 'Дождь',                 icon: '🌧', condition: 'rainy' },
+  65: { desc: 'Сильный дождь',         icon: '🌧', condition: 'rainy' },
+  71: { desc: 'Снег',                  icon: '🌨', condition: 'snow' },
+  73: { desc: 'Снег',                  icon: '🌨', condition: 'snow' },
+  75: { desc: 'Сильный снег',          icon: '❄️', condition: 'snow' },
+  80: { desc: 'Ливень',               icon: '🌧', condition: 'rainy' },
+  95: { desc: 'Гроза',                icon: '⛈', condition: 'storm' },
+  99: { desc: 'Гроза с градом',       icon: '⛈', condition: 'storm' },
 };
 
 async function fetchWeatherDirect(): Promise<WeatherData> {
@@ -38,7 +51,7 @@ async function fetchWeatherDirect(): Promise<WeatherData> {
   const r = await fetch(url);
   const d = await r.json();
   const c = d.current;
-  const m = WMO[c.weather_code] ?? { desc: 'Погода', icon: '🌡' };
+  const m = WMO[c.weather_code] ?? { desc: 'Погода', icon: '🌡', condition: 'sunny' as Condition };
   return {
     city: 'Ташкент',
     temp: Math.round(c.temperature_2m),
@@ -46,6 +59,7 @@ async function fetchWeatherDirect(): Promise<WeatherData> {
     desc: m.desc, icon: m.icon,
     humidity: Math.round(c.relative_humidity_2m),
     wind: Math.round(c.wind_speed_10m / 3.6),
+    condition: m.condition,
   };
 }
 

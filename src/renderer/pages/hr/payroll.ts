@@ -5,9 +5,11 @@ export interface PayrollRates {
   ndfl: number     // НДФЛ, % (по умолчанию 12)
   inps: number     // ИНПС — индивид. накопит. пенсия, % (по умолчанию 0.1)
   social: number   // Соцналог работодателя, % (по умолчанию 12; бюджет 25)
+  brv: number      // Базовый расчётный показатель (БРП) — для минимальных выплат
+  mrot: number     // Минимальный размер оплаты труда (МРОТ) РУз, сумов
 }
 
-export const DEFAULT_RATES: PayrollRates = { ndfl: 12, inps: 0.1, social: 12 }
+export const DEFAULT_RATES: PayrollRates = { ndfl: 12, inps: 0.1, social: 12, brv: 395_000, mrot: 1_050_000 }
 
 export interface PayrollResult {
   gross: number        // начислено (оклад + надбавки)

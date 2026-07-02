@@ -5,6 +5,7 @@ export interface ParsedTransaction {
   counterparty: string
   description: string
   status: 'paid'
+  category?: string
 }
 
 export const parseBankStatement = (fileContent: string, companyInn: string | null): ParsedTransaction[] => {

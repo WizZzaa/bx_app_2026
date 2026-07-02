@@ -19,6 +19,24 @@ interface BxBridge {
     getBackupConfig(): Promise<any>
     saveBackupConfig(config: any): Promise<void>
   }
+  widgets: {
+    getWeather(): Promise<any>
+    getRates(codes?: string[]): Promise<any[]>
+    getRateOnDate(code: string, date: string): Promise<any | null>
+  }
+  pc: {
+    scan(): Promise<any[]>
+    clean(ids: string[]): Promise<any>
+    checkBrowsers(ids: string[]): Promise<string[]>
+  }
+  ecp: {
+    pickPfx(): Promise<string | null>
+    parsePfx(filePath: string, password: string): Promise<any>
+    pickFileToSign(): Promise<string | null>
+    pickSigFile(): Promise<string | null>
+    signFile(pfxPath: string, password: string, filePath: string): Promise<{ success: boolean; sigPath?: string; error?: string }>
+    verifySig(filePath: string, sigPath: string): Promise<{ success: boolean; signer?: string; signedAt?: string; error?: string }>
+  }
   safe: {
     isAvailable(): Promise<boolean>
     encrypt(plainText: string): Promise<string>
@@ -26,6 +44,12 @@ interface BxBridge {
   }
   pdf: {
     generate(htmlContent: string, fileName: string): Promise<boolean>
+  }
+  notification: {
+    show(title: string, body: string): Promise<void>
+  }
+  shell?: {
+    openExternal(url: string): void
   }
 }
 
