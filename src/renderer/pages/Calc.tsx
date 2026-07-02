@@ -43,6 +43,13 @@ const TABS: Tab[] = [
 
 const GROUPS = ['Налоги', 'Зарплата и кадры', 'Прочее'];
 
+// Цветовой акцент группы: сайдбар, шапка, чипы
+const ACCENT: Record<string, { text: string; chipBg: string; activeBg: string; iconBg: string; grad: string }> = {
+  'Налоги':           { text: 'text-blue-400',  chipBg: 'bg-blue-600/15 border-blue-500/30',  activeBg: 'bg-blue-600/20',  iconBg: 'bg-blue-600/20 text-blue-400',   grad: 'from-blue-600/15' },
+  'Зарплата и кадры': { text: 'text-amber-400', chipBg: 'bg-amber-500/15 border-amber-500/30', activeBg: 'bg-amber-500/15', iconBg: 'bg-amber-500/20 text-amber-400', grad: 'from-amber-500/15' },
+  'Прочее':           { text: 'text-cyan-400',  chipBg: 'bg-cyan-500/15 border-cyan-500/30',  activeBg: 'bg-cyan-500/15',  iconBg: 'bg-cyan-500/20 text-cyan-400',   grad: 'from-cyan-500/15' },
+};
+
 const LAST_CALC_KEY = 'bx_calc_last';
 
 export default function Calc() {
@@ -86,9 +93,10 @@ export default function Calc() {
           {GROUPS.map(g => {
             const items = visibleTabs.filter(t => t.group === g);
             if (items.length === 0) return null;
+            const a = ACCENT[g];
             return (
               <div key={g} className="mb-2">
-                <p className="px-3 pt-2 pb-1 text-[10px] text-slate-600 uppercase tracking-widest font-semibold">{g}</p>
+                <p className={`px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest font-semibold ${a.text} opacity-70`}>{g}</p>
                 <div className="space-y-0.5">
                   {items.map(t => (
                     <button
@@ -96,14 +104,16 @@ export default function Calc() {
                       onClick={() => setActive(t.id)}
                       className={`w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
                         active === t.id
-                          ? 'bg-blue-600/20 text-blue-400'
+                          ? `${a.activeBg} ${a.text}`
                           : 'text-slate-400 hover:bg-[#1e2535] hover:text-slate-200'
                       }`}
                     >
-                      <Icon name={t.icon} className="w-[18px] h-[18px] flex-shrink-0 mt-0.5" />
+                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${active === t.id ? a.iconBg : 'bg-[#1e2535] text-slate-500'}`}>
+                        <Icon name={t.icon} className="w-4 h-4" />
+                      </span>
                       <span className="min-w-0">
                         <span className={`block text-sm leading-tight ${active === t.id ? 'font-medium' : ''}`}>{t.label}</span>
-                        <span className={`block text-[10px] mt-0.5 leading-tight ${active === t.id ? 'text-blue-400/70' : 'text-slate-600'}`}>{t.desc}</span>
+                        <span className={`block text-[10px] mt-0.5 leading-tight ${active === t.id ? 'opacity-70' : 'text-slate-600'}`}>{t.desc}</span>
                       </span>
                     </button>
                   ))}
@@ -116,17 +126,46 @@ export default function Calc() {
 
       {/* Правая панель — активный калькулятор */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto px-6 py-6">
-          <div className="flex items-center gap-3 mb-6">
-            <span className="w-10 h-10 rounded-xl bg-blue-600/15 text-blue-400 flex items-center justify-center flex-shrink-0">
-              <Icon name={tab.icon} className="w-5 h-5" />
-            </span>
-            <div>
-              <h2 className="text-lg font-semibold text-white">{tab.label}</h2>
-              <p className="text-xs text-slate-500">{tab.desc} · законодательство РУз</p>
+        <div className="max-w-2xl mx-auto px-6 py-6">
+          {/* Hero-шапка с акцентом группы */}
+          <div className={`rounded-2xl bg-gradient-to-br ${ACCENT[tab.group].grad} via-transparent to-transparent border border-[#1e2535] px-5 py-4 mb-4`}>
+            <div className="flex items-center gap-3.5">
+              <span className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${ACCENT[tab.group].iconBg}`}>
+                <Icon name={tab.icon} className="w-6 h-6" />
+              </span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-white leading-tight">{tab.label}</h2>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-semibold`}>
+                    {tab.group}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">{tab.desc} · законодательство РУз</p>
+              </div>
+            </div>
+            {/* Быстрое переключение внутри группы */}
+            <div className="flex flex-wrap gap-1.5 mt-3.5">
+              {TABS.filter(t => t.group === tab.group).map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setActive(t.id)}
+                  className={`px-2.5 py-1 text-[11px] rounded-lg border transition-colors ${
+                    t.id === tab.id
+                      ? `${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-medium`
+                      : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-[#1e2535]'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
             </div>
           </div>
-          {tab.component}
+
+          {/* Верстак калькулятора */}
+          <div className="rounded-2xl bg-[#10141d] border border-[#1e2535] p-5">
+            {tab.component}
+          </div>
+
           <CalcHistoryPanel />
         </div>
       </div>

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import CalcResult from './CalcResult';
 import MoneyInput from './MoneyInput';
+import { useEconomicIndicators } from '../../lib/useEconomicIndicators';
 
 // Больничные РУз: % от среднего заработка в зависимости от стажа
 // Ст. 284 ТК РУз + Положение о порядке назначения пособий
 // Менее 2 лет: 60%, 2–5 лет: 80%, более 5 лет: 100%
-// Мин. пособие: МРОТ; максимум не ограничен
-
-const MROT_MONTHLY = 980_000; // 2025–2026
+// Мин. пособие: МРОТ (живое значение из справочника); максимум не ограничен
 
 const STAZH_RULES = [
   { label: 'Менее 2 лет', maxYears: 2, pct: 60 },
@@ -20,6 +19,7 @@ function fmt(n: number) {
 }
 
 export default function SickLeaveCalc() {
+  const { mrot } = useEconomicIndicators();
   const [annualIncome, setAnnualIncome] = useState('');
   const [sickDays, setSickDays] = useState('10');
   const [stazh, setStazh] = useState(0); // index in STAZH_RULES
@@ -29,7 +29,7 @@ export default function SickLeaveCalc() {
   const rule = STAZH_RULES[stazh];
 
   const avgDaily = annual / 365;
-  const minDaily = MROT_MONTHLY / 25.4;
+  const minDaily = mrot / 25.4;
 
   const rawBenefit = avgDaily * days * (rule.pct / 100);
   const minBenefit = minDaily * days;
@@ -69,7 +69,7 @@ export default function SickLeaveCalc() {
           />
         </div>
         <div className="flex flex-col justify-end">
-          <p className="text-xs text-slate-500">МРОТ 2025: {fmt(MROT_MONTHLY)} UZS</p>
+          <p className="text-xs text-slate-500">МРОТ (справочник): {fmt(mrot)} UZS</p>
           <p className="text-xs text-slate-500">Коэфф. стажа: {rule.pct}%</p>
         </div>
       </div>

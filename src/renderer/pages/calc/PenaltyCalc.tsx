@@ -31,7 +31,10 @@ export default function PenaltyCalc() {
 
   const cbu = parseFloat(cbuRate.replace(',', '.')) || 0;
   const dailyRate = mode === 'fixed' ? DAILY_RATE_PERCENT / 100 : cbu / 100 / 365;
-  const penalty = debtVal * dailyRate * daysVal;
+  const penaltyRaw = debtVal * dailyRate * daysVal;
+  // Ст. 120 НК РУз: сумма пени не может превышать сумму задолженности
+  const capped = penaltyRaw > debtVal && debtVal > 0;
+  const penalty = capped ? debtVal : penaltyRaw;
   const total = debtVal + penalty;
 
   return (
@@ -94,10 +97,15 @@ export default function PenaltyCalc() {
           { label: 'Сумма долга', value: `${fmt(debtVal)} UZS` },
           { label: 'Количество дней', value: `${daysVal} дн.` },
           { label: 'Ставка в день', value: `${mode === 'fixed' ? '0.033' : (cbu / 365).toFixed(4)}%` },
-          { label: 'Сумма пени', value: `${fmt(penalty)} UZS`, highlight: true },
+          { label: capped ? 'Сумма пени (ограничена долгом)' : 'Сумма пени', value: `${fmt(penalty)} UZS`, highlight: true },
           { label: 'Итого к уплате (долг + пени)', value: `${fmt(total)} UZS` },
         ]}
       />
+      {capped && (
+        <p className="text-[11px] text-amber-400/80 bg-amber-500/10 rounded-lg px-3 py-2">
+          Пеня ограничена суммой долга (ст. 120 НК РУз): расчётные {fmt(penaltyRaw)} UZS → {fmt(penalty)} UZS.
+        </p>
+      )}
 
       <p className="text-[11px] text-slate-600">
         Ст. 120 НК РУз: пени = 0.033% за каждый день просрочки. Альтернатива: ставка ЦБ / 365 × дни.
