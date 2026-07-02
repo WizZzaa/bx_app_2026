@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { BxEvent, EventType, EventStatus, EventPriority, NewEvent } from './useEvents';
+import type { BxEvent, EventType, EventStatus, EventPriority, EventRecurrence, NewEvent } from './useEvents';
 import { todayISO } from '../../lib/dates';
 
 interface Props {
@@ -33,6 +33,14 @@ const PRIORITY_LABELS: Record<EventPriority, string> = {
 
 const TAX_TAGS = ['НДС','НДФЛ','Прибыль','Оборот','Имущество','Земля','Вода','Таможня','ЗП','Дивиденды'];
 
+const RECURRENCE_LABELS: Record<Exclude<EventRecurrence, null> | 'none', string> = {
+  none: 'Не повторять',
+  weekly: 'Еженедельно',
+  monthly: 'Ежемесячно',
+  quarterly: 'Ежеквартально',
+  yearly: 'Ежегодно',
+};
+
 const today = todayISO();
 
 export default function EventModal({ event, defaultDate, defaultType, onSave, onDelete, onClose }: Props) {
@@ -46,6 +54,7 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
   const [note,     setNote]     = useState(event?.note     ?? '');
   const [tags,     setTags]     = useState<string[]>(event?.tags ?? []);
   const [remind,   setRemind]   = useState(false);
+  const [recurrence, setRecurrence] = useState<EventRecurrence>(event?.recurrence ?? null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
@@ -75,6 +84,7 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
       note: note.trim() || null,
       source: 'manual',
       reminder_at: remind && dueDate ? new Date(dueDate + 'T09:00:00').toISOString() : null,
+      recurrence,
     });
   }
 
@@ -145,6 +155,21 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Повторение */}
+          <div>
+            <label className="text-xs text-slate-500 block mb-1.5">Повторение</label>
+            <select value={recurrence ?? 'none'}
+              onChange={e => setRecurrence(e.target.value === 'none' ? null : e.target.value as Exclude<EventRecurrence, null>)}
+              className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none text-sm">
+              {(Object.keys(RECURRENCE_LABELS) as (keyof typeof RECURRENCE_LABELS)[]).map(r => (
+                <option key={r} value={r}>{RECURRENCE_LABELS[r]}</option>
+              ))}
+            </select>
+            {recurrence && (
+              <p className="text-[10px] text-slate-600 mt-1">При завершении задачи автоматически создастся следующая ({RECURRENCE_LABELS[recurrence].toLowerCase()}).</p>
+            )}
           </div>
 
           {/* Теги */}

@@ -5,6 +5,7 @@ export type EventType     = 'task' | 'tax_deadline' | 'reminder' | 'event';
 export type EventStatus   = 'todo' | 'in_progress' | 'review' | 'done';
 export type EventPriority = 'high' | 'normal' | 'low';
 export type EventKind     = 'payment' | 'report' | null;
+export type EventRecurrence = 'weekly' | 'monthly' | 'quarterly' | 'yearly' | null;
 
 export interface BxEvent {
   id: string;
@@ -23,6 +24,7 @@ export interface BxEvent {
   note: string | null;
   source: 'manual' | 'tax' | 'seeded';
   reminder_at: string | null;
+  recurrence?: EventRecurrence; // требует колонку bx_events.recurrence
   created_at: string;
 }
 
@@ -63,7 +65,15 @@ export function useEvents(companyId?: string | null) {
   const add = useCallback(async (input: NewEvent): Promise<BxEvent | null> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
-    const { data, error } = await supabase.from('bx_events').insert({ ...input, user_id: user.id }).select().single();
+    const payload: Record<string, unknown> = { ...input, user_id: user.id };
+    if (payload.recurrence == null) delete payload.recurrence;
+    let { data, error } = await supabase.from('bx_events').insert(payload).select().single();
+    if (error && 'recurrence' in payload) {
+      // Колонка recurrence ещё не добавлена в БД — сохраняем без повторения
+      console.warn('bx_events.recurrence недоступна, событие сохранено без повторения:', error.message);
+      delete payload.recurrence;
+      ({ data, error } = await supabase.from('bx_events').insert(payload).select().single());
+    }
     if (error) { console.error(error); return null; }
     await load();
     return data as BxEvent;

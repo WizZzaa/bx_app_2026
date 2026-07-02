@@ -14,8 +14,8 @@ import { useCompany } from '../lib/CompanyContext';
 import { useToast } from '../lib/ui/ToastContext';
 import { supabase } from '../lib/db/supabase';
 import { requestNotificationPermission, startReminderLoop, stopReminderLoop } from '../lib/notifications';
-import type { BxEvent, NewEvent } from './planner/useEvents';
-import { todayISO } from '../lib/dates';
+import type { BxEvent, NewEvent, EventStatus } from './planner/useEvents';
+import { todayISO, nextRecurrenceISO } from '../lib/dates';
 
 type View = 'board' | 'calendar' | 'list';
 
@@ -101,12 +101,57 @@ export default function Planner() {
   // ── events handlers ──
   function openNewEvent(date?: string) { setEditing(null); setDefDate(date || today); setModalOpen(true); }
   function openEditEvent(ev: BxEvent) { setEditing(ev); setModalOpen(true); }
+
+  // Повторяющиеся задачи: при завершении создаём следующее вхождение
+  async function spawnNextOccurrence(base: NewEvent) {
+    if (!base.recurrence) return;
+    const nextDate = nextRecurrenceISO(base.date, base.recurrence);
+    const created = await add({
+      ...base,
+      date: nextDate,
+      due_date: base.due_date ? nextRecurrenceISO(base.due_date, base.recurrence) : null,
+      status: 'todo',
+    });
+    if (created) toast.info(`Повтор создан на ${new Date(nextDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`);
+  }
+
   async function handleSaveEvent(data: NewEvent) {
-    if (editing) await update(editing.id, data); else await add(data);
+    if (editing) {
+      await update(editing.id, data);
+      if (data.status === 'done' && editing.status !== 'done') await spawnNextOccurrence(data);
+    } else {
+      await add(data);
+    }
     toast.success(editing ? 'Событие обновлено' : 'Событие добавлено');
     setModalOpen(false); setEditing(null);
   }
   async function handleDeleteEvent() { if (editing) await remove(editing.id); toast.info('Событие удалено'); setModalOpen(false); setEditing(null); }
+
+  async function handleStatusChange(id: string, status: EventStatus) {
+    const ev = events.find(e => e.id === id);
+    await update(id, { status });
+    if (ev && status === 'done' && ev.status !== 'done' && ev.recurrence) {
+      const { id: _id, user_id: _u, created_at: _c, ...base } = ev;
+      await spawnNextOccurrence(base as NewEvent);
+    }
+  }
+
+  // Перенос срока перетаскиванием в календаре
+  async function handleEventDrop(id: string, newDate: string) {
+    const ev = events.find(e => e.id === id);
+    if (!ev) return;
+    // Переносим то поле, по которому событие показано в календаре
+    if (ev.due_date) await update(id, { due_date: newDate });
+    else await update(id, { date: newDate });
+    toast.success(`Перенесено на ${new Date(newDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`);
+  }
+
+  async function handleCardDrop(id: string, newDate: string) {
+    const { error } = await supabase.from('bx_cards').update({ due_date: newDate }).eq('id', id);
+    if (error) { toast.error('Не удалось перенести карточку'); return; }
+    setDatedCards(await fetchDatedCards());
+    toast.success(`Срок карточки: ${new Date(newDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`);
+  }
 
   // ── board handlers ──
   async function handleSaveBoard(name: string, icon: string, color: string) {
@@ -219,10 +264,11 @@ export default function Planner() {
           </div>
         )}
         {view === 'calendar' && (
-          <CalendarView events={filtered} cards={datedCards} onDayClick={openNewEvent} onEventClick={openEditEvent} onCardClick={openCardFromCalendar} />
+          <CalendarView events={filtered} cards={datedCards} onDayClick={openNewEvent} onEventClick={openEditEvent} onCardClick={openCardFromCalendar}
+            onEventDrop={handleEventDrop} onCardDrop={handleCardDrop} />
         )}
         {view === 'list' && (
-          <ListView events={filtered} onEdit={openEditEvent} onStatusChange={(id, status) => update(id, { status })} onDelete={bulkRemove} />
+          <ListView events={filtered} onEdit={openEditEvent} onStatusChange={handleStatusChange} onDelete={bulkRemove} />
         )}
       </div>
 
