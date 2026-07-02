@@ -51,11 +51,26 @@ const CATEGORIES = ['Все', '1С', 'Налоги', 'Текст', 'Дата', '
 // Tools with non-standard height that need full content panel height
 const FULL_HEIGHT_TOOLS = new Set(['requisites', 'notes']);
 
-export default function Tools() {
-  const [active, setActive] = useState('num2words');
-  const [catFilter, setCatFilter] = useState('Все');
+const LAST_TOOL_KEY = 'bx_tools_last';
 
-  const filtered = catFilter === 'Все' ? TOOLS : TOOLS.filter(t => t.category === catFilter);
+export default function Tools() {
+  const [active, setActiveRaw] = useState(() => {
+    const last = localStorage.getItem(LAST_TOOL_KEY);
+    return last && TOOLS.some(t => t.id === last) ? last : 'num2words';
+  });
+  const [catFilter, setCatFilter] = useState('Все');
+  const [search, setSearch] = useState('');
+
+  function setActive(id: string) {
+    setActiveRaw(id);
+    localStorage.setItem(LAST_TOOL_KEY, id);
+  }
+
+  const q = search.trim().toLowerCase();
+  const filtered = TOOLS.filter(t =>
+    (catFilter === 'Все' || t.category === catFilter) &&
+    (!q || t.label.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.category.toLowerCase().includes(q))
+  );
   const tool = TOOLS.find(t => t.id === active) ?? TOOLS[0];
   const isFullHeight = FULL_HEIGHT_TOOLS.has(active);
 
@@ -66,6 +81,16 @@ export default function Tools() {
         <div className="px-4 pt-5 pb-3 flex-shrink-0">
           <h1 className="text-base font-semibold text-white">Утилиты</h1>
           <p className="text-xs text-slate-500 mt-0.5">Инструменты бухгалтера</p>
+        </div>
+
+        {/* Поиск */}
+        <div className="px-3 pb-2 flex-shrink-0">
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Найти инструмент..."
+            className="w-full bg-[#0f1117] text-slate-200 placeholder-slate-600 text-xs px-3 py-2 rounded-lg border border-[#1e2535] focus:outline-none focus:border-blue-500/50"
+          />
         </div>
 
         {/* Фильтр категорий */}
@@ -81,6 +106,9 @@ export default function Tools() {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
+          {filtered.length === 0 && (
+            <p className="text-xs text-slate-600 text-center py-4">Ничего не найдено</p>
+          )}
           {filtered.map(t => (
             <button key={t.id} onClick={() => setActive(t.id)}
               className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors ${
