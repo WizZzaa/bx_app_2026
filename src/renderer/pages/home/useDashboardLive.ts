@@ -14,6 +14,19 @@ export interface NextDeadline {
   daysLeft: number
 }
 
+export interface TodayTask {
+  title: string
+  type: string        // 'task' | 'tax_deadline' | 'reminder' | 'event'
+  status: string
+  priority?: string
+}
+
+/** Метки дней текущего месяца: day (1-31) → есть ли дедлайн / задача */
+export interface DayMarks {
+  deadlines: Set<number>
+  tasks: Set<number>
+}
+
 export interface DashboardLive {
   rates: CurrencyRate[] | null
   weather: WeatherData | null
@@ -25,6 +38,8 @@ export interface DashboardLive {
   monthIncome: number
   monthExpense: number
   hasFinanceData: boolean
+  todayTasks: TodayTask[]
+  dayMarks: DayMarks
 }
 
 interface CachedEvent {
@@ -32,6 +47,7 @@ interface CachedEvent {
   title: string
   date: string
   status: string
+  priority?: string
 }
 
 interface CachedEcpKey { expiresAt: string }
@@ -80,6 +96,8 @@ export function useDashboardLive(): DashboardLive {
     monthIncome: 0,
     monthExpense: 0,
     hasFinanceData: false,
+    todayTasks: [] as TodayTask[],
+    dayMarks: { deadlines: new Set<number>(), tasks: new Set<number>() } as DayMarks,
   })
 
   useEffect(() => {
@@ -104,7 +122,31 @@ export function useDashboardLive(): DashboardLive {
       return d >= 0 && d <= 30
     }).length
 
-    setLocal(prev => ({ ...prev, nextDeadline, tasksToday, overdue, ecpExpiring }))
+    // Список «Сегодня»: сперва просроченное с высоким приоритетом, потом задачи дня
+    const prio = (e: CachedEvent) => (e.priority === 'high' ? 0 : e.priority === 'normal' ? 1 : 2)
+    const todayTasks: TodayTask[] = active
+      .filter(e => e.date === today)
+      .sort((a, b) => prio(a) - prio(b))
+      .slice(0, 5)
+
+    // Метки дней текущего месяца для мини-календаря
+    const monthPrefix = today.slice(0, 7)
+    const dayMarks: DayMarks = { deadlines: new Set(), tasks: new Set() }
+    for (const e of active) {
+      if (!e.date?.startsWith(monthPrefix)) continue
+      const day = Number(e.date.slice(8, 10))
+      if (e.type === 'tax_deadline') dayMarks.deadlines.add(day)
+      else dayMarks.tasks.add(day)
+    }
+    if (dayMarks.deadlines.size === 0) {
+      // Кэш пуст — точки дедлайнов из шаблонов налогового календаря
+      const now = new Date()
+      for (const d of deadlinesForMonth(now.getFullYear(), now.getMonth())) {
+        dayMarks.deadlines.add(Number(d.date.slice(8, 10)))
+      }
+    }
+
+    setLocal(prev => ({ ...prev, nextDeadline, tasksToday, overdue, ecpExpiring, todayTasks, dayMarks }))
 
     // Dexie: финансы за текущий месяц + штат (может быть заблокирована вторым экземпляром)
     ;(async () => {

@@ -1,27 +1,5 @@
 import React, { useState } from 'react';
-
-// Фиксированные праздники РУз (месяц, день)
-const UZ_HOLIDAYS: { month: number; day: number; name: string }[] = [
-  { month: 1,  day: 1,  name: 'Новый год' },
-  { month: 3,  day: 8,  name: 'Международный женский день' },
-  { month: 3,  day: 21, name: 'Навруз' },
-  { month: 3,  day: 22, name: 'Навруз (2-й день)' },
-  { month: 5,  day: 9,  name: 'День памяти и почестей' },
-  { month: 9,  day: 1,  name: 'День независимости' },
-  { month: 10, day: 1,  name: 'День учителя' },
-  { month: 12, day: 8,  name: 'День Конституции' },
-];
-
-function isHoliday(d: Date): string | null {
-  const h = UZ_HOLIDAYS.find(h => h.month === d.getMonth() + 1 && h.day === d.getDate());
-  return h ? h.name : null;
-}
-
-function isWorkday(d: Date): boolean {
-  const dow = d.getDay();
-  if (dow === 0 || dow === 6) return false;
-  return !isHoliday(d);
-}
+import { UZ_HOLIDAYS, holidayName as isHoliday, isWorkday } from '../../data/uzHolidays';
 
 function addCalendarDays(base: Date, n: number): Date {
   const d = new Date(base);

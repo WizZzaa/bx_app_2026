@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { APP_VERSION } from '../../shared/version'
-import { useDashboardLive, fmtUzs } from './home/useDashboardLive'
+import { useDashboardLive, fmtUzs, type TodayTask } from './home/useDashboardLive'
+import SmartCalendar from '../components/dashboard/SmartCalendar'
 
 // ── Assets ───────────────────────────────────────────────────────────────────
 import imgFinance  from '../assets/bento/finance.png'
@@ -209,6 +210,13 @@ export default function Home() {
           )}
         </div>
 
+        {/* ── Рабочее пространство: календарь · сегодня · действия ─────────── */}
+        <div className="grid gap-3 md:grid-cols-[290px_1fr_210px]">
+          <SmartCalendar marks={live.dayMarks} onOpen={() => navigate('/planner')} />
+          <TodayPanel tasks={live.todayTasks} overdue={live.overdue} onOpen={() => navigate('/planner')} />
+          <QuickActions onGo={navigate} />
+        </div>
+
         {/* ── Bento Grid (основная сетка) ──────────────────────────────────── */}
         <div
           className="grid gap-3"
@@ -252,6 +260,76 @@ export default function Home() {
           <span>·</span>
           <span className="text-slate-600">BX v{APP_VERSION} · Бухгалтер, у тебя всё под контролем ✓</span>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Панель «Сегодня» ─────────────────────────────────────────────────────────
+const TYPE_ICON: Record<string, string> = { tax_deadline: '📅', reminder: '🔔', event: '📌', task: '☑️' }
+
+function TodayPanel({ tasks, overdue, onOpen }: { tasks: TodayTask[]; overdue: number; onOpen: () => void }) {
+  return (
+    <div className="rounded-2xl bg-[#141820] border border-[#1e2535] p-4 flex flex-col">
+      <div className="flex items-center justify-between mb-2.5">
+        <span className="text-sm font-semibold text-slate-200">Сегодня</span>
+        {overdue > 0 && (
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-semibold">
+            просрочено: {overdue}
+          </span>
+        )}
+      </div>
+      {tasks.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-4">
+          <span className="text-2xl mb-1.5">✓</span>
+          <p className="text-sm text-slate-400">Задач на сегодня нет</p>
+          <p className="text-[11px] text-slate-600 mt-0.5">Спокойный день — можно разобрать почту</p>
+        </div>
+      ) : (
+        <div className="space-y-1.5 flex-1">
+          {tasks.map((t, i) => (
+            <button
+              key={i}
+              onClick={onOpen}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#0f1117] hover:bg-[#1a2035] border border-transparent hover:border-blue-500/30 transition-colors text-left"
+            >
+              <span className="text-sm">{TYPE_ICON[t.type] ?? '☑️'}</span>
+              <span className="flex-1 text-xs text-slate-300 truncate">{t.title}</span>
+              {t.priority === 'high' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 font-semibold">важно</span>}
+            </button>
+          ))}
+        </div>
+      )}
+      <button onClick={onOpen} className="mt-2.5 text-[11px] text-blue-400 hover:text-blue-300 transition-colors text-left">
+        Открыть планировщик →
+      </button>
+    </div>
+  )
+}
+
+// ── Быстрые действия ─────────────────────────────────────────────────────────
+const ACTIONS: { label: string; icon: string; to: string }[] = [
+  { label: 'Добавить операцию', icon: '💰', to: '/finance' },
+  { label: 'Новая задача', icon: '✏️', to: '/planner' },
+  { label: 'Спросить AI', icon: '✨', to: '/ai' },
+  { label: 'Создать документ', icon: '📄', to: '/templates' },
+]
+
+function QuickActions({ onGo }: { onGo: (to: string) => void }) {
+  return (
+    <div className="rounded-2xl bg-[#141820] border border-[#1e2535] p-4 flex flex-col">
+      <span className="text-sm font-semibold text-slate-200 mb-2.5">Действия</span>
+      <div className="flex flex-col gap-1.5 flex-1">
+        {ACTIONS.map(a => (
+          <button
+            key={a.to}
+            onClick={() => onGo(a.to)}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#0f1117] hover:bg-[#1a2035] border border-transparent hover:border-blue-500/30 transition-colors text-left"
+          >
+            <span className="text-sm">{a.icon}</span>
+            <span className="text-xs text-slate-300">{a.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   )

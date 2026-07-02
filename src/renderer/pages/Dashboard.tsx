@@ -10,6 +10,7 @@ import { useEvents } from './planner/useEvents';
 import { useTransactions } from './finance/useTransactions';
 import { useExchangeRates } from '../lib/useExchangeRates';
 import Icon from '../lib/ui/Icon';
+import SmartCalendar from '../components/dashboard/SmartCalendar';
 
 const ECP_KEY = 'bx_ecp_keys';
 function getExpiringEcpCount(): number {
@@ -84,6 +85,21 @@ export default function Dashboard() {
     .filter(e => e.type === 'tax_deadline' && e.status !== 'done' && (e.due_date || e.date) >= todayStr)
     .sort((a,b) => (a.due_date||a.date).localeCompare(b.due_date||b.date))
     .slice(0, 3);
+
+  // Метки текущего месяца для умного календаря
+  const calendarMarks = (() => {
+    const monthPrefix = todayStr.slice(0, 7);
+    const deadlines = new Set<number>();
+    const tasks = new Set<number>();
+    for (const e of events) {
+      if (e.status === 'done') continue;
+      const d = e.due_date || e.date;
+      if (!d?.startsWith(monthPrefix)) continue;
+      const day = Number(d.slice(8, 10));
+      if (e.type === 'tax_deadline') deadlines.add(day); else tasks.add(day);
+    }
+    return { deadlines, tasks };
+  })();
 
 
   const stats = [
@@ -212,8 +228,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Planner mini-panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Planner mini-panel: умный календарь · сегодня · дедлайны */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <SmartCalendar marks={calendarMarks} onOpen={() => navigate('/planner')} />
         {/* Сегодня + просрочено */}
         <div className="bg-[#141820] border border-[#1e2535] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
