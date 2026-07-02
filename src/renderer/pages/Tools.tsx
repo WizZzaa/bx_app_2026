@@ -8,7 +8,6 @@ import EimzoDiag from './tools/EimzoDiag';
 import QuickNotes from './tools/QuickNotes';
 import NumberToWords from './tools/NumberToWords';
 import DateCalc from './tools/DateCalc';
-import CompanyRequisites from './tools/CompanyRequisites';
 import Transliterate from './tools/Transliterate';
 import TaxCalculator from './tools/TaxCalculator';
 import { isElectron } from '../lib/onecApi';
@@ -33,8 +32,6 @@ const TOOLS: Tool[] = [
   { id: 'translit', icon: 'languages', label: 'Транслитерация', category: 'Текст', description: 'Узбек кирилл ↔ латиница (2019)', component: <Transliterate /> },
   // Дата и время
   { id: 'datecalc', icon: 'planner', label: 'Калькулятор дат', category: 'Дата', description: 'Рабочие дни, разница, праздники РУз', component: <DateCalc /> },
-  // Реквизиты
-  { id: 'requisites', icon: 'building', label: 'Реквизиты компаний', category: 'Реквизиты', description: 'Р/с, МФО, ОКОНХ, ОКПО — быстро скопировать', component: <CompanyRequisites /> },
   // Система
   { id: 'pccleaner', icon: 'monitor', label: 'Очистка ПК', category: 'Система', description: 'TEMP Windows + кэши браузеров', component: <PcCleaner /> },
   { id: 'network', icon: 'services', label: 'Проверка сети', category: 'Система', description: 'Доступность госсайтов РУз', component: <NetworkChecker /> },
@@ -46,10 +43,10 @@ const TOOLS: Tool[] = [
   { id: 'taxcalc', icon: 'planner', label: 'Налоговый калькулятор', category: 'Налоги', description: 'Налог с оборота, НДС, НДФЛ — на основе ваших данных', component: <TaxCalculator /> },
 ];
 
-const CATEGORIES = ['Все', '1С', 'Налоги', 'Текст', 'Дата', 'Реквизиты', 'Система', 'ЭЦП', 'Заметки'];
+const CATEGORIES = ['Все', '1С', 'Налоги', 'Текст', 'Дата', 'Система', 'ЭЦП', 'Заметки'];
 
 // Tools with non-standard height that need full content panel height
-const FULL_HEIGHT_TOOLS = new Set(['requisites', 'notes']);
+const FULL_HEIGHT_TOOLS = new Set(['notes']);
 
 const LAST_TOOL_KEY = 'bx_tools_last';
 

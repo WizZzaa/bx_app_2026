@@ -126,30 +126,45 @@ function CalcHistoryPanel() {
   }
 
   return (
-    <div className="mt-8">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[11px] text-slate-600 uppercase tracking-widest font-semibold">Недавние расчёты</p>
+    <div className="mt-8 pb-6">
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-2">
+          <span className="w-6 h-6 rounded-lg bg-[#1e2535] text-slate-400 flex items-center justify-center">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M8 5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+          </span>
+          <p className="text-sm font-semibold text-slate-300">Недавние расчёты</p>
+        </div>
         <button onClick={clearCalcHistory} className="text-[11px] text-slate-600 hover:text-red-400 transition-colors">Очистить</button>
       </div>
-      <div className="space-y-1.5">
-        {items.map(e => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {items.slice(0, 8).map(e => (
           <button
             key={e.ts}
             onClick={() => copyEntry(e)}
-            title={e.text}
-            className="w-full flex items-center gap-3 px-3.5 py-2 bg-[#141820] hover:bg-[#1a2035] border border-[#1e2535] hover:border-blue-500/30 rounded-lg text-left transition-colors"
+            title={`${e.text}\n\nКлик — скопировать снова`}
+            className="group px-3.5 py-2.5 bg-[#141820] hover:bg-[#18202f] border border-[#1e2535] hover:border-blue-500/40 rounded-xl text-left transition-all"
           >
-            <span className="flex-1 text-xs text-slate-300 truncate">{e.title}</span>
-            <span className={`text-xs font-semibold tabular-nums flex-shrink-0 ${copiedTs === e.ts ? 'text-emerald-400' : 'text-blue-400'}`}>
-              {copiedTs === e.ts ? 'Скопировано ✓' : e.main}
-            </span>
-            <span className="text-[10px] text-slate-600 flex-shrink-0 w-10 text-right">
-              {new Date(e.ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-            </span>
+            <div className="flex items-center justify-between gap-2 mb-0.5">
+              <span className="text-[11px] text-slate-500 truncate">{e.title}</span>
+              <span className="text-[10px] text-slate-600 flex-shrink-0">
+                {new Date(e.ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className={`text-sm font-semibold tabular-nums truncate ${copiedTs === e.ts ? 'text-emerald-400' : 'text-slate-100'}`}>
+                {copiedTs === e.ts ? 'Скопировано ✓' : e.main}
+              </span>
+              <svg className="w-3.5 h-3.5 text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" viewBox="0 0 16 16" fill="none">
+                <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+                <path d="M11 5V4a1.5 1.5 0 0 0-1.5-1.5h-5A1.5 1.5 0 0 0 3 4v5A1.5 1.5 0 0 0 4.5 10.5H5" stroke="currentColor" strokeWidth="1.3"/>
+              </svg>
+            </div>
           </button>
         ))}
       </div>
-      <p className="text-[10px] text-slate-700 mt-1.5">Клик по строке — скопировать расчёт снова. Хранятся последние 15.</p>
     </div>
   );
 }

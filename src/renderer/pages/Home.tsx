@@ -99,7 +99,7 @@ const CARDS: BentoCard[] = [
 interface QuickLink { label: string; emoji: string; to: string; desc: string }
 const QUICK_LINKS: QuickLink[] = [
   { label: 'Шаблоны',     emoji: '📝', to: '/templates',      desc: 'Договоры, ТТН, акты' },
-  { label: 'Контрагенты', emoji: '🏢', to: '/counterparties', desc: 'База с рейтингом риска' },
+  { label: 'Организации', emoji: '🏢', to: '/counterparties', desc: 'Контрагенты и свои реквизиты' },
   { label: 'Справочники', emoji: '📚', to: '/reference',      desc: 'НК, ставки, ОКЭД' },
   { label: 'Новости',     emoji: '📰', to: '/news',           desc: 'Деловая пресса РУз' },
   { label: 'Калькуляторы',emoji: '🧮', to: '/calc',           desc: 'НДС, прибыль, зарплата' },

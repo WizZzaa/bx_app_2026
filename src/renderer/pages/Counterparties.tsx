@@ -4,6 +4,10 @@ import { useCompany } from '../lib/CompanyContext'
 import { useToast } from '../lib/ui/ToastContext'
 import { validateInn, validateBankAccount, getBankNameByMfo } from '../lib/validation'
 import Icon from '../lib/ui/Icon'
+import CompanyRequisites from './tools/CompanyRequisites'
+
+type OrgTab = 'counterparties' | 'mine'
+const ORG_TAB_KEY = 'bx_org_tab'
 
 const calculateRiskScore = (cp: NewCounterparty | BxCounterparty) => {
   let score = 0
@@ -63,6 +67,10 @@ export default function Counterparties() {
   const { active } = useCompany()
   const { counterparties, add, update, remove } = useCounterparties(active?.id ?? null)
   const toast = useToast()
+
+  const [orgTab, setOrgTabRaw] = useState<OrgTab>(() =>
+    localStorage.getItem(ORG_TAB_KEY) === 'mine' ? 'mine' : 'counterparties')
+  const setOrgTab = (t: OrgTab) => { setOrgTabRaw(t); localStorage.setItem(ORG_TAB_KEY, t) }
 
   const [activeId, setActiveId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
@@ -187,7 +195,31 @@ export default function Counterparties() {
   }
 
   return (
-    <div className="flex-1 flex overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Вкладки: контрагенты / мои компании */}
+      <div className="flex-shrink-0 border-b border-[#1e2535] px-4 py-2.5 flex items-center gap-3">
+        <h1 className="text-base font-semibold text-white">Организации</h1>
+        <div className="flex bg-[#0f1117] border border-[#1e2535] rounded-lg p-0.5">
+          <button onClick={() => setOrgTab('counterparties')}
+            className={`px-3 py-1 text-xs rounded-md transition-colors ${orgTab === 'counterparties' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+            Контрагенты
+          </button>
+          <button onClick={() => setOrgTab('mine')}
+            className={`px-3 py-1 text-xs rounded-md transition-colors ${orgTab === 'mine' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+            Мои компании
+          </button>
+        </div>
+        <span className="text-[11px] text-slate-600">
+          {orgTab === 'counterparties' ? 'база партнёров с рейтингом риска' : 'реквизиты ваших фирм — р/с, МФО, ОКЭД'}
+        </span>
+      </div>
+
+      {orgTab === 'mine' ? (
+        <div className="flex-1 overflow-hidden p-4">
+          <CompanyRequisites />
+        </div>
+      ) : (
+      <div className="flex-1 flex overflow-hidden">
       {/* Список контрагентов */}
       <aside className="w-68 flex-shrink-0 border-r border-[#1e2535] flex flex-col bg-[#141820]/30">
         <div className="px-4 pt-5 pb-2">
@@ -442,6 +474,8 @@ export default function Counterparties() {
           </div>
         )}
       </div>
+    </div>
+      )}
     </div>
   )
 }
