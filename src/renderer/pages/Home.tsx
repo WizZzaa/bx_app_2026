@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { APP_VERSION } from '../../shared/version'
+import { useDashboardLive, fmtUzs } from './home/useDashboardLive'
 
 // ── Assets ───────────────────────────────────────────────────────────────────
 import imgFinance  from '../assets/bento/finance.png'
@@ -105,10 +106,19 @@ const QUICK_LINKS: QuickLink[] = [
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
+function greeting(d: Date): string {
+  const h = d.getHours()
+  if (h >= 5 && h < 12) return 'Доброе утро'
+  if (h >= 12 && h < 18) return 'Добрый день'
+  if (h >= 18 && h < 23) return 'Добрый вечер'
+  return 'Доброй ночи'
+}
+
 export default function Home() {
   const navigate = useNavigate()
   const [time, setTime] = useState(new Date())
   const [hovered, setHovered] = useState<string | null>(null)
+  const live = useDashboardLive()
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000)
@@ -117,6 +127,18 @@ export default function Home() {
 
   const fmtTime = (d: Date) => d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
   const fmtDate = (d: Date) => d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
+
+  // Живые бейджи на карточках
+  const badges: Record<string, string | null> = {
+    finance: live.hasFinanceData
+      ? `${live.monthIncome - live.monthExpense >= 0 ? '+' : '−'}${fmtUzs(Math.abs(live.monthIncome - live.monthExpense))} за месяц`
+      : null,
+    planner: live.overdue > 0
+      ? `⚠ просрочено: ${live.overdue}`
+      : live.tasksToday > 0 ? `сегодня: ${live.tasksToday}` : null,
+    ecp: live.ecpExpiring > 0 ? `истекает: ${live.ecpExpiring}` : null,
+    hr: live.activeEmployees ? `в штате: ${live.activeEmployees}` : null,
+  }
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#0f1117] text-white">
@@ -130,8 +152,8 @@ export default function Home() {
                 BX
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white leading-tight tracking-tight">BX Помощник</h1>
-                <p className="text-xs text-slate-500">Бухгалтерский ассистент · v{APP_VERSION}</p>
+                <h1 className="text-2xl font-bold text-white leading-tight tracking-tight">{greeting(time)}!</h1>
+                <p className="text-xs text-slate-500">BX Помощник · Бухгалтерский ассистент · v{APP_VERSION}</p>
               </div>
             </div>
           </div>
@@ -143,6 +165,50 @@ export default function Home() {
           </div>
         </div>
 
+        {/* ── Живая инфолента: погода · курсы · ближайший дедлайн ──────────── */}
+        <div className="flex flex-wrap items-stretch gap-2">
+          {live.weather && (
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#141820] border border-[#1e2535]">
+              <span className="text-lg leading-none">{live.weather.icon}</span>
+              <div>
+                <div className="text-sm font-semibold text-slate-200 leading-tight">{live.weather.temp}°C</div>
+                <div className="text-[10px] text-slate-500 leading-tight">Ташкент · {live.weather.desc}</div>
+              </div>
+            </div>
+          )}
+          {live.rates?.map(r => (
+            <div key={r.code} className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#141820] border border-[#1e2535]">
+              <span className="text-base leading-none">{r.flag}</span>
+              <div>
+                <div className="text-sm font-semibold text-slate-200 leading-tight tabular-nums">
+                  {r.value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
+                </div>
+                <div className={`text-[10px] leading-tight tabular-nums ${r.diff > 0 ? 'text-red-400' : r.diff < 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                  {r.code} {r.diff > 0 ? '▲' : r.diff < 0 ? '▼' : '·'} {Math.abs(r.diff).toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
+                </div>
+              </div>
+            </div>
+          ))}
+          {live.nextDeadline && (
+            <button
+              onClick={() => navigate('/planner')}
+              className={`flex items-center gap-2.5 px-3.5 py-2 rounded-xl border transition-colors text-left ${
+                live.nextDeadline.daysLeft <= 3
+                  ? 'bg-amber-500/10 border-amber-500/30 hover:border-amber-400/60'
+                  : 'bg-[#141820] border-[#1e2535] hover:border-blue-500/40'
+              }`}
+            >
+              <span className="text-lg leading-none">📅</span>
+              <div>
+                <div className="text-sm font-semibold text-slate-200 leading-tight">
+                  {live.nextDeadline.daysLeft === 0 ? 'Сегодня!' : live.nextDeadline.daysLeft === 1 ? 'Завтра' : `Через ${live.nextDeadline.daysLeft} дн.`}
+                </div>
+                <div className="text-[10px] text-slate-500 leading-tight max-w-[220px] truncate">{live.nextDeadline.title}</div>
+              </div>
+            </button>
+          )}
+        </div>
+
         {/* ── Bento Grid (основная сетка) ──────────────────────────────────── */}
         <div
           className="grid gap-3"
@@ -152,6 +218,7 @@ export default function Home() {
             <BentoCard
               key={card.id}
               card={card}
+              badge={badges[card.id] ?? null}
               isHovered={hovered === card.id}
               onHover={setHovered}
               onClick={() => navigate(card.to)}
@@ -192,9 +259,10 @@ export default function Home() {
 
 // ── Компонент одной Bento-карточки ───────────────────────────────────────────
 function BentoCard({
-  card, isHovered, onHover, onClick
+  card, badge, isHovered, onHover, onClick
 }: {
   card: BentoCard
+  badge: string | null
   isHovered: boolean
   onHover: (id: string | null) => void
   onClick: () => void
@@ -275,31 +343,50 @@ function BentoCard({
           padding: '20px',
         }}
       >
-        {/* Бейдж */}
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: card.accent + '20',
-            border: `1px solid ${card.accent}40`,
-            borderRadius: '8px',
-            padding: '4px 10px',
-            width: 'fit-content',
-          }}
-        >
+        {/* Бейджи: категория слева, живые данные справа */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
           <div
             style={{
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              background: card.accent,
-              boxShadow: `0 0 6px ${card.accent}`,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: card.accent + '20',
+              border: `1px solid ${card.accent}40`,
+              borderRadius: '8px',
+              padding: '4px 10px',
+              width: 'fit-content',
             }}
-          />
-          <span style={{ fontSize: '11px', color: card.accent, fontWeight: 600 }}>
-            {card.title}
-          </span>
+          >
+            <div
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: card.accent,
+                boxShadow: `0 0 6px ${card.accent}`,
+              }}
+            />
+            <span style={{ fontSize: '11px', color: card.accent, fontWeight: 600 }}>
+              {card.title}
+            </span>
+          </div>
+          {badge && (
+            <div
+              style={{
+                background: badge.startsWith('⚠') ? '#f59e0b25' : '#0f111790',
+                border: `1px solid ${badge.startsWith('⚠') ? '#f59e0b60' : '#2a3447'}`,
+                borderRadius: '8px',
+                padding: '4px 10px',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: badge.startsWith('⚠') ? '#fbbf24' : '#cbd5e1',
+                whiteSpace: 'nowrap',
+                backdropFilter: 'blur(4px)',
+              }}
+            >
+              {badge}
+            </div>
+          )}
         </div>
 
         {/* Текст снизу */}
