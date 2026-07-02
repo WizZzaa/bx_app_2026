@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { UZ_HOLIDAYS, holidayName as isHoliday, isWorkday } from '../../data/uzHolidays';
+import { todayISO } from '../../lib/dates';
 
 function addCalendarDays(base: Date, n: number): Date {
   const d = new Date(base);
@@ -58,7 +59,7 @@ export default function DateCalc() {
   // check
   const [checkDate, setCheckDate] = useState('');
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
 
   // ── diff results ──
   let calDays: number | null = null;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { widgetsApi } from '../../lib/widgetsApi';
+import { toLocalISO } from '../../lib/dates';
 
 interface Props { onClose: () => void; }
 
@@ -14,7 +15,7 @@ const PERIODS = [
 interface RatePoint { date: string; value: number; }
 
 function dateStr(d: Date) {
-  return d.toISOString().slice(0, 10);
+  return toLocalISO(d);
 }
 function addDays(d: Date, n: number) {
   const r = new Date(d); r.setDate(r.getDate() + n); return r;

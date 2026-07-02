@@ -11,6 +11,7 @@ import { useTransactions } from './finance/useTransactions';
 import { useExchangeRates } from '../lib/useExchangeRates';
 import Icon from '../lib/ui/Icon';
 import SmartCalendar from '../components/dashboard/SmartCalendar';
+import { todayISO } from '../lib/dates';
 
 const ECP_KEY = 'bx_ecp_keys';
 function getExpiringEcpCount(): number {
@@ -24,7 +25,7 @@ function getExpiringEcpCount(): number {
 export default function Dashboard() {
   const navigate = useNavigate();
   const today = new Date().toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  const todayStr = new Date().toISOString().slice(0,10);
+  const todayStr = todayISO();
   const { active, companies } = useCompany();
   const { events, loading } = useEvents(active?.id ?? null);
   const { transactions } = useTransactions(active?.id ?? null);

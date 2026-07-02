@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { useTransactions } from '../finance/useTransactions'
 import { useCompany } from '../../lib/CompanyContext'
 import { deadlinesForMonth } from '../../data/taxCalendar'
+import { todayISO, daysFromNowISO } from '../../lib/dates';
 
 // ─── Ставки налогов РУз (2024-2025) ───────────────────────────────────────
 const REGIMES = [
@@ -117,7 +118,7 @@ export default function TaxCalculator() {
     return all.sort((a, b) => a.date.localeCompare(b.date))
   }, [year, quarter, regime])
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayISO()
 
   return (
     <div className="space-y-5 max-w-xl">
@@ -268,7 +269,7 @@ export default function TaxCalculator() {
           <div className="space-y-1.5">
             {deadlines.map((d, i) => {
               const isPast = d.date < today
-              const isSoon = !isPast && d.date <= new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+              const isSoon = !isPast && d.date <= daysFromNowISO(7)
               return (
                 <div key={i} className={`flex items-center gap-3 text-xs rounded-lg px-3 py-2 ${isPast ? 'opacity-40' : ''} ${isSoon ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-[#141820]'}`}>
                   <span className={`font-mono text-[10px] ${isPast ? 'text-slate-600' : isSoon ? 'text-amber-400' : 'text-slate-400'}`}>{d.date}</span>

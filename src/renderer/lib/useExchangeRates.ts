@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { db, type ExchangeRate } from './db/localDb'
 import { widgetsApi } from './widgetsApi'
+import { todayISO } from './dates'
 
 const DEFAULT_RATES: Record<string, number> = {
   UZS: 1,
@@ -18,7 +19,7 @@ export const useExchangeRates = () => {
   const fetchRates = useCallback(async () => {
     setLoading(true)
     setError(null)
-    const today = new Date().toISOString().slice(0, 10)
+    const today = todayISO()
 
     try {
       const data = await widgetsApi.getRates(['USD', 'EUR', 'RUB'])

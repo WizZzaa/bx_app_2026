@@ -1,6 +1,7 @@
 import { supabase } from '../../lib/db/supabase';
 import { taxDeadlines } from '../../data/taxCalendar';
 import type { NewEvent } from './useEvents';
+import { todayISO } from '../../lib/dates';
 
 const SEEDED_KEY = 'bx_tax_seeded_years';
 
@@ -18,7 +19,7 @@ export async function seedTaxDeadlines(year: number, userId: string, companyId: 
   if (getSeededYears().includes(year)) return 0;
 
   const events: NewEvent[] = [];
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayISO();
 
   for (const dl of taxDeadlines) {
     const months = dl.month !== null ? [dl.month] : [1,2,3,4,5,6,7,8,9,10,11,12];

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { BxTransaction, NewTransaction } from './useTransactions';
 import { useExchangeRates } from '../../lib/useExchangeRates';
+import { todayISO } from '../../lib/dates';
 
 interface Props {
   tx?: BxTransaction | null;
@@ -15,7 +16,7 @@ const INCOME_CATS  = ['Выручка', 'Услуги', 'Аванс от кли�
 const EXPENSE_CATS = ['Зарплата', 'Аренда', 'Налоги и взносы', 'Закупка товара', 'Материалы', 'Коммуналка', 'Связь / интернет', 'Банковские услуги', 'Транспорт', 'Реклама', 'Прочее'];
 
 const field = 'w-full bg-[#0f1117] text-slate-200 px-3 py-2 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm';
-const today = new Date().toISOString().slice(0, 10);
+const today = todayISO();
 
 export default function TxModal({ tx, defaultType, companyId, onSave, onDelete, onClose }: Props) {
   const isEdit = Boolean(tx);

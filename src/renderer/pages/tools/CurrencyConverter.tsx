@@ -3,11 +3,12 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { widgetsApi } from '../../lib/widgetsApi';
 import type { CurrencyRate } from '../../../shared/types';
+import { todayISO } from '../../lib/dates';
 
 // Конвертер валют «на дату» — курс ЦБ РУз на любую историческую дату (для ГТД).
 
 export default function CurrencyConverter() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   const [code, setCode] = useState('USD');
   const [date, setDate] = useState(today);
   const [amount, setAmount] = useState('1');

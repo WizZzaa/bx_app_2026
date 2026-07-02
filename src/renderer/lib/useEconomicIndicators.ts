@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { loadIndicators } from './db/referenceRepo'
 import type { Indicator } from '../data/reference/types'
+import { todayISO } from './dates'
 
 const FALLBACK_VALUES: Record<string, number> = {
   brv: 340000,
@@ -45,7 +46,7 @@ export const useEconomicIndicators = () => {
   }, [])
 
   const getIndicatorValue = useCallback((key: string, dateStr?: string): number => {
-    const targetDate = dateStr || new Date().toISOString().slice(0, 10)
+    const targetDate = dateStr || todayISO()
     const ind = indicators.find(i => i.key === key)
     
     if (!ind || !ind.history || ind.history.length === 0) {

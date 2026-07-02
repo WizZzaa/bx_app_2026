@@ -15,6 +15,7 @@ import { useToast } from '../lib/ui/ToastContext';
 import { supabase } from '../lib/db/supabase';
 import { requestNotificationPermission, startReminderLoop, stopReminderLoop } from '../lib/notifications';
 import type { BxEvent, NewEvent } from './planner/useEvents';
+import { todayISO } from '../lib/dates';
 
 type View = 'board' | 'calendar' | 'list';
 
@@ -92,7 +93,7 @@ export default function Planner() {
     doSeed();
   }, [active?.id]);
 
-  const today = new Date().toISOString().slice(0,10);
+  const today = todayISO();
   const filtered = typeF ? events.filter(e => e.type === typeF) : events;
   const todayCount = events.filter(e => (e.due_date || e.date) === today && e.status !== 'done').length;
   const overdueCount = events.filter(e => e.due_date && e.due_date < today && e.status !== 'done' && (e.type === 'task' || e.type === 'reminder')).length;

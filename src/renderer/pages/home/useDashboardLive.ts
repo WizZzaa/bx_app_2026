@@ -3,6 +3,7 @@ import { widgetsApi } from '../../lib/widgetsApi'
 import { db } from '../../lib/db/localDb'
 import { deadlinesForMonth } from '../../data/taxCalendar'
 import type { CurrencyRate, WeatherData } from '../../../shared/types'
+import { todayISO } from '../../lib/dates'
 
 // Живая сводка для главной. Только быстрые локальные источники
 // (Dexie, localStorage-кэши) + курсы/погода через widgetsApi — без запросов к Supabase,
@@ -52,7 +53,7 @@ interface CachedEvent {
 
 interface CachedEcpKey { expiresAt: string }
 
-const todayStr = () => new Date().toISOString().slice(0, 10)
+const todayStr = todayISO
 
 function readEventsCache(): CachedEvent[] {
   try { return JSON.parse(localStorage.getItem('bx_events_cache_v1') || '[]') } catch { return [] }

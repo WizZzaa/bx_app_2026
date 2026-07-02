@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { BxEvent, EventType, EventStatus, EventPriority, NewEvent } from './useEvents';
+import { todayISO } from '../../lib/dates';
 
 interface Props {
   event?: BxEvent | null;
@@ -32,7 +33,7 @@ const PRIORITY_LABELS: Record<EventPriority, string> = {
 
 const TAX_TAGS = ['НДС','НДФЛ','Прибыль','Оборот','Имущество','Земля','Вода','Таможня','ЗП','Дивиденды'];
 
-const today = new Date().toISOString().slice(0,10);
+const today = todayISO();
 
 export default function EventModal({ event, defaultDate, defaultType, onSave, onDelete, onClose }: Props) {
   const isEdit = Boolean(event);

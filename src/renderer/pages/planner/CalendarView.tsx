@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import type { BxEvent } from './useEvents';
+import { toLocalISO } from '../../lib/dates';
+import { holidayName } from '../../data/uzHolidays';
 
 export interface CalCard { id: string; title: string; due_date: string }
 
@@ -22,9 +24,7 @@ const TYPE_COLOR: Record<string, string> = {
   event:        'bg-purple-500',
 };
 
-function toISO(d: Date) {
-  return d.toISOString().slice(0,10);
-}
+const toISO = toLocalISO;
 
 export default function CalendarView({ events, cards = [], onDayClick, onEventClick, onCardClick }: Props) {
   const now = new Date();
@@ -122,18 +122,23 @@ export default function CalendarView({ events, cards = [], onDayClick, onEventCl
                 const isToday = ds === todayStr;
                 const isWeekend = ci >= 5;
                 const isPast = ds < todayStr;
+                const holiday = holidayName(day);
                 return (
                   <div key={ci}
                     onClick={() => onDayClick(ds)}
+                    title={holiday ?? undefined}
                     className={`h-20 rounded-lg border p-1.5 cursor-pointer transition-all overflow-hidden
-                      ${isToday ? 'border-blue-500/60 bg-blue-500/5' : 'border-[#1e2535] hover:border-[#2a3447]'}
+                      ${isToday ? 'border-blue-500/60 bg-blue-500/5' : holiday ? 'border-red-500/25 hover:border-red-500/40' : 'border-[#1e2535] hover:border-[#2a3447]'}
                       ${isPast && !isToday ? 'opacity-60' : ''}
-                      ${isWeekend ? 'bg-[#0a0d14]' : 'bg-[#0f1117]'}
+                      ${holiday ? 'bg-red-500/[0.04]' : isWeekend ? 'bg-[#0a0d14]' : 'bg-[#0f1117]'}
                     `}
                   >
-                    <div className={`text-[11px] font-medium mb-1 w-5 h-5 flex items-center justify-center rounded-full
-                      ${isToday ? 'bg-blue-600 text-white' : isWeekend ? 'text-slate-600' : 'text-slate-400'}`}>
-                      {day.getDate()}
+                    <div className="flex items-center gap-1 mb-1">
+                      <div className={`text-[11px] font-medium w-5 h-5 flex items-center justify-center rounded-full flex-shrink-0
+                        ${isToday ? 'bg-blue-600 text-white' : holiday ? 'text-red-400 font-semibold' : isWeekend ? 'text-slate-600' : 'text-slate-400'}`}>
+                        {day.getDate()}
+                      </div>
+                      {holiday && <span className="text-[8px] text-red-400/70 truncate leading-tight">{holiday}</span>}
                     </div>
                     <div className="space-y-0.5">
                       {dayEvents.slice(0,3).map(ev => (

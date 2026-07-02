@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { uid } from '../lib/uid';
+import { todayISO } from '../lib/dates';
 
 const STORAGE_KEY = 'bx_ecp_keys';
 
@@ -117,7 +118,7 @@ export default function EcpManager() {
       const newKey: EcpKey = {
         id: uid(),
         ...form,
-        addedAt: new Date().toISOString().slice(0, 10),
+        addedAt: todayISO(),
       };
       persist([...keys, newKey]);
     }
