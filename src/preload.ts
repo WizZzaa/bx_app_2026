@@ -13,6 +13,7 @@ import type {
 } from './shared/types';
 import type { TempDirInfo, PcCleanResult } from './main/services/pcClean'
 import type { ParsedEcpInfo } from './main/services/ecpParser'
+import type { TraderInfo } from './main/services/innCheck'
 
 const api = {
   platform: process.platform,
@@ -54,6 +55,9 @@ const api = {
     isAvailable: (): Promise<boolean> => ipcRenderer.invoke(IPC.SAFE_AVAILABLE),
     encrypt: (plainText: string): Promise<string> => ipcRenderer.invoke(IPC.SAFE_ENCRYPT, plainText),
     decrypt: (encryptedHex: string): Promise<string> => ipcRenderer.invoke(IPC.SAFE_DECRYPT, encryptedHex)
+  },
+  inn: {
+    check: (tin: string): Promise<TraderInfo | null> => ipcRenderer.invoke(IPC.INN_CHECK, tin)
   },
   pdf: {
     generate: (htmlContent: string, fileName: string): Promise<boolean> =>

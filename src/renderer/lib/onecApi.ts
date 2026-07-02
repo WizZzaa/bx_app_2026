@@ -42,6 +42,12 @@ interface BxBridge {
     encrypt(plainText: string): Promise<string>
     decrypt(encryptedHex: string): Promise<string>
   }
+  inn: {
+    check(tin: string): Promise<{
+      inn: string; name: string; vatNumber?: string;
+      regimeName?: string; region?: string; registrationDate?: string;
+    } | null>
+  }
   pdf: {
     generate(htmlContent: string, fileName: string): Promise<boolean>
   }

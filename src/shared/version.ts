@@ -1,7 +1,8 @@
 // Single source of truth for app version & changelog.
-// ВАЖНО: при каждом улучшении поднимай версию и добавляй запись в CHANGELOG.
+// ВАЖНО: при каждом улучшении поднимай версию в package.json и добавляй запись в CHANGELOG.
+import pkg from '../../package.json'
 
-export const APP_VERSION = '1.17.0'
+export const APP_VERSION: string = pkg.version
 
 export interface ChangelogEntry {
   version: string
@@ -12,6 +13,20 @@ export interface ChangelogEntry {
 
 // Новые версии — сверху.
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.18.0',
+    date: '2026-07-02',
+    title: 'Освежение: рабочая проверка ИНН, актуальная дата у AI, CSP',
+    changes: [
+      'Проверка ИНН: реальный запрос к my.soliq.uz через main-процесс Electron (без CORS)',
+      'Валидатор ИНН исправлен: убран алгоритм контрольной цифры РФ, неприменимый к ИНН РУз',
+      'Страница ИНН честно показывает источник данных (API ГНК или демо) по среде запуска',
+      'AI-Консультант: исправлен формат context — RAG-статьи и данные предприятия снова доходят до Gemini (раньше молча отбрасывались)',
+      'AI-Консультант знает текущую дату — корректные ответы про «текущий год» и дедлайны',
+      'Версия приложения читается из package.json — рассинхрон версий больше невозможен',
+      'Content-Security-Policy для продакшн-сборки (устранено предупреждение Electron)',
+    ],
+  },
   {
     version: '1.17.0',
     date: '2026-06-27',

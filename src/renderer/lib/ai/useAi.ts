@@ -178,7 +178,15 @@ export function useAi() {
     // 3. RAG: подбираем релевантные статьи и локальные данные
     const kbContext = retrieveArticles(trimmed, 3)
     const localDataContext = await buildLocalDataContext(trimmed)
-    const fullContext = `--- Справочные статьи ---\n${kbContext}\n\n--- Данные из локальной БД предприятия ---\n${localDataContext || 'Нет связанных данных в БД'}`
+    const today = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+    const dateNote = `Сегодняшняя дата: ${today}. Отвечай исходя из неё (текущий год, действующие сроки и дедлайны).`
+    const fullContext = `${dateNote}\n\n--- Справочные статьи ---\n${kbContext}\n\n--- Данные из локальной БД предприятия ---\n${localDataContext || 'Нет связанных данных в БД'}`
+    // Edge-функция ai-consultant принимает context массивом статей {title, body}
+    const contextArticles = [
+      { title: 'Текущая дата', body: dateNote },
+      { title: 'Справочные статьи из Базы знаний', body: kbContext || 'Нет релевантных статей' },
+      { title: 'Данные из локальной БД предприятия', body: localDataContext || 'Нет связанных данных в БД' },
+    ]
 
     // 4. Отправляем запрос в зависимости от провайдера
     if (provider === 'ollama') {
@@ -273,7 +281,7 @@ ${fullContext}
       try {
         const payloadMessages = history.map(m => ({ role: m.role, content: m.content }))
         const { data, error: fErr } = await supabase.functions.invoke('ai-consultant', {
-          body: { messages: payloadMessages, context: fullContext },
+          body: { messages: payloadMessages, context: contextArticles },
         })
 
         if (fErr) { setError('Ошибка вызова AI: ' + fErr.message); setSending(false); return; }

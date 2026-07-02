@@ -1,31 +1,15 @@
-const INN_WEIGHTS_1 = [3, 7, 2, 4, 10, 3, 5, 9]
-const INN_WEIGHTS_2 = [4, 8, 3, 5, 11, 4, 6, 10]
-
+// ИНН юрлица РУз — 9 цифр без публичного алгоритма контрольной цифры
+// (взвешенная контрольная сумма — это схема ИНН РФ, к узбекским ИНН неприменима).
+// Проверяем только формат: 9 цифр, первая не ноль.
 export const validateInn = (inn: string): boolean => {
   const clean = inn.trim()
-  if (!/^\d{9}$/.test(clean)) {
-    return false
-  }
+  return /^[1-9]\d{8}$/.test(clean)
+}
 
-  const digits = clean.split('').map(Number)
-  let sum = 0
-  for (let i = 0; i < 8; i++) {
-    sum += digits[i] * INN_WEIGHTS_1[i]
-  }
-
-  let checkDigit = sum % 11
-  if (checkDigit === 10) {
-    sum = 0
-    for (let i = 0; i < 8; i++) {
-      sum += digits[i] * INN_WEIGHTS_2[i]
-    }
-    checkDigit = sum % 11
-    if (checkDigit === 10) {
-      checkDigit = 0
-    }
-  }
-
-  return digits[8] === checkDigit
+// ПИНФЛ физлица — 14 цифр
+export const validatePinfl = (pinfl: string): boolean => {
+  const clean = pinfl.trim()
+  return /^\d{14}$/.test(clean)
 }
 
 export const validateBankAccount = (account: string): boolean => {

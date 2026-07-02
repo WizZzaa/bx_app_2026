@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { validateInn } from '../lib/validation'
+import { isElectron } from '../lib/onecApi'
 
 interface CheckResult {
   inn: string;
@@ -10,6 +11,7 @@ interface CheckResult {
   region: string;
   registeredAt: string;
   riskClass?: string;
+  demo?: boolean;
 }
 
 type State = 'idle' | 'loading' | 'result' | 'error';
@@ -68,38 +70,36 @@ export default function InnCheck() {
     setResult(null)
 
     if (q.length === 9 && !validateInn(q)) {
-      setErrorMsg('Невалидный ИНН Узбекистана (ошибка контрольной цифры)')
+      setErrorMsg('ИНН юрлица РУз — 9 цифр, первая не ноль')
       setState('error')
       return
     }
 
-    await new Promise(r => setTimeout(r, 800))
-
-    // Попытка реального API (my.soliq.uz) — в браузере будет CORS, в Electron — нет
+    // Реальный API my.soliq.uz: в Electron — через main-процесс (без CORS),
+    // в браузере — прямой fetch (упадёт на CORS → демо-данные)
     try {
-      const res = await fetch(`https://my.soliq.uz/roaming-dark-api/api/v1/einvoice/get-trader?tin=${q}`, {
-        headers: { 'Content-Type': 'application/json' },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data && data.name) {
-          const r: CheckResult = {
-            inn: q,
-            name: data.name,
-            status: 'active',
-            vatPayer: Boolean(data.vatNumber),
-            regime: data.regimeName ?? '—',
-            region: data.region ?? '—',
-            registeredAt: data.registrationDate ?? '—',
-          }
-          setResult(r)
-          setHistory(h => [r, ...h.filter(x => x.inn !== q)].slice(0, 10))
-          setState('result')
-          return
+      const data = isElectron
+        ? await window.bx!.inn.check(q)
+        : await fetch(`https://my.soliq.uz/roaming-dark-api/api/v1/einvoice/get-trader?tin=${q}`, {
+            headers: { 'Content-Type': 'application/json' },
+          }).then(res => (res.ok ? res.json() : null))
+      if (data && data.name) {
+        const r: CheckResult = {
+          inn: q,
+          name: data.name,
+          status: 'active',
+          vatPayer: Boolean(data.vatNumber),
+          regime: data.regimeName ?? '—',
+          region: data.region ?? '—',
+          registeredAt: data.registrationDate ?? '—',
         }
+        setResult(r)
+        setHistory(h => [r, ...h.filter(x => x.inn !== q)].slice(0, 10))
+        setState('result')
+        return
       }
     } catch {
-      // CORS или недоступно — используем демо
+      // Недоступно (или CORS в браузере) — используем демо
     }
 
     // Демо-данные
@@ -214,11 +214,18 @@ export default function InnCheck() {
           </div>
         )}
 
-        <div className="text-xs text-slate-600 border border-[#1e2535] rounded-lg px-4 py-3 space-y-1">
-          <p className="font-medium text-slate-400">Демо-режим (браузер)</p>
-          <p>В браузере используются демо-данные из-за CORS-ограничений. В десктоп-версии Electron данные запрашиваются напрямую с my.soliq.uz.</p>
-          <p>Тестовые ИНН: <code className="text-slate-300">301845942</code>, <code className="text-slate-300">200000001</code>, <code className="text-slate-300">100000099</code></p>
-        </div>
+        {isElectron ? (
+          <div className="text-xs text-slate-600 border border-[#1e2535] rounded-lg px-4 py-3 space-y-1">
+            <p className="font-medium text-slate-400">Источник данных: my.soliq.uz</p>
+            <p>Запрос выполняется напрямую к API ГНК. Если сервис недоступен, показываются демо-данные (тестовые ИНН: <code className="text-slate-300">301845942</code>, <code className="text-slate-300">200000001</code>, <code className="text-slate-300">100000099</code>).</p>
+          </div>
+        ) : (
+          <div className="text-xs text-slate-600 border border-[#1e2535] rounded-lg px-4 py-3 space-y-1">
+            <p className="font-medium text-slate-400">Демо-режим (браузер)</p>
+            <p>В браузере используются демо-данные из-за CORS-ограничений. В десктоп-версии Electron данные запрашиваются напрямую с my.soliq.uz.</p>
+            <p>Тестовые ИНН: <code className="text-slate-300">301845942</code>, <code className="text-slate-300">200000001</code>, <code className="text-slate-300">100000099</code></p>
+          </div>
+        )}
       </div>
     </div>
   );

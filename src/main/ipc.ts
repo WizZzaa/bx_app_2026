@@ -10,6 +10,7 @@ import { scanPcTemp, cleanPcTemp, checkRunningBrowsers } from './services/pcClea
 import { pickPfxFile, parsePfx } from './services/ecpParser'
 import { signFile, verifySig, pickFileToSign, pickSigFile } from './services/ecpSigner'
 import { readBackupConfig, writeBackupConfig } from './services/onecBackupScheduler'
+import { fetchTrader } from './services/innCheck'
 
 export function registerIpcHandlers() {
   // --- Cache ---
@@ -60,6 +61,9 @@ export function registerIpcHandlers() {
     const buffer = Buffer.from(encryptedHex, 'hex')
     return safeStorage.decryptString(buffer)
   })
+
+  // --- INN check ---
+  ipcMain.handle(IPC.INN_CHECK, (_e, tin: string) => fetchTrader(tin))
 
   // --- PDF Generator ---
   ipcMain.handle(IPC.PDF_GENERATE, async (_e, htmlContent: string, fileName: string) => {

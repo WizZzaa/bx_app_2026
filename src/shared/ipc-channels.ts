@@ -32,6 +32,8 @@ export const IPC = {
   SAFE_ENCRYPT: 'safe:encrypt',
   SAFE_DECRYPT: 'safe:decrypt',
   SAFE_AVAILABLE: 'safe:available',
+  // INN / counterparty check
+  INN_CHECK: 'inn:check',
   // PDF generator
   PDF_GENERATE: 'pdf:generate',
   // Notifications
