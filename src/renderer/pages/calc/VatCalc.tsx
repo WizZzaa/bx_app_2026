@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Row } from './CalcRow';
+import CalcResult from './CalcResult';
+import MoneyInput from './MoneyInput';
 
 const VAT_RATE = 12;
 
@@ -39,24 +40,18 @@ export default function VatCalc() {
         <label className="block text-xs text-slate-400 mb-1.5">
           {mode === 'add' ? 'Сумма без НДС (UZS)' : 'Сумма с НДС (UZS)'}
         </label>
-        <input
-          type="text"
-          inputMode="decimal"
-          value={amount}
-          onChange={e => setAmount(e.target.value)}
-          placeholder="0"
-          className="w-full bg-[#0f1117] text-slate-200 text-lg px-4 py-3 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50"
-        />
+        <MoneyInput value={amount} onChange={setAmount} big autoFocus />
       </div>
 
-      <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
-        <div className="divide-y divide-[#1e2535]">
-          <Row label="Ставка НДС" value={`${VAT_RATE}%`} />
-          <Row label={mode === 'add' ? 'Сумма без НДС' : 'База (без НДС)'} value={`${fmt(base)} UZS`} />
-          <Row label="Сумма НДС" value={`${fmt(vatAmount)} UZS`} highlight />
-          <Row label={mode === 'add' ? 'Итого с НДС' : 'Сумма с НДС (введено)'} value={`${fmt(total)} UZS`} />
-        </div>
-      </div>
+      <CalcResult
+        title={`НДС ${VAT_RATE}% — ${mode === 'add' ? 'начисление' : 'выделение'}`}
+        rows={[
+          { label: 'Ставка НДС', value: `${VAT_RATE}%` },
+          { label: mode === 'add' ? 'Сумма без НДС' : 'База (без НДС)', value: `${fmt(base)} UZS` },
+          { label: 'Сумма НДС', value: `${fmt(vatAmount)} UZS`, highlight: true },
+          { label: mode === 'add' ? 'Итого с НДС' : 'Сумма с НДС (введено)', value: `${fmt(total)} UZS` },
+        ]}
+      />
 
       <p className="text-[11px] text-slate-600">Ставка НДС в Узбекистане — 12% (ст. 258 НК РУз)</p>
     </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Row } from './CalcRow';
+import CalcResult from './CalcResult';
+import MoneyInput from './MoneyInput';
 
 // Пени по НК РУз: 0.033% за каждый день просрочки (ст. 120 НК РУз)
 // Также можно считать через ставку ЦБ: Долг × ставка_ЦБ / 365 × дни
@@ -53,11 +54,7 @@ export default function PenaltyCalc() {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs text-slate-400 mb-1.5">Сумма долга (UZS)</label>
-          <input
-            type="text" inputMode="decimal" value={debt} onChange={e => setDebt(e.target.value)}
-            placeholder="0"
-            className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm"
-          />
+          <MoneyInput value={debt} onChange={setDebt} autoFocus />
         </div>
         {mode === 'cbu' && (
           <div>
@@ -91,14 +88,16 @@ export default function PenaltyCalc() {
         </div>
       </div>
 
-      <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
-        <div className="divide-y divide-[#1e2535]">
-          <Row label="Количество дней" value={`${daysVal} дн.`} />
-          <Row label="Ставка в день" value={`${mode === 'fixed' ? '0.033' : (cbu / 365).toFixed(4)}%`} />
-          <Row label="Сумма пени" value={`${fmt(penalty)} UZS`} highlight />
-          <Row label="Итого к уплате (долг + пени)" value={`${fmt(total)} UZS`} />
-        </div>
-      </div>
+      <CalcResult
+        title={`Пени ${mode === 'fixed' ? '0.033%/день (ст. 120 НК)' : `по ставке ЦБ ${cbu}%`}`}
+        rows={[
+          { label: 'Сумма долга', value: `${fmt(debtVal)} UZS` },
+          { label: 'Количество дней', value: `${daysVal} дн.` },
+          { label: 'Ставка в день', value: `${mode === 'fixed' ? '0.033' : (cbu / 365).toFixed(4)}%` },
+          { label: 'Сумма пени', value: `${fmt(penalty)} UZS`, highlight: true },
+          { label: 'Итого к уплате (долг + пени)', value: `${fmt(total)} UZS` },
+        ]}
+      />
 
       <p className="text-[11px] text-slate-600">
         Ст. 120 НК РУз: пени = 0.033% за каждый день просрочки. Альтернатива: ставка ЦБ / 365 × дни.

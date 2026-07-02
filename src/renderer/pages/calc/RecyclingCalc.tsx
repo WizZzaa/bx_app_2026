@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Row } from './CalcRow';
+import CalcResult from './CalcResult';
 
 // Утилизационный сбор РУз: Постановление Президента РУз № ПП-3292 (2017) и изменения
 // Формула: Базовая ставка × коэффициент объёма двигателя × коэффициент возраста
@@ -104,14 +104,15 @@ export default function RecyclingCalc() {
         </div>
       </div>
 
-      <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
-        <div className="divide-y divide-[#1e2535]">
-          <Row label="Базовая ставка" value={`${fmt(BASE_RATE)} UZS`} />
-          <Row label="Коэфф. объёма/типа" value={`×${engineCoeff}`} />
-          <Row label="Коэфф. возраста" value={`×${ageCoeff}`} />
-          <Row label="Утилизационный сбор" value={`${fmt(fee)} UZS`} highlight />
-        </div>
-      </div>
+      <CalcResult
+        title={`Утильсбор — ${engines[safeEngineIdx].label}, ${AGE_COEFFS[ageIdx].label.toLowerCase()}`}
+        rows={[
+          { label: 'Базовая ставка', value: `${fmt(BASE_RATE)} UZS` },
+          { label: 'Коэфф. объёма/типа', value: `×${engineCoeff}` },
+          { label: 'Коэфф. возраста', value: `×${ageCoeff}` },
+          { label: 'Утилизационный сбор', value: `${fmt(fee)} UZS`, highlight: true },
+        ]}
+      />
 
       <p className="text-[11px] text-slate-600">
         ПП РУз № ПП-3292, с изм. Базовая ставка 3 300 000 UZS (2024–2026).

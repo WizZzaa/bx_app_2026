@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Row } from './CalcRow';
+import CalcResult from './CalcResult';
+import MoneyInput from './MoneyInput';
 
 // Дивиденды РУз: ст. 382 НК РУз
 // Резиденты: 5%  (физ. лица РУз)
@@ -59,11 +60,7 @@ export default function DividendCalc() {
 
       <div>
         <label className="block text-xs text-slate-400 mb-1.5">Сумма дивидендов (UZS)</label>
-        <input
-          type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)}
-          placeholder="0"
-          className="w-full bg-[#0f1117] text-slate-200 text-lg px-4 py-3 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50"
-        />
+        <MoneyInput value={amount} onChange={setAmount} big autoFocus />
       </div>
 
       {!resident && (
@@ -81,13 +78,15 @@ export default function DividendCalc() {
         </div>
       )}
 
-      <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
-        <div className="divide-y divide-[#1e2535]">
-          <Row label="Ставка налога" value={`${rate}%`} />
-          <Row label="Налог у источника" value={`${fmt(tax)} UZS`} highlight />
-          <Row label="Сумма к выплате (нетто)" value={`${fmt(net)} UZS`} />
-        </div>
-      </div>
+      <CalcResult
+        title={`Дивиденды — ${resident ? 'резидент 5%' : `нерезидент ${rate}%`}`}
+        rows={[
+          { label: 'Сумма дивидендов', value: `${fmt(val)} UZS` },
+          { label: 'Ставка налога', value: `${rate}%` },
+          { label: 'Налог у источника', value: `${fmt(tax)} UZS`, highlight: true },
+          { label: 'Сумма к выплате (нетто)', value: `${fmt(net)} UZS` },
+        ]}
+      />
 
       <p className="text-[11px] text-slate-600">
         Ст. 382 НК РУз. Резиденты — 5%. Нерезиденты — 10% (или ставка СИДН, если она ниже).

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Row } from './CalcRow';
+import CalcResult from './CalcResult';
+import MoneyInput from './MoneyInput';
 import { useEconomicIndicators } from '../../lib/useEconomicIndicators'
 
 // НДФЛ РУз: плоская ставка 12% (с 2019 г., ст. 366 НК РУз)
@@ -40,14 +41,7 @@ export default function NdflCalc() {
 
       <div>
         <label className="block text-xs text-slate-400 mb-1.5">Начисленная зарплата (UZS)</label>
-        <input
-          type="text"
-          inputMode="decimal"
-          value={gross}
-          onChange={e => setGross(e.target.value)}
-          placeholder="0"
-          className="w-full bg-[#0f1117] text-slate-200 text-lg px-4 py-3 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50"
-        />
+        <MoneyInput value={gross} onChange={setGross} big autoFocus />
       </div>
 
       <label className="flex items-center gap-2.5 cursor-pointer select-none">
@@ -60,15 +54,16 @@ export default function NdflCalc() {
         <span className="text-sm text-slate-300">Льгота — необлагаемый минимум (1 БРВ/мес = {fmt(brv)} UZS)</span>
       </label>
 
-      <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
-        <div className="divide-y divide-[#1e2535]">
-          <Row label="Ставка НДФЛ" value={`${NDFL_RATE}%`} />
-          {deduction && <Row label="Вычет (необлагаемый)" value={`${fmt(brv * (period === 'year' ? 12 : 1))} UZS`} />}
-          <Row label="Налогооблагаемая база" value={`${fmt(taxableBase)} UZS`} />
-          <Row label="НДФЛ к удержанию" value={`${fmt(ndfl)} UZS`} highlight />
-          <Row label="Сумма «на руки»" value={`${fmt(net)} UZS`} />
-        </div>
-      </div>
+      <CalcResult
+        title={`НДФЛ ${NDFL_RATE}% (${period === 'month' ? 'месяц' : 'год'})`}
+        rows={[
+          { label: 'Ставка НДФЛ', value: `${NDFL_RATE}%` },
+          ...(deduction ? [{ label: 'Вычет (необлагаемый)', value: `${fmt(brv * (period === 'year' ? 12 : 1))} UZS` }] : []),
+          { label: 'Налогооблагаемая база', value: `${fmt(taxableBase)} UZS` },
+          { label: 'НДФЛ к удержанию', value: `${fmt(ndfl)} UZS`, highlight: true },
+          { label: 'Сумма «на руки»', value: `${fmt(net)} UZS` },
+        ]}
+      />
 
       <p className="text-[11px] text-slate-600">Ставка 12% — плоская, ст. 366 НК РУз. Льготы: ст. 378–380 НК РУз.</p>
     </div>

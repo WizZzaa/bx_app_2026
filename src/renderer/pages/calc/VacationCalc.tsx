@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Row } from './CalcRow';
+import CalcResult from './CalcResult';
+import MoneyInput from './MoneyInput';
 
 // Отпускные РУз: средний заработок × количество дней отпуска
 // Среднедневной = (Сумма за 12 мес / 12) / среднее кол-во рабочих дней в месяце
@@ -48,11 +49,7 @@ export default function VacationCalc() {
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="block text-xs text-slate-400 mb-1.5">Совокупный доход за 12 месяцев (UZS)</label>
-          <input
-            type="text" inputMode="decimal" value={annualIncome} onChange={e => setAnnualIncome(e.target.value)}
-            placeholder="0"
-            className="w-full bg-[#0f1117] text-slate-200 text-lg px-4 py-3 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50"
-          />
+          <MoneyInput value={annualIncome} onChange={setAnnualIncome} big autoFocus />
         </div>
         <div>
           <label className="block text-xs text-slate-400 mb-1.5">Дней отпуска</label>
@@ -67,15 +64,16 @@ export default function VacationCalc() {
         </div>
       </div>
 
-      <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
-        <div className="divide-y divide-[#1e2535]">
-          <Row label="Среднедневной заработок" value={`${fmt(avgDaily)} UZS`} />
-          <Row label={`Дней отпуска (${calcMethod === 'calendar' ? 'кал.' : 'раб.'})`} value={`${days} дн.`} />
-          <Row label="Начислено отпускных" value={`${fmt(vacationPay)} UZS`} highlight />
-          <Row label="НДФЛ (12%)" value={`${fmt(ndfl)} UZS`} />
-          <Row label="К выплате (без НДФЛ)" value={`${fmt(net)} UZS`} />
-        </div>
-      </div>
+      <CalcResult
+        title={`Отпускные (${calcMethod === 'calendar' ? 'календарные' : 'рабочие'} дни)`}
+        rows={[
+          { label: 'Среднедневной заработок', value: `${fmt(avgDaily)} UZS` },
+          { label: `Дней отпуска (${calcMethod === 'calendar' ? 'кал.' : 'раб.'})`, value: `${days} дн.` },
+          { label: 'Начислено отпускных', value: `${fmt(vacationPay)} UZS`, highlight: true },
+          { label: 'НДФЛ (12%)', value: `${fmt(ndfl)} UZS` },
+          { label: 'К выплате (без НДФЛ)', value: `${fmt(net)} UZS` },
+        ]}
+      />
 
       <p className="text-[11px] text-slate-600">
         Расчёт по ст. 158 ТК РУз. Среднедневной по календарным: доход/365, по рабочим: (доход/12)/25.4.
