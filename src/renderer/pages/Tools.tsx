@@ -7,9 +7,7 @@ import NetworkChecker from './tools/NetworkChecker';
 import EimzoDiag from './tools/EimzoDiag';
 import QuickNotes from './tools/QuickNotes';
 import NumberToWords from './tools/NumberToWords';
-import DateCalc from './tools/DateCalc';
 import Transliterate from './tools/Transliterate';
-import TaxCalculator from './tools/TaxCalculator';
 import { isElectron } from '../lib/onecApi';
 import Icon from '../lib/ui/Icon';
 
@@ -30,8 +28,6 @@ const TOOLS: Tool[] = [
   // Текст и числа
   { id: 'num2words', icon: 'hash', label: 'Число прописью', category: 'Текст', description: 'Для договоров, платёжных поручений', component: <NumberToWords /> },
   { id: 'translit', icon: 'languages', label: 'Транслитерация', category: 'Текст', description: 'Узбек кирилл ↔ латиница (2019)', component: <Transliterate /> },
-  // Дата и время
-  { id: 'datecalc', icon: 'planner', label: 'Калькулятор дат', category: 'Дата', description: 'Рабочие дни, разница, праздники РУз', component: <DateCalc /> },
   // Система
   { id: 'pccleaner', icon: 'monitor', label: 'Очистка ПК', category: 'Система', description: 'TEMP Windows + кэши браузеров', component: <PcCleaner /> },
   { id: 'network', icon: 'services', label: 'Проверка сети', category: 'Система', description: 'Доступность госсайтов РУз', component: <NetworkChecker /> },
@@ -39,11 +35,9 @@ const TOOLS: Tool[] = [
   { id: 'eimzo', icon: 'ecp', label: 'Диагностика E-Imzo', category: 'ЭЦП', description: 'Проверка плагина и локального сервиса', component: <EimzoDiag /> },
   // Заметки
   { id: 'notes', icon: 'note', label: 'Быстрые заметки', category: 'Заметки', description: 'Временный буфер для текстов и реквизитов', component: <QuickNotes /> },
-  // Налоги
-  { id: 'taxcalc', icon: 'planner', label: 'Налоговый калькулятор', category: 'Налоги', description: 'Налог с оборота, НДС, НДФЛ — на основе ваших данных', component: <TaxCalculator /> },
 ];
 
-const CATEGORIES = ['Все', '1С', 'Налоги', 'Текст', 'Дата', 'Система', 'ЭЦП', 'Заметки'];
+const CATEGORIES = ['Все', '1С', 'Текст', 'Система', 'ЭЦП', 'Заметки'];
 
 // Tools with non-standard height that need full content panel height
 const FULL_HEIGHT_TOOLS = new Set(['notes']);
