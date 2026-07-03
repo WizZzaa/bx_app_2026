@@ -20,7 +20,6 @@ import Settings from './pages/Settings'
 import EcpManager from './pages/EcpManager'
 import Counterparties from './pages/Counterparties'
 import Placeholder from './pages/Placeholder'
-import Home from './pages/Home'
 import { CompanyProvider } from './lib/CompanyContext';
 
 export default function App() {
@@ -80,7 +79,7 @@ export default function App() {
         <Topbar onOpenSearch={() => setPaletteOpen(true)} />
         <main className="flex flex-1 overflow-hidden">
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Dashboard />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tools" element={<Tools />} />
             <Route path="/reference" element={<Reference />} />

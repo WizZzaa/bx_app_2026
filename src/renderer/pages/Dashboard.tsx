@@ -22,6 +22,14 @@ function getExpiringEcpCount(): number {
   } catch { return 0; }
 }
 
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return 'Доброе утро';
+  if (h >= 12 && h < 18) return 'Добрый день';
+  if (h >= 18 && h < 23) return 'Добрый вечер';
+  return 'Доброй ночи';
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const today = new Date().toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -38,7 +46,7 @@ export default function Dashboard() {
     weather: true,
     currency: true,
     notifications: true,
-    horoscope: true
+    horoscope: false // развлечения — по желанию, включается в «Настроить виджеты»
   })
 
   useEffect(() => {
@@ -119,7 +127,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-white">Рабочий стол</h1>
+          <h1 className="text-xl font-semibold text-white">{greeting()}!</h1>
           <p className="text-sm text-slate-500 capitalize mt-0.5">{today}</p>
         </div>
         <button
