@@ -21,6 +21,8 @@ export interface IndicatorValue {
   to?: string;
   /** Основание (номер постановления/указа) */
   basis?: string;
+  /** Сверено ли значение с официальным источником */
+  verified?: boolean;
 }
 
 export interface Indicator {

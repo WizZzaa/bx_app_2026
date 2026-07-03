@@ -45,9 +45,9 @@ function IndicatorCard({ ind }: { ind: Indicator }) {
           {ind.history.map((h, i) => (
             <div key={i} className="flex items-center justify-between gap-2 text-[11px]" title={h.basis}>
               <span className="text-slate-400 flex-shrink-0">с {fmtDate(h.from)}</span>
-              {h.basis?.includes('требует проверки')
-                ? <span className="text-amber-500/60 text-[9px]">⚠</span>
-                : <span className="text-emerald-500/60 text-[9px]">✓</span>}
+              {(h.verified ?? !(h.basis?.includes('требует проверки') ?? true))
+                ? <span className="text-emerald-500/60 text-[9px]">✓</span>
+                : <span className="text-amber-500/60 text-[9px]">⚠</span>}
               <span className="text-slate-300 font-mono ml-auto">{fmtSum(h.value)} {ind.unit}</span>
             </div>
           ))}

@@ -19,17 +19,21 @@ export async function loadIndicators(): Promise<{ data: Indicator[]; source: 'cl
         .order('valid_from', { ascending: false });
       if (vErr) throw vErr;
 
-      const mapped: Indicator[] = (inds ?? []).map(i => ({
-        key: i.key,
-        name: i.name,
-        shortName: i.short_name,
-        unit: i.unit,
-        hint: i.hint ?? undefined,
-        meta: { verified: false, updatedAt: new Date().toISOString().slice(0, 10) },
-        history: (vals ?? [])
+      const mapped: Indicator[] = (inds ?? []).map(i => {
+        const history = (vals ?? [])
           .filter(v => v.indicator_id === i.id)
-          .map(v => ({ value: Number(v.value), from: v.valid_from, to: v.valid_to ?? undefined, basis: v.basis ?? undefined })),
-      }));
+          .map(v => ({ value: Number(v.value), from: v.valid_from, to: v.valid_to ?? undefined, basis: v.basis ?? undefined, verified: Boolean(v.verified) }));
+        return {
+          key: i.key,
+          name: i.name,
+          shortName: i.short_name,
+          unit: i.unit,
+          hint: i.hint ?? undefined,
+          // Показатель считается сверенным, если сверено его актуальное (новейшее) значение
+          meta: { verified: history[0]?.verified ?? false, updatedAt: new Date().toISOString().slice(0, 10) },
+          history,
+        };
+      });
       if (mapped.length) return { data: mapped, source: 'cloud' };
     } catch {
       // падаем в локальный фолбэк
