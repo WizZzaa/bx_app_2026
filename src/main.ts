@@ -1,11 +1,46 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron'
 import path from 'node:path'
+import fs from 'node:fs'
 import started from 'electron-squirrel-startup'
 import { registerIpcHandlers } from './main/ipc'
 import { initBackupScheduler } from './main/services/onecBackupScheduler'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
+  app.quit()
+}
+
+// ── Миграция userData после переименования приложения ──────────────────────
+// productName был «app» — данные жили в …/Application Support/app.
+// Переносим папку под новое имя ДО requestSingleInstanceLock (он создаёт
+// Singleton-файлы в userData). Если перенос невозможен — работаем по старому пути.
+{
+  const oldDir = path.join(app.getPath('appData'), 'app')
+  const newDir = path.join(app.getPath('appData'), app.getName())
+  if (oldDir !== newDir && fs.existsSync(oldDir)) {
+    // папка нового имени со «скелетом» (Singleton*/.DS_Store) считается пустой
+    let newBlocks = false
+    if (fs.existsSync(newDir)) {
+      try {
+        const entries = fs.readdirSync(newDir)
+        newBlocks = !entries.every(e => e.startsWith('Singleton') || e === '.DS_Store')
+        if (!newBlocks) fs.rmSync(newDir, { recursive: true, force: true })
+      } catch { newBlocks = true }
+    }
+    if (newBlocks) {
+      app.setPath('userData', oldDir)
+    } else {
+      try { fs.renameSync(oldDir, newDir) }
+      catch { app.setPath('userData', oldDir) }
+    }
+  }
+}
+
+// ── Один экземпляр ──────────────────────────────────────────────────────────
+// Два одновременных запуска дерутся за IndexedDB (ошибки Dexie/quota) и
+// инвалидируют Supabase-сессию друг друга. Второй экземпляр лишь показывает окно первого.
+const gotLock = app.requestSingleInstanceLock()
+if (!gotLock) {
   app.quit()
 }
 
@@ -71,8 +106,10 @@ const createWindow = () => {
     )
   }
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools()
+  // DevTools — только в dev-режиме
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    mainWindow.webContents.openDevTools()
+  }
 
   mainWindow.on('close', (e) => {
     if (!(app as any).isQuitting) {
@@ -81,6 +118,14 @@ const createWindow = () => {
     }
   })
 }
+
+app.on('second-instance', () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.show()
+    mainWindow.focus()
+  }
+})
 
 app.on('ready', () => {
   registerIpcHandlers()
