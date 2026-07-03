@@ -15,7 +15,7 @@ const nav = [
   { to: '/knowledge',  icon: 'knowledge', label: 'База знаний' },
   { to: '/templates',  icon: 'templates', label: 'Шаблоны' },
   { to: '/hr',         icon: 'hr',        label: 'Сотрудники' },
-  { to: '/finance',    icon: 'finance',   label: 'Финансы' },
+  { to: '/finance',    icon: 'finance',   label: 'Контроль оплат' },
   { to: '/counterparties', icon: 'users', label: 'Организации' },
   { to: '/ecp',        icon: 'ecp',       label: 'ЭЦП' },
   { to: '/check-inn',  icon: 'search',    label: 'Проверка ИНН' },

@@ -28,7 +28,7 @@ const COMMANDS: Cmd[] = [
   { id: 'n-kb',     label: 'База знаний',       icon: 'knowledge', to: '/knowledge', group: 'Раздел', keywords: 'статьи гайды' },
   { id: 'n-tpl',    label: 'Шаблоны',           icon: 'templates', to: '/templates', group: 'Раздел', keywords: 'договор акт приказ' },
   { id: 'n-hr',     label: 'Сотрудники',        icon: 'hr',        to: '/hr',        group: 'Раздел', keywords: 'кадры зарплата зп' },
-  { id: 'n-fin',    label: 'Финансы',           icon: 'finance',   to: '/finance',   group: 'Раздел', keywords: 'доходы расходы прибыль' },
+  { id: 'n-fin',    label: 'Контроль оплат',    icon: 'finance',   to: '/finance',   group: 'Раздел', keywords: 'финансы дебиторка кредиторка оплата долги' },
   { id: 'n-ecp',    label: 'ЭЦП',               icon: 'ecp',       to: '/ecp',       group: 'Раздел', keywords: 'ключ подпись e-imzo' },
   { id: 'n-inn',    label: 'Проверка ИНН',      icon: 'search',    to: '/check-inn', group: 'Раздел' },
   { id: 'n-ai',     label: 'AI-Консультант',    icon: 'ai',        to: '/ai',        group: 'Раздел' },

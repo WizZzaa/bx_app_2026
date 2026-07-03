@@ -4,11 +4,9 @@ import WeatherWidget from '../components/widgets/WeatherWidget';
 import NotificationsWidget from '../components/widgets/NotificationsWidget';
 import HoroscopeWidget from '../components/widgets/HoroscopeWidget';
 import CurrencyWidget from '../components/widgets/CurrencyWidget';
-import FinanceChart from '../components/widgets/FinanceChart'
 import { useCompany } from '../lib/CompanyContext';
 import { useEvents } from './planner/useEvents';
 import { useTransactions } from './finance/useTransactions';
-import { useExchangeRates } from '../lib/useExchangeRates';
 import Icon from '../lib/ui/Icon';
 import SmartCalendar from '../components/dashboard/SmartCalendar';
 import { todayISO } from '../lib/dates';
@@ -37,8 +35,6 @@ export default function Dashboard() {
   const { active, companies } = useCompany();
   const { events, loading } = useEvents(active?.id ?? null);
   const { transactions } = useTransactions(active?.id ?? null);
-  const { convert } = useExchangeRates();
-  const [displayCurrency, setDisplayCurrency] = useState('UZS');
   const ecpExpiring = getExpiringEcpCount();
 
   const [showWidgetConfig, setShowWidgetConfig] = useState(false)
@@ -65,22 +61,16 @@ export default function Dashboard() {
     localStorage.setItem('bx_dashboard_widgets', JSON.stringify(updated))
   }
 
-  // Финансовая сводка за текущий месяц с мультивалютным пересчетом
-  const monthKey = todayStr.slice(0, 7);
+  // Контроль оплат: открытые долги (в сумах по курсу операции)
   const fin = (() => {
-    let income = 0, expense = 0, receivable = 0, payable = 0;
+    let receivable = 0, payable = 0, receivableN = 0, payableN = 0;
     for (const t of transactions) {
-      const txCurrency = t.currency || 'UZS';
-      const amountInDisplayCur = convert(t.amount, txCurrency, displayCurrency);
-      
-      if (t.status === 'unpaid') {
-        if (t.type === 'income') receivable += amountInDisplayCur; else payable += amountInDisplayCur;
-        continue;
-      }
-      if (t.date.slice(0, 7) !== monthKey) continue;
-      if (t.type === 'income') income += amountInDisplayCur; else expense += amountInDisplayCur;
+      if (t.status !== 'unpaid') continue;
+      const amt = t.amount * (t.exchange_rate || 1);
+      if (t.type === 'income') { receivable += amt; receivableN++; }
+      else { payable += amt; payableN++; }
     }
-    return { income, expense, profit: income - expense, receivable, payable };
+    return { receivable, payable, receivableN, payableN };
   })();
   const fmtMoney = (n: number) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Math.round(n));
 
@@ -201,40 +191,19 @@ export default function Dashboard() {
         {widgetVisibility.horoscope && <HoroscopeWidget />}
       </div>
 
-      {/* Финансовая сводка и График за месяц */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <FinanceChart transactions={transactions} />
+      {/* Контроль оплат */}
+      <div className="bg-[#141820] border border-[#1e2535] rounded-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-white">💰 Контроль оплат</h2>
+          <button onClick={() => navigate('/finance')} className="text-xs text-blue-400 hover:text-blue-300">Открыть →</button>
         </div>
-        <div className="bg-[#141820] border border-[#1e2535] rounded-xl p-4 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-white">💰 Финансы за месяц</h2>
-              <div className="flex items-center gap-2">
-                <select
-                  value={displayCurrency}
-                  onChange={e => setDisplayCurrency(e.target.value)}
-                  className="bg-[#0f1117] text-slate-300 text-xs px-2 py-1 rounded border border-[#1e2535] focus:outline-none focus:border-blue-500/50"
-                >
-                  <option value="UZS">UZS</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="RUB">RUB (₽)</option>
-                </select>
-                <button onClick={() => navigate('/finance')} className="text-xs text-blue-400 hover:text-blue-300">Открыть →</button>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <FinCell label="Доходы"     value={fmtMoney(fin.income)}  color="text-emerald-400" currency={displayCurrency} />
-              <FinCell label="Расходы"    value={fmtMoney(fin.expense)} color="text-red-400" currency={displayCurrency} />
-              <FinCell label="Прибыль"    value={fmtMoney(fin.profit)}  color={fin.profit >= 0 ? 'text-blue-400' : 'text-red-400'} currency={displayCurrency} />
-              <FinCell label="Дебиторка"  value={fmtMoney(fin.receivable)} color="text-amber-400" currency={displayCurrency} />
-            </div>
-          </div>
-          {transactions.length === 0 && (
-            <p className="text-[11px] text-slate-600 mt-2">Нет операций — добавьте доход или расход в разделе «Финансы».</p>
-          )}
+        <div className="grid grid-cols-2 gap-2">
+          <FinCell label={`Нам должны · ${fin.receivableN}`} value={fmtMoney(fin.receivable)} color="text-emerald-400" currency="UZS" />
+          <FinCell label={`Мы должны · ${fin.payableN}`} value={fmtMoney(fin.payable)} color="text-red-400" currency="UZS" />
         </div>
+        {fin.receivableN === 0 && fin.payableN === 0 && (
+          <p className="text-[11px] text-slate-600 mt-2">Открытых оплат нет — все счета закрыты ✓</p>
+        )}
       </div>
 
       {/* Planner mini-panel: умный календарь · сегодня · дедлайны */}
