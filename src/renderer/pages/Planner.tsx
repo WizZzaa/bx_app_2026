@@ -5,6 +5,7 @@ import { useCards, fetchDatedCards, fetchCardById, fetchAllCards, type BxCard, t
 import { seedTaxDeadlines } from './planner/taxSeeder';
 import CalendarView from './planner/CalendarView';
 import AllTasksView from './planner/AllTasksView';
+import DigestView from './planner/DigestView';
 import ListView from './planner/ListView';
 import EventModal from './planner/EventModal';
 import BoardKanban from './planner/BoardKanban';
@@ -18,7 +19,7 @@ import { requestNotificationPermission, startReminderLoop, stopReminderLoop } fr
 import type { BxEvent, NewEvent, EventStatus } from './planner/useEvents';
 import { todayISO, nextRecurrenceISO } from '../lib/dates';
 
-type View = 'board' | 'all' | 'calendar' | 'list';
+type View = 'board' | 'all' | 'digest' | 'calendar' | 'list';
 
 const TYPE_FILTERS = [
   { id: '',             label: 'Все' },
@@ -67,7 +68,7 @@ export default function Planner() {
   // Карточки со сроком по всем доскам — для Календаря
   useEffect(() => {
     if (view === 'calendar') fetchDatedCards().then(setDatedCards);
-    if (view === 'all') fetchAllCards().then(setAllCards);
+    if (view === 'all' || view === 'digest') fetchAllCards().then(setAllCards);
   }, [view, cards]);
 
   async function openCardFromCalendar(id: string) {
@@ -194,7 +195,7 @@ export default function Planner() {
 
           <div className="flex items-center gap-2">
             <div className="flex bg-[#0f1117] border border-[#1e2535] rounded-lg p-0.5">
-              {([['board','Доски'],['all','Все задачи'],['calendar','Календарь'],['list','Список']] as const).map(([v,l]) => (
+              {([['board','Доски'],['all','Все задачи'],['digest','Сводка'],['calendar','Календарь'],['list','Список']] as const).map(([v,l]) => (
                 <button key={v} onClick={() => setView(v as View)}
                   className={`px-3 py-1 text-xs rounded-md transition-colors ${view === v ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>{l}</button>
               ))}
@@ -274,6 +275,16 @@ export default function Planner() {
             onEventClick={openEditEvent}
             onCardClick={openCardFromCalendar}
             onEventStatusChange={handleStatusChange}
+          />
+        )}
+        {view === 'digest' && (
+          <DigestView
+            events={filtered}
+            cards={allCards}
+            boards={boards}
+            onEventClick={openEditEvent}
+            onCardClick={openCardFromCalendar}
+            onOpenBoard={(id) => { setActiveBoardId(id); setView('board'); }}
           />
         )}
         {view === 'calendar' && (
