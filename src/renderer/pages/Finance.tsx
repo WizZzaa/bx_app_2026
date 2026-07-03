@@ -8,6 +8,8 @@ import { exportTransactionsToExcel } from '../lib/excelExport'
 import { parseBankStatement, type ParsedTransaction } from '../lib/bankStatementParser'
 import { supabase } from '../lib/db/supabase'
 import { daysFromNowISO, todayISO } from '../lib/dates'
+import { usePlan } from '../lib/plan'
+import { useNavigate } from 'react-router-dom'
 
 // «Контроль оплат» (бывшие «Финансы», сжаты по стратегии docs/05_strategy.md):
 // кто должен нам / кому должны мы, напоминания об оплате в Планировщик,
@@ -27,6 +29,8 @@ export default function Finance() {
   const { transactions, add, update, remove, syncStatus } = useTransactions(active?.id ?? null)
   const toast = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { isPro, loading: planLoading } = usePlan()
+  const navigate = useNavigate()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
@@ -137,6 +141,24 @@ export default function Finance() {
       if (result) successCount++
     }
     toast.success(`Импортировано операций: ${successCount}`)
+  }
+
+  // Контроль оплат — возможность тарифа Pro
+  if (!planLoading && !isPro) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="max-w-md text-center">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-600/15 text-blue-400 flex items-center justify-center text-2xl mb-4">🔒</div>
+          <h1 className="text-lg font-bold text-white mb-2">Контроль оплат — в тарифе Pro</h1>
+          <p className="text-sm text-slate-400 mb-1">Дебиторка и кредиторка по каждому контрагенту, отметка оплат одним кликом и напоминания в Планировщике.</p>
+          <p className="text-xs text-slate-600 mb-5">Полный учёт при этом остаётся в 1С — мы следим только за оплатами.</p>
+          <button onClick={() => navigate('/settings')}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors">
+            Посмотреть тарифы
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (

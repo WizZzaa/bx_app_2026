@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAi } from '../lib/ai/useAi';
+import { usePlan } from '../lib/plan';
+import PaywallModal from '../components/PaywallModal';
+import { supabase } from '../lib/db/supabase';
 
 const QUICK_QUESTIONS = [
   'Какие сроки сдачи НДС в 2026 году?',
@@ -37,12 +40,31 @@ function renderAnswer(text: string): React.ReactNode[] {
 export default function Ai() {
   const { chats, activeId, messages, sending, error, openChat, newChat, deleteChat, send } = useAi();
   const [input, setInput] = useState('');
+  const { isPro, limits } = usePlan();
+  const [paywall, setPaywall] = useState(false);
+
+  // Лимит Free: N вопросов в месяц (считаем отправленные user-сообщения)
+  async function checkAiLimit(): Promise<boolean> {
+    if (isPro) return true;
+    try {
+      const monthStart = new Date();
+      monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+      const { count, error } = await supabase
+        .from('bx_ai_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('role', 'user')
+        .gte('created_at', monthStart.toISOString());
+      if (error) return true; // офлайн/ошибка — не блокируем
+      return (count ?? 0) < limits.aiPerMonth;
+    } catch { return true; }
+  }
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, [messages, sending]);
 
-  function submit() {
+  async function submit() {
     if (!input.trim() || sending) return;
+    if (!(await checkAiLimit())) { setPaywall(true); return; }
     send(input);
     setInput('');
   }
@@ -151,6 +173,7 @@ export default function Ai() {
           </p>
         </div>
       </div>
+      {paywall && <PaywallModal feature="Безлимитный AI-Консультант" onClose={() => setPaywall(false)} />}
     </div>
   );
 }

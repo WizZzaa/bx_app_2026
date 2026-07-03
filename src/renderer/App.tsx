@@ -21,6 +21,7 @@ import EcpManager from './pages/EcpManager'
 import Counterparties from './pages/Counterparties'
 import Placeholder from './pages/Placeholder'
 import { CompanyProvider } from './lib/CompanyContext';
+import { PlanProvider } from './lib/plan';
 
 export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -73,6 +74,7 @@ export default function App() {
 
   return (
     <CompanyProvider>
+    <PlanProvider>
     <div className="flex h-screen w-screen overflow-hidden bg-[#0f1117]">
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
@@ -101,6 +103,7 @@ export default function App() {
       </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
+    </PlanProvider>
     </CompanyProvider>
   );
 }

@@ -3,6 +3,7 @@ import { supabase } from '../lib/db/supabase'
 import { clearPin } from '../lib/auth/pin'
 import { APP_VERSION } from '../../shared/version'
 import { db } from '../lib/db/localDb'
+import { usePlan, PLAN_LIMITS } from '../lib/plan'
 
 const THEME_KEY = 'bx_theme';
 const NOTIFY_KEY = 'bx_notify_days';
@@ -10,6 +11,7 @@ const NOTIFY_KEY = 'bx_notify_days';
 type NotifyDays = '1' | '3' | '7' | 'off';
 
 export default function Settings() {
+  const { plan, isPro } = usePlan()
   const [userEmail, setUserEmail] = useState('');
   const [notifyDays, setNotifyDays] = useState<NotifyDays>('3');
   const [signingOut, setSigningOut] = useState(false);
@@ -69,6 +71,49 @@ export default function Settings() {
           <h1 className="text-xl font-semibold text-white">Настройки</h1>
           <p className="text-sm text-slate-500 mt-0.5">BX Помощник Бухгалтера v{APP_VERSION}</p>
         </div>
+
+        {/* Тариф */}
+        <Section title="Тариф и оплата">
+          <div className={`rounded-xl border px-4 py-3 mb-3 ${isPro
+            ? 'bg-gradient-to-br from-emerald-600/15 to-transparent border-emerald-500/30'
+            : 'bg-gradient-to-br from-blue-600/15 to-transparent border-blue-500/30'}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  Ваш план: {isPro ? 'Pro' : 'Free'}
+                  <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-full ${isPro ? 'bg-emerald-500/15 text-emerald-400' : 'bg-blue-500/15 text-blue-400'}`}>
+                    {isPro ? 'активен' : 'бесплатный'}
+                  </span>
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {isPro ? 'Спасибо, что поддерживаете BX!' : 'Pro открывает мультикомпанию, безлимитный AI и контроль оплат'}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-[#1e2535] overflow-hidden text-xs">
+            <div className="grid grid-cols-3 bg-[#141820] px-4 py-2 font-semibold text-slate-300">
+              <span>Возможность</span><span className="text-center">Free</span><span className="text-center text-blue-400">Pro</span>
+            </div>
+            {[
+              ['Справочники, БЗ, калькуляторы, шаблоны', '✓', '✓ + свои шаблоны'],
+              ['Компании', String(PLAN_LIMITS.free.companies), 'безлимит'],
+              ['Доски Планировщика', String(PLAN_LIMITS.free.boards), 'безлимит'],
+              ['AI-Консультант, вопросов/мес', String(PLAN_LIMITS.free.aiPerMonth), 'безлимит'],
+              ['Контроль оплат', '—', '✓'],
+              ['Живой специалист', '—', '✓'],
+            ].map(([f, a, b]) => (
+              <div key={f} className="grid grid-cols-3 px-4 py-2 border-t border-[#1e2535]/60 text-slate-400">
+                <span>{f}</span><span className="text-center text-slate-500">{a}</span><span className="text-center text-slate-200">{b}</span>
+              </div>
+            ))}
+          </div>
+          {!isPro && (
+            <p className="text-[11px] text-slate-500 mt-3">
+              Приём оплаты Payme/Click подключается. Для активации Pro напишите нам: <span className="text-blue-400">chernikov.dev@gmail.com</span> — включим вручную в день обращения.
+            </p>
+          )}
+        </Section>
 
         {/* Аккаунт */}
         <Section title="Аккаунт">

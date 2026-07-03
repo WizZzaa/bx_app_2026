@@ -13,6 +13,8 @@ import BoardModal from './planner/BoardModal';
 import CardModal from './planner/CardModal';
 import ArchivePanel from './planner/ArchivePanel';
 import { useCompany } from '../lib/CompanyContext';
+import { usePlan } from '../lib/plan';
+import PaywallModal from '../components/PaywallModal';
 import { useToast } from '../lib/ui/ToastContext';
 import { supabase } from '../lib/db/supabase';
 import { requestNotificationPermission, startReminderLoop, stopReminderLoop } from '../lib/notifications';
@@ -32,6 +34,8 @@ const TYPE_FILTERS = [
 export default function Planner() {
   const { active } = useCompany();
   const toast = useToast();
+  const { isPro, limits } = usePlan();
+  const [paywall, setPaywall] = useState<string | null>(null);
   const { events, loading, reload, add, update, remove, bulkRemove } = useEvents(active?.id ?? null);
   const { boards, loading: boardsLoading, error: boardsError, createBoard, updateBoard, deleteBoard } = useBoards(active?.id ?? null);
 
@@ -201,7 +205,10 @@ export default function Planner() {
               ))}
             </div>
             {view === 'board' ? (
-              <button onClick={() => { setEditingBoard(null); setBoardModalOpen(true); }}
+              <button onClick={() => {
+                if (!isPro && boards.length >= limits.boards) { setPaywall('Несколько досок Планировщика'); return; }
+                setEditingBoard(null); setBoardModalOpen(true);
+              }}
                 className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">+ Доска</button>
             ) : (
               <button onClick={() => openNewEvent()}
@@ -321,6 +328,7 @@ export default function Planner() {
           removeComment={removeComment}
         />
       )}
+      {paywall && <PaywallModal feature={paywall} onClose={() => setPaywall(null)} />}
       {archiveOpen && activeBoard && (
         <ArchivePanel
           boardName={activeBoard.name}

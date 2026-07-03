@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCompany } from '../../lib/CompanyContext';
+import { usePlan } from '../../lib/plan';
+import PaywallModal from '../PaywallModal';
 
 export default function CompanySwitcher() {
   const { companies, active, setActive, addCompany } = useCompany();
@@ -8,6 +10,8 @@ export default function CompanySwitcher() {
   const [name, setName] = useState('');
   const [inn, setInn] = useState('');
   const [busy, setBusy] = useState(false);
+  const { isPro, limits } = usePlan();
+  const [paywall, setPaywall] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,12 +74,16 @@ export default function CompanySwitcher() {
               </div>
             </div>
           ) : (
-            <button onClick={() => setAdding(true)} className="w-full text-left px-4 py-2.5 text-sm text-blue-400 hover:bg-[#1e2535]">
+            <button onClick={() => {
+              if (!isPro && companies.length >= limits.companies) { setPaywall(true); setOpen(false); return; }
+              setAdding(true);
+            }} className="w-full text-left px-4 py-2.5 text-sm text-blue-400 hover:bg-[#1e2535]">
               + Добавить компанию
             </button>
           )}
         </div>
       )}
+      {paywall && <PaywallModal feature="Мультикомпания — ведение нескольких фирм" onClose={() => setPaywall(false)} />}
     </div>
   );
 }
