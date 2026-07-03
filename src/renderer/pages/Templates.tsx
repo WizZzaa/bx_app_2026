@@ -4,6 +4,7 @@ import { useToast } from '../lib/ui/ToastContext'
 import { useCompany } from '../lib/CompanyContext'
 import { useCounterparties } from '../lib/db/useCounterparties'
 import { db } from '../lib/db/localDb'
+import { toWordsRu } from '../lib/numToWords'
 
 const RU_MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря']
 
@@ -121,6 +122,10 @@ const extractVars = (body: string): TemplateVar[] => {
 export default function Templates() {
   const { active } = useCompany()
   const { counterparties } = useCounterparties(active?.id ?? null)
+  // «Мои компании» из раздела Организации (localStorage)
+  const [myCompanies] = useState<Array<{ id: string; name: string; inn: string; director: string; bank: string; account: string; mfo: string; address: string; phone: string }>>(() => {
+    try { return JSON.parse(localStorage.getItem('bx_company_requisites') || '[]') } catch { return [] }
+  })
   const [category, setCategory] = useState('Все')
   const [search,   setSearch]   = useState('')
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -153,51 +158,61 @@ export default function Templates() {
 
   const allTemplates = useMemo(() => [...TEMPLATES, ...customTpls], [customTpls])
 
-  const handleApplyCounterparty = (cpId: string) => {
-    if (!cpId || !tpl) return
-    const cp = counterparties.find(c => c.id === cpId)
-    if (!cp) return
+  // ── Автозаполнение сторон договора ──
+  // «Моя сторона» — продавец/исполнитель/арендодатель; контрагент — покупатель/заказчик.
+  // Заполняем строго по префиксу стороны, чтобы контрагент не затирал реквизиты продавца.
+  const MY_PREFIXES = ['seller', 'provider', 'landlord', 'lender', 'executor', 'org1', 'company']
+  const CP_PREFIXES = ['buyer', 'client', 'tenant', 'borrower', 'customer', 'recipient', 'org2']
 
+  interface PartyData {
+    name: string; inn: string; rep?: string; bank?: string;
+    account?: string; mfo?: string; address?: string; phone?: string;
+  }
+
+  function fillParty(prefixes: string[], data: PartyData, extra: Record<string, string | undefined> = {}) {
+    if (!tpl) return
+    const bySuffix: Record<string, string | undefined> = {
+      name: data.name, tin: data.inn, inn: data.inn, rep: data.rep,
+      bank: data.bank, account: data.account, mfo: data.mfo,
+      address: data.address, phone: data.phone,
+    }
     setVals(prev => {
       const next = { ...prev }
       for (const v of tpl.vars) {
-        const key = v.key.toLowerCase()
-        if (
-          key.includes('buyer_name') || 
-          key.includes('client_name') || 
-          key.includes('tenant_name') || 
-          key.includes('borrower_name') || 
-          key.includes('org2_name') || 
-          key.includes('recipient_name') ||
-          key.includes('customer_name')
-        ) {
-          next[v.key] = cp.name
-        } else if (
-          key.includes('buyer_tin') || 
-          key.includes('client_tin') || 
-          key.includes('tenant_tin') || 
-          key.includes('borrower_tin') || 
-          key.includes('org2_tin') || 
-          key.includes('recipient_tin') || 
-          key.includes('buyer_inn') || 
-          key.includes('client_inn') ||
-          key.includes('customer_tin') ||
-          key.includes('customer_inn')
-        ) {
-          next[v.key] = cp.inn
-        } else if (key.includes('account') || key.includes('rs') || key.includes('bill')) {
-          next[v.key] = cp.bank_account || ''
-        } else if (key.includes('mfo')) {
-          next[v.key] = cp.mfo || ''
-        } else if (key.includes('bank')) {
-          next[v.key] = cp.bank_name || ''
-        } else if (key.includes('address')) {
-          next[v.key] = cp.address || ''
-        } else if (key.includes('phone')) {
-          next[v.key] = cp.phone || ''
-        }
+        if (extra[v.key] !== undefined) { next[v.key] = extra[v.key]!; continue }
+        const m = v.key.match(/^([a-z0-9]+)_([a-z]+)$/)
+        if (!m) continue
+        const [, prefix, suffix] = m
+        if (!prefixes.includes(prefix)) continue
+        const val = bySuffix[suffix]
+        if (val) next[v.key] = val
       }
       return next
+    })
+  }
+
+  const handleApplyMyCompany = (reqId: string) => {
+    if (!reqId) return
+    const r = myCompanies.find(x => x.id === reqId)
+    if (!r) return
+    fillParty(MY_PREFIXES, {
+      name: r.name, inn: r.inn, rep: r.director, bank: r.bank,
+      account: r.account, mfo: r.mfo, address: r.address, phone: r.phone,
+    }, {
+      company_name: r.name, company_tin: r.inn,
+      director_name: r.director, rep_name: r.director,
+    })
+    toast.success('Реквизиты вашей компании применены')
+  }
+
+  const handleApplyCounterparty = (cpId: string) => {
+    if (!cpId) return
+    const cp = counterparties.find(c => c.id === cpId)
+    if (!cp) return
+    fillParty(CP_PREFIXES, {
+      name: cp.name, inn: cp.inn, bank: cp.bank_name || undefined,
+      account: cp.bank_account || undefined, mfo: cp.mfo || undefined,
+      address: cp.address || undefined, phone: cp.phone || undefined,
     })
     toast.success('Реквизиты контрагента применены')
   }
@@ -222,7 +237,20 @@ export default function Templates() {
   }
 
   const handleSetVal = (key: string, val: string) => {
-    setVals(prev => ({ ...prev, [key]: val }))
+    setVals(prev => {
+      const next = { ...prev, [key]: val }
+      // Автопрописью: если в шаблоне есть поле `<key>_words`, генерируем из числа
+      const wordsKey = `${key}_words`
+      if (tpl?.vars.some(v => v.key === wordsKey)) {
+        const n = parseFloat(val.replace(/\s/g, '').replace(',', '.'))
+        if (!isNaN(n) && n >= 0) {
+          const curStr = (next['currency'] ?? '').toUpperCase()
+          const cur = curStr.includes('USD') ? 'usd' : curStr.includes('EUR') ? 'eur' : 'sum'
+          next[wordsKey] = toWordsRu(n, cur)
+        }
+      }
+      return next
+    })
   }
 
   const preview = useMemo(() => tpl ? substituteVars(tpl.body, vals, tpl.vars) : '', [tpl, vals])
@@ -401,10 +429,25 @@ export default function Templates() {
                 <p className="text-[10px] text-slate-500">{tpl.category}</p>
               </div>
             </div>
-            {/* Выбор контрагента */}
-            {counterparties.length > 0 && (
+            {/* Автозаполнение сторон из Организаций */}
+            {myCompanies.length > 0 && (
               <div className="mt-3">
-                <label className="block text-[10px] font-semibold text-slate-500 mb-1 uppercase tracking-wider">Заполнить из контрагента</label>
+                <label className="block text-[10px] font-semibold text-slate-500 mb-1 uppercase tracking-wider">Моя компания (продавец / исполнитель)</label>
+                <select
+                  onChange={e => handleApplyMyCompany(e.target.value)}
+                  defaultValue=""
+                  className="w-full bg-[#0f1117] text-slate-300 text-[11px] rounded-lg border border-[#2a3447] px-2 py-1.5 focus:outline-none focus:border-blue-500/50"
+                >
+                  <option value="">-- Выберите компанию --</option>
+                  {myCompanies.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}{r.inn ? ` (ИНН: ${r.inn})` : ''}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {counterparties.length > 0 && (
+              <div className="mt-2">
+                <label className="block text-[10px] font-semibold text-slate-500 mb-1 uppercase tracking-wider">Контрагент (покупатель / заказчик)</label>
                 <select
                   onChange={e => handleApplyCounterparty(e.target.value)}
                   defaultValue=""
@@ -416,6 +459,11 @@ export default function Templates() {
                   ))}
                 </select>
               </div>
+            )}
+            {myCompanies.length === 0 && (
+              <p className="mt-3 text-[10px] text-slate-600">
+                Добавьте свою фирму в «Организации → Мои компании» — реквизиты будут подставляться сюда одним кликом.
+              </p>
             )}
             {/* Прогресс */}
             {tpl.vars.length > 0 && (
