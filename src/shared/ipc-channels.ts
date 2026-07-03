@@ -34,6 +34,8 @@ export const IPC = {
   SAFE_AVAILABLE: 'safe:available',
   // INN / counterparty check
   INN_CHECK: 'inn:check',
+  // News feed (RSS)
+  NEWS_FEED: 'news:feed',
   // PDF generator
   PDF_GENERATE: 'pdf:generate',
   // Notifications

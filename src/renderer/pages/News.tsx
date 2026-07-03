@@ -111,18 +111,84 @@ function openLink(url: string) {
   }
 }
 
+interface FeedItem { title: string; link: string; date: string; source: string }
+const FEED_CACHE_KEY = 'bx_news_feed_cache';
+
+function fmtFeedDate(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  const isToday = d.toDateString() === today.toDateString();
+  if (isToday) return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+}
+
 export default function News() {
   const [filter, setFilter] = useState<string>('all');
+  const [feed, setFeed] = useState<FeedItem[]>(() => {
+    try { return JSON.parse(localStorage.getItem(FEED_CACHE_KEY) || '[]'); } catch { return []; }
+  });
+  const [feedState, setFeedState] = useState<'idle' | 'loading' | 'error'>('idle');
 
+  const loadFeed = React.useCallback(async () => {
+    const bridge = (window as any).bx?.news?.fetch;
+    if (!bridge) return; // браузерный превью: лента доступна только в Electron
+    setFeedState('loading');
+    try {
+      const items = await bridge();
+      if (items?.length) {
+        setFeed(items);
+        localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(items));
+        setFeedState('idle');
+      } else {
+        setFeedState('error');
+      }
+    } catch {
+      setFeedState('error');
+    }
+  }, []);
+
+  React.useEffect(() => { loadFeed(); }, [loadFeed]);
+
+  const currentYear = new Date().getFullYear();
   const tags = ['all', ...Array.from(new Set(STATIC_NEWS.map(n => n.tag)))];
   const filtered = filter === 'all' ? STATIC_NEWS : STATIC_NEWS.filter(n => n.tag === filter);
+  const hasBridge = Boolean((window as any).bx?.news?.fetch);
 
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-white">Новости и изменения</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Актуальные ставки, нормы и дедлайны на 2025–2026</p>
+        <p className="text-sm text-slate-500 mt-0.5">Деловая лента РУз и ключевые ставки на {currentYear}</p>
       </div>
+
+      {/* Живая лента */}
+      {(hasBridge || feed.length > 0) && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-slate-300">📰 Деловая лента <span className="text-slate-600 font-normal">spot.uz · gazeta.uz</span></h2>
+            <button onClick={loadFeed} disabled={feedState === 'loading'}
+              className="text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors">
+              {feedState === 'loading' ? 'Обновление…' : '⟳ Обновить'}
+            </button>
+          </div>
+          {feed.length === 0 && feedState === 'loading' && (
+            <p className="text-xs text-slate-600 py-3">Загрузка ленты…</p>
+          )}
+          {feed.length === 0 && feedState === 'error' && (
+            <p className="text-xs text-amber-400/80 py-3">Не удалось загрузить ленту — проверьте соединение и нажмите «Обновить».</p>
+          )}
+          <div className="space-y-1">
+            {feed.slice(0, 12).map((n, i) => (
+              <button key={i} onClick={() => openLink(n.link)}
+                className="w-full flex items-center gap-3 px-3.5 py-2 bg-[#141820] hover:bg-[#1e2535] border border-[#1e2535] hover:border-[#2a3447] rounded-lg text-left transition-all group">
+                <span className="flex-1 text-[13px] text-slate-300 group-hover:text-white truncate transition-colors">{n.title}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-slate-500 flex-shrink-0">{n.source}</span>
+                <span className="text-[10px] text-slate-600 w-12 text-right flex-shrink-0">{fmtFeedDate(n.date)}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Источники — быстрый переход */}
       <section>
@@ -187,7 +253,7 @@ export default function News() {
       </section>
 
       <p className="text-[11px] text-slate-600 pb-2">
-        Справочная информация актуальна на 2025–2026. Всегда проверяйте актуальность на официальных источниках перед применением.
+        Ключевые ставки в «Быстрой справке» сверены 03.07.2026 (см. Справочники). Всегда проверяйте актуальность на официальных источниках перед применением.
       </p>
     </div>
   );

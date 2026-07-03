@@ -11,6 +11,7 @@ import { pickPfxFile, parsePfx } from './services/ecpParser'
 import { signFile, verifySig, pickFileToSign, pickSigFile } from './services/ecpSigner'
 import { readBackupConfig, writeBackupConfig } from './services/onecBackupScheduler'
 import { fetchTrader } from './services/innCheck'
+import { fetchNewsFeed } from './services/newsFeed'
 
 export function registerIpcHandlers() {
   // --- Cache ---
@@ -64,6 +65,9 @@ export function registerIpcHandlers() {
 
   // --- INN check ---
   ipcMain.handle(IPC.INN_CHECK, (_e, tin: string) => fetchTrader(tin))
+
+  // --- News feed ---
+  ipcMain.handle(IPC.NEWS_FEED, () => fetchNewsFeed())
 
   // --- PDF Generator ---
   ipcMain.handle(IPC.PDF_GENERATE, async (_e, htmlContent: string, fileName: string) => {

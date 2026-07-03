@@ -48,6 +48,9 @@ interface BxBridge {
       regimeName?: string; region?: string; registrationDate?: string;
     } | null>
   }
+  news: {
+    fetch(): Promise<Array<{ title: string; link: string; date: string; source: string }>>
+  }
   pdf: {
     generate(htmlContent: string, fileName: string): Promise<boolean>
   }
