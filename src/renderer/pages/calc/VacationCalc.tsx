@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import CalcResult from './CalcResult';
 import MoneyInput from './MoneyInput';
+import { takeCalcPrefill, toMoneyString } from './prefill';
 
 // Отпускные РУз: средний заработок × количество дней отпуска
 // Среднедневной = (Сумма за 12 мес / 12) / среднее кол-во рабочих дней в месяце
@@ -11,7 +12,10 @@ function fmt(n: number) {
 }
 
 export default function VacationCalc() {
-  const [annualIncome, setAnnualIncome] = useState('');
+  const [annualIncome, setAnnualIncome] = useState(() => {
+    const pre = takeCalcPrefill('vacation');
+    return pre?.annual ? toMoneyString(pre.annual) : '';
+  });
   const [vacDays, setVacDays] = useState('15');
   const [calcMethod, setCalcMethod] = useState<'calendar' | 'working'>('calendar');
 

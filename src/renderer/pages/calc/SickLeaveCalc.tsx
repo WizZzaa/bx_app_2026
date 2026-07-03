@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import CalcResult from './CalcResult';
 import MoneyInput from './MoneyInput';
 import { useEconomicIndicators } from '../../lib/useEconomicIndicators';
+import { takeCalcPrefill, toMoneyString } from './prefill';
 
 // Больничные РУз: % от среднего заработка в зависимости от стажа
 // Ст. 284 ТК РУз + Положение о порядке назначения пособий
@@ -20,7 +21,10 @@ function fmt(n: number) {
 
 export default function SickLeaveCalc() {
   const { mrot } = useEconomicIndicators();
-  const [annualIncome, setAnnualIncome] = useState('');
+  const [annualIncome, setAnnualIncome] = useState(() => {
+    const pre = takeCalcPrefill('sick');
+    return pre?.annual ? toMoneyString(pre.annual) : '';
+  });
   const [sickDays, setSickDays] = useState('10');
   const [stazh, setStazh] = useState(0); // index in STAZH_RULES
 

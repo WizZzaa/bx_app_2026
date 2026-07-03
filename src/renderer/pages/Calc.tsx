@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { readCalcHistory, clearCalcHistory, HISTORY_EVENT, type CalcHistoryEntry } from './calc/CalcResult';
+import { peekCalcPrefill } from './calc/prefill';
 import VatCalc from './calc/VatCalc';
 import NdflCalc from './calc/NdflCalc';
 import SalaryCalc from './calc/SalaryCalc';
@@ -54,6 +55,9 @@ const LAST_CALC_KEY = 'bx_calc_last';
 
 export default function Calc() {
   const [active, setActiveRaw] = useState(() => {
+    // Хендофф из других разделов (карточка сотрудника → отпускные/больничные)
+    const pre = peekCalcPrefill();
+    if (pre && TABS.some(t => t.id === pre.calc)) return pre.calc;
     const last = localStorage.getItem(LAST_CALC_KEY);
     return last && TABS.some(t => t.id === last) ? last : 'vat';
   });

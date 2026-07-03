@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useEmployees, type BxEmployee, type NewEmployee } from './hr/useEmployees'
 import { calcPayroll, fmtSum, DEFAULT_RATES, type PayrollRates } from './hr/payroll'
 import { useCompany } from '../lib/CompanyContext'
 import { useToast } from '../lib/ui/ToastContext'
 import { exportPayrollToExcel } from '../lib/excelExport'
+import { setCalcPrefill } from './calc/prefill'
 
 const EMPTY: NewEmployee = {
   company_id: null, full_name: '', position: '', department: '', hire_date: '',
@@ -16,7 +18,8 @@ const field = 'w-full bg-[#0f1117] text-slate-200 px-3 py-2 rounded-lg border bo
 export default function Hr() {
   const { active } = useCompany();
   const { employees, add, update, remove } = useEmployees(active?.id ?? null);
-  const toast = useToast();
+  const toast = useToast()
+  const navigate = useNavigate();
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -302,6 +305,12 @@ export default function Hr() {
               <div className="flex gap-2">
                 <button onClick={printPayslip} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg">🖨️ Расчётный лист</button>
                 <button onClick={handleExportPayslipPDF} className="px-4 py-2 border border-[#2a3447] text-slate-300 hover:text-white text-xs font-medium rounded-lg bg-[#141820] hover:bg-[#1e2535] transition-colors">📥 Скачать PDF</button>
+                <button onClick={() => { setCalcPrefill({ calc: 'vacation', annual: data.salary * 12 }); navigate('/calc'); }}
+                  title="Открыть калькулятор отпускных с годовым доходом сотрудника"
+                  className="px-4 py-2 border border-[#2a3447] text-slate-300 hover:text-white text-xs font-medium rounded-lg bg-[#141820] hover:bg-[#1e2535] transition-colors">🏖 Отпускные</button>
+                <button onClick={() => { setCalcPrefill({ calc: 'sick', annual: data.salary * 12 }); navigate('/calc'); }}
+                  title="Открыть калькулятор больничных с годовым доходом сотрудника"
+                  className="px-4 py-2 border border-[#2a3447] text-slate-300 hover:text-white text-xs font-medium rounded-lg bg-[#141820] hover:bg-[#1e2535] transition-colors">🤒 Больничные</button>
               </div>
               {!creating && current && (
                 confirmDel ? (
