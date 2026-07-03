@@ -14,7 +14,7 @@ export default function PenaltyCalc() {
   const [mode, setMode] = useState<'fixed' | 'cbu'>('fixed');
   const [debt, setDebt] = useState('');
   const [days, setDays] = useState('');
-  const [cbuRate, setCbuRate] = useState('13.5');
+  const [cbuRate, setCbuRate] = useState('14'); // основная ставка ЦБ с 20.03.2025
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 

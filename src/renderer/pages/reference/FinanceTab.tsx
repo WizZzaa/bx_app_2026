@@ -24,7 +24,12 @@ function IndicatorCard({ ind }: { ind: Indicator }) {
           </div>
           <div className="text-[11px] text-slate-500 mt-1">с {fmtDate(current.from)}</div>
         </div>
-        {!ind.meta.verified && (
+        {ind.meta.verified ? (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400"
+            title={`Сверено ${ind.meta.updatedAt}${ind.meta.source ? ` · ${ind.meta.source}` : ''}`}>
+            ✓ сверено {ind.meta.updatedAt?.slice(5).split('-').reverse().join('.')}
+          </span>
+        ) : (
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400" title="Значение требует сверки с официальным источником">
             ⚠ не проверено
           </span>
@@ -38,9 +43,12 @@ function IndicatorCard({ ind }: { ind: Indicator }) {
       {open && (
         <div className="mt-2 space-y-1 border-t border-[#1e2535] pt-2">
           {ind.history.map((h, i) => (
-            <div key={i} className="flex items-center justify-between text-[11px]">
-              <span className="text-slate-400">с {fmtDate(h.from)}</span>
-              <span className="text-slate-300 font-mono">{fmtSum(h.value)} {ind.unit}</span>
+            <div key={i} className="flex items-center justify-between gap-2 text-[11px]" title={h.basis}>
+              <span className="text-slate-400 flex-shrink-0">с {fmtDate(h.from)}</span>
+              {h.basis?.includes('требует проверки')
+                ? <span className="text-amber-500/60 text-[9px]">⚠</span>
+                : <span className="text-emerald-500/60 text-[9px]">✓</span>}
+              <span className="text-slate-300 font-mono ml-auto">{fmtSum(h.value)} {ind.unit}</span>
             </div>
           ))}
         </div>

@@ -1,8 +1,8 @@
 import type { Indicator, TaxRate, PaymentCode } from './types';
 
-// ВНИМАНИЕ: значения требуют сверки с официальными источниками
-// (lex.uz, soliq.uz, cbu.uz). Все записи помечены verified:false до проверки.
-// Архитектура позволяет в будущем подтягивать актуальные данные с сервера.
+// Актуальные значения сверены 03.07.2026 с buxgalter.uz / cbu.uz / gov.uz —
+// такие записи помечены verified:true и содержат основание.
+// Историческая глубина (старые периоды) по-прежнему требует сверки.
 
 export const indicators: Indicator[] = [
   {
@@ -11,9 +11,9 @@ export const indicators: Indicator[] = [
     shortName: 'БРВ',
     unit: 'сум',
     hint: 'Применяется для расчёта штрафов, госпошлин, патентов и иных платежей.',
-    meta: { verified: false, source: 'lex.uz', updatedAt: '2026-06-19' },
+    meta: { verified: true, source: 'lex.uz / buxgalter.uz', updatedAt: '2026-07-03' },
     history: [
-      { value: 412000, from: '2025-09-01', basis: 'требует проверки' },
+      { value: 412000, from: '2025-08-01', basis: 'С 01.08.2025, действует на весь 2026 (сверено 03.07.2026)' },
       { value: 375000, from: '2024-09-01', basis: 'требует проверки' },
       { value: 340000, from: '2024-04-01', basis: 'требует проверки' },
       { value: 330000, from: '2023-05-01', basis: 'требует проверки' },
@@ -26,8 +26,9 @@ export const indicators: Indicator[] = [
     shortName: 'МРОТ',
     unit: 'сум',
     hint: 'Минимальная зарплата. Часть расчётов в РУз переведена на БРВ — уточняйте применимость.',
-    meta: { verified: false, source: 'lex.uz', updatedAt: '2026-06-19' },
+    meta: { verified: true, source: 'gov.uz / bss.uz', updatedAt: '2026-07-03' },
     history: [
+      { value: 1271000, from: '2025-08-01', basis: 'Указ Президента, с 01.08.2025 (сверено 03.07.2026)' },
       { value: 1155000, from: '2024-09-01', basis: 'требует проверки' },
       { value: 1050000, from: '2023-05-01', basis: 'требует проверки' },
       { value: 920000, from: '2022-06-01', basis: 'требует проверки' },
@@ -35,14 +36,15 @@ export const indicators: Indicator[] = [
   },
   {
     key: 'refi',
-    name: 'Ставка рефинансирования ЦБ РУз',
+    name: 'Основная ставка ЦБ РУз',
     shortName: 'Ставка ЦБ',
     unit: '%',
     hint: 'Используется при расчёте пени за просрочку налоговых платежей.',
-    meta: { verified: false, source: 'cbu.uz', updatedAt: '2026-06-19' },
+    meta: { verified: true, source: 'cbu.uz', updatedAt: '2026-07-03' },
     history: [
-      { value: 13.5, from: '2024-07-25', basis: 'требует проверки' },
-      { value: 14.0, from: '2023-03-16', basis: 'требует проверки' },
+      { value: 14.0, from: '2025-03-20', basis: 'Пресс-релиз ЦБ 20.03.2025; сохранена заседаниями янв–апр 2026 (сверено 03.07.2026)' },
+      { value: 13.5, from: '2024-07-26', to: '2025-03-19', basis: 'С 26.07.2024 (сверено 03.07.2026)' },
+      { value: 14.0, from: '2023-03-16', to: '2024-07-25', basis: 'требует проверки' },
       { value: 17.0, from: '2022-03-17', basis: 'требует проверки' },
     ],
   },

@@ -3,10 +3,12 @@ import { loadIndicators } from './db/referenceRepo'
 import type { Indicator } from '../data/reference/types'
 import { todayISO } from './dates'
 
+// Сверено 03.07.2026: БРВ и МРОТ — с 01.08.2025 (действуют на 2026),
+// основная ставка ЦБ — 14% с 20.03.2025 (подтверждена заседаниями 2026).
 const FALLBACK_VALUES: Record<string, number> = {
-  brv: 340000,
-  mrot: 1155000,
-  refi: 13.5
+  brv: 412000,
+  mrot: 1271000,
+  refi: 14
 }
 
 const STORAGE_KEY = 'bx_cached_indicators'

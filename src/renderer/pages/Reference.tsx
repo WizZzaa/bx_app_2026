@@ -21,15 +21,15 @@ export default function Reference() {
         <p className="text-sm text-slate-500 mt-0.5">Нормативная база Республики Узбекистан.</p>
       </div>
 
-      {/* Баннер проверки */}
-      <div className="text-xs text-amber-400 bg-amber-500/10 rounded-lg px-4 py-2.5 flex items-start gap-2">
-        <span>⚠</span>
+      {/* Баннер о сверке */}
+      <div className="text-xs text-slate-400 bg-[#141820] border border-[#1e2535] rounded-lg px-4 py-2.5 flex items-start gap-2">
+        <span className="text-emerald-400">✓</span>
         <span>
-          Данные носят справочный характер и требуют сверки с официальными источниками
-          (<a className="underline" href="https://lex.uz" target="_blank" rel="noreferrer">lex.uz</a>,{' '}
+          Ключевые показатели (БРВ, МРОТ, ставка ЦБ) сверены 03.07.2026 — отмечены зелёным бейджем.
+          Записи с «⚠ не проверено» требуют сверки с{' '}
+          <a className="underline" href="https://lex.uz" target="_blank" rel="noreferrer">lex.uz</a>,{' '}
           <a className="underline" href="https://soliq.uz" target="_blank" rel="noreferrer">soliq.uz</a>,{' '}
-          <a className="underline" href="https://cbu.uz" target="_blank" rel="noreferrer">cbu.uz</a>).
-          В будущем актуальные значения будут обновляться автоматически.
+          <a className="underline" href="https://cbu.uz" target="_blank" rel="noreferrer">cbu.uz</a>.
         </span>
       </div>
 

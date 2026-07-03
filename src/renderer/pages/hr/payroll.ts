@@ -9,7 +9,8 @@ export interface PayrollRates {
   mrot: number     // Минимальный размер оплаты труда (МРОТ) РУз, сумов
 }
 
-export const DEFAULT_RATES: PayrollRates = { ndfl: 12, inps: 0.1, social: 12, brv: 395_000, mrot: 1_050_000 }
+// БРВ/МРОТ сверены 03.07.2026 (действуют с 01.08.2025, на весь 2026)
+export const DEFAULT_RATES: PayrollRates = { ndfl: 12, inps: 0.1, social: 12, brv: 412_000, mrot: 1_271_000 }
 
 export interface PayrollResult {
   gross: number        // начислено (оклад + надбавки)
