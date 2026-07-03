@@ -238,3 +238,19 @@ export async function fetchCardById(id: string): Promise<BxCard | null> {
   if (error) { console.error(error); return null; }
   return data as BxCard;
 }
+
+/** Все неархивные карточки со всех досок — для вкладки «Все задачи». */
+export interface AllCard {
+  id: string; title: string; due_date: string | null;
+  board_id: string; column_id: string; priority: string;
+}
+
+export async function fetchAllCards(): Promise<AllCard[]> {
+  const { data, error } = await supabase
+    .from('bx_cards')
+    .select('id,title,due_date,board_id,column_id,priority')
+    .eq('archived', false)
+    .order('due_date', { ascending: true, nullsFirst: false });
+  if (error) { console.error(error); return []; }
+  return (data ?? []) as AllCard[];
+}
