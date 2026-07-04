@@ -20,6 +20,7 @@ const nav = [
   { to: '/ecp',        icon: 'ecp',       label: 'ЭЦП' },
   { to: '/check-inn',  icon: 'search',    label: 'Проверка ИНН' },
   { to: '/ai',         icon: 'ai',        label: 'AI-Консультант' },
+  { to: '/support',    icon: 'info',      label: 'Поддержка' },
 ]
 
 export default function Sidebar() {

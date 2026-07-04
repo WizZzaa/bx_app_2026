@@ -11,6 +11,7 @@ import Planner from './pages/Planner';
 import Knowledge from './pages/Knowledge';
 import Templates from './pages/Templates';
 import Ai from './pages/Ai';
+import Support from './pages/Support';
 import Hr from './pages/Hr';
 import Finance from './pages/Finance';
 import Services from './pages/Services';
@@ -96,6 +97,7 @@ export default function App() {
             <Route path="/ecp" element={<EcpManager />} />
             <Route path="/check-inn" element={<InnCheck />} />
             <Route path="/ai" element={<Ai />} />
+            <Route path="/support" element={<Support />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/counterparties" element={<Counterparties />} />
           </Routes>

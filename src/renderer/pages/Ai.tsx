@@ -3,6 +3,7 @@ import { useAi } from '../lib/ai/useAi';
 import { usePlan } from '../lib/plan';
 import PaywallModal from '../components/PaywallModal';
 import { supabase } from '../lib/db/supabase';
+import { useNavigate } from 'react-router-dom';
 
 const QUICK_QUESTIONS = [
   'Какие сроки сдачи НДС в 2026 году?',
@@ -42,6 +43,22 @@ export default function Ai() {
   const [input, setInput] = useState('');
   const { isPro, limits } = usePlan();
   const [paywall, setPaywall] = useState(false);
+  const navigate = useNavigate();
+
+  // Эскалация к живому специалисту: черновик тикета из текущего диалога
+  function callSpecialist() {
+    if (!isPro) { setPaywall(true); return; }
+    const firstQuestion = messages.find(m => m.role === 'user')?.content ?? '';
+    const subject = (firstQuestion || 'Вопрос специалисту').slice(0, 80);
+    const dialog = messages.slice(-6)
+      .map(m => `${m.role === 'user' ? 'Я' : 'AI'}: ${m.content}`)
+      .join('\n\n');
+    const body = dialog
+      ? `Обсуждал(а) с AI-Консультантом, нужен специалист.\n\n--- Диалог ---\n${dialog}\n\n--- Мой вопрос ---\n`
+      : '';
+    localStorage.setItem('bx_support_draft', JSON.stringify({ subject, body }));
+    navigate('/support');
+  }
 
   // Лимит Free: N вопросов в месяц (считаем отправленные user-сообщения)
   async function checkAiLimit(): Promise<boolean> {
@@ -80,6 +97,9 @@ export default function Ai() {
         <div className="px-3 pb-2">
           <button onClick={newChat}
             className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">+ Новый диалог</button>
+          <button onClick={callSpecialist}
+            title="Передать вопрос живому специалисту (Pro)"
+            className="w-full py-2 mt-1.5 bg-[#1e2535] hover:bg-[#252c3a] text-slate-300 text-xs font-medium rounded-lg transition-colors">🎧 Позвать специалиста</button>
         </div>
         <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
           {chats.map(c => (
