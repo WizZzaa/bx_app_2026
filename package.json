@@ -1,7 +1,7 @@
 {
   "name": "app",
   "productName": "BX Помощник Бухгалтера",
-  "version": "1.38.0",
+  "version": "1.39.0",
   "description": "BX — помощник бухгалтера Республики Узбекистан: планировщик, калькуляторы, справочники, AI-консультант",
   "main": ".vite/build/main.js",
   "private": true,
@@ -28,6 +28,7 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.11.2",
     "@electron-forge/plugin-fuses": "^7.11.2",
     "@electron-forge/plugin-vite": "^7.11.2",
+    "@electron-forge/publisher-github": "^7.11.2",
     "@electron/fuses": "^1.8.0",
     "@types/electron-squirrel-startup": "^1.0.2",
     "@types/react": "^19.2.17",
@@ -51,6 +52,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.0",
+    "update-electron-app": "^3.3.0",
     "xlsx": "^0.18.5"
   }
 }

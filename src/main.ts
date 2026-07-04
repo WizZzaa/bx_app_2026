@@ -2,12 +2,22 @@ import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs'
 import started from 'electron-squirrel-startup'
+import { updateElectronApp } from 'update-electron-app'
 import { registerIpcHandlers } from './main/ipc'
 import { initBackupScheduler } from './main/services/onecBackupScheduler'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit()
+}
+
+// ── Автообновление (только собранное приложение; репо должен быть публичным) ──
+if (app.isPackaged) {
+  try {
+    updateElectronApp({ repo: 'WizZzaa/bx_app_2026', updateInterval: '1 hour' })
+  } catch (e) {
+    console.warn('Автообновление недоступно:', e)
+  }
 }
 
 // ── Миграция userData после переименования приложения ──────────────────────

@@ -288,7 +288,9 @@ ${fullContext}
         if (data?.error) {
           const msg = data.error === 'NO_API_KEY'
             ? 'AI-Консультант не настроен: администратору нужно добавить GEMINI_API_KEY в секреты Supabase.'
-            : ('Ошибка AI: ' + (data.message || data.error))
+            : data.error === 'LIMIT'
+              ? (data.message || 'Лимит бесплатного плана исчерпан — перейдите на Pro.')
+              : ('Ошибка AI: ' + (data.message || data.error))
           setError(msg)
           setSending(false)
           return
