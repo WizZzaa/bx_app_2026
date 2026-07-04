@@ -23,7 +23,18 @@ export default function NumberToWords() {
     navigator.clipboard.writeText(text).catch(() => { void 0 })
     setCopied(lang)
     setTimeout(() => setCopied(null), 1500)
+    // журнал последних сумм
+    try {
+      const prev: { raw: string; currency: string }[] = JSON.parse(localStorage.getItem('bx_n2w_history') || '[]')
+      const next = [{ raw, currency }, ...prev.filter(h => h.raw !== raw)].slice(0, 8)
+      localStorage.setItem('bx_n2w_history', JSON.stringify(next))
+      setHistory(next)
+    } catch { /* пусто */ }
   }
+
+  const [history, setHistory] = useState<{ raw: string; currency: string }[]>(() => {
+    try { return JSON.parse(localStorage.getItem('bx_n2w_history') || '[]') } catch { return [] }
+  })
 
   return (
     <div className="space-y-5">
@@ -66,6 +77,21 @@ export default function NumberToWords() {
             copied={copied === 'uz'}
             onCopy={() => copy(uzText, 'uz')}
           />
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div>
+          <p className="text-[10px] text-slate-600 uppercase tracking-widest font-semibold mb-1.5">Недавние суммы</p>
+          <div className="flex flex-wrap gap-1.5">
+            {history.map(h => (
+              <button key={h.raw + h.currency}
+                onClick={() => { setRaw(h.raw); setCurrency(h.currency) }}
+                className="px-2.5 py-1 text-[11px] rounded-lg bg-[#1e2535] text-slate-400 hover:text-slate-200 hover:bg-[#252c3a] transition-colors tabular-nums">
+                {h.raw}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

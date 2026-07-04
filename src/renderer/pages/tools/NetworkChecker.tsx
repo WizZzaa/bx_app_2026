@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface SiteResult {
   id: string;
@@ -75,6 +75,13 @@ export default function NetworkChecker() {
     );
     setState('done');
   }
+
+  // Автозапуск проверки при открытии инструмента
+  const ranOnce = useRef(false);
+  useEffect(() => {
+    if (!ranOnce.current) { ranOnce.current = true; check(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const online = results.filter(r => r.ok === true).length;
   const offline = results.filter(r => r.ok === false).length;
