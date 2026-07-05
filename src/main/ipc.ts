@@ -1,4 +1,4 @@
-import { ipcMain, safeStorage, BrowserWindow, dialog, Notification } from 'electron'
+import { ipcMain, safeStorage, BrowserWindow, dialog, Notification, app } from 'electron'
 import * as fs from 'fs'
 import { IPC } from '../shared/ipc-channels'
 import { scanCache, cleanCache } from './services/onecCache';
@@ -100,6 +100,12 @@ export function registerIpcHandlers() {
   // --- Notifications ---
   ipcMain.handle(IPC.NOTIFY_SHOW, (_e, title: string, body: string) => {
     new Notification({ title, body }).show()
+  })
+
+  // --- Autostart ---
+  ipcMain.handle(IPC.AUTOSTART_GET, () => app.getLoginItemSettings().openAtLogin)
+  ipcMain.handle(IPC.AUTOSTART_SET, (_e, enabled: boolean) => {
+    app.setLoginItemSettings({ openAtLogin: enabled })
   })
 }
 

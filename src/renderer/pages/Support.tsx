@@ -68,10 +68,10 @@ export default function Support() {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Список обращений */}
-      <aside className="w-72 flex-shrink-0 border-r border-[#1e2535] flex flex-col">
+      <aside className="w-72 flex-shrink-0 border-r border-bx-border flex flex-col">
         <div className="px-4 pt-5 pb-3">
-          <h1 className="text-base font-semibold text-white">Поддержка</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Живые специалисты по налогам и учёту</p>
+          <h1 className="text-base font-semibold text-bx-text">Поддержка</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Техподдержка по ПК, 1С и E-Imzo</p>
         </div>
         <div className="px-3 pb-2">
           <button onClick={startCreate}
@@ -83,16 +83,15 @@ export default function Support() {
           {loading && <p className="text-xs text-slate-600 text-center py-4">Загрузка…</p>}
           {!loading && tickets.length === 0 && (
             <p className="text-xs text-slate-600 text-center py-6 px-3 leading-relaxed">
-              Обращений пока нет.
-              Начните с AI-Консультанта — а если нужен человек, нажмите «Позвать специалиста».
+              Обращений пока нет. Нужна помощь с 1С, E-Imzo или настройкой ПК? Откройте новое обращение.
             </p>
           )}
           {tickets.map(t => (
             <button key={t.id} onClick={() => openTicket(t.id)}
               className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors ${
-                activeId === t.id ? 'bg-blue-600/20' : 'hover:bg-[#1e2535]'}`}>
+                activeId === t.id ? 'bg-blue-600/20' : 'hover:bg-bx-surface-2'}`}>
               <div className="flex items-center justify-between gap-2">
-                <p className={`text-xs font-medium truncate ${activeId === t.id ? 'text-blue-400' : 'text-slate-300'}`}>{t.subject}</p>
+                <p className={`text-xs font-medium truncate ${activeId === t.id ? 'text-blue-400' : 'text-bx-text'}`}>{t.subject}</p>
                 <span className={`text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${STATUS[t.status].cls}`}>{STATUS[t.status].label}</span>
               </div>
               <p className="text-[10px] text-slate-600 mt-0.5">{new Date(t.updated_at).toLocaleDateString('ru-RU')}</p>
@@ -106,18 +105,18 @@ export default function Support() {
         {creating ? (
           <div className="flex-1 overflow-y-auto p-6">
             <div className="max-w-lg mx-auto space-y-4">
-              <h2 className="text-lg font-semibold text-white">Новое обращение</h2>
+              <h2 className="text-lg font-semibold text-bx-text">Новое обращение в техподдержку</h2>
               <div>
                 <label className="text-xs text-slate-500 block mb-1.5">Тема</label>
                 <input value={subject} onChange={e => setSubject(e.target.value)} autoFocus
-                  placeholder="Кратко: о чём вопрос"
-                  className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm" />
+                  placeholder="Например: Ошибка при входе в E-Imzo или Настройка принтера"
+                  className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
               </div>
               <div>
-                <label className="text-xs text-slate-500 block mb-1.5">Вопрос специалисту</label>
+                <label className="text-xs text-slate-500 block mb-1.5">Описание проблемы</label>
                 <textarea value={body} onChange={e => setBody(e.target.value)} rows={8}
-                  placeholder="Опишите ситуацию: режим налогообложения, суммы, сроки…"
-                  className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm resize-none" />
+                  placeholder="Опишите проблему: какая программа не работает, код ошибки или что требуется настроить…"
+                  className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm resize-none" />
               </div>
               <div className="flex gap-2">
                 <button onClick={submitCreate} disabled={!subject.trim() || !body.trim()}
@@ -126,14 +125,14 @@ export default function Support() {
                 </button>
                 <button onClick={() => setCreating(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Отмена</button>
               </div>
-              <p className="text-[11px] text-slate-600">Специалист ответит в этом же обращении. Обычно — в течение рабочего дня.</p>
+              <p className="text-[11px] text-slate-600">Специалист техподдержки ответит в этом же обращении. Обычно — в течение рабочего дня.</p>
             </div>
           </div>
         ) : active ? (
           <>
-            <div className="flex-shrink-0 border-b border-[#1e2535] px-6 py-3 flex items-center justify-between gap-3">
+            <div className="flex-shrink-0 border-b border-bx-border px-6 py-3 flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-white truncate">{active.subject}</p>
+                <p className="text-sm font-semibold text-bx-text truncate">{active.subject}</p>
                 <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${STATUS[active.status].cls}`}>{STATUS[active.status].label}</span>
               </div>
               {active.status !== 'closed' && (
@@ -146,9 +145,9 @@ export default function Support() {
                 <div key={m.id} className={`max-w-[75%] ${m.author === 'user' ? 'ml-auto' : ''}`}>
                   <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                     m.author === 'user'
-                      ? 'bg-blue-600/20 text-slate-200 rounded-br-sm'
-                      : 'bg-[#141820] border border-[#1e2535] text-slate-300 rounded-bl-sm'}`}>
-                    {m.author === 'staff' && <p className="text-[10px] text-emerald-400 font-semibold mb-1">👤 Специалист BX</p>}
+                      ? 'bg-blue-600/20 text-bx-text rounded-br-sm'
+                      : 'bg-bx-surface border border-bx-border text-bx-text rounded-bl-sm'}`}>
+                    {m.author === 'staff' && <p className="text-[10px] text-emerald-400 font-semibold mb-1">👤 Техподдержка BX</p>}
                     <p className="whitespace-pre-wrap">{m.body}</p>
                   </div>
                   <p className={`text-[10px] text-slate-600 mt-1 ${m.author === 'user' ? 'text-right' : ''}`}>
@@ -158,11 +157,11 @@ export default function Support() {
               ))}
             </div>
             {active.status !== 'closed' && (
-              <div className="flex-shrink-0 border-t border-[#1e2535] p-4 flex gap-2">
+              <div className="flex-shrink-0 border-t border-bx-border p-4 flex gap-2">
                 <input value={replyText} onChange={e => setReplyText(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') submitReply() }}
                   placeholder="Дополнить обращение…"
-                  className="flex-1 bg-[#0f1117] text-slate-200 px-3.5 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm" />
+                  className="flex-1 bg-bx-bg text-bx-text px-3.5 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
                 <button onClick={submitReply} disabled={!replyText.trim()}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-sm font-medium rounded-lg transition-colors">
                   Отправить
@@ -174,9 +173,9 @@ export default function Support() {
           <div className="flex-1 flex items-center justify-center p-6">
             <div className="max-w-sm text-center">
               <p className="text-3xl mb-3">🎧</p>
-              <h2 className="text-base font-semibold text-white mb-1.5">Нужен человек?</h2>
+              <h2 className="text-base font-semibold text-bx-text mb-1.5">Нужна помощь с ПК или 1С?</h2>
               <p className="text-sm text-slate-400 leading-relaxed">
-                AI-Консультант отвечает мгновенно, а здесь на вопросы отвечают живые специалисты по налогам и учёту РУз.
+                Здесь вы можете задать вопросы специалистам технической поддержки по установке программ, настройке E-Imzo, кэша 1С или бэкапам.
               </p>
               <button onClick={startCreate}
                 className="mt-4 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors">

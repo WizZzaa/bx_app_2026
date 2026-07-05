@@ -27,6 +27,8 @@ export const PLAN_LIMITS = {
 interface PlanCtx {
   plan: Plan
   isPro: boolean
+  role: 'user' | 'admin'
+  isAdmin: boolean
   loading: boolean
   limits: (typeof PLAN_LIMITS)['free' | 'pro']
   refresh: () => Promise<void>
@@ -34,12 +36,13 @@ interface PlanCtx {
 
 const CACHE_KEY = 'bx_plan_cache'
 const Ctx = createContext<PlanCtx>({
-  plan: 'free', isPro: false, loading: true, limits: PLAN_LIMITS.free, refresh: async () => {},
+  plan: 'free', isPro: false, role: 'user', isAdmin: false, loading: true, limits: PLAN_LIMITS.free, refresh: async () => {},
 })
 
 export function PlanProvider({ children }: { children: React.ReactNode }) {
   const [plan, setPlan] = useState<Plan>(() =>
     (localStorage.getItem(CACHE_KEY) === 'pro' ? 'pro' : 'free'))
+  const [role, setRole] = useState<'user' | 'admin'>('user')
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
@@ -47,17 +50,19 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
       const { data, error } = await supabase
-        .from('bx_profiles').select('plan, plan_expires_at').eq('user_id', user.id).maybeSingle()
+        .from('bx_profiles').select('plan, plan_expires_at, role').eq('user_id', user.id).maybeSingle()
       if (error) throw error
       if (!data) {
         // Первый вход до срабатывания триггера — создаём free-профиль
         await supabase.from('bx_profiles').insert({ user_id: user.id }).select().maybeSingle()
         setPlan('free')
+        setRole('user')
         localStorage.setItem(CACHE_KEY, 'free')
       } else {
         const expired = data.plan_expires_at && new Date(data.plan_expires_at) < new Date()
         const p: Plan = data.plan === 'pro' && !expired ? 'pro' : 'free'
         setPlan(p)
+        setRole((data.role as 'user' | 'admin') || 'user')
         localStorage.setItem(CACHE_KEY, p)
       }
     } catch {
@@ -70,7 +75,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { refresh() }, [refresh])
 
   return (
-    <Ctx.Provider value={{ plan, isPro: plan === 'pro', loading, limits: PLAN_LIMITS[plan], refresh }}>
+    <Ctx.Provider value={{ plan, isPro: plan === 'pro', role, isAdmin: role === 'admin', loading, limits: PLAN_LIMITS[plan], refresh }}>
       {children}
     </Ctx.Provider>
   )

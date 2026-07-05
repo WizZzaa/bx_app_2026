@@ -58,9 +58,40 @@ export default function EcpManager() {
   const [pfxPassword, setPfxPassword] = useState('123456')
   const [pfxError, setPfxError] = useState<string | null>(null)
   const [pfxSuccess, setPfxSuccess] = useState(false)
+  const [eimzoStatus, setEimzoStatus] = useState<'checking' | 'active' | 'missing'>('checking')
+
+  const checkEimzo = async () => {
+    setEimzoStatus('checking')
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 1500)
+      await fetch('http://127.0.0.1:64443/', {
+        method: 'GET',
+        signal: controller.signal,
+        mode: 'no-cors'
+      })
+      clearTimeout(timeoutId)
+      setEimzoStatus('active')
+    } catch {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 1500)
+        await fetch('https://127.0.0.1:64443/', {
+          method: 'GET',
+          signal: controller.signal,
+          mode: 'no-cors'
+        })
+        clearTimeout(timeoutId)
+        setEimzoStatus('active')
+      } catch {
+        setEimzoStatus('missing')
+      }
+    }
+  }
 
   useEffect(() => {
     setKeys(loadKeys());
+    checkEimzo()
   }, []);
 
   function persist(updated: EcpKey[]) {
@@ -164,6 +195,29 @@ export default function EcpManager() {
             </button>
           ))}
         </div>
+
+        {/* Автодиагностика E-Imzo */}
+        {eimzoStatus === 'checking' && (
+          <div className="text-xs text-slate-400 bg-[#0f1117] border border-[#1e2535] rounded-xl px-4 py-2 flex items-center gap-2">
+            <span className="animate-spin text-sm">⏳</span> Диагностика подключения к модулю E-Imzo...
+          </div>
+        )}
+        {eimzoStatus === 'active' && (
+          <div className="text-xs text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-4 py-2 flex items-center gap-2">
+            <span>🟢</span> Модуль E-Imzo активен на порту 64443. Подписание доступно.
+          </div>
+        )}
+        {eimzoStatus === 'missing' && (
+          <div className="text-xs text-red-400 bg-red-500/5 border border-red-500/25 rounded-xl px-4 py-3 flex items-start gap-2">
+            <span className="text-sm">🔴</span>
+            <div>
+              <p className="font-bold text-red-400">Модуль E-Imzo не обнаружен на порту 64443</p>
+              <p className="text-slate-500 mt-0.5">
+                Для подписания отчетов убедитесь, что приложение <b>E-Imzo</b> запущено на вашем компьютере.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Предупреждение */}
         {mainTab === 'keys' && urgentCount > 0 && (

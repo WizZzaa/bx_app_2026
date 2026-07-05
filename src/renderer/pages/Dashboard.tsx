@@ -103,9 +103,9 @@ export default function Dashboard() {
 
   const stats = [
     { label: 'На сегодня',  value: String(todayEvents.length),   color: 'text-blue-400',   bg: 'bg-blue-500/10',   to: '/planner' },
-    { label: 'Просрочено',  value: String(overdueEvents.length),  color: overdueEvents.length > 0 ? 'text-red-400' : 'text-slate-400', bg: overdueEvents.length > 0 ? 'bg-red-500/10' : 'bg-[#141820]', to: '/planner' },
+    { label: 'Просрочено',  value: String(overdueEvents.length),  color: overdueEvents.length > 0 ? 'text-red-400' : 'text-slate-400', bg: overdueEvents.length > 0 ? 'bg-red-500/10' : 'bg-bx-surface', to: '/planner' },
     { label: 'Компаний',    value: String(companies.length),      color: 'text-emerald-400', bg: 'bg-emerald-500/10', to: '/settings' },
-    { label: 'ЭЦП истекает',value: ecpExpiring > 0 ? String(ecpExpiring) : '—', color: ecpExpiring > 0 ? 'text-amber-400' : 'text-slate-500', bg: ecpExpiring > 0 ? 'bg-amber-500/10' : 'bg-[#141820]', to: '/ecp' },
+    { label: 'ЭЦП истекает',value: ecpExpiring > 0 ? String(ecpExpiring) : '—', color: ecpExpiring > 0 ? 'text-amber-400' : 'text-slate-500', bg: ecpExpiring > 0 ? 'bg-amber-500/10' : 'bg-bx-surface', to: '/ecp' },
   ];
 
   function fmtDate(d: string) {
@@ -117,19 +117,19 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-white">{greeting()}!</h1>
+          <h1 className="text-xl font-semibold text-bx-text">{greeting()}!</h1>
           <p className="text-sm text-slate-500 capitalize mt-0.5">{today}</p>
         </div>
         <button
           onClick={() => setShowWidgetConfig(o => !o)}
-          className="px-3 py-1.5 bg-[#141820] hover:bg-[#1e2535] border border-[#1e2535] text-slate-300 text-xs rounded-lg transition-colors flex items-center gap-1.5 font-medium"
+          className="px-3 py-1.5 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border text-slate-300 text-xs rounded-lg transition-colors flex items-center gap-1.5 font-medium"
         >
           ⚙ Настроить виджеты
         </button>
       </div>
 
       {showWidgetConfig && (
-        <div className="bg-[#141820] border border-[#1e2535] rounded-xl p-4 space-y-2">
+        <div className="bg-bx-surface border border-bx-border rounded-xl p-4 space-y-2">
           <p className="text-xs font-semibold text-slate-300 mb-2">Настройка видимости виджетов</p>
           <div className="flex flex-wrap gap-4 text-xs">
             <label className="flex items-center gap-2 cursor-pointer text-slate-300">
@@ -176,7 +176,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-4 gap-4">
         {stats.map(s => (
           <button key={s.label} onClick={() => navigate(s.to)}
-            className={`rounded-xl border border-[#1e2535] ${s.bg} p-4 text-left hover:border-blue-500/30 transition-colors`}>
+            className={`rounded-xl border border-bx-border ${s.bg} p-4 text-left hover:border-bx-accent/30 transition-colors`}>
             <div className={`text-2xl font-bold ${s.color}`}>{loading ? '…' : s.value}</div>
             <div className="text-xs text-slate-500 mt-1">{s.label}</div>
           </button>
@@ -192,9 +192,9 @@ export default function Dashboard() {
       </div>
 
       {/* Контроль оплат */}
-      <div className="bg-[#141820] border border-[#1e2535] rounded-xl p-4">
+      <div className="bg-bx-surface border border-bx-border rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-white">💰 Контроль оплат</h2>
+          <h2 className="text-sm font-semibold text-bx-text">💰 Контроль оплат</h2>
           <button onClick={() => navigate('/finance')} className="text-xs text-blue-400 hover:text-blue-300">Открыть →</button>
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -210,9 +210,9 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <SmartCalendar marks={calendarMarks} onOpen={() => navigate('/planner')} />
         {/* Сегодня + просрочено */}
-        <div className="bg-[#141820] border border-[#1e2535] rounded-xl p-4">
+        <div className="bg-bx-surface border border-bx-border rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-white">📋 На сегодня</h2>
+            <h2 className="text-sm font-semibold text-bx-text">📋 На сегодня</h2>
             <button onClick={() => navigate('/planner')} className="text-xs text-blue-400 hover:text-blue-300">Все задачи →</button>
           </div>
           {overdueEvents.length > 0 && (
@@ -228,13 +228,13 @@ export default function Dashboard() {
               <p className="text-xs text-slate-600 text-center py-3">Задач на сегодня нет</p>
             )}
             {todayEvents.slice(0,5).map(e => (
-              <div key={e.id} className="flex items-center gap-2 py-1.5 border-b border-[#1e2535]/50 last:border-0">
+              <div key={e.id} className="flex items-center gap-2 py-1.5 border-b border-bx-border/50 last:border-0">
                 <span className="text-base flex-shrink-0">
                   {e.type === 'tax_deadline' ? '📋' : e.type === 'reminder' ? '🔔' : '✅'}
                 </span>
-                <p className="text-xs text-slate-300 truncate flex-1">{e.title}</p>
+                <p className="text-xs text-bx-text truncate flex-1">{e.title}</p>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                  e.priority === 'high' ? 'bg-red-500/20 text-red-400' : 'bg-[#1e2535] text-slate-600'
+                  e.priority === 'high' ? 'bg-red-500/20 text-red-400' : 'bg-bx-surface-2 text-slate-600'
                 }`}>{e.priority === 'high' ? 'Срочно' : e.type === 'tax_deadline' ? 'Налог' : 'Задача'}</span>
               </div>
             ))}
@@ -247,9 +247,9 @@ export default function Dashboard() {
         </div>
 
         {/* Ближайшие налоговые дедлайны */}
-        <div className="bg-[#141820] border border-[#1e2535] rounded-xl p-4">
+        <div className="bg-bx-surface border border-bx-border rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-white">📅 Ближайшие дедлайны</h2>
+            <h2 className="text-sm font-semibold text-bx-text">📅 Ближайшие дедлайны</h2>
             <button onClick={() => navigate('/planner')} className="text-xs text-blue-400 hover:text-blue-300">Открыть →</button>
           </div>
           {upcomingTax.length === 0 && !loading && (
@@ -276,7 +276,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-200 truncate">{e.title}</p>
+                    <p className="text-xs text-bx-text truncate">{e.title}</p>
                     <p className="text-[10px] text-slate-600">{daysLeft === 0 ? 'сегодня' : `через ${daysLeft} д.`}</p>
                   </div>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0
@@ -303,7 +303,7 @@ export default function Dashboard() {
             { icon: 'templates', label: 'Шаблоны документов',  to: '/templates' },
           ].map(a => (
             <button key={a.label} onClick={() => navigate(a.to)}
-              className="flex items-center gap-3 bg-[#141820] border border-[#1e2535] hover:border-blue-500/30 hover:bg-[#1a2030] rounded-xl px-4 py-3 text-sm text-slate-300 transition-all text-left">
+              className="flex items-center gap-3 bg-bx-surface border border-bx-border hover:border-bx-accent/30 hover:bg-bx-surface-2 rounded-xl px-4 py-3 text-sm text-slate-300 transition-all text-left">
               <span className="w-9 h-9 rounded-lg bg-blue-600/15 text-blue-400 flex items-center justify-center flex-shrink-0"><Icon name={a.icon} className="w-[18px] h-[18px]" /></span>
               <span>{a.label}</span>
             </button>
@@ -318,7 +318,7 @@ function FinCell({ label, value, color, currency, hint }: { label: string; value
   const symMap: Record<string, string> = { UZS: ' сум', USD: ' $', EUR: ' €', RUB: ' ₽' }
   const sym = symMap[currency] || ` ${currency}`
   return (
-    <div className="bg-[#0f1117] rounded-lg px-3 py-2">
+    <div className="bg-bx-bg rounded-lg px-3 py-2">
       <p className="text-[10px] text-slate-500">{label}{hint && <span className="text-slate-700"> · {hint}</span>}</p>
       <p className={`text-base font-semibold ${color} mt-0.5 leading-tight`}>{value}<span className="text-[9px] text-slate-700 font-normal">{sym}</span></p>
     </div>

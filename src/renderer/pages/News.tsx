@@ -131,10 +131,18 @@ export default function News() {
 
   const loadFeed = React.useCallback(async () => {
     const bridge = (window as any).bx?.news?.fetch;
-    if (!bridge) return; // браузерный превью: лента доступна только в Electron
     setFeedState('loading');
     try {
-      const items = await bridge();
+      let items: FeedItem[] = [];
+      if (bridge) {
+        items = await bridge();
+      } else {
+        // Веб-версия: запрос через Vercel Serverless Proxy
+        const r = await fetch('/api/news');
+        if (r.ok) {
+          items = await r.json();
+        }
+      }
       if (items?.length) {
         setFeed(items);
         localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(items));
@@ -152,7 +160,7 @@ export default function News() {
   const currentYear = new Date().getFullYear();
   const tags = ['all', ...Array.from(new Set(STATIC_NEWS.map(n => n.tag)))];
   const filtered = filter === 'all' ? STATIC_NEWS : STATIC_NEWS.filter(n => n.tag === filter);
-  const hasBridge = Boolean((window as any).bx?.news?.fetch);
+  const hasBridge = true; // Отображаем ленту новостей и в Electron, и в вебе
 
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-6">

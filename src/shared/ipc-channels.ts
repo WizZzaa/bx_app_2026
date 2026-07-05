@@ -39,6 +39,9 @@ export const IPC = {
   // PDF generator
   PDF_GENERATE: 'pdf:generate',
   // Notifications
-  NOTIFY_SHOW: 'notify:show'
+  NOTIFY_SHOW: 'notify:show',
+  // Autostart settings
+  AUTOSTART_GET: 'settings:autostart:get',
+  AUTOSTART_SET: 'settings:autostart:set'
 } as const
 

@@ -55,23 +55,76 @@ if (!gotLock) {
 }
 
 let mainWindow: BrowserWindow | null = null
+let trayWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 
+const createTrayWindow = () => {
+  trayWindow = new BrowserWindow({
+    width: 360,
+    height: 480,
+    show: false,
+    frame: false,
+    fullscreenable: false,
+    resizable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+    },
+  })
+
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    trayWindow.loadURL(`${MAIN_WINDOW_VITE_DEV_SERVER_URL}#/tray`)
+  } else {
+    trayWindow.loadURL(
+      `file://${path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)}#/tray`
+    )
+  }
+
+  trayWindow.on('blur', () => {
+    trayWindow?.hide()
+  })
+}
+
+const toggleTrayWindow = () => {
+  if (!tray || !trayWindow) return
+
+  if (trayWindow.isVisible()) {
+    trayWindow.hide()
+    return
+  }
+
+  const trayBounds = tray.getBounds()
+  const windowBounds = trayWindow.getBounds()
+
+  let x = Math.round(trayBounds.x + (trayBounds.width / 2) - (windowBounds.width / 2))
+  let y = Math.round(trayBounds.y - windowBounds.height)
+
+  if (process.platform === 'darwin') {
+    x = Math.round(trayBounds.x + (trayBounds.width / 2) - (windowBounds.width / 2))
+    y = Math.round(trayBounds.y + trayBounds.height)
+  }
+
+  trayWindow.setPosition(x, y, false)
+  trayWindow.show()
+  trayWindow.focus()
+}
+
 const createTray = () => {
-  const icon = nativeImage.createEmpty()
+  const icon = nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAANElEQVR42mNk+M9QDwOsoRiEUcoGBgYGBhphwAAMmAY0YBoEID4aICyMhogQhhmkPADt/gP9Nn6GZAAAAABJRU5ErkJggg==')
   tray = new Tray(icon)
   
   const contextMenu = Menu.buildFromTemplate([
     { 
-      label: 'Показать приложение', 
+      label: 'Показать панель виджетов', 
       click: () => {
-        mainWindow?.show()
+        toggleTrayWindow()
       } 
     },
     { 
-      label: 'Скрыть', 
+      label: 'Открыть главное окно', 
       click: () => {
-        mainWindow?.hide()
+        mainWindow?.show()
       } 
     },
     { type: 'separator' },
@@ -88,11 +141,7 @@ const createTray = () => {
   tray.setContextMenu(contextMenu)
   
   tray.on('click', () => {
-    if (mainWindow?.isVisible()) {
-      mainWindow.hide()
-    } else {
-      mainWindow?.show()
-    }
+    toggleTrayWindow()
   })
 }
 
@@ -141,6 +190,7 @@ app.on('ready', () => {
   registerIpcHandlers()
   initBackupScheduler()
   createWindow()
+  createTrayWindow()
   createTray()
 })
 

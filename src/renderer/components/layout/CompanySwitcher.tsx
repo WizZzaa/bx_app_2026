@@ -35,7 +35,7 @@ export default function CompanySwitcher() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 bg-[#1e2535] hover:bg-[#2a3447] text-slate-300 text-sm px-3 py-1.5 rounded-lg border border-[#2a3447] transition-colors max-w-[220px]"
+        className="flex items-center gap-2 bg-bx-surface-2 hover:bg-bx-border-2 text-slate-300 text-sm px-3 py-1.5 rounded-lg border border-bx-border-2 transition-colors max-w-[220px]"
       >
         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: active?.color || '#4ade80' }} />
         <span className="truncate">{active ? active.name : 'Все компании'}</span>
@@ -43,19 +43,19 @@ export default function CompanySwitcher() {
       </button>
 
       {open && (
-        <div className="absolute top-full right-0 mt-1.5 w-64 bg-[#141820] border border-[#2a3447] rounded-lg shadow-2xl z-50 overflow-hidden">
+        <div className="absolute top-full right-0 mt-1.5 w-64 bg-bx-surface border border-bx-border-2 rounded-lg shadow-2xl z-50 overflow-hidden">
           <button
             onClick={() => { setActive(null); setOpen(false); }}
-            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#1e2535] ${!active ? 'text-blue-400' : 'text-slate-300'}`}
+            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-bx-surface-2 ${!active ? 'text-blue-400' : 'text-bx-text'}`}
           >
             Все компании
           </button>
-          <div className="border-t border-[#1e2535]" />
+          <div className="border-t border-bx-border" />
           {companies.map(c => (
             <button
               key={c.id}
               onClick={() => { setActive(c); setOpen(false); }}
-              className={`w-full flex items-center gap-2 text-left px-4 py-2.5 text-sm hover:bg-[#1e2535] ${active?.id === c.id ? 'text-blue-400' : 'text-slate-300'}`}
+              className={`w-full flex items-center gap-2 text-left px-4 py-2.5 text-sm hover:bg-bx-surface-2 ${active?.id === c.id ? 'text-blue-400' : 'text-bx-text'}`}
             >
               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: c.color || '#4ade80' }} />
               <span className="flex-1 truncate">{c.name}</span>
@@ -63,11 +63,11 @@ export default function CompanySwitcher() {
             </button>
           ))}
 
-          <div className="border-t border-[#1e2535]" />
+          <div className="border-t border-bx-border" />
           {adding ? (
             <div className="p-3 space-y-2">
-              <input value={name} onChange={e => setName(e.target.value)} placeholder="Название" className="w-full bg-[#0f1117] text-slate-200 text-sm px-2.5 py-1.5 rounded border border-[#1e2535] focus:outline-none focus:border-blue-500/50" />
-              <input value={inn} onChange={e => setInn(e.target.value)} placeholder="ИНН (необязательно)" className="w-full bg-[#0f1117] text-slate-200 text-sm px-2.5 py-1.5 rounded border border-[#1e2535] focus:outline-none focus:border-blue-500/50" />
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Название" className="w-full bg-bx-bg text-bx-text text-sm px-2.5 py-1.5 rounded border border-bx-border focus:outline-none focus:border-blue-500/50" />
+              <input value={inn} onChange={e => setInn(e.target.value)} placeholder="ИНН (необязательно)" className="w-full bg-bx-bg text-bx-text text-sm px-2.5 py-1.5 rounded border border-bx-border focus:outline-none focus:border-blue-500/50" />
               <div className="flex gap-2">
                 <button onClick={create} disabled={busy} className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs py-1.5 rounded">Добавить</button>
                 <button onClick={() => setAdding(false)} className="px-3 text-slate-500 hover:text-slate-300 text-xs">Отмена</button>
@@ -77,7 +77,7 @@ export default function CompanySwitcher() {
             <button onClick={() => {
               if (!isPro && companies.length >= limits.companies) { setPaywall(true); setOpen(false); return; }
               setAdding(true);
-            }} className="w-full text-left px-4 py-2.5 text-sm text-blue-400 hover:bg-[#1e2535]">
+            }} className="w-full text-left px-4 py-2.5 text-sm text-blue-400 hover:bg-bx-surface-2">
               + Добавить компанию
             </button>
           )}

@@ -87,7 +87,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
   }
 
   return (
-    <header className="flex items-center gap-4 px-6 h-12 bg-[#0f1117] border-b border-[#1e2535] flex-shrink-0">
+    <header className="flex items-center gap-4 px-6 h-12 bg-bx-bg border-b border-bx-border flex-shrink-0">
       <div className="flex-1 max-w-md relative" ref={boxRef}>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"><Icon name="search" className="w-4 h-4" /></span>
@@ -97,16 +97,16 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
             value={query}
             onChange={e => setQuery(e.target.value)}
             onFocus={() => query && setOpen(true)}
-            className="w-full bg-[#1e2535] text-slate-200 placeholder-slate-500 text-sm pl-9 pr-16 py-1.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 transition-colors"
+            className="w-full bg-bx-surface-2 text-bx-text placeholder-slate-500 text-sm pl-9 pr-16 py-1.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 transition-colors"
           />
           {onOpenSearch && (
             <button onClick={onOpenSearch} title="Командная палитра (Ctrl+K)"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 border border-[#2a3447] rounded px-1.5 py-0.5 hover:text-slate-300 hover:border-slate-600 transition-colors">⌘K</button>
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 border border-bx-border-2 rounded px-1.5 py-0.5 hover:text-slate-300 hover:border-slate-600 transition-colors">⌘K</button>
           )}
         </div>
 
         {open && (
-          <div className="absolute top-full mt-1.5 w-full bg-[#141820] border border-[#2a3447] rounded-lg shadow-2xl max-h-96 overflow-y-auto z-50">
+          <div className="absolute top-full mt-1.5 w-full bg-bx-surface border border-bx-border-2 rounded-lg shadow-2xl max-h-96 overflow-y-auto z-50">
             {results.length === 0 ? (
               <div className="px-4 py-3 text-sm text-slate-500">Ничего не найдено</div>
             ) : (
@@ -114,10 +114,10 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
                 <button
                   key={i}
                   onClick={() => go(r)}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[#1e2535] transition-colors border-b border-[#1e2535] last:border-0"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-bx-surface-2 transition-colors border-b border-bx-border last:border-0"
                 >
                   <div className="flex-1 min-w-0">
-                     <div className="text-sm text-slate-200 truncate">{r.title}</div>
+                     <div className="text-sm text-bx-text truncate">{r.title}</div>
                      <div className="text-[11px] text-slate-500 truncate">{r.subtitle}</div>
                   </div>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 flex-shrink-0">{r.category}</span>
@@ -140,7 +140,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
         )}
 
         {/* Индикатор сети и синхронизации */}
-        <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#141820] border border-[#1e2535]">
+        <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-bx-surface border border-bx-border">
           <span className={`w-1.5 h-1.5 rounded-full ${
             queueLength > 0 
               ? isOnline ? 'bg-amber-500 animate-pulse' : 'bg-orange-500' 
@@ -166,7 +166,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
         <CompanySwitcher />
         <button
           onClick={() => navigate('/settings')}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#1e2535] hover:bg-[#2a3447] text-slate-400 transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-slate-400 transition-colors"
           title="Настройки"
         >
           <Icon name="settings" className="w-4 h-4" />

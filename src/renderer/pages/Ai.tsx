@@ -45,16 +45,16 @@ export default function Ai() {
   const [paywall, setPaywall] = useState(false);
   const navigate = useNavigate();
 
-  // Эскалация к живому специалисту: черновик тикета из текущего диалога
+  // Эскалация к техподдержке: черновик тикета из текущего диалога
   function callSpecialist() {
     if (!isPro) { setPaywall(true); return; }
     const firstQuestion = messages.find(m => m.role === 'user')?.content ?? '';
-    const subject = (firstQuestion || 'Вопрос специалисту').slice(0, 80);
+    const subject = (firstQuestion || 'Вопрос по настройке / ошибке').slice(0, 80);
     const dialog = messages.slice(-6)
       .map(m => `${m.role === 'user' ? 'Я' : 'AI'}: ${m.content}`)
       .join('\n\n');
     const body = dialog
-      ? `Обсуждал(а) с AI-Консультантом, нужен специалист.\n\n--- Диалог ---\n${dialog}\n\n--- Мой вопрос ---\n`
+      ? `Обращение перенесено из AI-Консультанта.\n\n--- Диалог ---\n${dialog}\n\n--- Описание технической проблемы ---\n`
       : '';
     localStorage.setItem('bx_support_draft', JSON.stringify({ subject, body }));
     navigate('/support');
@@ -89,21 +89,21 @@ export default function Ai() {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Список диалогов */}
-      <aside className="w-60 flex-shrink-0 border-r border-[#1e2535] flex flex-col">
+      <aside className="w-60 flex-shrink-0 border-r border-bx-border flex flex-col">
         <div className="px-4 pt-5 pb-3">
-          <h1 className="text-base font-semibold text-white">AI-Консультант</h1>
+          <h1 className="text-base font-semibold text-bx-text">AI-Консультант</h1>
           <p className="text-xs text-slate-500 mt-0.5">По налогам и учёту РУз</p>
         </div>
         <div className="px-3 pb-2">
           <button onClick={newChat}
             className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">+ Новый диалог</button>
           <button onClick={callSpecialist}
-            title="Передать вопрос живому специалисту (Pro)"
-            className="w-full py-2 mt-1.5 bg-[#1e2535] hover:bg-[#252c3a] text-slate-300 text-xs font-medium rounded-lg transition-colors">🎧 Позвать специалиста</button>
+            title="Написать в техподдержку по ПК и 1С (Pro)"
+            className="w-full py-2 mt-1.5 bg-bx-surface-2 hover:bg-bx-border-2 text-slate-300 text-xs font-medium rounded-lg transition-colors">🎧 Техподдержка</button>
         </div>
         <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
           {chats.map(c => (
-            <div key={c.id} className={`group flex items-center rounded-lg ${activeId === c.id ? 'bg-blue-600/20' : 'hover:bg-[#1e2535]'}`}>
+            <div key={c.id} className={`group flex items-center rounded-lg ${activeId === c.id ? 'bg-blue-600/20' : 'hover:bg-bx-surface-2'}`}>
               <button onClick={() => openChat(c.id)}
                 className={`flex-1 text-left px-3 py-2 text-xs truncate ${activeId === c.id ? 'text-blue-400' : 'text-slate-400'}`}>
                 {c.title}
@@ -122,12 +122,12 @@ export default function Ai() {
           {messages.length === 0 && !sending ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-8 max-w-2xl mx-auto">
               <p className="text-5xl mb-3">🤖</p>
-              <h2 className="text-lg font-semibold text-white mb-2">Спросите про налоги, учёт, труд и ВЭД</h2>
+              <h2 className="text-lg font-semibold text-bx-text mb-2">Спросите про налоги, учёт, труд и ВЭД</h2>
               <p className="text-sm text-slate-500 mb-6 max-w-md">Помощник отвечает с опорой на встроенную Базу знаний РУз. Ответы носят справочный характер — сверяйтесь с lex.uz / soliq.uz.</p>
               <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
                 {QUICK_QUESTIONS.map(q => (
                   <button key={q} onClick={() => send(q)}
-                    className="text-left text-xs text-slate-400 bg-[#141820] border border-[#1e2535] hover:border-blue-500/40 hover:text-slate-200 rounded-lg px-3 py-2.5 transition-colors">
+                    className="text-left text-xs text-slate-400 bg-bx-surface border border-bx-border hover:border-bx-accent/40 hover:text-slate-200 rounded-lg px-3 py-2.5 transition-colors">
                     {q}
                   </button>
                 ))}
@@ -142,8 +142,8 @@ export default function Ai() {
                   </div>
                 ) : (
                   <div key={m.id} className="flex gap-3">
-                    <div className="w-7 h-7 rounded-full bg-[#1e2535] flex items-center justify-center text-sm flex-shrink-0">🤖</div>
-                    <div className="bg-[#141820] border border-[#1e2535] rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%]">
+                    <div className="w-7 h-7 rounded-full bg-bx-surface-2 flex items-center justify-center text-sm flex-shrink-0">🤖</div>
+                    <div className="bg-bx-surface border border-bx-border rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%]">
                       {renderAnswer(m.content)}
                     </div>
                   </div>
@@ -151,8 +151,8 @@ export default function Ai() {
               ))}
               {sending && (
                 <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-full bg-[#1e2535] flex items-center justify-center text-sm flex-shrink-0">🤖</div>
-                  <div className="bg-[#141820] border border-[#1e2535] rounded-2xl rounded-tl-md px-4 py-3">
+                  <div className="w-7 h-7 rounded-full bg-bx-surface-2 flex items-center justify-center text-sm flex-shrink-0">🤖</div>
+                  <div className="bg-bx-surface border border-bx-border rounded-2xl rounded-tl-md px-4 py-3">
                     <span className="flex gap-1">
                       <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                       <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -173,7 +173,7 @@ export default function Ai() {
         )}
 
         {/* Ввод */}
-        <div className="border-t border-[#1e2535] px-6 py-3">
+        <div className="border-t border-bx-border px-6 py-3">
           <div className="max-w-2xl mx-auto flex items-end gap-2">
             <textarea
               value={input}
@@ -181,7 +181,7 @@ export default function Ai() {
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }}
               rows={1}
               placeholder="Задайте вопрос по налогам, учёту, труду..."
-              className="flex-1 bg-[#0f1117] text-slate-200 px-4 py-2.5 rounded-xl border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm resize-none max-h-32"
+              className="flex-1 bg-bx-bg text-bx-text px-4 py-2.5 rounded-xl border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm resize-none max-h-32"
             />
             <button onClick={submit} disabled={!input.trim() || sending}
               className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-sm font-medium rounded-xl transition-colors flex-shrink-0">

@@ -70,6 +70,10 @@ const api = {
   notification: {
     show: (title: string, body: string): Promise<void> =>
       ipcRenderer.invoke(IPC.NOTIFY_SHOW, title, body)
+  },
+  autostart: {
+    get: (): Promise<boolean> => ipcRenderer.invoke(IPC.AUTOSTART_GET),
+    set: (enabled: boolean): Promise<void> => ipcRenderer.invoke(IPC.AUTOSTART_SET, enabled)
   }
 }
 

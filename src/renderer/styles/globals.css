@@ -18,6 +18,18 @@
   --bx-radius: 0.75rem;
 }
 
+.light {
+  color-scheme: light;
+  --bx-bg: #f8fafc;          /* фон приложения */
+  --bx-surface: #ffffff;     /* карточки/панели */
+  --bx-surface-2: #f1f5f9;   /* всплывающие меню/инпуты */
+  --bx-border: #e2e8f0;      /* основные границы */
+  --bx-border-2: #cbd5e1;    /* инпуты/акцентные границы */
+  --bx-text: #0f172a;        /* основной текст */
+  --bx-muted: #64748b;       /* приглушённый текст */
+  --bx-accent: #2563eb;      /* акцент (blue-600) */
+}
+
 /* Анимации */
 @keyframes bx-toast-in {
   from { opacity: 0; transform: translateX(16px); }
@@ -38,8 +50,8 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #0f1117;
-  color: #e2e8f0;
+  background: var(--bx-bg);
+  color: var(--bx-text);
   height: 100vh;
   overflow: hidden;
 }

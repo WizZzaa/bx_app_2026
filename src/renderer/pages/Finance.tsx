@@ -166,19 +166,19 @@ export default function Finance() {
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".txt" className="hidden" />
 
       {/* Шапка */}
-      <div className="flex-shrink-0 border-b border-[#1e2535] px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex-shrink-0 border-b border-bx-border px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <h1 className="text-base font-semibold text-white">Контроль оплат</h1>
-          <span className="text-[11px] text-slate-600">кто должен нам · кому должны мы</span>
+          <h1 className="text-base font-semibold text-bx-text">Контроль оплат</h1>
+          <span className="text-[11px] text-slate-600">who should pay us · who we should pay</span>
           {syncStatus && (
-            <span className="text-[10px] text-slate-500 bg-[#1e2535] px-2 py-0.5 rounded-full">{syncStatus}</span>
+            <span className="text-[10px] text-slate-500 bg-bx-surface-2 px-2 py-0.5 rounded-full">{syncStatus}</span>
           )}
         </div>
         <div className="flex gap-2">
-          <button onClick={handleImportClick} className="px-3 py-1.5 border border-[#2a3447] text-slate-300 hover:text-white text-xs font-medium rounded-lg bg-[#141820] hover:bg-[#1e2535] transition-colors">
+          <button onClick={handleImportClick} className="px-3 py-1.5 border border-bx-border-2 text-slate-300 hover:text-white text-xs font-medium rounded-lg bg-bx-surface hover:bg-bx-surface-2 transition-colors">
             Импорт выписки
           </button>
-          <button onClick={handleExport} className="px-3 py-1.5 border border-[#2a3447] text-slate-300 hover:text-white text-xs font-medium rounded-lg bg-[#141820] hover:bg-[#1e2535] transition-colors">
+          <button onClick={handleExport} className="px-3 py-1.5 border border-bx-border-2 text-slate-300 hover:text-white text-xs font-medium rounded-lg bg-bx-surface hover:bg-bx-surface-2 transition-colors">
             Экспорт в Excel
           </button>
           <button onClick={() => openNew('income')} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg">+ Нам должны</button>
@@ -190,11 +190,11 @@ export default function Finance() {
         <div className="max-w-4xl mx-auto space-y-5">
           {/* Итоги */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="bg-gradient-to-br from-emerald-600/15 via-[#141b2e] to-[#0f1117] border border-[#1e2535] rounded-2xl px-5 py-4">
+            <div className="bg-gradient-to-br from-emerald-600/15 via-bx-surface/50 to-bx-bg border border-bx-border rounded-2xl px-5 py-4">
               <p className="text-[11px] text-emerald-300/70 uppercase tracking-wider font-semibold">Нам должны · {receivable.length}</p>
               <p className="text-2xl font-bold text-emerald-400 mt-1 tabular-nums">{fmt(sums.receivable)} <span className="text-xs font-normal text-slate-500">сум</span></p>
             </div>
-            <div className="bg-gradient-to-br from-red-600/15 via-[#141b2e] to-[#0f1117] border border-[#1e2535] rounded-2xl px-5 py-4">
+            <div className="bg-gradient-to-br from-red-600/15 via-bx-surface/50 to-bx-bg border border-bx-border rounded-2xl px-5 py-4">
               <p className="text-[11px] text-red-300/70 uppercase tracking-wider font-semibold">Мы должны · {payable.length}</p>
               <p className="text-2xl font-bold text-red-400 mt-1 tabular-nums">{fmt(sums.payable)} <span className="text-xs font-normal text-slate-500">сум</span></p>
             </div>
@@ -215,24 +215,24 @@ export default function Finance() {
           </div>
 
           {/* История оплат */}
-          <div className="bg-[#141820] border border-[#1e2535] rounded-xl overflow-hidden">
+          <div className="bg-bx-surface border border-bx-border rounded-xl overflow-hidden">
             <button onClick={() => setShowHistory(v => !v)}
-              className="w-full flex items-center justify-between px-5 py-3 hover:bg-[#1a2030] transition-colors">
-              <h3 className="text-sm font-semibold text-white">История оплат <span className="text-slate-600 font-normal">· последние {paid.length}</span></h3>
+              className="w-full flex items-center justify-between px-5 py-3 hover:bg-bx-surface-2 transition-colors">
+              <h3 className="text-sm font-semibold text-bx-text">История оплат <span className="text-slate-600 font-normal">· последние {paid.length}</span></h3>
               <span className="text-xs text-slate-500">{showHistory ? 'свернуть ▴' : 'развернуть ▾'}</span>
             </button>
             {showHistory && (
               paid.length === 0 ? (
-                <p className="text-xs text-slate-600 text-center py-8 border-t border-[#1e2535]">Оплаченных операций пока нет.</p>
+                <p className="text-xs text-slate-600 text-center py-8 border-t border-bx-border">Оплаченных операций пока нет.</p>
               ) : (
-                <div className="divide-y divide-[#1e2535]/60 border-t border-[#1e2535]">
+                <div className="divide-y divide-bx-border/60 border-t border-bx-border">
                   {paid.map(t => (
-                    <button key={t.id} onClick={() => openEdit(t)} className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-[#1e2535]/40 transition-colors text-left">
+                    <button key={t.id} onClick={() => openEdit(t)} className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-bx-surface-2/40 transition-colors text-left">
                       <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${t.type === 'income' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
                         {t.type === 'income' ? '↑' : '↓'}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-slate-200 truncate">{t.counterparty || t.category || (t.type === 'income' ? 'Поступление' : 'Оплата')}</p>
+                        <p className="text-xs text-bx-text truncate">{t.counterparty || t.category || (t.type === 'income' ? 'Поступление' : 'Оплата')}</p>
                         <p className="text-[10px] text-slate-600">{new Date(t.date).toLocaleDateString('ru-RU')}{t.description ? ` · ${t.description}` : ''}</p>
                       </div>
                       <span className={`text-sm font-medium flex-shrink-0 tabular-nums ${t.type === 'income' ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -286,25 +286,27 @@ function DebtList({ title, accent, items, onEdit, onPaid, onRemind, empty }: {
 }) {
   const today = todayISO()
   return (
-    <div className="bg-[#141820] border border-[#1e2535] rounded-xl overflow-hidden">
-      <div className="px-5 py-3 border-b border-[#1e2535]">
-        <h3 className="text-sm font-semibold text-white">{title} <span className="text-slate-600 font-normal">· {items.length}</span></h3>
+    <div className="bg-bx-surface border border-bx-border rounded-xl overflow-hidden">
+      <div className="px-5 py-3 border-b border-bx-border">
+        <h3 className="text-sm font-semibold text-bx-text">{title} <span className="text-slate-600 font-normal">· {items.length}</span></h3>
       </div>
       {items.length === 0 ? (
         <p className="text-xs text-slate-600 text-center py-8">{empty}</p>
       ) : (
-        <div className="divide-y divide-[#1e2535]/60">
+        <div className="divide-y divide-bx-border/60">
           {items.map(t => {
             const days = Math.round((new Date(today).getTime() - new Date(t.date).getTime()) / 86400000)
             return (
-              <div key={t.id} className="px-4 py-2.5 hover:bg-[#1e2535]/30 transition-colors group">
+              <div key={t.id} className="px-4 py-2.5 hover:bg-bx-surface-2/30 transition-colors group">
                 <div className="flex items-center gap-2.5">
-                  <button onClick={() => onEdit(t)} className="flex-1 min-w-0 text-left">
-                    <p className="text-xs text-slate-200 truncate">{t.counterparty || t.category || 'Без контрагента'}</p>
-                    <p className="text-[10px] text-slate-600">
-                      {new Date(t.date).toLocaleDateString('ru-RU')}
-                      {days > 0 && <span className={days > 30 ? ' text-red-400' : ' text-amber-400/70'}> · висит {days} дн.</span>}
-                    </p>
+                  <button onClick={() => onEdit(t)} className="w-full text-left flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-bx-text truncate">{t.counterparty || t.category || 'Без контрагента'}</p>
+                      <p className="text-[10px] text-slate-600">
+                        {new Date(t.date).toLocaleDateString('ru-RU')}
+                        {days > 0 && <span className={days > 30 ? ' text-red-400' : ' text-amber-400/70'}> · висит {days} дн.</span>}
+                      </p>
+                    </div>
                   </button>
                   <span className={`text-sm font-semibold flex-shrink-0 tabular-nums ${accent === 'emerald' ? 'text-emerald-400' : 'text-red-400'}`}>
                     {fmt(t.amount * ((t as BxTransaction).exchange_rate || 1))}<span className="text-[10px] font-normal text-slate-500"> сум</span>

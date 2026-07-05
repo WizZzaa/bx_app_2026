@@ -21,6 +21,8 @@ import Settings from './pages/Settings'
 import EcpManager from './pages/EcpManager'
 import Counterparties from './pages/Counterparties'
 import Placeholder from './pages/Placeholder'
+import TrayView from './pages/TrayView'
+import AdminDashboard from './pages/AdminDashboard'
 import { CompanyProvider } from './lib/CompanyContext';
 import { PlanProvider } from './lib/plan';
 
@@ -73,39 +75,65 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [])
 
+  useEffect(() => {
+    const theme = localStorage.getItem('bx_theme') || 'dark';
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+  }, []);
+
+  const isTray = window.location.hash.includes('tray') || window.location.pathname.includes('tray')
+
+  if (isTray) {
+    return (
+      <CompanyProvider>
+        <PlanProvider>
+          <div className="w-screen h-screen overflow-hidden bg-bx-bg text-bx-text">
+            <Routes>
+              <Route path="*" element={<TrayView />} />
+            </Routes>
+          </div>
+        </PlanProvider>
+      </CompanyProvider>
+    )
+  }
+
   return (
     <CompanyProvider>
-    <PlanProvider>
-    <div className="flex h-screen w-screen overflow-hidden bg-[#0f1117]">
-      <Sidebar />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Topbar onOpenSearch={() => setPaletteOpen(true)} />
-        <main className="flex flex-1 overflow-hidden">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/tools" element={<Tools />} />
-            <Route path="/reference" element={<Reference />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/news" element={<News />} />
-            <Route path="/knowledge" element={<Knowledge />} />
-            <Route path="/templates" element={<Templates />} />
-            <Route path="/hr" element={<Hr />} />
-            <Route path="/finance" element={<Finance />} />
-            <Route path="/planner" element={<Planner />} />
-            <Route path="/calc" element={<Calc />} />
-            <Route path="/ecp" element={<EcpManager />} />
-            <Route path="/check-inn" element={<InnCheck />} />
-            <Route path="/ai" element={<Ai />} />
-            <Route path="/support" element={<Support />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/counterparties" element={<Counterparties />} />
-          </Routes>
-        </main>
-      </div>
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
-    </div>
-    </PlanProvider>
+      <PlanProvider>
+        <div className="flex h-screen w-screen overflow-hidden bg-bx-bg text-bx-text">
+          <Sidebar />
+          <div className="flex flex-col flex-1 overflow-hidden">
+            <Topbar onOpenSearch={() => setPaletteOpen(true)} />
+            <main className="flex flex-1 overflow-hidden">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/tools" element={<Tools />} />
+                <Route path="/reference" element={<Reference />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/news" element={<News />} />
+                <Route path="/knowledge" element={<Knowledge />} />
+                <Route path="/templates" element={<Templates />} />
+                <Route path="/hr" element={<Hr />} />
+                <Route path="/finance" element={<Finance />} />
+                <Route path="/planner" element={<Planner />} />
+                <Route path="/calc" element={<Calc />} />
+                <Route path="/ecp" element={<EcpManager />} />
+                <Route path="/check-inn" element={<InnCheck />} />
+                <Route path="/ai" element={<Ai />} />
+                <Route path="/support" element={<Support />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/counterparties" element={<Counterparties />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+              </Routes>
+            </main>
+          </div>
+          <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+        </div>
+      </PlanProvider>
     </CompanyProvider>
-  );
+  )
 }

@@ -6,18 +6,28 @@ Electron-приложение для бухгалтеров Республики
 ## Стек
 
 - **Electron Forge + Vite** (main/preload/renderer), React 19, TypeScript, Tailwind CSS
+- **Веб-версия и Лендинг**: React + Vite + Tailwind v4 в `/web` (с использованием `@tailwindcss/postcss` адаптера, роутинг SPA, деплой на Vercel, проксирование новостей через `/api/news`)
 - **Данные**: Supabase (проект bxuz, таблицы с префиксом `bx_`, RLS по user_id)
   + локальный кэш Dexie/IndexedDB + localStorage для настроек и мелких кэшей
-- **AI**: Supabase Edge Function `ai-consultant` → Google Gemini (секрет GEMINI_API_KEY);
-  альтернативный провайдер — локальная Ollama
+- **AI & Бот**: Supabase Edge Functions:
+  + `ai-consultant` → Google Gemini (проверка лимитов Free-тарифа: 10 вопросов/мес)
+  + `support-bot` → Telegram Webhook бот для уведомления о тикетах и ответов из Telegram
+  + альтернативный провайдер ИИ — локальная Ollama
 
 ## Команды
 
 ```bash
+# Десктопное приложение
 npm start        # запуск приложения (electron-forge + vite dev)
 npx tsc --noEmit # проверка типов — обязательна перед коммитом
 npm run lint     # eslint
 npm run make     # сборка дистрибутива
+
+# Веб-сайт и лендинг
+cd ../web
+npm run dev      # локальный запуск сайта
+npx tsc --noEmit # проверка типов веб-версии
+npm run build    # сборка веб-версии
 ```
 
 ## Обязательные правила

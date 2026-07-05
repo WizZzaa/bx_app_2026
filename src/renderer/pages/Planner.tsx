@@ -186,10 +186,10 @@ export default function Planner() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Top bar */}
-      <div className="flex-shrink-0 border-b border-[#1e2535] px-6 py-3">
+      <div className="flex-shrink-0 border-b border-bx-border px-6 py-3">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
-            <h1 className="text-base font-semibold text-white">Планировщик</h1>
+            <h1 className="text-base font-semibold text-bx-text">Планировщик</h1>
             <div className="flex items-center gap-2">
               {todayCount > 0 && <span className="text-[11px] bg-blue-500/15 text-blue-400 px-2 py-0.5 rounded-full">сегодня: {todayCount}</span>}
               {overdueCount > 0 && <span className="text-[11px] bg-red-500/15 text-red-400 px-2 py-0.5 rounded-full">просрочено: {overdueCount}</span>}
@@ -198,7 +198,7 @@ export default function Planner() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex bg-[#0f1117] border border-[#1e2535] rounded-lg p-0.5">
+            <div className="flex bg-bx-bg border border-bx-border rounded-lg p-0.5">
               {([['board','Доски'],['all','Все задачи'],['digest','Сводка'],['calendar','Календарь'],['list','Список']] as const).map(([v,l]) => (
                 <button key={v} onClick={() => setView(v as View)}
                   className={`px-3 py-1 text-xs rounded-md transition-colors ${view === v ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>{l}</button>
@@ -223,7 +223,7 @@ export default function Planner() {
             {boards.map(b => (
               <button key={b.id} onClick={() => setActiveBoardId(b.id)}
                 onDoubleClick={() => { setEditingBoard(b); setBoardModalOpen(true); }}
-                className={`group px-2.5 py-1 text-xs rounded-lg transition-colors flex items-center gap-1.5 ${activeBoardId === b.id ? 'bg-[#1e2535] text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+                className={`group px-2.5 py-1 text-xs rounded-lg transition-colors flex items-center gap-1.5 ${activeBoardId === b.id ? 'bg-bx-surface-2 text-bx-text font-medium border border-bx-border-2' : 'text-slate-500 hover:text-slate-300'}`}>
                 <span>{b.icon}</span>{b.name}
                 {activeBoardId === b.id && (
                   <span onClick={(e) => { e.stopPropagation(); setEditingBoard(b); setBoardModalOpen(true); }}

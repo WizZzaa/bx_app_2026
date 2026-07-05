@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../lib/auth/useAuth';
-import { hasPin, setPin, verifyPin, clearPin } from '../../lib/auth/pin';
-import LoginScreen from './LoginScreen';
-import PinScreen from './PinScreen';
+import React, { useState, useCallback } from 'react'
+import { useAuth } from '../../lib/auth/useAuth'
+import { hasPin, setPin, verifyPin, clearPin } from '../../lib/auth/pin'
+import { useIdleLock } from '../../lib/auth/useIdleLock'
+import LoginScreen from './LoginScreen'
+import PinScreen from './PinScreen'
 
 /**
  * Поток входа:
@@ -10,28 +11,43 @@ import PinScreen from './PinScreen';
  * 2. Есть сессия, нет PIN → установка PIN.
  * 3. Есть сессия и PIN, не разблокировано в этом запуске → ввод PIN.
  * 4. Разблокировано → приложение.
+ *    + Автоблокировка по неактивности (если включена в настройках).
  */
 export default function AuthGate({ children }: { children: React.ReactNode }) {
-  const { loading, session, signIn, signUp, signOut } = useAuth();
-  const [unlocked, setUnlocked] = useState(false);
+  const { loading, session, signIn, signUp, signOut, resetPassword, resendConfirmation } = useAuth()
+  const [unlocked, setUnlocked] = useState(false)
 
-  async function forgot() {
-    clearPin();
-    setUnlocked(false);
-    await signOut();
-  }
+  const handleLock = useCallback(() => {
+    setUnlocked(false)
+  }, [])
+
+  // Автоблокировка активна только когда приложение разблокировано
+  useIdleLock(handleLock, unlocked)
+
+  const forgot = useCallback(async () => {
+    clearPin()
+    setUnlocked(false)
+    await signOut()
+  }, [signOut])
 
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-[#0f1117]">
         <span className="w-6 h-6 border-2 border-slate-600 border-t-blue-500 rounded-full animate-spin" />
       </div>
-    );
+    )
   }
 
   // Нет сессии → вход по паролю
   if (!session) {
-    return <LoginScreen onSignIn={signIn} onSignUp={signUp} />;
+    return (
+      <LoginScreen
+        onSignIn={signIn}
+        onSignUp={signUp}
+        onResetPassword={resetPassword}
+        onResendConfirmation={resendConfirmation}
+      />
+    )
   }
 
   // Есть сессия, но PIN не задан → установить
@@ -44,7 +60,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         onSuccess={() => setUnlocked(true)}
         onForgot={forgot}
       />
-    );
+    )
   }
 
   // Есть сессия и PIN, но в этом запуске ещё не разблокировано → ввести PIN
@@ -58,8 +74,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         onSuccess={() => setUnlocked(true)}
         onForgot={forgot}
       />
-    );
+    )
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 }
