@@ -25,6 +25,7 @@ import TrayView from './pages/TrayView'
 import AdminDashboard from './pages/AdminDashboard'
 import { CompanyProvider } from './lib/CompanyContext';
 import { PlanProvider } from './lib/plan';
+import { loadEcpKeys } from './lib/ecpStorage';
 
 export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -43,9 +44,8 @@ export default function App() {
   useEffect(() => {
     const checkEcpExpiry = async () => {
       try {
-        const keysStr = localStorage.getItem('bx_ecp_keys') || '[]'
-        const keys = JSON.parse(keysStr)
-        const urgentKeys = keys.filter((k: any) => {
+        const keys = await loadEcpKeys()
+        const urgentKeys = keys.filter((k) => {
           const now = new Date()
           now.setHours(0, 0, 0, 0)
           const target = new Date(k.expiresAt)
@@ -58,7 +58,7 @@ export default function App() {
           const today = new Date().toDateString()
           
           if (lastNotify !== today && window.bx?.notification?.show) {
-            const names = urgentKeys.map((k: any) => k.name).join(', ')
+            const names = urgentKeys.map((k) => k.name).join(', ')
             await window.bx.notification.show(
               'Истекает срок действия ЭЦП',
               `Внимание! Ключи (${names}) истекают в течение 14 дней. Пожалуйста, обновите их.`

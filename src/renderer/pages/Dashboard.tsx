@@ -10,11 +10,11 @@ import { useTransactions } from './finance/useTransactions';
 import Icon from '../lib/ui/Icon';
 import SmartCalendar from '../components/dashboard/SmartCalendar';
 import { todayISO } from '../lib/dates';
+import { loadEcpKeys } from '../lib/ecpStorage';
 
-const ECP_KEY = 'bx_ecp_keys';
-function getExpiringEcpCount(): number {
+async function getExpiringEcpCount(): Promise<number> {
   try {
-    const keys: { expiresAt: string }[] = JSON.parse(localStorage.getItem(ECP_KEY) || '[]');
+    const keys = await loadEcpKeys();
     const soon = new Date(); soon.setDate(soon.getDate() + 30);
     return keys.filter(k => new Date(k.expiresAt) <= soon).length;
   } catch { return 0; }
@@ -35,7 +35,8 @@ export default function Dashboard() {
   const { active, companies } = useCompany();
   const { events, loading } = useEvents(active?.id ?? null);
   const { transactions } = useTransactions(active?.id ?? null);
-  const ecpExpiring = getExpiringEcpCount();
+  const [ecpExpiring, setEcpExpiring] = useState(0);
+  useEffect(() => { getExpiringEcpCount().then(setEcpExpiring); }, []);
 
   const [showWidgetConfig, setShowWidgetConfig] = useState(false)
   const [widgetVisibility, setWidgetVisibility] = useState({

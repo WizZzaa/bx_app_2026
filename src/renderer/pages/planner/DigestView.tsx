@@ -5,6 +5,7 @@ import type { AllCard } from './useCards';
 import type { BxBoard } from './useBoards';
 import { db } from '../../lib/db/localDb';
 import { todayISO } from '../../lib/dates';
+import { loadEcpKeys } from '../../lib/ecpStorage';
 
 // «Сводка» — все задачи со всех разделов приложения по пунктам:
 // события Планировщика, карточки каждой доски, истекающие ЭЦП,
@@ -44,14 +45,13 @@ export default function DigestView({ events, cards, boards, onEventClick, onCard
 
   useEffect(() => {
     // ЭЦП: истекающие ≤ 60 дней
-    try {
-      const keys: EcpKey[] = JSON.parse(localStorage.getItem('bx_ecp_keys') || '[]');
+    loadEcpKeys().then(keys => {
       const soon = keys.filter(k => {
         const d = Math.round((new Date(k.expiresAt).getTime() - new Date(today).getTime()) / 86400000);
         return d <= 60;
       }).sort((a, b) => a.expiresAt.localeCompare(b.expiresAt));
       setEcpKeys(soon);
-    } catch { setEcpKeys([]); }
+    }).catch(() => setEcpKeys([]));
 
     // Финансы: неоплаченные операции из локального кэша Dexie
     db.transactions.toArray()

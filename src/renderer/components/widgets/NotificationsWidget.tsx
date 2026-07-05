@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { todayISO } from '../../lib/dates';
+import { loadEcpKeys } from '../../lib/ecpStorage';
 
 // Виджет оповещений — реальные данные из Планировщика (кэш bx_events)
 // и менеджера ЭЦП (bx_ecp_keys). Клик ведёт в соответствующий раздел.
@@ -28,7 +29,7 @@ function daysTo(dateISO: string, today: string): number {
   return Math.round((new Date(dateISO).getTime() - new Date(today).getTime()) / 86400000);
 }
 
-function buildNotices(): Notice[] {
+function buildNotices(keys: EcpKey[]): Notice[] {
   const today = todayISO();
   const notices: Notice[] = [];
 
@@ -76,8 +77,6 @@ function buildNotices(): Notice[] {
   }
 
   // ЭЦП: истекающие ключи
-  let keys: EcpKey[] = [];
-  try { keys = JSON.parse(localStorage.getItem('bx_ecp_keys') || '[]'); } catch { /* пусто */ }
   const expiring = keys
     .map(k => ({ k, d: daysTo(k.expiresAt.slice(0, 10), today) }))
     .filter(x => x.d >= 0 && x.d <= 30)
@@ -96,7 +95,9 @@ function buildNotices(): Notice[] {
 
 export default function NotificationsWidget() {
   const navigate = useNavigate();
-  const notices = useMemo(buildNotices, []);
+  const [ecpKeys, setEcpKeys] = useState<EcpKey[]>([]);
+  useEffect(() => { loadEcpKeys().then(setEcpKeys); }, []);
+  const notices = useMemo(() => buildNotices(ecpKeys), [ecpKeys]);
 
   return (
     <div className="rounded-xl border border-[#1e2535] bg-[#141820] p-4 h-full">

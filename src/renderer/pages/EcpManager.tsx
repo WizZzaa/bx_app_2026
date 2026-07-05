@@ -1,30 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { uid } from '../lib/uid';
 import { todayISO } from '../lib/dates';
+import { loadEcpKeys, saveEcpKeys, EcpKeyRecord } from '../lib/ecpStorage';
 
-const STORAGE_KEY = 'bx_ecp_keys';
-
-interface EcpKey {
-  id: string;
-  name: string;
-  owner: string;
-  inn: string;
-  expiresAt: string;
-  addedAt: string;
-  org?: string;
-}
-
-function loadKeys(): EcpKey[] {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function saveKeys(keys: EcpKey[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(keys));
-}
+type EcpKey = EcpKeyRecord;
 
 function daysUntil(dateStr: string): number {
   const now = new Date();
@@ -90,13 +69,13 @@ export default function EcpManager() {
   }
 
   useEffect(() => {
-    setKeys(loadKeys());
+    loadEcpKeys().then(setKeys);
     checkEimzo()
   }, []);
 
   function persist(updated: EcpKey[]) {
     setKeys(updated);
-    saveKeys(updated);
+    void saveEcpKeys(updated);
   }
 
   function startAdd() {
