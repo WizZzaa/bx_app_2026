@@ -5,9 +5,6 @@ import { useToast } from '../lib/ui/ToastContext'
 import { KB_ARTICLES } from '../data/knowledge'
 import { SECTIONS as BUNDLED_SECTIONS } from '../data/services'
 
-// Панель администратора BX: пользователи и тарифы, справочник БРВ/МРОТ,
-// CMS базы знаний, чат техподдержки. Доступ — только role='admin' (RLS).
-
 interface Profile {
   user_id: string
   plan: string
@@ -16,9 +13,6 @@ interface Profile {
   email?: string
 }
 
-// Живая схема справочника показателей:
-//   bx_ref_indicators       — сам показатель (key = 'brv' | 'mrot' | 'refi')
-//   bx_ref_indicator_values — история значений с привязкой по indicator_id
 interface IndicatorMeta {
   id: string
   key: string
@@ -52,6 +46,11 @@ interface Ticket {
   status: 'open' | 'answered' | 'closed'
   created_at: string
   updated_at: string
+  contact_name?: string
+  contact_phone?: string
+  company_name?: string
+  company_inn?: string
+  remote_id?: string
   email?: string
 }
 
@@ -62,29 +61,69 @@ interface TicketMessage {
   created_at: string
 }
 
-type Tab = 'users' | 'indicators' | 'cms' | 'services' | 'tickets'
-
-const TABS: { id: Tab; label: string; icon: string; accent: string; activeCls: string }[] = [
-  { id: 'users',      label: 'Пользователи',   icon: '👥', accent: 'text-blue-400',    activeCls: 'bg-blue-600/20 text-blue-400 border-blue-500/40' },
-  { id: 'indicators', label: 'БРВ / МРОТ',     icon: '📊', accent: 'text-emerald-400', activeCls: 'bg-emerald-600/20 text-emerald-400 border-emerald-500/40' },
-  { id: 'cms',        label: 'База знаний',    icon: '📚', accent: 'text-purple-400',  activeCls: 'bg-purple-600/20 text-purple-400 border-purple-500/40' },
-  { id: 'services',   label: 'Сервисы',        icon: '🔗', accent: 'text-cyan-400',    activeCls: 'bg-cyan-600/20 text-cyan-400 border-cyan-500/40' },
-  { id: 'tickets',    label: 'Техподдержка',   icon: '🎧', accent: 'text-amber-400',   activeCls: 'bg-amber-500/20 text-amber-400 border-amber-500/40' },
-]
-
 interface ServiceRow {
-  id: string
+  id?: string
   section_id: string
-  section_title: string
+  section_title?: string
   icon: string
   title: string
   description: string
   url: string
-  tag: string
+  tag?: string
   is_hot: boolean
   is_published: boolean
-  sort_order: number
+  sort_order?: number
+  is_local?: boolean
 }
+
+interface PaymentOrder {
+  id: string
+  seq: number
+  user_id: string
+  months: number
+  amount: number
+  state: 'created' | 'waiting' | 'paid' | 'cancelled'
+  provider: 'payme' | 'click' | null
+  provider_trans_id: string | null
+  paid_at: string | null
+  created_at: string
+}
+
+interface TaxRateRow {
+  id?: string
+  name: string
+  rate: string
+  base: string
+  note?: string
+  regime?: string
+  sort?: number
+}
+
+interface AccountRow {
+  code: string
+  name: string
+  account_class: string
+  type: string | null
+  sort?: number
+}
+
+interface NsbuRow {
+  number: number
+  title: string
+  description: string | null
+}
+
+type Tab = 'users' | 'indicators' | 'cms' | 'services' | 'payments' | 'tickets'
+type SubRefTab = 'indicators' | 'taxes' | 'accounts' | 'nsbu'
+
+const TABS: { id: Tab; label: string; icon: string; accent: string; activeCls: string }[] = [
+  { id: 'users',      label: 'Пользователи',   icon: '👥', accent: 'text-blue-400',    activeCls: 'bg-blue-600/20 text-blue-400 border-blue-500/40' },
+  { id: 'indicators', label: 'Справочники',    icon: '📊', accent: 'text-emerald-400', activeCls: 'bg-emerald-600/20 text-emerald-400 border-emerald-500/40' },
+  { id: 'cms',        label: 'База знаний',    icon: '📚', accent: 'text-purple-400',  activeCls: 'bg-purple-600/20 text-purple-400 border-purple-500/40' },
+  { id: 'services',   label: 'Сервисы',        icon: '🔗', accent: 'text-cyan-400',    activeCls: 'bg-cyan-600/20 text-cyan-400 border-cyan-500/40' },
+  { id: 'payments',   label: 'Оплаты',         icon: '💳', accent: 'text-rose-400',    activeCls: 'bg-rose-600/20 text-rose-400 border-rose-500/40' },
+  { id: 'tickets',    label: 'Техподдержка',   icon: '🎧', accent: 'text-amber-400',   activeCls: 'bg-amber-500/20 text-amber-400 border-amber-500/40' },
+]
 
 const TICKET_STATUS: Record<Ticket['status'], { label: string; cls: string }> = {
   open:     { label: 'Открыт',     cls: 'bg-blue-500/15 text-blue-400' },
@@ -98,19 +137,36 @@ const INDICATOR_BADGE: Record<string, string> = {
   refi: 'bg-amber-500/15 text-amber-400',
 }
 
-function initials(email?: string): string {
+const ORDER_STATE_BADGE: Record<PaymentOrder['state'], { label: string; cls: string }> = {
+  paid:      { label: 'Оплачен', cls: 'bg-emerald-500/15 text-emerald-400' },
+  waiting:   { label: 'Ожидает', cls: 'bg-amber-500/15 text-amber-400' },
+  created:   { label: 'Создан',  cls: 'bg-blue-500/15 text-blue-400' },
+  cancelled: { label: 'Отменен', cls: 'bg-red-500/15 text-red-500' },
+}
+
+const initials = (email?: string): string => {
   return (email ?? '??').slice(0, 2).toUpperCase()
 }
 
-function avatarHue(id: string): string {
-  const hues = ['bg-blue-600/25 text-blue-300', 'bg-purple-600/25 text-purple-300', 'bg-emerald-600/25 text-emerald-300',
-    'bg-amber-500/25 text-amber-300', 'bg-cyan-600/25 text-cyan-300', 'bg-rose-600/25 text-rose-300']
+const avatarHue = (id: string): string => {
+  const hues = [
+    'bg-blue-600/25 text-blue-300',
+    'bg-purple-600/25 text-purple-300',
+    'bg-emerald-600/25 text-emerald-300',
+    'bg-amber-500/25 text-amber-300',
+    'bg-cyan-600/25 text-cyan-300',
+    'bg-rose-600/25 text-rose-300'
+  ]
   let h = 0
   for (const c of id) h = (h * 31 + c.charCodeAt(0)) % hues.length
   return hues[h]
 }
 
-export default function AdminDashboard() {
+const fmtSum = (n: number) => {
+  return n.toLocaleString('ru-RU')
+}
+
+const AdminDashboard = () => {
   const { isAdmin, loading: planLoading, refresh: refreshPlan } = usePlan()
   const toast = useToast()
   const [activeTab, setActiveTab] = useState<Tab>('users')
@@ -119,22 +175,46 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<Profile[]>([])
   const [usersLoading, setUsersLoading] = useState(false)
   const [userSearch, setUserSearch] = useState('')
+  const [userFilter, setUserFilter] = useState<'all' | 'pro' | 'free' | 'admin'>('all')
+
+  // Справочники под-вкладки
+  const [subRefTab, setSubRefTab] = useState<SubRefTab>('indicators')
 
   // Indicators
   const [indMeta, setIndMeta] = useState<IndicatorMeta[]>([])
   const [indValues, setIndValues] = useState<IndicatorValueRow[]>([])
-  const [indType, setIndType] = useState<'brv' | 'mrot'>('brv')
+  const [indType, setIndType] = useState<'brv' | 'mrot' | 'refi'>('brv')
   const [indValue, setIndValue] = useState('')
   const [indDate, setIndDate] = useState('')
   const [indBasis, setIndBasis] = useState('')
   const [indVerified, setIndVerified] = useState(true)
 
+  // Справочник Налоги
+  const [taxRates, setTaxRates] = useState<TaxRateRow[]>([])
+  const [editingTax, setEditingTax] = useState<Partial<TaxRateRow> | null>(null)
+  const [taxMode, setTaxMode] = useState<'list' | 'create' | 'edit'>('list')
+
+  // Справочник План счетов
+  const [accounts, setAccounts] = useState<AccountRow[]>([])
+  const [accSearch, setAccSearch] = useState('')
+  const [editingAcc, setEditingAcc] = useState<Partial<AccountRow> | null>(null)
+  const [accMode, setAccMode] = useState<'list' | 'create' | 'edit'>('list')
+
+  // Справочник НСБУ
+  const [nsbuList, setNsbuList] = useState<NsbuRow[]>([])
+  const [nsbuSearch, setNsbuSearch] = useState('')
+  const [editingNsbu, setEditingNsbu] = useState<Partial<NsbuRow> | null>(null)
+  const [nsbuMode, setNsbuMode] = useState<'list' | 'create' | 'edit'>('list')
+
   // CMS
   const [articles, setArticles] = useState<Article[]>([])
   const [cmsMode, setCmsMode] = useState<'list' | 'create' | 'edit'>('list')
   const [editingArticle, setEditingArticle] = useState<Partial<Article> | null>(null)
+  const [cmsSearch, setCmsSearch] = useState('')
+  const [cmsFilterCategory, setCmsFilterCategory] = useState('Все')
+  const [cmsFilterSource, setCmsFilterSource] = useState<'all' | 'local' | 'cloud' | 'draft'>('all')
 
-  // Services (каталог «Сервисы»)
+  // Services
   const [services, setServices] = useState<ServiceRow[]>([])
   const [svcMode, setSvcMode] = useState<'list' | 'create' | 'edit'>('list')
   const [editingSvc, setEditingSvc] = useState<Partial<ServiceRow> | null>(null)
@@ -145,15 +225,16 @@ export default function AdminDashboard() {
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null)
   const [messages, setMessages] = useState<TicketMessage[]>([])
   const [replyText, setReplyText] = useState('')
-
-  // Дополнительные фильтры и поиск (улучшение админки)
-  const [userFilter, setUserFilter] = useState<'all' | 'pro' | 'free' | 'admin'>('all')
-  const [cmsSearch, setCmsSearch] = useState('')
-  const [cmsFilterCategory, setCmsFilterCategory] = useState('Все')
-  const [cmsFilterSource, setCmsFilterSource] = useState<'all' | 'local' | 'cloud' | 'draft'>('all')
   const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'answered' | 'closed'>('all')
 
-  // Фильтрация данных на клиенте через useMemo
+  // Payments
+  const [orders, setOrders] = useState<PaymentOrder[]>([])
+  const [ordersLoading, setOrdersLoading] = useState(false)
+  const [paymentFilterState, setPaymentFilterState] = useState<'all' | 'paid' | 'waiting' | 'created' | 'cancelled'>('all')
+  const [paymentFilterProvider, setPaymentFilterProvider] = useState<'all' | 'payme' | 'click'>('all')
+  const [paymentSearch, setPaymentSearch] = useState('')
+
+  // Фильтрация
   const filteredUsers = useMemo(() => {
     let list = [...users]
     if (userSearch.trim()) {
@@ -163,8 +244,6 @@ export default function AdminDashboard() {
     if (userFilter === 'pro') list = list.filter(u => u.plan === 'pro')
     if (userFilter === 'free') list = list.filter(u => u.plan === 'free')
     if (userFilter === 'admin') list = list.filter(u => u.role === 'admin')
-    
-    // Сортировка: новые пользователи первыми
     return list.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
   }, [users, userSearch, userFilter])
 
@@ -197,30 +276,115 @@ export default function AdminDashboard() {
     return list
   }, [tickets, ticketFilter])
 
-  // Карта user_id → email (для тикетов: показывать почту вместо UUID)
   const emailByUserId = useMemo(() => {
     const m = new Map<string, string>()
     for (const u of users) if (u.email) m.set(u.user_id, u.email)
     return m
   }, [users])
+
   const emailFor = (uid: string) => emailByUserId.get(uid) || `User-${uid.slice(0, 8)}`
 
-  // Сервисы, сгруппированные по секциям (с учётом поиска)
   const servicesBySection = useMemo(() => {
+    // 1. Превращаем встроенные сервисы в формат ServiceRow
+    const localServices: ServiceRow[] = []
+    for (const section of BUNDLED_SECTIONS) {
+      for (const item of section.items) {
+        localServices.push({
+          section_id: section.id,
+          section_title: section.title,
+          icon: item.icon,
+          title: item.title,
+          description: item.desc,
+          url: item.url,
+          tag: item.tag || '',
+          is_hot: !!item.hot,
+          is_published: true,
+          sort_order: 100,
+          is_local: true
+        })
+      }
+    }
+
+    // 2. Объединяем, перезаписывая встроенные облачными по URL
+    const normUrl = (u: string) => u.trim().replace(/\/+$/, '').toLowerCase()
+    const cloudByUrl = new Map<string, ServiceRow>()
+    for (const s of services) {
+      cloudByUrl.set(normUrl(s.url), s)
+    }
+
+    const mergedList: ServiceRow[] = []
+    const addedUrls = new Set<string>()
+
+    // Сначала проходим по встроенным и подставляем облачный оверрайд, если он есть
+    for (const local of localServices) {
+      const urlKey = normUrl(local.url)
+      const cloudOverride = cloudByUrl.get(urlKey)
+      if (cloudOverride) {
+        mergedList.push(cloudOverride)
+      } else {
+        mergedList.push(local)
+      }
+      addedUrls.add(urlKey)
+    }
+
+    // Добавляем новые облачные сервисы, которых не было во встроенных
+    for (const s of services) {
+      const urlKey = normUrl(s.url)
+      if (!addedUrls.has(urlKey)) {
+        mergedList.push(s)
+      }
+    }
+
+    // Фильтруем по поиску
     const q = svcSearch.trim().toLowerCase()
     const list = q
-      ? services.filter(s => s.title.toLowerCase().includes(q) || s.url.toLowerCase().includes(q) || s.section_title.toLowerCase().includes(q))
-      : services
+      ? mergedList.filter(s => s.title.toLowerCase().includes(q) || s.url.toLowerCase().includes(q) || (s.section_title || '').toLowerCase().includes(q))
+      : mergedList
+
+    // Группируем по секциям
     const groups = new Map<string, { title: string; items: ServiceRow[] }>()
     for (const s of list) {
-      const g = groups.get(s.section_id) ?? { title: s.section_title || s.section_id, items: [] }
+      const secTitle = s.section_title || BUNDLED_SECTIONS.find(b => b.id === s.section_id)?.title || s.section_id
+      const g = groups.get(s.section_id) ?? { title: secTitle, items: [] }
       g.items.push(s)
       groups.set(s.section_id, g)
     }
+
     return [...groups.entries()].map(([id, g]) => ({ id, ...g }))
   }, [services, svcSearch])
 
-  // ── Загрузка данных ──
+  // Фильтрация оплат
+  const filteredOrders = useMemo(() => {
+    let list = [...orders]
+    if (paymentFilterState !== 'all') {
+      list = list.filter(o => o.state === paymentFilterState)
+    }
+    if (paymentFilterProvider !== 'all') {
+      list = list.filter(o => o.provider === paymentFilterProvider)
+    }
+    if (paymentSearch.trim()) {
+      const q = paymentSearch.toLowerCase()
+      list = list.filter(o => emailFor(o.user_id).toLowerCase().includes(q) || o.id.toLowerCase().includes(q))
+    }
+    return list
+  }, [orders, paymentFilterState, paymentFilterProvider, paymentSearch, emailByUserId])
+
+  // Выручка
+  const totalRevenue = useMemo(() => {
+    return orders
+      .filter(o => o.state === 'paid')
+      .reduce((sum, o) => sum + Number(o.amount), 0)
+  }, [orders])
+
+  // Метрики
+  const metrics = useMemo(() => ({
+    total: users.length,
+    pro: users.filter(u => u.plan === 'pro').length,
+    openTickets: tickets.filter(t => t.status === 'open').length,
+    articles: articles.filter(a => a.is_published).length,
+  }), [users, tickets, articles])
+
+  // Загрузки
   const loadUsers = async () => {
     setUsersLoading(true)
     try {
@@ -253,6 +417,42 @@ export default function AdminDashboard() {
     setIndValues((vals as IndicatorValueRow[]) || [])
   }
 
+  const loadTaxes = async () => {
+    const { data, error } = await supabase
+      .from('bx_ref_taxes')
+      .select('*')
+      .order('sort', { ascending: true })
+    if (error) {
+      setTaxRates([])
+      return
+    }
+    setTaxRates((data as TaxRateRow[]) || [])
+  }
+
+  const loadAccounts = async () => {
+    const { data, error } = await supabase
+      .from('bx_ref_accounts')
+      .select('*')
+      .order('sort', { ascending: true })
+    if (error) {
+      setAccounts([])
+      return
+    }
+    setAccounts((data as AccountRow[]) || [])
+  }
+
+  const loadNsbu = async () => {
+    const { data, error } = await supabase
+      .from('bx_ref_nsbu')
+      .select('*')
+      .order('number', { ascending: true })
+    if (error) {
+      setNsbuList([])
+      return
+    }
+    setNsbuList((data as NsbuRow[]) || [])
+  }
+
   const loadArticles = async () => {
     try {
       const { data, error } = await supabase
@@ -262,7 +462,6 @@ export default function AdminDashboard() {
       const cloudArticles = (data as Article[]) || []
       const cloudTitles = new Set(cloudArticles.map(a => a.title.trim().toLowerCase().replace(/ё/g, 'е')))
       
-      // Слияние: добавляем локальные статьи, которых нет в облаке
       const localArticlesMapped: Article[] = KB_ARTICLES.filter(
         a => !cloudTitles.has(a.title.trim().toLowerCase().replace(/ё/g, 'е'))
       ).map(a => ({
@@ -303,29 +502,43 @@ export default function AdminDashboard() {
       .select('id, section_id, section_title, icon, title, description, url, tag, is_hot, is_published, sort_order')
       .order('section_id', { ascending: true })
       .order('sort_order', { ascending: true })
-    if (error) { setServices([]); return } // таблицы может не быть до миграции
+    if (error) { setServices([]); return }
     setServices((data as ServiceRow[]) || [])
   }
 
-  // ВСЕ хуки — до ранних return (правила хуков React)
-  // При входе в админку перечитываем роль/план из облака: свежая выдача прав
-  // (например, role='admin', выставленная в Supabase) применяется без перезапуска.
+  const loadOrders = async () => {
+    setOrdersLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('bx_payment_orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setOrders((data as PaymentOrder[]) || [])
+    } catch (err) {
+      console.error('Failed to load orders:', err)
+      setOrders([])
+    } finally {
+      setOrdersLoading(false)
+    }
+  }
+
   useEffect(() => { refreshPlan() }, [refreshPlan])
 
   useEffect(() => {
     if (!isAdmin) return
-    loadUsers(); loadTickets(); loadArticles(); loadIndicators(); loadServices()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadUsers()
+    loadTickets()
+    loadArticles()
+    loadIndicators()
+    loadTaxes()
+    loadAccounts()
+    loadNsbu()
+    loadServices()
+    loadOrders()
   }, [isAdmin])
 
-  const metrics = useMemo(() => ({
-    total: users.length,
-    pro: users.filter(u => u.plan === 'pro').length,
-    openTickets: tickets.filter(t => t.status === 'open').length,
-    articles: articles.filter(a => a.is_published).length,
-  }), [users, tickets, articles])
-
-  // ── Действия ──
+  // Действия
   const handleUpdateTariff = async (userId: string, newPlan: string) => {
     try {
       const expiresAt = newPlan === 'pro'
@@ -358,10 +571,101 @@ export default function AdminDashboard() {
       })
       if (error) throw error
       toast.success('Показатель добавлен')
-      setIndValue(''); setIndBasis('')
+      setIndValue('')
+      setIndBasis('')
       loadIndicators()
     } catch {
       toast.error('Ошибка сохранения')
+    }
+  }
+
+  const handleSaveTax = async () => {
+    if (!editingTax?.name || !editingTax?.rate || !editingTax?.base) {
+      toast.error('Заполните обязательные поля налога')
+      return
+    }
+    try {
+      if (editingTax.id) {
+        const { error } = await supabase
+          .from('bx_ref_taxes')
+          .update({
+            name: editingTax.name,
+            rate: editingTax.rate,
+            base: editingTax.base,
+            note: editingTax.note || '',
+            regime: editingTax.regime || '',
+            sort: editingTax.sort || 0
+          })
+          .eq('id', editingTax.id)
+        if (error) throw error
+        toast.success('Ставка налога обновлена')
+      } else {
+        const { error } = await supabase
+          .from('bx_ref_taxes')
+          .insert({
+            name: editingTax.name,
+            rate: editingTax.rate,
+            base: editingTax.base,
+            note: editingTax.note || '',
+            regime: editingTax.regime || '',
+            sort: editingTax.sort || 0
+          })
+        if (error) throw error
+        toast.success('Ставка налога создана')
+      }
+      setTaxMode('list')
+      setEditingTax(null)
+      loadTaxes()
+    } catch {
+      toast.error('Ошибка сохранения ставки')
+    }
+  }
+
+  const handleSaveAccount = async () => {
+    if (!editingAcc?.code || !editingAcc?.name || !editingAcc?.account_class) {
+      toast.error('Заполните обязательные поля счета')
+      return
+    }
+    try {
+      const { error } = await supabase
+        .from('bx_ref_accounts')
+        .upsert({
+          code: editingAcc.code,
+          name: editingAcc.name,
+          account_class: editingAcc.account_class,
+          type: editingAcc.type || null,
+          sort: editingAcc.sort || 0
+        })
+      if (error) throw error
+      toast.success('Счет сохранен')
+      setAccMode('list')
+      setEditingAcc(null)
+      loadAccounts()
+    } catch {
+      toast.error('Ошибка сохранения счета')
+    }
+  }
+
+  const handleSaveNsbu = async () => {
+    if (!editingNsbu?.number || !editingNsbu?.title) {
+      toast.error('Заполните номер и название НСБУ')
+      return
+    }
+    try {
+      const { error } = await supabase
+        .from('bx_ref_nsbu')
+        .upsert({
+          number: Number(editingNsbu.number),
+          title: editingNsbu.title,
+          description: editingNsbu.description || null
+        })
+      if (error) throw error
+      toast.success('Стандарт НСБУ сохранен')
+      setNsbuMode('list')
+      setEditingNsbu(null)
+      loadNsbu()
+    } catch {
+      toast.error('Ошибка сохранения стандарта')
     }
   }
 
@@ -370,7 +674,6 @@ export default function AdminDashboard() {
       toast.error('Заполните заголовок, категорию и содержание'); return
     }
     try {
-      // Статья считается локальной, если у неё взведен флаг is_local или её ID не является UUID
       const isLocal = editingArticle.is_local || !editingArticle.id || !editingArticle.id.includes('-') || editingArticle.id.length !== 36
       
       if (editingArticle.id && !isLocal) {
@@ -382,7 +685,6 @@ export default function AdminDashboard() {
         if (error) throw error
         toast.success('Статья обновлена в облаке')
       } else {
-        // Для локальных статей или новых при сохранении вставляем новую запись (база сама сгенерирует UUID)
         const { error } = await supabase.from('bx_knowledge_articles').insert({
           title: editingArticle.title, body: editingArticle.body,
           category: editingArticle.category, is_published: editingArticle.is_published ?? true,
@@ -390,7 +692,8 @@ export default function AdminDashboard() {
         if (error) throw error
         toast.success('Статья сохранена в облако')
       }
-      setCmsMode('list'); setEditingArticle(null)
+      setCmsMode('list')
+      setEditingArticle(null)
       loadArticles()
     } catch {
       toast.error('Ошибка сохранения статьи')
@@ -428,9 +731,11 @@ export default function AdminDashboard() {
         if (error) throw error
         toast.success('Сервис добавлен')
       }
-      setSvcMode('list'); setEditingSvc(null); loadServices()
+      setSvcMode('list')
+      setEditingSvc(null)
+      loadServices()
     } catch {
-      toast.error('Ошибка сохранения (применена ли миграция bx_services?)')
+      toast.error('Ошибка сохранения сервиса')
     }
   }
 
@@ -439,7 +744,9 @@ export default function AdminDashboard() {
       const { error } = await supabase.from('bx_services').delete().eq('id', id)
       if (error) throw error
       toast.success('Сервис удалён')
-      setSvcMode('list'); setEditingSvc(null); loadServices()
+      setSvcMode('list')
+      setEditingSvc(null)
+      loadServices()
     } catch {
       toast.error('Не удалось удалить')
     }
@@ -490,22 +797,21 @@ export default function AdminDashboard() {
     }
   }
 
-  // Вспомогательные функции рендеринга Markdown для Split Preview базы знаний
-  const inlinePreview = (text: string): React.ReactNode => {
-    const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
-    return parts.map((p, i) => {
-      if (p.startsWith('**') && p.endsWith('**')) return <strong key={i} className="text-bx-text font-bold">{p.slice(2, -2)}</strong>
-      if (p.startsWith('`') && p.endsWith('`')) return <code key={i} className="bg-bx-bg text-emerald-400 font-mono px-1.5 py-0.5 rounded text-[11px] border border-bx-border">{p.slice(1, -1)}</code>
-      return p
-    })
-  }
-
   const renderPreviewBody = (body: string): React.ReactNode[] => {
     const nodes: React.ReactNode[] = []
     let key = 0
+    const inlinePreview = (text: string): React.ReactNode => {
+      const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
+      return parts.map((p, i) => {
+        if (p.startsWith('**') && p.endsWith('**')) return <strong key={i} className="text-bx-text font-bold">{p.slice(2, -2)}</strong>
+        if (p.startsWith('`') && p.endsWith('`')) return <code key={i} className="bg-bx-bg text-emerald-400 font-mono px-1.5 py-0.5 rounded text-[11px] border border-bx-border">{p.slice(1, -1)}</code>
+        return p
+      })
+    }
+
     for (const raw of body.split('\n')) {
       const line = raw.trimEnd()
-      if (!line) { nodes.push(<div key={key++} className="h-2" />); continue; }
+      if (!line) { nodes.push(<div key={key++} className="h-2" />); continue }
       if (line.startsWith('## ')) {
         nodes.push(<h4 key={key++} className="text-sm font-bold text-bx-text mt-4 mb-2 flex items-center gap-2"><span className="w-1 h-3 bg-purple-500 rounded-full" />{line.slice(3)}</h4>)
         continue
@@ -527,24 +833,23 @@ export default function AdminDashboard() {
         continue
       }
       if (line.startsWith('- ')) {
-        nodes.push(<div key={key++} className="flex gap-2 text-xs text-slate-300 leading-relaxed my-0.5"><span className="text-purple-500 flex-shrink-0">•</span><span>{inlinePreview(line.slice(2))}</span></div>)
+        nodes.push(<div key={key++} className="flex gap-2 text-xs text-slate-300 my-0.5"><span className="text-purple-500 flex-shrink-0">•</span><span>{inlinePreview(line.slice(2))}</span></div>)
         continue
       }
-      if (/^\d+\.\s/.test(line)) {
+      if (/^\d+\s/.test(line)) {
         const n = line.match(/^\d+/)?.[0]
-        nodes.push(<div key={key++} className="flex gap-2 text-xs text-slate-300 leading-relaxed my-0.5"><span className="text-purple-400 flex-shrink-0 font-medium">{n}.</span><span>{inlinePreview(line.replace(/^\d+\.\s/, ''))}</span></div>)
+        nodes.push(<div key={key++} className="flex gap-2 text-xs text-slate-300 my-0.5"><span className="text-purple-400 flex-shrink-0 font-medium">{n}.</span><span>{inlinePreview(line.replace(/^\d+\.\s/, ''))}</span></div>)
         continue
       }
       if (line.startsWith('`') && line.endsWith('`') && line.length > 2) {
         nodes.push(<code key={key++} className="block bg-bx-bg border border-bx-border rounded-lg px-2.5 py-1.5 text-[11px] text-emerald-400 font-mono my-1.5 whitespace-pre-wrap">{line.slice(1, -1)}</code>)
         continue
       }
-      nodes.push(<p key={key++} className="text-xs text-slate-300 leading-relaxed my-1">{inlinePreview(line)}</p>)
+      nodes.push(<p key={key++} className="text-xs text-slate-300 my-1">{inlinePreview(line)}</p>)
     }
     return nodes
   }
 
-  // ── Ранние return — строго после хуков ──
   if (planLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -573,14 +878,14 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* ── Hero-шапка с метриками ── */}
+      {/* Hero-шапка */}
       <div className="flex-shrink-0 border-b border-bx-border bg-gradient-to-br from-indigo-600/15 via-bx-surface to-bx-surface px-6 pt-5 pb-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <span className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xl shadow-lg shadow-indigo-600/30">👑</span>
             <div>
               <h1 className="text-lg font-black text-bx-text leading-tight">Панель управления BX</h1>
-              <p className="text-xs text-slate-500">Пользователи · тарифы · контент · поддержка</p>
+              <p className="text-xs text-slate-500">Пользователи · тарифы · контент · поддержка · оплаты</p>
             </div>
           </div>
           <div className="grid grid-cols-4 gap-2.5">
@@ -598,7 +903,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Вкладки-пилюли */}
+        {/* Вкладки */}
         <div className="flex gap-2 mt-4 flex-wrap">
           {TABS.map(t => (
             <button key={t.id} onClick={() => setActiveTab(t.id)}
@@ -614,7 +919,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* ── Контент вкладок ── */}
+      {/* Контент вкладок */}
       <div className="flex-1 overflow-hidden p-5 bg-bx-bg">
 
         {/* Пользователи */}
@@ -627,7 +932,6 @@ export default function AdminDashboard() {
                 placeholder="Поиск по email…"
                 className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-500/50 w-full sm:max-w-xs"
               />
-              {/* Табы-фильтры пользователей */}
               <div className="flex gap-1 bg-bx-bg/60 p-1 rounded-xl border border-bx-border">
                 {[
                   ['all', 'Все'],
@@ -691,79 +995,326 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* БРВ / МРОТ */}
+        {/* Справочники */}
         {activeTab === 'indicators' && (
-          <div className="h-full grid md:grid-cols-[320px_1fr] gap-4 max-w-4xl mx-auto">
-            <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 h-fit">
-              <h3 className="text-sm font-bold text-bx-text mb-4">Новое значение</h3>
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  {(['brv', 'mrot'] as const).map(t => (
-                    <button key={t} onClick={() => setIndType(t)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
-                        indType === t ? 'bg-emerald-600/25 text-emerald-400 border border-emerald-500/40' : 'bg-bx-bg text-slate-500 border border-bx-border'}`}>
-                      {t.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-500 block mb-1">Значение (сум)</label>
-                  <input value={indValue} onChange={e => setIndValue(e.target.value.replace(/[^\d.]/g, ''))}
-                    placeholder="1271000" inputMode="numeric"
-                    className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-sm text-bx-text focus:outline-none focus:border-emerald-500/50 tabular-nums" />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-500 block mb-1">Действует с</label>
-                  <input type="date" value={indDate} onChange={e => setIndDate(e.target.value)}
-                    className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-sm text-bx-text focus:outline-none focus:border-emerald-500/50" />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-500 block mb-1">Основание (указ/ПКМ)</label>
-                  <input value={indBasis} onChange={e => setIndBasis(e.target.value)}
-                    placeholder="Указ Президента от…"
-                    className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
-                </div>
-                <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
-                  <input type="checkbox" checked={indVerified}
-                    onChange={e => setIndVerified(e.target.checked)}
-                    className="accent-emerald-500 w-3.5 h-3.5" />
-                  Сверено с официальным источником
-                </label>
-                <button onClick={handleAddIndicator}
-                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-colors">
-                  Опубликовать значение
+          <div className="h-full flex flex-col gap-4 max-w-5xl mx-auto overflow-hidden">
+            {/* Меню переключения под-справочников */}
+            <div className="flex gap-2 bg-[#141820] p-1.5 rounded-xl border border-bx-border">
+              {[
+                ['indicators', 'БРВ / МРОТ / Рефинансирование'],
+                ['taxes', 'Ставки налогов'],
+                ['accounts', 'План счетов'],
+                ['nsbu', 'Стандарты НСБУ']
+              ].map(([t, name]) => (
+                <button
+                  key={t}
+                  onClick={() => setSubRefTab(t as any)}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                    subRefTab === t ? 'bg-emerald-600/25 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {name}
                 </button>
-                <p className="text-[10px] text-slate-600 leading-relaxed">
-                  Значение мгновенно попадёт в справочники, калькуляторы и зарплатный модуль всех пользователей.
-                </p>
-              </div>
+              ))}
             </div>
 
-            <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col">
-              <div className="px-4 py-3 border-b border-bx-border">
-                <h3 className="text-sm font-bold text-bx-text">История значений</h3>
-              </div>
-              <div className="flex-1 overflow-y-auto divide-y divide-bx-border/60">
-                {indValues.map(v => {
-                  const meta = indMeta.find(m => m.id === v.indicator_id)
-                  const key = meta?.key ?? '—'
-                  const unit = meta?.unit ?? 'сум'
-                  return (
-                    <div key={v.id} className="flex items-center gap-3 px-4 py-2.5">
-                      <span className={`text-[9px] px-2 py-0.5 rounded-full font-black flex-shrink-0 ${INDICATOR_BADGE[key] ?? 'bg-slate-500/15 text-slate-400'}`}>
-                        {meta?.short_name ?? key.toUpperCase()}
-                      </span>
-                      <span className="text-sm font-bold text-bx-text tabular-nums">
-                        {unit === '%' ? `${Number(v.value)}%` : `${Number(v.value).toLocaleString('ru-RU')} ${unit}`}
-                      </span>
-                      {v.verified && <span className="text-[10px] text-emerald-400 flex-shrink-0" title="Сверено">✓</span>}
-                      <span className="text-[10px] text-slate-500 ml-auto flex-shrink-0">с {new Date(v.valid_from).toLocaleDateString('ru-RU')}</span>
+            {/* Под-вкладка БРВ / МРОТ */}
+            {subRefTab === 'indicators' && (
+              <div className="grid md:grid-cols-[320px_1fr] gap-4 overflow-hidden flex-1">
+                <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 h-fit">
+                  <h3 className="text-sm font-bold text-bx-text mb-4">Новое значение</h3>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      {(['brv', 'mrot', 'refi'] as const).map(t => (
+                        <button key={t} onClick={() => setIndType(t)}
+                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
+                            indType === t ? 'bg-emerald-600/25 text-emerald-400 border border-emerald-500/40' : 'bg-bx-bg text-slate-500 border border-bx-border'}`}>
+                          {t.toUpperCase()}
+                        </button>
+                      ))}
                     </div>
-                  )
-                })}
-                {indValues.length === 0 && <p className="text-xs text-slate-600 text-center py-8">Значений пока нет</p>}
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Значение (сум / %)</label>
+                      <input value={indValue} onChange={e => setIndValue(e.target.value.replace(/[^\d.]/g, ''))}
+                        placeholder="1271000" inputMode="numeric"
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-sm text-bx-text focus:outline-none focus:border-emerald-500/50" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Действует с</label>
+                      <input type="date" value={indDate} onChange={e => setIndDate(e.target.value)}
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-sm text-bx-text focus:outline-none focus:border-emerald-500/50" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Основание (указ/ПКМ)</label>
+                      <input value={indBasis} onChange={e => setIndBasis(e.target.value)}
+                        placeholder="Указ Президента от…"
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
+                    </div>
+                    <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+                      <input type="checkbox" checked={indVerified}
+                        onChange={e => setIndVerified(e.target.checked)}
+                        className="accent-emerald-500 w-3.5 h-3.5" />
+                      Сверено с источником
+                    </label>
+                    <button onClick={handleAddIndicator}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-colors">
+                      Опубликовать
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col">
+                  <div className="px-4 py-3 border-b border-bx-border flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-bx-text">История значений</h3>
+                    <button onClick={loadIndicators} className="text-xs text-slate-500 hover:text-slate-300">⟳</button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto divide-y divide-bx-border/60">
+                    {indValues.map(v => {
+                      const meta = indMeta.find(m => m.id === v.indicator_id)
+                      const key = meta?.key ?? '—'
+                      const unit = meta?.unit ?? 'сум'
+                      return (
+                        <div key={v.id} className="flex items-center gap-3 px-4 py-2.5">
+                          <span className={`text-[9px] px-2 py-0.5 rounded-full font-black flex-shrink-0 ${INDICATOR_BADGE[key] ?? 'bg-slate-500/15 text-slate-400'}`}>
+                            {meta?.short_name ?? key.toUpperCase()}
+                          </span>
+                          <span className="text-sm font-bold text-bx-text tabular-nums">
+                            {unit === '%' ? `${Number(v.value)}%` : `${Number(v.value).toLocaleString('ru-RU')} ${unit}`}
+                          </span>
+                          {v.verified && <span className="text-[10px] text-emerald-400 flex-shrink-0" title="Сверено">✓</span>}
+                          <span className="text-[10px] text-slate-500 ml-auto flex-shrink-0">с {new Date(v.valid_from).toLocaleDateString('ru-RU')}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Под-вкладка Налоги */}
+            {subRefTab === 'taxes' && (
+              <div className="grid md:grid-cols-[320px_1fr] gap-4 overflow-hidden flex-1">
+                {taxMode === 'list' ? (
+                  <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 h-fit space-y-4">
+                    <h3 className="text-sm font-bold text-bx-text">Управление ставками</h3>
+                    <button onClick={() => { setEditingTax({ name: '', rate: '', base: '', regime: '', note: '', sort: 0 }); setTaxMode('create') }}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all active:scale-95">
+                      + Добавить ставку
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 h-fit space-y-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-sm font-bold text-bx-text">{taxMode === 'create' ? 'Новый налог' : 'Редактирование'}</h3>
+                      <button onClick={() => { setTaxMode('list'); setEditingTax(null) }} className="text-xs text-slate-500 hover:text-slate-300">← назад</button>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Название *</label>
+                      <input value={editingTax?.name ?? ''} onChange={e => setEditingTax(p => ({ ...p, name: e.target.value }))}
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Ставка *</label>
+                      <input value={editingTax?.rate ?? ''} onChange={e => setEditingTax(p => ({ ...p, rate: e.target.value }))}
+                        placeholder="12% или 5%"
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50 font-mono" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Объект (база) *</label>
+                      <input value={editingTax?.base ?? ''} onChange={e => setEditingTax(p => ({ ...p, base: e.target.value }))}
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Режим налогообложения</label>
+                      <input value={editingTax?.regime ?? ''} onChange={e => setEditingTax(p => ({ ...p, regime: e.target.value }))}
+                        placeholder="ОСН, Оборотный"
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Примечание</label>
+                      <input value={editingTax?.note ?? ''} onChange={e => setEditingTax(p => ({ ...p, note: e.target.value }))}
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Сортировка</label>
+                      <input type="number" value={editingTax?.sort ?? 0} onChange={e => setEditingTax(p => ({ ...p, sort: Number(e.target.value) }))}
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50 font-mono" />
+                    </div>
+                    <button onClick={handleSaveTax}
+                      className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-colors">
+                      Сохранить ставку
+                    </button>
+                  </div>
+                )}
+
+                <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col">
+                  <div className="px-4 py-3 border-b border-bx-border flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-bx-text">Ставки налогов в облаке</h3>
+                    <button onClick={loadTaxes} className="text-xs text-slate-500 hover:text-slate-300">⟳</button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto divide-y divide-bx-border/60">
+                    {taxRates.map((t, idx) => (
+                      <button key={idx} onClick={() => { setEditingTax(t); setTaxMode('edit') }}
+                        className="w-full flex items-center justify-between gap-4 px-4 py-3 hover:bg-[#1a2030] text-left transition-colors">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-slate-200 truncate">{t.name}</p>
+                          <p className="text-[10px] text-slate-500 mt-0.5 truncate">{t.base}</p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-xs font-bold text-blue-400 font-mono">{t.rate}</p>
+                          {t.regime && <p className="text-[9px] text-slate-600 mt-0.5">{t.regime}</p>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Под-вкладка План счетов */}
+            {subRefTab === 'accounts' && (
+              <div className="grid md:grid-cols-[320px_1fr] gap-4 overflow-hidden flex-1">
+                {accMode === 'list' ? (
+                  <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 h-fit space-y-4">
+                    <h3 className="text-sm font-bold text-bx-text">Управление счетами</h3>
+                    <button onClick={() => { setEditingAcc({ code: '', name: '', account_class: '', type: '', sort: 0 }); setAccMode('create') }}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all active:scale-95">
+                      + Добавить счет
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 h-fit space-y-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-sm font-bold text-bx-text">{accMode === 'create' ? 'Новый счет' : 'Редактирование'}</h3>
+                      <button onClick={() => { setAccMode('list'); setEditingAcc(null) }} className="text-xs text-slate-500 hover:text-slate-300">← назад</button>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Код счета (4 цифры) *</label>
+                      <input value={editingAcc?.code ?? ''} onChange={e => setEditingAcc(p => ({ ...p, code: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                        placeholder="0110"
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50 font-mono" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Название счета *</label>
+                      <input value={editingAcc?.name ?? ''} onChange={e => setEditingAcc(p => ({ ...p, name: e.target.value }))}
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Раздел/Класс *</label>
+                      <input value={editingAcc?.account_class ?? ''} onChange={e => setEditingAcc(p => ({ ...p, account_class: e.target.value }))}
+                        placeholder="Основные средства"
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Тип счета (Активный/Пассивный)</label>
+                      <select value={editingAcc?.type ?? ''} onChange={e => setEditingAcc(p => ({ ...p, type: e.target.value || null }))}
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50">
+                        <option value="">Не указан</option>
+                        <option value="А">Активный</option>
+                        <option value="П">Пассивный</option>
+                        <option value="А-П">Активно-Пассивный</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Сортировка</label>
+                      <input type="number" value={editingAcc?.sort ?? 0} onChange={e => setEditingAcc(p => ({ ...p, sort: Number(e.target.value) }))}
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50 font-mono" />
+                    </div>
+                    <button onClick={handleSaveAccount}
+                      className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-colors">
+                      Сохранить счет
+                    </button>
+                  </div>
+                )}
+
+                <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col">
+                  <div className="px-4 py-3 border-b border-bx-border flex items-center gap-3">
+                    <input value={accSearch} onChange={e => setAccSearch(e.target.value)}
+                      placeholder="Поиск по коду/имени..."
+                      className="flex-1 bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-1.5 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
+                    <button onClick={loadAccounts} className="text-xs text-slate-500 hover:text-slate-300 flex-shrink-0">⟳</button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto divide-y divide-bx-border/60">
+                    {accounts.filter(a => !accSearch || a.code.includes(accSearch) || a.name.toLowerCase().includes(accSearch.toLowerCase())).map((a, idx) => (
+                      <button key={idx} onClick={() => { setEditingAcc(a); setAccMode('edit') }}
+                        className="w-full flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-[#1a2030] text-left transition-colors">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-slate-200 font-mono">{a.code} — {a.name}</p>
+                          <p className="text-[10px] text-slate-500 mt-0.5 truncate">{a.account_class}</p>
+                        </div>
+                        {a.type && (
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-bold flex-shrink-0">
+                            {a.type}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Под-вкладка НСБУ */}
+            {subRefTab === 'nsbu' && (
+              <div className="grid md:grid-cols-[320px_1fr] gap-4 overflow-hidden flex-1">
+                {nsbuMode === 'list' ? (
+                  <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 h-fit space-y-4">
+                    <h3 className="text-sm font-bold text-bx-text">Управление НСБУ</h3>
+                    <button onClick={() => { setEditingNsbu({ number: 1, title: '', description: '' }); setNsbuMode('create') }}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all active:scale-95">
+                      + Добавить стандарт
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 h-fit space-y-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-sm font-bold text-bx-text">{nsbuMode === 'create' ? 'Новый НСБУ' : 'Редактирование'}</h3>
+                      <button onClick={() => { setNsbuMode('list'); setEditingNsbu(null) }} className="text-xs text-slate-500 hover:text-slate-300">← назад</button>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Номер НСБУ *</label>
+                      <input type="number" value={editingNsbu?.number ?? 1} onChange={e => setEditingNsbu(p => ({ ...p, number: Number(e.target.value) }))}
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50 font-mono" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Заголовок *</label>
+                      <input value={editingNsbu?.title ?? ''} onChange={e => setEditingNsbu(p => ({ ...p, title: e.target.value }))}
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">Описание</label>
+                      <textarea value={editingNsbu?.description ?? ''} onChange={e => setEditingNsbu(p => ({ ...p, description: e.target.value }))}
+                        rows={5}
+                        className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50 resize-none" />
+                    </div>
+                    <button onClick={handleSaveNsbu}
+                      className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-colors">
+                      Сохранить стандарт
+                    </button>
+                  </div>
+                )}
+
+                <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col">
+                  <div className="px-4 py-3 border-b border-bx-border flex items-center gap-3">
+                    <input value={nsbuSearch} onChange={e => setNsbuSearch(e.target.value)}
+                      placeholder="Поиск по номеру/заголовку..."
+                      className="flex-1 bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-1.5 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
+                    <button onClick={loadNsbu} className="text-xs text-slate-500 hover:text-slate-300 flex-shrink-0">⟳</button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto divide-y divide-bx-border/60">
+                    {nsbuList.filter(n => !nsbuSearch || String(n.number).includes(nsbuSearch) || n.title.toLowerCase().includes(nsbuSearch.toLowerCase())).map((n, idx) => (
+                      <button key={idx} onClick={() => { setEditingNsbu(n); setNsbuMode('edit') }}
+                        className="w-full flex items-center justify-between gap-4 px-4 py-3 hover:bg-[#1a2030] text-left transition-colors">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-slate-200">НСБУ №{n.number} — {n.title}</p>
+                          {n.description && <p className="text-[10px] text-slate-500 mt-1 truncate">{n.description}</p>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -779,8 +1330,6 @@ export default function AdminDashboard() {
                     placeholder="Поиск статей…"
                     className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-purple-500/50 w-full sm:max-w-xs"
                   />
-                  
-                  {/* Выбор категории */}
                   <select
                     value={cmsFilterCategory}
                     onChange={e => setCmsFilterCategory(e.target.value)}
@@ -790,8 +1339,6 @@ export default function AdminDashboard() {
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
-
-                  {/* Выбор источника */}
                   <select
                     value={cmsFilterSource}
                     onChange={e => setCmsFilterSource(e.target.value as any)}
@@ -802,7 +1349,6 @@ export default function AdminDashboard() {
                     <option value="cloud">Опубликованные</option>
                     <option value="draft">Черновики</option>
                   </select>
-
                   <button onClick={() => { setEditingArticle({ is_published: true }); setCmsMode('create') }}
                     className="ml-auto px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-purple-600/20 active:scale-95">
                     + Новая статья
@@ -833,7 +1379,6 @@ export default function AdminDashboard() {
               </>
             ) : (
               <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-5 h-full overflow-hidden">
-                {/* Форма редактирования слева */}
                 <div className="space-y-3 overflow-y-auto pr-1">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-bx-text flex items-center gap-2">
@@ -864,7 +1409,7 @@ export default function AdminDashboard() {
                     </label>
                   </div>
 
-                  <textarea value={editingArticle?.body ?? ''} placeholder="Текст статьи (Markdown: ## Заголовок, > Цитата, - Списки, | Таблицы, `Код` )…" rows={16}
+                  <textarea value={editingArticle?.body ?? ''} placeholder="Текст статьи (Markdown)..." rows={16}
                     onChange={e => setEditingArticle(p => ({ ...p, body: e.target.value }))}
                     className="w-full bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-3 text-xs text-bx-text focus:outline-none focus:border-purple-500/50 resize-none font-mono leading-relaxed" />
                   
@@ -874,10 +1419,9 @@ export default function AdminDashboard() {
                   </button>
                 </div>
 
-                {/* Markdown Предпросмотр справа */}
                 <div className="border border-bx-border bg-bx-surface/20 rounded-2xl flex flex-col overflow-hidden h-full">
                   <div className="px-4 py-2.5 border-b border-bx-border bg-bx-surface/40 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wide">Предпросмотр (Preview)</span>
+                    <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wide">Предпросмотр</span>
                     {editingArticle?.category && (
                       <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 font-bold border border-purple-500/20">
                         {editingArticle.category}
@@ -889,7 +1433,7 @@ export default function AdminDashboard() {
                       {editingArticle?.title || 'Заголовок статьи...'}
                     </h2>
                     <div className="text-xs text-slate-300 leading-relaxed font-sans">
-                      {editingArticle?.body ? renderPreviewBody(editingArticle.body) : <p className="text-slate-600 italic">Начните писать в редакторе слева, чтобы увидеть готовый вид...</p>}
+                      {editingArticle?.body ? renderPreviewBody(editingArticle.body) : <p className="text-slate-600 italic">Начните писать в редакторе...</p>}
                     </div>
                   </div>
                 </div>
@@ -910,7 +1454,9 @@ export default function AdminDashboard() {
                     placeholder="Поиск сервиса…"
                     className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-cyan-500/50 w-full sm:max-w-xs"
                   />
-                  <span className="text-[11px] text-slate-500 font-mono">{services.length} в облаке</span>
+                  <span className="text-[11px] text-slate-500 font-mono">
+                    {services.length} в облаке · {servicesBySection.reduce((acc, val) => acc + val.items.length, 0)} всего
+                  </span>
                   <button onClick={loadServices}
                     className="px-3 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-slate-300 transition-colors">⟳</button>
                   <button
@@ -920,27 +1466,24 @@ export default function AdminDashboard() {
                   </button>
                 </div>
 
-                {services.length === 0 && (
-                  <div className="text-center py-10 text-slate-500 text-xs leading-relaxed">
-                    Облачных сервисов пока нет. Базовый каталог зашит в приложение;<br />
-                    здесь можно добавлять свои — они появятся у всех пользователей поверх встроенных.
-                    <div className="text-[11px] text-slate-600 mt-2">Если добавление не сохраняется — не применена миграция <code className="text-cyan-400">bx_services</code>.</div>
-                  </div>
-                )}
-
                 <div className="flex-1 overflow-y-auto space-y-4 pr-1">
                   {servicesBySection.map(sec => (
                     <div key={sec.id}>
                       <p className="text-[11px] font-bold text-slate-400 mb-1.5 sticky top-0 bg-bx-bg/80 py-1">{sec.title}</p>
                       <div className="space-y-1.5">
                         {sec.items.map(s => (
-                          <button key={s.id} onClick={() => { setEditingSvc(s); setSvcMode('edit') }}
+                          <button key={s.id || s.url} onClick={() => { setEditingSvc(s); setSvcMode('edit') }}
                             className="w-full flex items-center gap-3 px-4 py-2.5 bg-bx-surface border border-bx-border hover:border-cyan-500/40 rounded-xl text-left transition-colors">
                             <span className="text-lg flex-shrink-0">{s.icon}</span>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-bx-text truncate">{s.title}</p>
                               <p className="text-[11px] text-slate-500 truncate font-mono">{s.url}</p>
                             </div>
+                            {s.is_local ? (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-500/10 text-slate-400 font-bold flex-shrink-0 border border-slate-500/10">Встроенный</span>
+                            ) : (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 font-bold flex-shrink-0 border border-cyan-500/10">В облаке</span>
+                            )}
                             {s.is_hot && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-bold flex-shrink-0">ЧАСТО</span>}
                             {!s.is_published && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-500/20 text-slate-400 font-bold flex-shrink-0">СКРЫТ</span>}
                             {s.tag && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/12 text-cyan-400 flex-shrink-0">{s.tag}</span>}
@@ -949,6 +1492,9 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   ))}
+                  {servicesBySection.length === 0 && (
+                    <p className="text-xs text-slate-600 text-center py-8">Сервисов не найдено.</p>
+                  )}
                 </div>
               </>
             ) : (
@@ -978,7 +1524,7 @@ export default function AdminDashboard() {
 
                   <textarea value={editingSvc?.description ?? ''} placeholder="Короткое описание" rows={2}
                     onChange={e => setEditingSvc(p => ({ ...p, description: e.target.value }))}
-                    className="w-full bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs text-bx-text focus:outline-none focus:border-cyan-500/50 resize-none leading-relaxed" />
+                    className="w-full bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs text-bx-text focus:outline-none focus:border-cyan-500/50 resize-none" />
 
                   <div className="grid grid-cols-2 gap-2.5">
                     <select value={editingSvc?.section_id ?? ''}
@@ -989,9 +1535,6 @@ export default function AdminDashboard() {
                       }}
                       className="bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500/50">
                       {BUNDLED_SECTIONS.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
-                      {editingSvc?.section_id && !BUNDLED_SECTIONS.some(b => b.id === editingSvc.section_id) && (
-                        <option value={editingSvc.section_id}>{editingSvc.section_title || editingSvc.section_id}</option>
-                      )}
                     </select>
                     <input value={editingSvc?.tag ?? ''} placeholder="Тег (напр. ЛКН)"
                       onChange={e => setEditingSvc(p => ({ ...p, tag: e.target.value }))}
@@ -1019,7 +1562,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-2 pt-1">
                     <button onClick={handleSaveService}
                       className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-cyan-600/20 active:scale-95">
-                      {svcMode === 'create' ? 'Добавить сервис' : 'Сохранить изменения'}
+                      Сохранить изменения
                     </button>
                     {svcMode === 'edit' && editingSvc?.id && (
                       <button onClick={() => handleDeleteService(editingSvc.id!)}
@@ -1034,6 +1577,104 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* Оплаты */}
+        {activeTab === 'payments' && (
+          <div className="h-full flex flex-col gap-3 max-w-5xl mx-auto overflow-hidden">
+            {/* Панель метрик */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-bx-surface/40 p-3 rounded-2xl border border-bx-border">
+              <div className="bg-[#141820] border border-bx-border p-3.5 rounded-xl">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Общая выручка</span>
+                <p className="text-lg font-black text-rose-400 mt-1 tabular-nums">{fmtSum(totalRevenue)} UZS</p>
+              </div>
+              <div className="bg-[#141820] border border-bx-border p-3.5 rounded-xl">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Всего оплат</span>
+                <p className="text-lg font-black text-slate-200 mt-1 tabular-nums">
+                  {orders.filter(o => o.state === 'paid').length} / {orders.length}
+                </p>
+              </div>
+              <div className="bg-[#141820] border border-bx-border p-3.5 rounded-xl">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Выручка Payme</span>
+                <p className="text-lg font-black text-slate-200 mt-1 tabular-nums">
+                  {fmtSum(orders.filter(o => o.state === 'paid' && o.provider === 'payme').reduce((sum, o) => sum + Number(o.amount), 0))} UZS
+                </p>
+              </div>
+              <div className="bg-[#141820] border border-bx-border p-3.5 rounded-xl">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Выручка Click</span>
+                <p className="text-lg font-black text-slate-200 mt-1 tabular-nums">
+                  {fmtSum(orders.filter(o => o.state === 'paid' && o.provider === 'click').reduce((sum, o) => sum + Number(o.amount), 0))} UZS
+                </p>
+              </div>
+            </div>
+
+            {/* Фильтры и поиск */}
+            <div className="flex gap-2 flex-wrap items-center bg-bx-surface/40 p-3 rounded-2xl border border-bx-border">
+              <input
+                value={paymentSearch}
+                onChange={e => setPaymentSearch(e.target.value)}
+                placeholder="Поиск по email или ID заказа…"
+                className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-rose-500/50 w-full sm:max-w-xs"
+              />
+              
+              <select value={paymentFilterState} onChange={e => setPaymentFilterState(e.target.value as any)}
+                className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-rose-500/50 text-slate-300">
+                <option value="all">Все статусы</option>
+                <option value="paid">Оплачен</option>
+                <option value="waiting">Ожидает</option>
+                <option value="created">Создан</option>
+                <option value="cancelled">Отменен</option>
+              </select>
+
+              <select value={paymentFilterProvider} onChange={e => setPaymentFilterProvider(e.target.value as any)}
+                className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-rose-500/50 text-slate-300">
+                <option value="all">Все провайдеры</option>
+                <option value="payme">Payme</option>
+                <option value="click">Click</option>
+              </select>
+
+              <button onClick={loadOrders}
+                className="px-3 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-slate-300 transition-colors">
+                ⟳
+              </button>
+            </div>
+
+            {/* Список платежей */}
+            <div className="flex-1 overflow-y-auto space-y-1.5">
+              {ordersLoading && <p className="text-xs text-slate-600 text-center py-6">Загрузка…</p>}
+              {!ordersLoading && filteredOrders.length === 0 && (
+                <p className="text-xs text-slate-600 text-center py-8">Платежей не найдено</p>
+              )}
+              {filteredOrders.map(order => (
+                <div key={order.id}
+                  className="flex items-center gap-3 px-4 py-3 bg-bx-surface border border-bx-border hover:border-rose-500/40 rounded-xl transition-all">
+                  <span className="w-8 h-8 rounded-full bg-rose-600/10 text-rose-400 flex items-center justify-center text-xs font-black flex-shrink-0">
+                    💳
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-bx-text truncate">{emailFor(order.user_id)}</p>
+                    <p className="text-[9px] text-slate-600 font-mono mt-0.5">ID: {order.id} · Срок: {order.months} мес.</p>
+                  </div>
+                  <div className="text-right flex-shrink-0 flex items-center gap-4">
+                    <div>
+                      <p className="text-xs font-bold text-slate-200 font-mono">{fmtSum(order.amount)} UZS</p>
+                      <p className="text-[9px] text-slate-600 font-mono mt-0.5">
+                        {new Date(order.created_at).toLocaleDateString('ru-RU')} {new Date(order.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    {order.provider && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 bg-[#0f1117] border border-bx-border text-slate-400 rounded uppercase">
+                        {order.provider}
+                      </span>
+                    )}
+                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold w-20 text-center ${ORDER_STATE_BADGE[order.state].cls}`}>
+                      {ORDER_STATE_BADGE[order.state].label}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Тикеты */}
         {activeTab === 'tickets' && (
           <div className="h-full grid grid-cols-[280px_1fr] gap-4 max-w-5xl mx-auto overflow-hidden">
@@ -1043,7 +1684,6 @@ export default function AdminDashboard() {
                 <button onClick={loadTickets} className="text-xs text-slate-500 hover:text-slate-300">⟳</button>
               </div>
               
-              {/* Табы-фильтры тикетов */}
               <div className="px-2.5 py-2 border-b border-bx-border bg-bx-bg/30 flex gap-1 overflow-x-auto">
                 {[
                   ['all', 'Все'],
@@ -1080,7 +1720,6 @@ export default function AdminDashboard() {
                     </p>
                   </button>
                 ))}
-                {filteredTickets.length === 0 && <p className="text-xs text-slate-600 text-center py-8">Обращений не найдено</p>}
               </div>
             </div>
 
@@ -1106,6 +1745,37 @@ export default function AdminDashboard() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Вывод контактных полей тикета */}
+                  {(activeTicket.contact_name || activeTicket.contact_phone || activeTicket.company_name || activeTicket.remote_id) && (
+                    <div className="bg-[#141820] border-b border-bx-border px-4 py-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] text-slate-400">
+                      {activeTicket.contact_name && (
+                        <div>ФИО: <span className="text-slate-200 font-semibold">{activeTicket.contact_name}</span></div>
+                      )}
+                      {activeTicket.contact_phone && (
+                        <div>Телефон: <span className="text-slate-200 font-semibold">{activeTicket.contact_phone}</span></div>
+                      )}
+                      {activeTicket.company_name && (
+                        <div className="col-span-2">Компания: <span className="text-blue-400 font-semibold">{activeTicket.company_name}</span> {activeTicket.company_inn ? `(ИНН: ${activeTicket.company_inn})` : ''}</div>
+                      )}
+                      {activeTicket.remote_id && (
+                        <div className="col-span-2 flex items-center gap-1.5 mt-0.5">
+                          <span>ID AnyDesk/RustDesk:</span>
+                          <span className="text-purple-400 font-mono font-bold bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">{activeTicket.remote_id}</span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(activeTicket.remote_id || '')
+                              toast.success('ID скопирован в буфер')
+                            }}
+                            className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors underline"
+                          >
+                            Копировать
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-bx-bg/25">
                     {messages.map(m => (
                       <div key={m.id} className={`max-w-[75%] ${m.author === 'staff' ? 'ml-auto' : ''}`}>
@@ -1138,7 +1808,7 @@ export default function AdminDashboard() {
               ) : (
                 <div className="flex-1 flex items-center justify-center text-center p-6">
                   <div>
-                    <p className="text-3xl mb-2 animate-bounce">🎧</p>
+                    <p className="text-3xl mb-2">🎧</p>
                     <p className="text-xs text-slate-500">Выберите обращение в левой панели для начала общения</p>
                   </div>
                 </div>
@@ -1150,3 +1820,5 @@ export default function AdminDashboard() {
     </div>
   )
 }
+
+export default AdminDashboard

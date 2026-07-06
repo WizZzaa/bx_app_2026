@@ -18,7 +18,6 @@ const nav = [
   { to: '/finance',    icon: 'finance',   label: 'Контроль оплат' },
   { to: '/counterparties', icon: 'users', label: 'Организации' },
   { to: '/ecp',        icon: 'ecp',       label: 'ЭЦП' },
-  { to: '/check-inn',  icon: 'search',    label: 'Проверка ИНН' },
   { to: '/ai',         icon: 'ai',        label: 'AI-Консультант' },
   { to: '/support',    icon: 'info',      label: 'Поддержка' },
 ]

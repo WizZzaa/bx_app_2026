@@ -1,16 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/db/supabase'
 
-// Тикеты живой поддержки (этап 3 стратегии).
-// Ответы специалистов вставляются на стороне оператора (service role, author='staff').
-
 export interface BxTicket {
   id: string
   user_id: string
   subject: string
   status: 'open' | 'answered' | 'closed'
+  category?: string
   created_at: string
   updated_at: string
+  contact_name?: string
+  contact_phone?: string
+  company_name?: string
+  company_inn?: string
+  remote_id?: string
 }
 
 export interface BxTicketMessage {
@@ -22,7 +25,7 @@ export interface BxTicketMessage {
   created_at: string
 }
 
-export function useTickets() {
+export const useTickets = () => {
   const [tickets, setTickets] = useState<BxTicket[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [messages, setMessages] = useState<BxTicketMessage[]>([])
@@ -56,13 +59,37 @@ export function useTickets() {
     await loadMessages(id)
   }, [loadMessages])
 
-  /** Создать тикет с первым сообщением. Возвращает id или null. */
-  const createTicket = useCallback(async (subject: string, body: string): Promise<string | null> => {
+  const createTicket = useCallback(async (
+    subject: string,
+    body: string,
+    contactName?: string,
+    contactPhone?: string,
+    companyName?: string,
+    companyInn?: string,
+    remoteId?: string
+  ): Promise<string | null> => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
+    
     const { data: t, error } = await supabase
-      .from('bx_tickets').insert({ user_id: user.id, subject }).select().single()
-    if (error || !t) { console.error(error); return null }
+      .from('bx_tickets')
+      .insert({
+        user_id: user.id,
+        subject,
+        contact_name: contactName || null,
+        contact_phone: contactPhone || null,
+        company_name: companyName || null,
+        company_inn: companyInn || null,
+        remote_id: remoteId || null
+      })
+      .select()
+      .single()
+      
+    if (error || !t) {
+      console.error(error)
+      return null
+    }
+    
     await supabase.from('bx_ticket_messages')
       .insert({ ticket_id: t.id, user_id: user.id, author: 'user', body })
     await loadTickets()

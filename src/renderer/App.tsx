@@ -15,7 +15,6 @@ import Hr from './pages/Hr';
 import Finance from './pages/Finance';
 import Services from './pages/Services';
 import News from './pages/News';
-import InnCheck from './pages/InnCheck'
 import Settings from './pages/Settings'
 import EcpManager from './pages/EcpManager'
 import Counterparties from './pages/Counterparties'
@@ -121,7 +120,6 @@ export default function App() {
                 <Route path="/planner" element={<Planner />} />
                 <Route path="/calc" element={<Calc />} />
                 <Route path="/ecp" element={<EcpManager />} />
-                <Route path="/check-inn" element={<InnCheck />} />
                 <Route path="/ai" element={<Ai />} />
                 <Route path="/support" element={<Support />} />
                 <Route path="/settings" element={<Settings />} />

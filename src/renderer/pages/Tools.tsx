@@ -1,24 +1,26 @@
-import React, { useState } from 'react';
-import CacheCleaner from './tools/CacheCleaner';
-import ProcessKiller from './tools/ProcessKiller';
-import DatabaseBackup from './tools/DatabaseBackup';
-import PcCleaner from './tools/PcCleaner';
-import NetworkChecker from './tools/NetworkChecker';
-import EimzoDiag from './tools/EimzoDiag';
-import QuickNotes from './tools/QuickNotes';
-import NumberToWords from './tools/NumberToWords';
-import Transliterate from './tools/Transliterate';
-import BankCheck from './tools/BankCheck';
-import { isElectron } from '../lib/onecApi';
-import Icon from '../lib/ui/Icon';
+import React, { useState } from 'react'
+import CacheCleaner from './tools/CacheCleaner'
+import ProcessKiller from './tools/ProcessKiller'
+import DatabaseBackup from './tools/DatabaseBackup'
+import PcCleaner from './tools/PcCleaner'
+import NetworkChecker from './tools/NetworkChecker'
+import EimzoDiag from './tools/EimzoDiag'
+import QuickNotes from './tools/QuickNotes'
+import NumberToWords from './tools/NumberToWords'
+import Transliterate from './tools/Transliterate'
+import BankCheck from './tools/BankCheck'
+import InnCheckTool from './tools/InnCheckTool'
+import TranslatorTool from './tools/TranslatorTool'
+import { isElectron } from '../lib/onecApi'
+import Icon from '../lib/ui/Icon'
 
 interface Tool {
-  id: string;
-  icon: string;
-  label: string;
-  group: string;
-  component: React.ReactNode;
-  desc: string;
+  id: string
+  icon: string
+  label: string
+  group: string
+  component: React.ReactNode
+  desc: string
 }
 
 const TOOLS: Tool[] = [
@@ -27,6 +29,8 @@ const TOOLS: Tool[] = [
   { id: 'backup', icon: 'save',  label: 'Резервная копия',  group: '1С', desc: 'Бэкап баз данных 1С (.1CD)', component: <DatabaseBackup /> },
   { id: 'killer', icon: 'zap',   label: 'Снятие процессов', group: '1С', desc: 'Завершить зависший 1cv8.exe', component: <ProcessKiller /> },
   // Текст и реквизиты
+  { id: 'inncheck', icon: 'search', label: 'Проверка ИНН', group: 'Текст и реквизиты', desc: 'Статус, НДС и класс риска по ИНН', component: <InnCheckTool /> },
+  { id: 'translator', icon: 'languages', label: 'Переводчик документов', group: 'Текст и реквизиты', desc: 'Умный переводчик с узбекского языка', component: <TranslatorTool /> },
   { id: 'num2words', icon: 'hash',      label: 'Число прописью',        group: 'Текст и реквизиты', desc: 'Для договоров и платёжек', component: <NumberToWords /> },
   { id: 'translit',  icon: 'languages', label: 'Транслитерация',        group: 'Текст и реквизиты', desc: 'Узбек кирилл ↔ латиница (2019)', component: <Transliterate /> },
   { id: 'bankcheck', icon: 'building',  label: 'Проверка счёта и МФО',  group: 'Текст и реквизиты', desc: 'Р/с 20 цифр + банк по МФО', component: <BankCheck /> },
@@ -36,41 +40,39 @@ const TOOLS: Tool[] = [
   { id: 'eimzo',     icon: 'ecp',      label: 'Диагностика E-Imzo', group: 'Система', desc: 'Плагин и локальный сервис ЭЦП', component: <EimzoDiag /> },
   // Заметки
   { id: 'notes', icon: 'note', label: 'Быстрые заметки', group: 'Заметки', desc: 'Буфер для текстов и реквизитов', component: <QuickNotes /> },
-];
+]
 
-const GROUPS = ['1С', 'Текст и реквизиты', 'Система', 'Заметки'];
+const GROUPS = ['1С', 'Текст и реквизиты', 'Система', 'Заметки']
 
-// Цветовой акцент группы (та же система, что в Калькуляторах)
 const ACCENT: Record<string, { text: string; chipBg: string; activeBg: string; iconBg: string; grad: string }> = {
   '1С':                { text: 'text-amber-400',   chipBg: 'bg-amber-500/15 border-amber-500/30',     activeBg: 'bg-amber-500/15',   iconBg: 'bg-amber-500/20 text-amber-400',     grad: 'from-amber-500/15' },
   'Текст и реквизиты': { text: 'text-purple-400',  chipBg: 'bg-purple-500/15 border-purple-500/30',   activeBg: 'bg-purple-500/15',  iconBg: 'bg-purple-500/20 text-purple-400',   grad: 'from-purple-500/15' },
   'Система':           { text: 'text-cyan-400',    chipBg: 'bg-cyan-500/15 border-cyan-500/30',       activeBg: 'bg-cyan-500/15',    iconBg: 'bg-cyan-500/20 text-cyan-400',       grad: 'from-cyan-500/15' },
   'Заметки':           { text: 'text-emerald-400', chipBg: 'bg-emerald-500/15 border-emerald-500/30', activeBg: 'bg-emerald-500/15', iconBg: 'bg-emerald-500/20 text-emerald-400', grad: 'from-emerald-500/15' },
-};
+}
 
-// Инструменты, которым нужна вся высота панели (без верстака-карточки)
-const FULL_HEIGHT_TOOLS = new Set(['notes']);
+const FULL_HEIGHT_TOOLS = new Set(['notes'])
 
-const LAST_TOOL_KEY = 'bx_tools_last';
+const LAST_TOOL_KEY = 'bx_tools_last'
 
-export default function Tools() {
+const Tools = () => {
   const [active, setActiveRaw] = useState(() => {
-    const last = localStorage.getItem(LAST_TOOL_KEY);
-    return last && TOOLS.some(t => t.id === last) ? last : 'num2words';
-  });
-  const [search, setSearch] = useState('');
+    const last = localStorage.getItem(LAST_TOOL_KEY)
+    return last && TOOLS.some(t => t.id === last) ? last : 'inncheck'
+  })
+  const [search, setSearch] = useState('')
 
-  function setActive(id: string) {
-    setActiveRaw(id);
-    localStorage.setItem(LAST_TOOL_KEY, id);
+  const handleSetActive = (id: string) => {
+    setActiveRaw(id)
+    localStorage.setItem(LAST_TOOL_KEY, id)
   }
 
-  const q = search.trim().toLowerCase();
+  const q = search.trim().toLowerCase()
   const visible = TOOLS.filter(t =>
-    !q || t.label.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.group.toLowerCase().includes(q));
-  const tool = TOOLS.find(t => t.id === active) ?? TOOLS[0];
-  const a = ACCENT[tool.group];
-  const isFullHeight = FULL_HEIGHT_TOOLS.has(tool.id);
+    !q || t.label.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.group.toLowerCase().includes(q))
+  const tool = TOOLS.find(t => t.id === active) ?? TOOLS[0]
+  const a = ACCENT[tool.group]
+  const isFullHeight = FULL_HEIGHT_TOOLS.has(tool.id)
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -95,15 +97,15 @@ export default function Tools() {
             <p className="text-xs text-slate-600 text-center py-4">Ничего не найдено</p>
           )}
           {GROUPS.map(g => {
-            const items = visible.filter(t => t.group === g);
-            if (items.length === 0) return null;
-            const ga = ACCENT[g];
+            const items = visible.filter(t => t.group === g)
+            if (items.length === 0) return null
+            const ga = ACCENT[g]
             return (
               <div key={g} className="mb-2">
                 <p className={`px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest font-semibold ${ga.text} opacity-70`}>{g}</p>
                 <div className="space-y-0.5">
                   {items.map(t => (
-                    <button key={t.id} onClick={() => setActive(t.id)}
+                    <button key={t.id} onClick={() => handleSetActive(t.id)}
                       className={`w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
                         active === t.id ? `${ga.activeBg} ${ga.text}` : 'text-slate-400 hover:bg-[#1e2535] hover:text-slate-200'
                       }`}>
@@ -118,7 +120,7 @@ export default function Tools() {
                   ))}
                 </div>
               </div>
-            );
+            )
           })}
         </nav>
       </aside>
@@ -143,7 +145,7 @@ export default function Tools() {
             {/* Быстрое переключение внутри группы */}
             <div className="flex flex-wrap gap-1.5 mt-3.5">
               {TOOLS.filter(t => t.group === tool.group).map(t => (
-                <button key={t.id} onClick={() => setActive(t.id)}
+                <button key={t.id} onClick={() => handleSetActive(t.id)}
                   className={`px-2.5 py-1 text-[11px] rounded-lg border transition-colors ${
                     t.id === tool.id
                       ? `${a.chipBg} ${a.text} font-medium`
@@ -178,5 +180,7 @@ export default function Tools() {
         )}
       </div>
     </div>
-  );
+  )
 }
+
+export default Tools
