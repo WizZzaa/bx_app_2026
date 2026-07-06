@@ -37,6 +37,14 @@ export default function TrayView() {
   const [supportSending, setSupportSending] = useState(false)
   const [ticketCreated, setTicketCreated] = useState(false)
 
+  // Закрепление окна на экране (не прятать по потере фокуса)
+  const [pinned, setPinned] = useState(false)
+  const togglePin = () => {
+    const next = !pinned
+    setPinned(next)
+    ;(window as any).bx?.tray?.setPinned(next)
+  }
+
   // Load Exchange Rates & Deadlines
   useEffect(() => {
     const loadRates = async () => {
@@ -165,16 +173,28 @@ export default function TrayView() {
   }
 
   return (
-    <div className="w-[360px] h-[480px] bg-bx-surface border border-bx-border-2 flex flex-col overflow-hidden text-bx-text select-none">
+    <div className="w-screen h-screen bg-bx-surface border border-bx-border-2 flex flex-col overflow-hidden text-bx-text select-none">
       {/* Header */}
       <div className="flex-shrink-0 px-4 py-3 bg-gradient-to-r from-blue-600/10 via-bx-surface-2 to-transparent border-b border-bx-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
           <h2 className="text-xs font-bold uppercase tracking-wider text-bx-text">BX Агент</h2>
         </div>
-        <span className="text-[10px] text-slate-500 bg-bx-bg px-2 py-0.5 rounded border border-bx-border">
-          {isPro ? 'Тариф Pro' : 'Тариф Free'}
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={togglePin}
+            title={pinned ? 'Открепить (прятать при клике вне окна)' : 'Закрепить на экране'}
+            aria-label={pinned ? 'Открепить окно' : 'Закрепить окно'}
+            className={`w-6 h-6 flex items-center justify-center rounded-md border transition-colors ${pinned ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : 'bg-bx-bg border-bx-border text-slate-500 hover:text-slate-300'}`}
+          >
+            <svg className="w-3.5 h-3.5" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 4l-1 6 4 3v2H7v-2l4-3-1-6M12 15v5" />
+            </svg>
+          </button>
+          <span className="text-[10px] text-slate-500 bg-bx-bg px-2 py-0.5 rounded border border-bx-border">
+            {isPro ? 'Тариф Pro' : 'Тариф Free'}
+          </span>
+        </div>
       </div>
 
       {/* Main Area */}

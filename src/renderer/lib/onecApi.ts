@@ -70,6 +70,9 @@ interface BxBridge {
     installUpdate(): Promise<void>
     onUpdateStatus(callback: (data: { status: string; error: string; version: string }) => void): () => void
   }
+  tray?: {
+    setPinned(pinned: boolean): Promise<boolean>
+  }
 }
 
 declare global {

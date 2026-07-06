@@ -87,6 +87,9 @@ const api = {
       ipcRenderer.on('app:update-status', handler)
       return () => ipcRenderer.removeListener('app:update-status', handler)
     }
+  },
+  tray: {
+    setPinned: (pinned: boolean): Promise<boolean> => ipcRenderer.invoke('tray:set-pinned', pinned)
   }
 }
 

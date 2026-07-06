@@ -99,6 +99,14 @@ ipcMain.handle('app:install-update', () => {
   }
 })
 
+// Закрепление трей-окна: рендерер трея переключает «пин».
+// Закреплённое окно не прячется по blur и остаётся поверх окон.
+ipcMain.handle('tray:set-pinned', (_e, pinned: boolean) => {
+  trayPinned = !!pinned
+  trayWindow?.setAlwaysOnTop(true)
+  return trayPinned
+})
+
 // ── Миграция userData после переименования приложения ──────────────────────
 // productName был «app» — данные жили в …/Application Support/app.
 // Переносим папку под новое имя ДО requestSingleInstanceLock (он создаёт
@@ -136,6 +144,8 @@ if (!gotLock) {
 let mainWindow: BrowserWindow | null = null
 let trayWindow: BrowserWindow | null = null
 let tray: Tray | null = null
+// Закрепление трей-окна: когда true — окно не прячется при потере фокуса.
+let trayPinned = false
 
 const createTrayWindow = () => {
   trayWindow = new BrowserWindow({
@@ -161,7 +171,7 @@ const createTrayWindow = () => {
   }
 
   trayWindow.on('blur', () => {
-    trayWindow?.hide()
+    if (!trayPinned) trayWindow?.hide()
   })
 }
 
