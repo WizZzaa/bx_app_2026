@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import { useAuth } from '../../lib/auth/useAuth'
-import { hasPin, setPin, verifyPin, clearPin } from '../../lib/auth/pin'
+import { hasPin, setPin, verifyPin, clearPin, isPinEnabled, setPinEnabled } from '../../lib/auth/pin'
 import { useIdleLock } from '../../lib/auth/useIdleLock'
 import LoginScreen from './LoginScreen'
 import PinScreen from './PinScreen'
@@ -21,8 +21,13 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     setUnlocked(false)
   }, [])
 
-  // Автоблокировка активна только когда приложение разблокировано
-  useIdleLock(handleLock, unlocked)
+  // Автоблокировка активна только когда приложение разблокировано и PIN включён
+  useIdleLock(handleLock, unlocked && isPinEnabled())
+
+  const skipPin = useCallback(() => {
+    setPinEnabled(false)
+    setUnlocked(true)
+  }, [])
 
   const forgot = useCallback(async () => {
     clearPin()
@@ -50,7 +55,12 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Есть сессия, но PIN не задан → установить
+  // PIN отключён пользователем → сразу в приложение
+  if (!isPinEnabled()) {
+    return <>{children}</>
+  }
+
+  // Есть сессия, но PIN не задан → предложить установить (можно пропустить)
   if (!hasPin()) {
     return (
       <PinScreen
@@ -59,6 +69,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         onVerifyPin={verifyPin}
         onSuccess={() => setUnlocked(true)}
         onForgot={forgot}
+        onSkip={skipPin}
       />
     )
   }

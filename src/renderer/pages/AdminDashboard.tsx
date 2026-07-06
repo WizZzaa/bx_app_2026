@@ -197,6 +197,14 @@ export default function AdminDashboard() {
     return list
   }, [tickets, ticketFilter])
 
+  // Карта user_id → email (для тикетов: показывать почту вместо UUID)
+  const emailByUserId = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const u of users) if (u.email) m.set(u.user_id, u.email)
+    return m
+  }, [users])
+  const emailFor = (uid: string) => emailByUserId.get(uid) || `User-${uid.slice(0, 8)}`
+
   // Сервисы, сгруппированные по секциям (с учётом поиска)
   const servicesBySection = useMemo(() => {
     const q = svcSearch.trim().toLowerCase()
@@ -1066,6 +1074,7 @@ export default function AdminDashboard() {
                         {TICKET_STATUS[t.status].label}
                       </span>
                     </div>
+                    <p className="text-[9px] text-slate-500 mt-0.5 truncate">{emailFor(t.user_id)}</p>
                     <p className="text-[9px] text-slate-600 mt-0.5 font-mono">
                       {new Date(t.updated_at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </p>
@@ -1081,7 +1090,7 @@ export default function AdminDashboard() {
                   <div className="px-4 py-3 border-b border-bx-border bg-bx-surface/40 flex items-center justify-between gap-3 flex-wrap">
                     <div className="min-w-0">
                       <p className="text-xs font-black text-bx-text truncate">{activeTicket.subject}</p>
-                      <p className="text-[9px] text-slate-500 font-mono mt-0.5">Клиент: {activeTicket.user_id}</p>
+                      <p className="text-[9px] text-slate-500 mt-0.5">Клиент: <span className="text-slate-400">{emailFor(activeTicket.user_id)}</span></p>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
                       {activeTicket.status !== 'closed' && (

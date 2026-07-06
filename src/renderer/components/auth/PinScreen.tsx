@@ -8,11 +8,12 @@ interface Props {
   onVerifyPin: (pin: string) => Promise<boolean>
   onSuccess: () => void
   onForgot: () => void // выйти и войти заново по паролю
+  onSkip?: () => void  // отказаться от PIN (только для mode='set')
 }
 
 const PIN_LENGTH = 4
 
-const PinScreen: React.FC<Props> = ({ mode, email, onSetPin, onVerifyPin, onSuccess, onForgot }) => {
+const PinScreen: React.FC<Props> = ({ mode, email, onSetPin, onVerifyPin, onSuccess, onForgot, onSkip }) => {
   const [pin, setPin] = useState('')
   const [confirm, setConfirm] = useState('')
   const [stage, setStage] = useState<'enter' | 'confirm'>('enter')
@@ -458,6 +459,22 @@ const PinScreen: React.FC<Props> = ({ mode, email, onSetPin, onVerifyPin, onSucc
         >
           {mode === 'unlock' ? 'Забыли PIN? Войти по паролю' : 'Выйти'}
         </button>
+
+        {/* Отказаться от PIN (только при установке) */}
+        {mode === 'set' && onSkip && (
+          <button
+            onClick={onSkip}
+            style={{
+              fontSize: '12px', color: '#475569', marginTop: '10px',
+              background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s',
+            }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.color = '#94a3b8' }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.color = '#475569' }}
+            tabIndex={0}
+          >
+            Входить без PIN
+          </button>
+        )}
       </div>
 
       {/* CSS animation for shake */}

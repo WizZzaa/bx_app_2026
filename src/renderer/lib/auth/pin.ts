@@ -3,6 +3,7 @@
 // При доступе по HTTP в локальной сети используется fallback-хэш.
 
 const PIN_KEY = 'bx_pin_hash'
+const PIN_ENABLED_KEY = 'bx_pin_enabled'
 const SALT = 'bx_pin_v1_2026'
 const ATTEMPTS_KEY = 'bx_pin_attempts'
 const MAX_ATTEMPTS = 5
@@ -140,6 +141,18 @@ export const resetAttempts = (): void => {
 
 export function hasPin(): boolean {
   return Boolean(localStorage.getItem(PIN_KEY))
+}
+
+// Включена ли защита PIN-кодом. По умолчанию — включена (обратная совместимость),
+// но пользователь может отключить (PIN «постоянно надоедает»).
+export function isPinEnabled(): boolean {
+  return localStorage.getItem(PIN_ENABLED_KEY) !== '0'
+}
+
+// Отключение PIN стирает сам код и сбрасывает счётчик попыток.
+export function setPinEnabled(on: boolean): void {
+  localStorage.setItem(PIN_ENABLED_KEY, on ? '1' : '0')
+  if (!on) clearPin()
 }
 
 export async function setPin(pin: string): Promise<void> {

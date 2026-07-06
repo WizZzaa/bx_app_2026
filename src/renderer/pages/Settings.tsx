@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/db/supabase'
-import { clearPin } from '../lib/auth/pin'
+import { clearPin, isPinEnabled, setPinEnabled } from '../lib/auth/pin'
 import { APP_VERSION } from '../../shared/version'
 import { db } from '../lib/db/localDb'
 import { usePlan, PLAN_LIMITS } from '../lib/plan'
@@ -24,6 +24,7 @@ export default function Settings() {
   const [payMethod, setPayMethod] = useState<'card' | 'invoice'>('card')
   const [autostartEnabled, setAutostartEnabled] = useState(false)
   const [idleLock, setIdleLock] = useState<IdleLock>('off')
+  const [pinEnabled, setPinEnabledState] = useState(true)
 
   const handleToggleAutostart = async (val: boolean) => {
     setAutostartEnabled(val)
@@ -109,6 +110,7 @@ export default function Settings() {
 
     const savedIdle = localStorage.getItem(IDLE_LOCK_KEY) as IdleLock
     if (savedIdle) setIdleLock(savedIdle)
+    setPinEnabledState(isPinEnabled())
 
     const savedTheme = localStorage.getItem(THEME_KEY) as 'dark' | 'light'
     if (savedTheme) setTheme(savedTheme)
@@ -165,6 +167,11 @@ export default function Settings() {
   async function resetPin() {
     clearPin();
     window.location.reload();
+  }
+
+  function togglePinEnabled(on: boolean) {
+    setPinEnabledState(on);
+    setPinEnabled(on); // выключение стирает PIN; включение попросит задать при след. блокировке
   }
 
   function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -310,14 +317,25 @@ export default function Settings() {
           <SettingRow label="Email" desc="Supabase аккаунт">
             <span className="text-sm text-slate-400">{userEmail || '—'}</span>
           </SettingRow>
-          <SettingRow label="PIN-код" desc="Используется для быстрой разблокировки на этом ПК">
+          <SettingRow label="Защита PIN-кодом" desc="Спрашивать PIN при запуске и блокировке. Выключите, если мешает">
             <button
-              onClick={resetPin}
-              className="text-xs px-3 py-1.5 bg-bx-surface-2 hover:bg-bx-border-2 text-slate-300 rounded-lg transition-colors"
+              onClick={() => togglePinEnabled(!pinEnabled)}
+              className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${pinEnabled ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-slate-400 hover:text-slate-200'}`}
             >
-              Сбросить PIN
+              {pinEnabled ? 'Включена' : 'Выключена'}
             </button>
           </SettingRow>
+          {pinEnabled && (
+            <SettingRow label="Сбросить PIN-код" desc="Задать новый PIN при следующей блокировке">
+              <button
+                onClick={resetPin}
+                className="text-xs px-3 py-1.5 bg-bx-surface-2 hover:bg-bx-border-2 text-slate-300 rounded-lg transition-colors"
+              >
+                Сбросить PIN
+              </button>
+            </SettingRow>
+          )}
+          {pinEnabled && (
           <SettingRow label="Автоблокировка экрана" desc="Блокировка PIN-кодом при бездействии (опционально)">
             <div className="flex gap-1.5">
               {(['off', '5', '10', '30', '60'] as IdleLock[]).map(v => (
@@ -331,6 +349,7 @@ export default function Settings() {
               ))}
             </div>
           </SettingRow>
+          )}
           <SettingRow label="Выход из аккаунта" desc="Потребуется повторный вход по email">
             <button
               onClick={signOut}
