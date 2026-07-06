@@ -129,6 +129,16 @@ ipcMain.handle('tray:set-pinned', (_e, pinned: boolean) => {
   return trayPinned
 })
 
+// Открыть главное окно приложения (опц. на конкретном разделе) из трей-виджета.
+ipcMain.handle('tray:open-app', (_e, route?: string) => {
+  if (!mainWindow) return
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  mainWindow.show()
+  mainWindow.focus()
+  if (route) mainWindow.webContents.send('tray:navigate', route)
+  if (!trayPinned) trayWindow?.hide()
+})
+
 // ── Миграция userData после переименования приложения ──────────────────────
 // productName был «app» — данные жили в …/Application Support/app.
 // Переносим папку под новое имя ДО requestSingleInstanceLock (он создаёт
@@ -169,14 +179,32 @@ let tray: Tray | null = null
 // Закрепление трей-окна: когда true — окно не прячется при потере фокуса.
 let trayPinned = false
 
+// Запоминаем размер трей-окна между запусками
+const traySizeFile = () => path.join(app.getPath('userData'), 'tray-size.json')
+const loadTraySize = (): { width: number; height: number } => {
+  try {
+    const s = JSON.parse(fs.readFileSync(traySizeFile(), 'utf-8'))
+    if (typeof s?.width === 'number' && typeof s?.height === 'number') return s
+  } catch { /* default */ }
+  return { width: 380, height: 520 }
+}
+const saveTraySize = (width: number, height: number) => {
+  try { fs.writeFileSync(traySizeFile(), JSON.stringify({ width, height })) } catch { /* ignore */ }
+}
+
 const createTrayWindow = () => {
+  const size = loadTraySize()
   trayWindow = new BrowserWindow({
-    width: 360,
-    height: 480,
+    width: size.width,
+    height: size.height,
+    minWidth: 320,
+    minHeight: 400,
+    maxWidth: 680,
+    maxHeight: 960,
     show: false,
     frame: false,
     fullscreenable: false,
-    resizable: false,
+    resizable: true,
     skipTaskbar: true,
     alwaysOnTop: true,
     webPreferences: {
@@ -191,6 +219,15 @@ const createTrayWindow = () => {
       `file://${path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)}#/tray`
     )
   }
+
+  // Сохраняем размер при изменении (с debounce)
+  let saveTimer: ReturnType<typeof setTimeout> | null = null
+  trayWindow.on('resize', () => {
+    if (!trayWindow) return
+    const [w, h] = trayWindow.getSize()
+    if (saveTimer) clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => saveTraySize(w, h), 400)
+  })
 
   trayWindow.on('blur', () => {
     if (!trayPinned) trayWindow?.hide()

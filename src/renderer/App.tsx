@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
 import Topbar from './components/layout/Topbar';
 import CommandPalette from './components/CommandPalette';
@@ -24,6 +24,17 @@ import AdminDashboard from './pages/AdminDashboard'
 import { CompanyProvider } from './lib/CompanyContext';
 import { PlanProvider } from './lib/plan';
 import { loadEcpKeys } from './lib/ecpStorage';
+
+// Слушает запросы навигации из трей-виджета (main → 'tray:navigate') и
+// переходит на нужный раздел в главном окне.
+function TrayNavigateListener() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    const un = window.bx?.tray?.onNavigate?.((route) => { if (route) navigate(route) })
+    return () => un?.()
+  }, [navigate])
+  return null
+}
 
 export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -102,6 +113,7 @@ export default function App() {
     <CompanyProvider>
       <PlanProvider>
         <div className="flex h-screen w-screen overflow-hidden bg-bx-bg text-bx-text">
+          <TrayNavigateListener />
           <Sidebar />
           <div className="flex flex-col flex-1 overflow-hidden">
             <Topbar onOpenSearch={() => setPaletteOpen(true)} />

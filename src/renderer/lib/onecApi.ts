@@ -72,6 +72,8 @@ interface BxBridge {
   }
   tray?: {
     setPinned(pinned: boolean): Promise<boolean>
+    openApp(route?: string): Promise<void>
+    onNavigate(callback: (route: string) => void): () => void
   }
 }
 

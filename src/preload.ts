@@ -89,7 +89,13 @@ const api = {
     }
   },
   tray: {
-    setPinned: (pinned: boolean): Promise<boolean> => ipcRenderer.invoke('tray:set-pinned', pinned)
+    setPinned: (pinned: boolean): Promise<boolean> => ipcRenderer.invoke('tray:set-pinned', pinned),
+    openApp: (route?: string): Promise<void> => ipcRenderer.invoke('tray:open-app', route),
+    onNavigate: (callback: (route: string) => void) => {
+      const handler = (_event: any, route: string) => callback(route)
+      ipcRenderer.on('tray:navigate', handler)
+      return () => ipcRenderer.removeListener('tray:navigate', handler)
+    }
   }
 }
 
