@@ -124,6 +124,57 @@ export default function AdminDashboard() {
   const [messages, setMessages] = useState<TicketMessage[]>([])
   const [replyText, setReplyText] = useState('')
 
+  // Дополнительные фильтры и поиск (улучшение админки)
+  const [userFilter, setUserFilter] = useState<'all' | 'pro' | 'free' | 'admin'>('all')
+  const [cmsSearch, setCmsSearch] = useState('')
+  const [cmsFilterCategory, setCmsFilterCategory] = useState('Все')
+  const [cmsFilterSource, setCmsFilterSource] = useState<'all' | 'local' | 'cloud' | 'draft'>('all')
+  const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'answered' | 'closed'>('all')
+
+  // Фильтрация данных на клиенте через useMemo
+  const filteredUsers = useMemo(() => {
+    let list = [...users]
+    if (userSearch.trim()) {
+      const q = userSearch.toLowerCase()
+      list = list.filter(u => u.email?.toLowerCase().includes(q))
+    }
+    if (userFilter === 'pro') list = list.filter(u => u.plan === 'pro')
+    if (userFilter === 'free') list = list.filter(u => u.plan === 'free')
+    if (userFilter === 'admin') list = list.filter(u => u.role === 'admin')
+    
+    // Сортировка: новые пользователи первыми
+    return list.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+  }, [users, userSearch, userFilter])
+
+  const filteredArticles = useMemo(() => {
+    let list = [...articles]
+    if (cmsSearch.trim()) {
+      const q = cmsSearch.toLowerCase()
+      list = list.filter(a => a.title.toLowerCase().includes(q) || a.body.toLowerCase().includes(q))
+    }
+    if (cmsFilterCategory !== 'Все') {
+      list = list.filter(a => a.category === cmsFilterCategory)
+    }
+    if (cmsFilterSource === 'local') {
+      list = list.filter(a => a.is_local)
+    }
+    if (cmsFilterSource === 'cloud') {
+      list = list.filter(a => !a.is_local && a.is_published)
+    }
+    if (cmsFilterSource === 'draft') {
+      list = list.filter(a => !a.is_local && !a.is_published)
+    }
+    return list
+  }, [articles, cmsSearch, cmsFilterCategory, cmsFilterSource])
+
+  const filteredTickets = useMemo(() => {
+    let list = [...tickets]
+    if (ticketFilter === 'open') list = list.filter(t => t.status === 'open')
+    if (ticketFilter === 'answered') list = list.filter(t => t.status === 'answered')
+    if (ticketFilter === 'closed') list = list.filter(t => t.status === 'closed')
+    return list
+  }, [tickets, ticketFilter])
+
   // ── Загрузка данных ──
   const loadUsers = async () => {
     setUsersLoading(true)
@@ -320,6 +371,76 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleCloseTicket = async () => {
+    if (!activeTicketId) return
+    try {
+      const { error } = await supabase
+        .from('bx_tickets')
+        .update({ status: 'closed', updated_at: new Date().toISOString() })
+        .eq('id', activeTicketId)
+      if (error) throw error
+      toast.success('Обращение закрыто')
+      loadTickets()
+      setActiveTicketId(null)
+    } catch {
+      toast.error('Не удалось закрыть обращение')
+    }
+  }
+
+  // Вспомогательные функции рендеринга Markdown для Split Preview базы знаний
+  const inlinePreview = (text: string): React.ReactNode => {
+    const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
+    return parts.map((p, i) => {
+      if (p.startsWith('**') && p.endsWith('**')) return <strong key={i} className="text-bx-text font-bold">{p.slice(2, -2)}</strong>
+      if (p.startsWith('`') && p.endsWith('`')) return <code key={i} className="bg-bx-bg text-emerald-400 font-mono px-1.5 py-0.5 rounded text-[11px] border border-bx-border">{p.slice(1, -1)}</code>
+      return p
+    })
+  }
+
+  const renderPreviewBody = (body: string): React.ReactNode[] => {
+    const nodes: React.ReactNode[] = []
+    let key = 0
+    for (const raw of body.split('\n')) {
+      const line = raw.trimEnd()
+      if (!line) { nodes.push(<div key={key++} className="h-2" />); continue; }
+      if (line.startsWith('## ')) {
+        nodes.push(<h4 key={key++} className="text-sm font-bold text-bx-text mt-4 mb-2 flex items-center gap-2"><span className="w-1 h-3 bg-purple-500 rounded-full" />{line.slice(3)}</h4>)
+        continue
+      }
+      if (line.startsWith('> ')) {
+        nodes.push(<div key={key++} className="border-l-2 border-amber-500/50 bg-amber-500/5 pl-3 pr-3 py-1.5 my-2 rounded-r-lg text-xs text-amber-200/80 leading-relaxed">{inlinePreview(line.slice(2))}</div>)
+        continue
+      }
+      if (line.startsWith('|')) {
+        const cells = line.split('|').filter((_, i, a) => i > 0 && i < a.length - 1)
+        if (cells.every(c => /^[-: ]+$/.test(c))) continue
+        const prev = nodes[nodes.length - 1] as React.ReactElement | undefined
+        const isHeader = !prev || (prev.props as Record<string, unknown>)?.['data-row'] !== 'true'
+        nodes.push(
+          <div key={key++} data-row="true" className={`grid text-[11px] py-1.5 px-2.5 ${isHeader ? 'font-semibold text-slate-300 bg-bx-bg rounded-t-lg border-t border-x border-bx-border' : 'text-slate-400 border border-bx-border bg-bx-surface/20'}`} style={{ gridTemplateColumns: `repeat(${cells.length}, 1fr)` }}>
+            {cells.map((c, i) => <span key={i} className="pr-2">{inlinePreview(c.trim())}</span>)}
+          </div>
+        )
+        continue
+      }
+      if (line.startsWith('- ')) {
+        nodes.push(<div key={key++} className="flex gap-2 text-xs text-slate-300 leading-relaxed my-0.5"><span className="text-purple-500 flex-shrink-0">•</span><span>{inlinePreview(line.slice(2))}</span></div>)
+        continue
+      }
+      if (/^\d+\.\s/.test(line)) {
+        const n = line.match(/^\d+/)?.[0]
+        nodes.push(<div key={key++} className="flex gap-2 text-xs text-slate-300 leading-relaxed my-0.5"><span className="text-purple-400 flex-shrink-0 font-medium">{n}.</span><span>{inlinePreview(line.replace(/^\d+\.\s/, ''))}</span></div>)
+        continue
+      }
+      if (line.startsWith('`') && line.endsWith('`') && line.length > 2) {
+        nodes.push(<code key={key++} className="block bg-bx-bg border border-bx-border rounded-lg px-2.5 py-1.5 text-[11px] text-emerald-400 font-mono my-1.5 whitespace-pre-wrap">{line.slice(1, -1)}</code>)
+        continue
+      }
+      nodes.push(<p key={key++} className="text-xs text-slate-300 leading-relaxed my-1">{inlinePreview(line)}</p>)
+    }
+    return nodes
+  }
+
   // ── Ранние return — строго после хуков ──
   if (planLoading) {
     return (
@@ -345,7 +466,6 @@ export default function AdminDashboard() {
     )
   }
 
-  const filteredUsers = users.filter(u => u.email?.toLowerCase().includes(userSearch.toLowerCase()))
   const activeTicket = tickets.find(t => t.id === activeTicketId) ?? null
 
   return (
@@ -397,18 +517,37 @@ export default function AdminDashboard() {
         {/* Пользователи */}
         {activeTab === 'users' && (
           <div className="h-full flex flex-col gap-3 max-w-4xl mx-auto">
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap items-center bg-bx-surface/40 p-3 rounded-2xl border border-bx-border">
               <input
                 value={userSearch}
                 onChange={e => setUserSearch(e.target.value)}
                 placeholder="Поиск по email…"
-                className="flex-1 max-w-xs bg-bx-surface border border-bx-border text-bx-text text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-500/50"
+                className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-500/50 w-full sm:max-w-xs"
               />
+              {/* Табы-фильтры пользователей */}
+              <div className="flex gap-1 bg-bx-bg/60 p-1 rounded-xl border border-bx-border">
+                {[
+                  ['all', 'Все'],
+                  ['pro', 'PRO'],
+                  ['free', 'FREE'],
+                  ['admin', 'Админы']
+                ].map(([f, label]) => (
+                  <button
+                    key={f}
+                    onClick={() => setUserFilter(f as any)}
+                    className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                      userFilter === f ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               <button onClick={loadUsers}
-                className="px-3.5 py-2.5 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-slate-300 transition-colors">
-                ⟳ Обновить
+                className="px-3 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-slate-300 transition-colors">
+                ⟳
               </button>
-              <span className="ml-auto self-center text-[11px] text-slate-600">{filteredUsers.length} из {users.length}</span>
+              <span className="ml-auto text-[11px] text-slate-600 font-mono">{filteredUsers.length} из {users.length}</span>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-1.5">
@@ -527,18 +666,48 @@ export default function AdminDashboard() {
 
         {/* CMS базы знаний */}
         {activeTab === 'cms' && (
-          <div className="h-full flex flex-col gap-3 max-w-4xl mx-auto">
+          <div className="h-full flex flex-col gap-3 max-w-5xl mx-auto overflow-hidden">
             {cmsMode === 'list' ? (
               <>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-slate-500">{articles.length} статей · {metrics.articles} опубликовано</p>
+                <div className="flex gap-2 flex-wrap items-center bg-bx-surface/40 p-3 rounded-2xl border border-bx-border">
+                  <input
+                    value={cmsSearch}
+                    onChange={e => setCmsSearch(e.target.value)}
+                    placeholder="Поиск статей…"
+                    className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-purple-500/50 w-full sm:max-w-xs"
+                  />
+                  
+                  {/* Выбор категории */}
+                  <select
+                    value={cmsFilterCategory}
+                    onChange={e => setCmsFilterCategory(e.target.value)}
+                    className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-purple-500/50 text-slate-300"
+                  >
+                    {['Все', 'Налоги и взносы', 'Трудовое право', 'ВЭД и таможня', 'ЭДО и E-Imzo', 'Работа с 1С', 'Штрафы и санкции'].map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+
+                  {/* Выбор источника */}
+                  <select
+                    value={cmsFilterSource}
+                    onChange={e => setCmsFilterSource(e.target.value as any)}
+                    className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-purple-500/50 text-slate-300"
+                  >
+                    <option value="all">Все типы</option>
+                    <option value="local">В бандле</option>
+                    <option value="cloud">Опубликованные</option>
+                    <option value="draft">Черновики</option>
+                  </select>
+
                   <button onClick={() => { setEditingArticle({ is_published: true }); setCmsMode('create') }}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-colors">
+                    className="ml-auto px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-purple-600/20 active:scale-95">
                     + Новая статья
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto space-y-1.5">
-                  {articles.map(a => (
+
+                <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+                  {filteredArticles.map(a => (
                     <button key={a.id} onClick={() => { setEditingArticle(a); setCmsMode('edit') }}
                       className="w-full flex items-center gap-3 px-4 py-3 bg-bx-surface border border-bx-border hover:border-purple-500/40 rounded-xl text-left transition-colors">
                       <div className="flex-1 min-w-0">
@@ -556,36 +725,70 @@ export default function AdminDashboard() {
                       </span>
                     </button>
                   ))}
-                  {articles.length === 0 && <p className="text-xs text-slate-600 text-center py-8">Статей пока нет — создайте первую</p>}
+                  {filteredArticles.length === 0 && <p className="text-xs text-slate-600 text-center py-8">Статей не найдено</p>}
                 </div>
               </>
             ) : (
-              <div className="flex-1 overflow-y-auto">
-                <div className="max-w-2xl space-y-3">
+              <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-5 h-full overflow-hidden">
+                {/* Форма редактирования слева */}
+                <div className="space-y-3 overflow-y-auto pr-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-bx-text">{cmsMode === 'create' ? 'Новая статья' : 'Редактирование'}</h3>
+                    <h3 className="text-sm font-bold text-bx-text flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                      {cmsMode === 'create' ? 'Новая статья' : 'Редактирование'}
+                    </h3>
                     <button onClick={() => { setCmsMode('list'); setEditingArticle(null) }}
-                      className="text-xs text-slate-500 hover:text-slate-300">← к списку</button>
+                      className="text-xs text-slate-500 hover:text-slate-300 transition-colors">← к списку</button>
                   </div>
                   <input value={editingArticle?.title ?? ''} placeholder="Заголовок статьи"
                     onChange={e => setEditingArticle(p => ({ ...p, title: e.target.value }))}
-                    className="w-full bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-3 text-sm font-semibold text-bx-text focus:outline-none focus:border-purple-500/50" />
-                  <input value={editingArticle?.category ?? ''} placeholder="Категория (Налоги, Труд, ВЭД…)"
-                    onChange={e => setEditingArticle(p => ({ ...p, category: e.target.value }))}
-                    className="w-full bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs text-bx-text focus:outline-none focus:border-purple-500/50" />
-                  <textarea value={editingArticle?.body ?? ''} placeholder="Текст статьи (Markdown)…" rows={14}
+                    className="w-full bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-3 text-xs font-semibold text-bx-text focus:outline-none focus:border-purple-500/50" />
+                  
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <select value={editingArticle?.category ?? ''}
+                      onChange={e => setEditingArticle(p => ({ ...p, category: e.target.value }))}
+                      className="w-full bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs text-bx-text focus:outline-none focus:border-purple-500/50 text-slate-300">
+                      <option value="" disabled>Выберите категорию</option>
+                      {['Налоги и взносы', 'Трудовое право', 'ВЭД и таможня', 'ЭДО и E-Imzo', 'Работа с 1С', 'Штрафы и санкции'].map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <label className="flex items-center gap-2 text-xs text-slate-400 bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 cursor-pointer">
+                      <input type="checkbox" checked={editingArticle?.is_published ?? true}
+                        onChange={e => setEditingArticle(p => ({ ...p, is_published: e.target.checked }))}
+                        className="accent-purple-500 w-3.5 h-3.5" />
+                      Опубликовать
+                    </label>
+                  </div>
+
+                  <textarea value={editingArticle?.body ?? ''} placeholder="Текст статьи (Markdown: ## Заголовок, > Цитата, - Списки, | Таблицы, `Код` )…" rows={16}
                     onChange={e => setEditingArticle(p => ({ ...p, body: e.target.value }))}
                     className="w-full bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-3 text-xs text-bx-text focus:outline-none focus:border-purple-500/50 resize-none font-mono leading-relaxed" />
-                  <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
-                    <input type="checkbox" checked={editingArticle?.is_published ?? true}
-                      onChange={e => setEditingArticle(p => ({ ...p, is_published: e.target.checked }))}
-                      className="accent-purple-500 w-3.5 h-3.5" />
-                    Опубликовать сразу
-                  </label>
+                  
                   <button onClick={handleSaveArticle}
-                    className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-colors">
-                    Сохранить статью
+                    className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-purple-600/20 active:scale-95">
+                    Сохранить изменения
                   </button>
+                </div>
+
+                {/* Markdown Предпросмотр справа */}
+                <div className="border border-bx-border bg-bx-surface/20 rounded-2xl flex flex-col overflow-hidden h-full">
+                  <div className="px-4 py-2.5 border-b border-bx-border bg-bx-surface/40 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wide">Предпросмотр (Preview)</span>
+                    {editingArticle?.category && (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 font-bold border border-purple-500/20">
+                        {editingArticle.category}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-5 space-y-3 prose-mini scroll-smooth">
+                    <h2 className="text-base font-black text-bx-text leading-snug border-b border-bx-border/60 pb-2">
+                      {editingArticle?.title || 'Заголовок статьи...'}
+                    </h2>
+                    <div className="text-xs text-slate-300 leading-relaxed font-sans">
+                      {editingArticle?.body ? renderPreviewBody(editingArticle.body) : <p className="text-slate-600 italic">Начните писать в редакторе слева, чтобы увидеть готовый вид...</p>}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -594,73 +797,109 @@ export default function AdminDashboard() {
 
         {/* Тикеты */}
         {activeTab === 'tickets' && (
-          <div className="h-full grid grid-cols-[280px_1fr] gap-4 max-w-5xl mx-auto">
-            <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col">
-              <div className="px-4 py-3 border-b border-bx-border flex items-center justify-between">
-                <h3 className="text-sm font-bold text-bx-text">Обращения</h3>
+          <div className="h-full grid grid-cols-[280px_1fr] gap-4 max-w-5xl mx-auto overflow-hidden">
+            <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col h-full">
+              <div className="px-4 py-3 border-b border-bx-border bg-bx-surface/40 flex items-center justify-between">
+                <h3 className="text-xs font-black text-bx-text">Обращения</h3>
                 <button onClick={loadTickets} className="text-xs text-slate-500 hover:text-slate-300">⟳</button>
               </div>
+              
+              {/* Табы-фильтры тикетов */}
+              <div className="px-2.5 py-2 border-b border-bx-border bg-bx-bg/30 flex gap-1 overflow-x-auto">
+                {[
+                  ['all', 'Все'],
+                  ['open', 'Открытые'],
+                  ['answered', 'Отвеченные'],
+                  ['closed', 'Закрытые']
+                ].map(([f, label]) => (
+                  <button
+                    key={f}
+                    onClick={() => setTicketFilter(f as any)}
+                    className={`px-2 py-1 text-[9px] font-bold rounded-lg transition-all flex-shrink-0 ${
+                      ticketFilter === f ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                {tickets.map(t => (
+                {filteredTickets.map(t => (
                   <button key={t.id} onClick={() => handleOpenTicket(t.id)}
                     className={`w-full text-left px-3 py-2.5 rounded-xl transition-colors ${
-                      activeTicketId === t.id ? 'bg-amber-500/15 border border-amber-500/30' : 'hover:bg-bx-surface-2 border border-transparent'}`}>
+                      activeTicketId === t.id ? 'bg-amber-500/10 border border-amber-500/35' : 'hover:bg-bx-surface-2 border border-transparent'}`}>
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-xs font-semibold text-bx-text truncate">{t.subject}</p>
                       <span className={`text-[8px] px-1.5 py-0.5 rounded-full flex-shrink-0 font-bold ${TICKET_STATUS[t.status].cls}`}>
                         {TICKET_STATUS[t.status].label}
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-600 mt-0.5">
+                    <p className="text-[9px] text-slate-600 mt-0.5 font-mono">
                       {new Date(t.updated_at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </button>
                 ))}
-                {tickets.length === 0 && <p className="text-xs text-slate-600 text-center py-8">Обращений нет 🎉</p>}
+                {filteredTickets.length === 0 && <p className="text-xs text-slate-600 text-center py-8">Обращений не найдено</p>}
               </div>
             </div>
 
-            <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col">
+            <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col h-full">
               {activeTicket ? (
                 <>
-                  <div className="px-4 py-3 border-b border-bx-border flex items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-bx-text truncate">{activeTicket.subject}</p>
-                    <span className="text-[10px] text-slate-600 font-mono flex-shrink-0">{activeTicket.user_id.slice(0, 8)}…</span>
+                  <div className="px-4 py-3 border-b border-bx-border bg-bx-surface/40 flex items-center justify-between gap-3 flex-wrap">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-bx-text truncate">{activeTicket.subject}</p>
+                      <p className="text-[9px] text-slate-500 font-mono mt-0.5">Клиент: {activeTicket.user_id}</p>
+                    </div>
+                    <div className="flex items-center gap-2 ml-auto">
+                      {activeTicket.status !== 'closed' && (
+                        <button
+                          onClick={handleCloseTicket}
+                          className="px-3 py-1.5 bg-rose-600/15 hover:bg-rose-600/35 border border-rose-500/30 text-rose-400 hover:text-rose-300 rounded-xl text-[10px] font-bold transition-all active:scale-95"
+                        >
+                          ✓ Закрыть обращение
+                        </button>
+                      )}
+                      <span className={`text-[9px] px-2 py-1 rounded-full font-bold ${TICKET_STATUS[activeTicket.status].cls}`}>
+                        {TICKET_STATUS[activeTicket.status].label}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-bx-bg/25">
                     {messages.map(m => (
                       <div key={m.id} className={`max-w-[75%] ${m.author === 'staff' ? 'ml-auto' : ''}`}>
-                        <div className={`rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${
+                        <div className={`rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-sm ${
                           m.author === 'staff'
-                            ? 'bg-amber-500/15 border border-amber-500/25 text-bx-text rounded-br-sm'
-                            : 'bg-bx-bg border border-bx-border text-bx-text rounded-bl-sm'}`}>
-                          <p className={`text-[9px] font-bold mb-1 ${m.author === 'staff' ? 'text-amber-400' : 'text-blue-400'}`}>
-                            {m.author === 'staff' ? '🎧 Вы (специалист)' : '👤 Клиент'}
+                            ? 'bg-amber-500/10 border border-amber-500/20 text-bx-text rounded-tr-sm'
+                            : 'bg-bx-surface border border-bx-border text-bx-text rounded-tl-sm'}`}>
+                          <p className={`text-[8px] font-bold mb-1 uppercase tracking-wider ${m.author === 'staff' ? 'text-amber-400' : 'text-blue-400'}`}>
+                            {m.author === 'staff' ? '🎧 Ответ специалиста' : '👤 Вопрос клиента'}
                           </p>
                           <p className="whitespace-pre-wrap">{m.body}</p>
                         </div>
-                        <p className={`text-[9px] text-slate-600 mt-1 ${m.author === 'staff' ? 'text-right' : ''}`}>
+                        <p className={`text-[9px] text-slate-600 mt-1 font-mono ${m.author === 'staff' ? 'text-right' : ''}`}>
                           {new Date(m.created_at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     ))}
                   </div>
-                  <div className="flex-shrink-0 border-t border-bx-border p-3 flex gap-2">
+                  <div className="flex-shrink-0 border-t border-bx-border p-3 bg-bx-surface/40 flex gap-2">
                     <input value={replyText} onChange={e => setReplyText(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') handleSendReply() }}
-                      placeholder="Ответ клиенту…"
+                      placeholder="Наберите текст ответа…"
                       className="flex-1 bg-bx-bg border border-bx-border-2 rounded-xl px-3.5 py-2.5 text-xs text-bx-text focus:outline-none focus:border-amber-500/50" />
                     <button onClick={handleSendReply} disabled={!replyText.trim()}
-                      className="px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black rounded-xl text-xs font-black transition-colors">
-                      Ответить
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black rounded-xl text-xs font-black transition-all active:scale-95">
+                      Отправить
                     </button>
                   </div>
                 </>
               ) : (
                 <div className="flex-1 flex items-center justify-center text-center p-6">
                   <div>
-                    <p className="text-3xl mb-2">🎧</p>
-                    <p className="text-sm text-slate-500">Выберите обращение слева</p>
+                    <p className="text-3xl mb-2 animate-bounce">🎧</p>
+                    <p className="text-xs text-slate-500">Выберите обращение в левой панели для начала общения</p>
                   </div>
                 </div>
               )}
