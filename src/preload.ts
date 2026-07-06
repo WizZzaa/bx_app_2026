@@ -74,6 +74,19 @@ const api = {
   autostart: {
     get: (): Promise<boolean> => ipcRenderer.invoke(IPC.AUTOSTART_GET),
     set: (enabled: boolean): Promise<void> => ipcRenderer.invoke(IPC.AUTOSTART_SET, enabled)
+  },
+  updater: {
+    checkForUpdates: (): Promise<{ status: string; error: string; version: string }> =>
+      ipcRenderer.invoke('app:check-for-updates'),
+    getStatus: (): Promise<{ status: string; error: string; version: string }> =>
+      ipcRenderer.invoke('app:get-update-status'),
+    installUpdate: (): Promise<void> =>
+      ipcRenderer.invoke('app:install-update'),
+    onUpdateStatus: (callback: (data: { status: string; error: string; version: string }) => void) => {
+      const handler = (_event: any, data: any) => callback(data)
+      ipcRenderer.on('app:update-status', handler)
+      return () => ipcRenderer.removeListener('app:update-status', handler)
+    }
   }
 }
 

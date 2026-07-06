@@ -60,6 +60,16 @@ interface BxBridge {
   shell?: {
     openExternal(url: string): void
   }
+  autostart?: {
+    get(): Promise<boolean>
+    set(enabled: boolean): Promise<void>
+  }
+  updater?: {
+    checkForUpdates(): Promise<{ status: string; error: string; version: string }>
+    getStatus(): Promise<{ status: string; error: string; version: string }>
+    installUpdate(): Promise<void>
+    onUpdateStatus(callback: (data: { status: string; error: string; version: string }) => void): () => void
+  }
 }
 
 declare global {

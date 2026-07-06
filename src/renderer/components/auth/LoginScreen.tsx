@@ -18,9 +18,38 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
   const [showResend, setShowResend] = useState(false)
   const [resending, setResending] = useState(false)
   const [showChangelog, setShowChangelog] = useState(false)
-  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'latest' | 'error'>('idle')
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'latest' | 'error' | 'downloading' | 'ready'>('idle')
 
   const latestEntry = CHANGELOG[0]
+
+  // Подписка на нативный autoUpdater из Electron
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.bx && window.bx.updater) {
+      // Запросить начальный статус
+      window.bx.updater.getStatus().then((res: any) => {
+        if (res.status === 'ready') setUpdateStatus('ready')
+        else if (res.status === 'downloading') setUpdateStatus('downloading')
+      })
+
+      // Слушать обновления статуса в реальном времени
+      const unsubscribe = window.bx.updater.onUpdateStatus((data: any) => {
+        if (data.status === 'ready') {
+          setUpdateStatus('ready')
+        } else if (data.status === 'downloading') {
+          setUpdateStatus('downloading')
+        } else if (data.status === 'checking') {
+          setUpdateStatus('checking')
+        } else if (data.status === 'error') {
+          setUpdateStatus('error')
+          setTimeout(() => setUpdateStatus('idle'), 4000)
+        } else if (data.status === 'idle') {
+          setUpdateStatus('idle')
+        }
+      })
+
+      return () => unsubscribe()
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -90,6 +119,27 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
   }
 
   const handleCheckUpdate = async () => {
+    if (typeof window !== 'undefined' && window.bx && window.bx.updater) {
+      setUpdateStatus('checking')
+      try {
+        const res = await window.bx.updater.checkForUpdates()
+        if (res.status === 'ready') {
+          setUpdateStatus('ready')
+        } else if (res.status === 'downloading') {
+          setUpdateStatus('downloading')
+        } else {
+          // Если запуск без упаковки или обновлений нет
+          setUpdateStatus('latest')
+          setTimeout(() => setUpdateStatus('idle'), 3000)
+        }
+      } catch {
+        setUpdateStatus('error')
+        setTimeout(() => setUpdateStatus('idle'), 3000)
+      }
+      return
+    }
+
+    // Резервный веб-вариант проверки
     setUpdateStatus('checking')
     try {
       const res = await fetch('https://api.github.com/repos/WizZzaa/bx_app_2026/releases/latest')
@@ -106,6 +156,12 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
     } catch {
       setUpdateStatus('error')
       setTimeout(() => setUpdateStatus('idle'), 3000)
+    }
+  }
+
+  const handleInstallUpdate = () => {
+    if (typeof window !== 'undefined' && window.bx && window.bx.updater) {
+      window.bx.updater.installUpdate()
     }
   }
 
@@ -135,6 +191,32 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
             {modeLabel}
           </p>
         </div>
+
+        {/* Auto updater status banner */}
+        {updateStatus === 'downloading' && (
+          <div className="mb-4 bg-blue-950/40 border border-blue-500/30 rounded-2xl p-4 flex items-center justify-between text-xs text-blue-300 bx-animate-fade">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
+              <span>Загрузка обновления в фоне…</span>
+            </div>
+          </div>
+        )}
+
+        {updateStatus === 'ready' && (
+          <div className="mb-4 bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between text-xs text-emerald-300 bx-animate-fade">
+            <div>
+              <p className="font-bold text-white mb-0.5">Обновление скачано!</p>
+              <p className="text-[10px] text-slate-400">Приложение готово к обновлению</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleInstallUpdate}
+              className="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-semibold px-3 py-1.5 rounded-lg transition-all"
+            >
+              Перезапустить
+            </button>
+          </div>
+        )}
 
         {/* Card */}
         <form onSubmit={handleSubmit} className="bg-[#111420]/80 backdrop-blur-xl border border-bx-border rounded-3xl p-8 space-y-5 shadow-2xl shadow-blue-950/20">

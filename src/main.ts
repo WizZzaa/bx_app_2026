@@ -1,8 +1,7 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, autoUpdater, ipcMain, dialog } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs'
 import started from 'electron-squirrel-startup'
-import { updateElectronApp } from 'update-electron-app'
 import { registerIpcHandlers } from './main/ipc'
 import { initBackupScheduler } from './main/services/onecBackupScheduler'
 
@@ -11,14 +10,94 @@ if (started) {
   app.quit()
 }
 
-// ── Автообновление (только собранное приложение; репо должен быть публичным) ──
-if (app.isPackaged) {
+// ── Автообновление через autoUpdater + Squirrel ──────────────────────────────
+// update.electronjs.org предоставляет совместимый сервер обновлений для публичных GitHub-репо.
+// autoUpdater скачивает обновление в фоне и предлагает перезапуск.
+let updateStatus: 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error' = 'idle'
+let updateError = ''
+
+const setupAutoUpdater = () => {
+  if (!app.isPackaged) return
+
+  const server = 'https://update.electronjs.org'
+  const repo = 'WizZzaa/bx_app_2026'
+  const platform = `${process.platform}-${process.arch}`
+  const version = app.getVersion()
+  const feedURL = `${server}/${repo}/${platform}/${version}`
+
   try {
-    updateElectronApp({ repo: 'WizZzaa/bx_app_2026', updateInterval: '1 hour' })
+    autoUpdater.setFeedURL({ url: feedURL })
   } catch (e) {
-    console.warn('Автообновление недоступно:', e)
+    console.warn('Автообновление: не удалось настроить feed URL:', e)
+    return
   }
+
+  autoUpdater.on('checking-for-update', () => {
+    updateStatus = 'checking'
+    broadcastUpdateStatus()
+  })
+
+  autoUpdater.on('update-available', () => {
+    updateStatus = 'downloading'
+    broadcastUpdateStatus()
+  })
+
+  autoUpdater.on('update-not-available', () => {
+    updateStatus = 'idle'
+    broadcastUpdateStatus()
+  })
+
+  autoUpdater.on('update-downloaded', () => {
+    updateStatus = 'ready'
+    broadcastUpdateStatus()
+  })
+
+  autoUpdater.on('error', (err) => {
+    updateStatus = 'error'
+    updateError = err?.message || 'Неизвестная ошибка'
+    broadcastUpdateStatus()
+    // Сбрасываем ошибку через 10 секунд
+    setTimeout(() => {
+      updateStatus = 'idle'
+      updateError = ''
+    }, 10000)
+  })
+
+  // Проверяем обновления при запуске и потом каждый час
+  setTimeout(() => {
+    try { autoUpdater.checkForUpdates() } catch { /* ignore */ }
+  }, 5000)
+
+  setInterval(() => {
+    try { autoUpdater.checkForUpdates() } catch { /* ignore */ }
+  }, 60 * 60 * 1000)
 }
+
+const broadcastUpdateStatus = () => {
+  BrowserWindow.getAllWindows().forEach(win => {
+    try {
+      win.webContents.send('app:update-status', { status: updateStatus, error: updateError, version: app.getVersion() })
+    } catch { /* window might be destroyed */ }
+  })
+}
+
+// IPC: рендерер запрашивает текущий статус или проверку
+ipcMain.handle('app:check-for-updates', () => {
+  if (app.isPackaged) {
+    try { autoUpdater.checkForUpdates() } catch { /* ignore */ }
+  }
+  return { status: updateStatus, error: updateError, version: app.getVersion() }
+})
+
+ipcMain.handle('app:get-update-status', () => {
+  return { status: updateStatus, error: updateError, version: app.getVersion() }
+})
+
+ipcMain.handle('app:install-update', () => {
+  if (updateStatus === 'ready') {
+    autoUpdater.quitAndInstall()
+  }
+})
 
 // ── Миграция userData после переименования приложения ──────────────────────
 // productName был «app» — данные жили в …/Application Support/app.
@@ -189,6 +268,7 @@ app.on('second-instance', () => {
 app.on('ready', () => {
   registerIpcHandlers()
   initBackupScheduler()
+  setupAutoUpdater()
   createWindow()
   createTrayWindow()
   createTray()
