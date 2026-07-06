@@ -3,6 +3,7 @@ import { supabase } from '../lib/db/supabase'
 import { usePlan } from '../lib/plan'
 import { useToast } from '../lib/ui/ToastContext'
 import { KB_ARTICLES } from '../data/knowledge'
+import { SECTIONS as BUNDLED_SECTIONS } from '../data/services'
 
 // Панель администратора BX: пользователи и тарифы, справочник БРВ/МРОТ,
 // CMS базы знаний, чат техподдержки. Доступ — только role='admin' (RLS).
@@ -61,14 +62,29 @@ interface TicketMessage {
   created_at: string
 }
 
-type Tab = 'users' | 'indicators' | 'cms' | 'tickets'
+type Tab = 'users' | 'indicators' | 'cms' | 'services' | 'tickets'
 
 const TABS: { id: Tab; label: string; icon: string; accent: string; activeCls: string }[] = [
   { id: 'users',      label: 'Пользователи',   icon: '👥', accent: 'text-blue-400',    activeCls: 'bg-blue-600/20 text-blue-400 border-blue-500/40' },
   { id: 'indicators', label: 'БРВ / МРОТ',     icon: '📊', accent: 'text-emerald-400', activeCls: 'bg-emerald-600/20 text-emerald-400 border-emerald-500/40' },
   { id: 'cms',        label: 'База знаний',    icon: '📚', accent: 'text-purple-400',  activeCls: 'bg-purple-600/20 text-purple-400 border-purple-500/40' },
+  { id: 'services',   label: 'Сервисы',        icon: '🔗', accent: 'text-cyan-400',    activeCls: 'bg-cyan-600/20 text-cyan-400 border-cyan-500/40' },
   { id: 'tickets',    label: 'Техподдержка',   icon: '🎧', accent: 'text-amber-400',   activeCls: 'bg-amber-500/20 text-amber-400 border-amber-500/40' },
 ]
+
+interface ServiceRow {
+  id: string
+  section_id: string
+  section_title: string
+  icon: string
+  title: string
+  description: string
+  url: string
+  tag: string
+  is_hot: boolean
+  is_published: boolean
+  sort_order: number
+}
 
 const TICKET_STATUS: Record<Ticket['status'], { label: string; cls: string }> = {
   open:     { label: 'Открыт',     cls: 'bg-blue-500/15 text-blue-400' },
@@ -117,6 +133,12 @@ export default function AdminDashboard() {
   const [articles, setArticles] = useState<Article[]>([])
   const [cmsMode, setCmsMode] = useState<'list' | 'create' | 'edit'>('list')
   const [editingArticle, setEditingArticle] = useState<Partial<Article> | null>(null)
+
+  // Services (каталог «Сервисы»)
+  const [services, setServices] = useState<ServiceRow[]>([])
+  const [svcMode, setSvcMode] = useState<'list' | 'create' | 'edit'>('list')
+  const [editingSvc, setEditingSvc] = useState<Partial<ServiceRow> | null>(null)
+  const [svcSearch, setSvcSearch] = useState('')
 
   // Tickets
   const [tickets, setTickets] = useState<Ticket[]>([])
@@ -174,6 +196,21 @@ export default function AdminDashboard() {
     if (ticketFilter === 'closed') list = list.filter(t => t.status === 'closed')
     return list
   }, [tickets, ticketFilter])
+
+  // Сервисы, сгруппированные по секциям (с учётом поиска)
+  const servicesBySection = useMemo(() => {
+    const q = svcSearch.trim().toLowerCase()
+    const list = q
+      ? services.filter(s => s.title.toLowerCase().includes(q) || s.url.toLowerCase().includes(q) || s.section_title.toLowerCase().includes(q))
+      : services
+    const groups = new Map<string, { title: string; items: ServiceRow[] }>()
+    for (const s of list) {
+      const g = groups.get(s.section_id) ?? { title: s.section_title || s.section_id, items: [] }
+      g.items.push(s)
+      groups.set(s.section_id, g)
+    }
+    return [...groups.entries()].map(([id, g]) => ({ id, ...g }))
+  }, [services, svcSearch])
 
   // ── Загрузка данных ──
   const loadUsers = async () => {
@@ -252,6 +289,16 @@ export default function AdminDashboard() {
     setTickets((data as Ticket[]) || [])
   }
 
+  const loadServices = async () => {
+    const { data, error } = await supabase
+      .from('bx_services')
+      .select('id, section_id, section_title, icon, title, description, url, tag, is_hot, is_published, sort_order')
+      .order('section_id', { ascending: true })
+      .order('sort_order', { ascending: true })
+    if (error) { setServices([]); return } // таблицы может не быть до миграции
+    setServices((data as ServiceRow[]) || [])
+  }
+
   // ВСЕ хуки — до ранних return (правила хуков React)
   // При входе в админку перечитываем роль/план из облака: свежая выдача прав
   // (например, role='admin', выставленная в Supabase) применяется без перезапуска.
@@ -259,7 +306,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!isAdmin) return
-    loadUsers(); loadTickets(); loadArticles(); loadIndicators()
+    loadUsers(); loadTickets(); loadArticles(); loadIndicators(); loadServices()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin])
 
@@ -339,6 +386,54 @@ export default function AdminDashboard() {
       loadArticles()
     } catch {
       toast.error('Ошибка сохранения статьи')
+    }
+  }
+
+  const handleSaveService = async () => {
+    const s = editingSvc
+    if (!s?.title || !s?.url || !s?.section_id) {
+      toast.error('Заполните название, ссылку и категорию'); return
+    }
+    const sectionTitle = s.section_title
+      || BUNDLED_SECTIONS.find(b => b.id === s.section_id)?.title
+      || s.section_id
+    const payload = {
+      section_id: s.section_id,
+      section_title: sectionTitle,
+      icon: s.icon || '🔗',
+      title: s.title,
+      description: s.description || '',
+      url: s.url,
+      tag: s.tag || '',
+      is_hot: s.is_hot ?? false,
+      is_published: s.is_published ?? true,
+      sort_order: s.sort_order ?? 0,
+    }
+    try {
+      if (s.id) {
+        const { error } = await supabase.from('bx_services')
+          .update({ ...payload, updated_at: new Date().toISOString() }).eq('id', s.id)
+        if (error) throw error
+        toast.success('Сервис обновлён')
+      } else {
+        const { error } = await supabase.from('bx_services').insert(payload)
+        if (error) throw error
+        toast.success('Сервис добавлен')
+      }
+      setSvcMode('list'); setEditingSvc(null); loadServices()
+    } catch {
+      toast.error('Ошибка сохранения (применена ли миграция bx_services?)')
+    }
+  }
+
+  const handleDeleteService = async (id: string) => {
+    try {
+      const { error } = await supabase.from('bx_services').delete().eq('id', id)
+      if (error) throw error
+      toast.success('Сервис удалён')
+      setSvcMode('list'); setEditingSvc(null); loadServices()
+    } catch {
+      toast.error('Не удалось удалить')
     }
   }
 
@@ -788,6 +883,142 @@ export default function AdminDashboard() {
                     <div className="text-xs text-slate-300 leading-relaxed font-sans">
                       {editingArticle?.body ? renderPreviewBody(editingArticle.body) : <p className="text-slate-600 italic">Начните писать в редакторе слева, чтобы увидеть готовый вид...</p>}
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Сервисы */}
+        {activeTab === 'services' && (
+          <div className="h-full flex flex-col gap-3 max-w-4xl mx-auto overflow-hidden">
+            {svcMode === 'list' ? (
+              <>
+                <div className="flex gap-2 flex-wrap items-center bg-bx-surface/40 p-3 rounded-2xl border border-bx-border">
+                  <input
+                    value={svcSearch}
+                    onChange={e => setSvcSearch(e.target.value)}
+                    placeholder="Поиск сервиса…"
+                    className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-cyan-500/50 w-full sm:max-w-xs"
+                  />
+                  <span className="text-[11px] text-slate-500 font-mono">{services.length} в облаке</span>
+                  <button onClick={loadServices}
+                    className="px-3 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-slate-300 transition-colors">⟳</button>
+                  <button
+                    onClick={() => { setEditingSvc({ is_published: true, is_hot: false, icon: '🔗', section_id: BUNDLED_SECTIONS[0]?.id }); setSvcMode('create') }}
+                    className="ml-auto px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-cyan-600/20 active:scale-95">
+                    + Новый сервис
+                  </button>
+                </div>
+
+                {services.length === 0 && (
+                  <div className="text-center py-10 text-slate-500 text-xs leading-relaxed">
+                    Облачных сервисов пока нет. Базовый каталог зашит в приложение;<br />
+                    здесь можно добавлять свои — они появятся у всех пользователей поверх встроенных.
+                    <div className="text-[11px] text-slate-600 mt-2">Если добавление не сохраняется — не применена миграция <code className="text-cyan-400">bx_services</code>.</div>
+                  </div>
+                )}
+
+                <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                  {servicesBySection.map(sec => (
+                    <div key={sec.id}>
+                      <p className="text-[11px] font-bold text-slate-400 mb-1.5 sticky top-0 bg-bx-bg/80 py-1">{sec.title}</p>
+                      <div className="space-y-1.5">
+                        {sec.items.map(s => (
+                          <button key={s.id} onClick={() => { setEditingSvc(s); setSvcMode('edit') }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 bg-bx-surface border border-bx-border hover:border-cyan-500/40 rounded-xl text-left transition-colors">
+                            <span className="text-lg flex-shrink-0">{s.icon}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-bx-text truncate">{s.title}</p>
+                              <p className="text-[11px] text-slate-500 truncate font-mono">{s.url}</p>
+                            </div>
+                            {s.is_hot && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-bold flex-shrink-0">ЧАСТО</span>}
+                            {!s.is_published && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-500/20 text-slate-400 font-bold flex-shrink-0">СКРЫТ</span>}
+                            {s.tag && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/12 text-cyan-400 flex-shrink-0">{s.tag}</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 overflow-y-auto">
+                <div className="max-w-2xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-bx-text flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+                      {svcMode === 'create' ? 'Новый сервис' : 'Редактирование сервиса'}
+                    </h3>
+                    <button onClick={() => { setSvcMode('list'); setEditingSvc(null) }}
+                      className="text-xs text-slate-500 hover:text-slate-300 transition-colors">← к списку</button>
+                  </div>
+
+                  <div className="grid grid-cols-[64px_1fr] gap-2.5">
+                    <input value={editingSvc?.icon ?? ''} placeholder="🔗" maxLength={4}
+                      onChange={e => setEditingSvc(p => ({ ...p, icon: e.target.value }))}
+                      className="bg-bx-surface border border-bx-border-2 rounded-xl px-3 py-2.5 text-lg text-center text-bx-text focus:outline-none focus:border-cyan-500/50" />
+                    <input value={editingSvc?.title ?? ''} placeholder="Название сервиса"
+                      onChange={e => setEditingSvc(p => ({ ...p, title: e.target.value }))}
+                      className="bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-bx-text focus:outline-none focus:border-cyan-500/50" />
+                  </div>
+
+                  <input value={editingSvc?.url ?? ''} placeholder="https://…"
+                    onChange={e => setEditingSvc(p => ({ ...p, url: e.target.value }))}
+                    className="w-full bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs font-mono text-bx-text focus:outline-none focus:border-cyan-500/50" />
+
+                  <textarea value={editingSvc?.description ?? ''} placeholder="Короткое описание" rows={2}
+                    onChange={e => setEditingSvc(p => ({ ...p, description: e.target.value }))}
+                    className="w-full bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs text-bx-text focus:outline-none focus:border-cyan-500/50 resize-none leading-relaxed" />
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <select value={editingSvc?.section_id ?? ''}
+                      onChange={e => {
+                        const id = e.target.value
+                        const bundled = BUNDLED_SECTIONS.find(b => b.id === id)
+                        setEditingSvc(p => ({ ...p, section_id: id, section_title: bundled?.title ?? p?.section_title ?? '' }))
+                      }}
+                      className="bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500/50">
+                      {BUNDLED_SECTIONS.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
+                      {editingSvc?.section_id && !BUNDLED_SECTIONS.some(b => b.id === editingSvc.section_id) && (
+                        <option value={editingSvc.section_id}>{editingSvc.section_title || editingSvc.section_id}</option>
+                      )}
+                    </select>
+                    <input value={editingSvc?.tag ?? ''} placeholder="Тег (напр. ЛКН)"
+                      onChange={e => setEditingSvc(p => ({ ...p, tag: e.target.value }))}
+                      className="bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs text-bx-text focus:outline-none focus:border-cyan-500/50" />
+                  </div>
+
+                  <div className="grid grid-cols-[1fr_1fr_100px] gap-2.5">
+                    <label className="flex items-center gap-2 text-xs text-slate-400 bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 cursor-pointer">
+                      <input type="checkbox" checked={editingSvc?.is_hot ?? false}
+                        onChange={e => setEditingSvc(p => ({ ...p, is_hot: e.target.checked }))}
+                        className="accent-blue-500 w-3.5 h-3.5" />
+                      Часто используется
+                    </label>
+                    <label className="flex items-center gap-2 text-xs text-slate-400 bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 cursor-pointer">
+                      <input type="checkbox" checked={editingSvc?.is_published ?? true}
+                        onChange={e => setEditingSvc(p => ({ ...p, is_published: e.target.checked }))}
+                        className="accent-cyan-500 w-3.5 h-3.5" />
+                      Показывать
+                    </label>
+                    <input type="number" value={editingSvc?.sort_order ?? 0} title="Порядок"
+                      onChange={e => setEditingSvc(p => ({ ...p, sort_order: Number(e.target.value) }))}
+                      className="bg-bx-surface border border-bx-border-2 rounded-xl px-3 py-2.5 text-xs text-bx-text focus:outline-none focus:border-cyan-500/50" />
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button onClick={handleSaveService}
+                      className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-cyan-600/20 active:scale-95">
+                      {svcMode === 'create' ? 'Добавить сервис' : 'Сохранить изменения'}
+                    </button>
+                    {svcMode === 'edit' && editingSvc?.id && (
+                      <button onClick={() => handleDeleteService(editingSvc.id!)}
+                        className="px-4 py-3 bg-rose-600/15 hover:bg-rose-600/35 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-bold transition-all active:scale-95">
+                        Удалить
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

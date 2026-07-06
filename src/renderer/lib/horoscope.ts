@@ -1,7 +1,8 @@
 // «Бухо-гороскоп» — шуточный предсказатель для бухгалтера.
-// Большая база вариаций: предсказание собирается из 4 частей,
-// что даёт тысячи уникальных комбинаций. Детерминировано по дате —
-// один день = одно предсказание, до полуночи не меняется.
+// Предсказание собирается из нескольких частей + выбирается один из 10
+// визуальных вариантов оформления (тема + палитра + арт в виджете).
+// Детерминировано по дате — один день = одно предсказание и одна тема,
+// до полуночи не меняется. Кнопка «Ещё» крутит случайные комбинации.
 
 // 1. Настрой дня (общее предсказание)
 const moods: string[] = [
@@ -25,6 +26,16 @@ const moods: string[] = [
   'Звёзды сложились в форму идеальной декларации.',
   'День удачи для авансовых отчётов — подотчётники принесут все чеки.',
   'Сегодня soliq.uz не «ляжет» в самый неподходящий момент.',
+  'Плутон в аренде: договор продлят без торга.',
+  'Сегодня сальдо начального = сальдо конечного вашей душевной гармонии.',
+  'Ретроградного ничего нет — гоните отчётность смело.',
+  'День золотого сечения: расходы и доходы в идеальной пропорции.',
+  'Сегодня аудитор найдёт только то, что вы и так знали.',
+  'Комета удачи: премию согласуют с первого захода.',
+  'Сегодня выписка банка придёт до обеда. Редкое созвездие.',
+  'Нептун в облаке: 1С:Fresh не отвалится посреди проводки.',
+  'День лёгких округлений — тийины сами лягут куда надо.',
+  'Сегодня в почте не будет ни одного письма от ГНК с темой «Требование».',
 ];
 
 // 2. Совет дня
@@ -45,11 +56,17 @@ const advices: string[] = [
   'Совет: закройте лишние сеансы 1С, чтобы база не подвисала.',
   'Совет: держите под рукой реквизиты для платёжек.',
   'Совет: сегодня стоит ответить на тот самый отложенный запрос ГНК.',
+  'Совет: разнесите первичку сегодня — завтра её станет вдвое больше.',
+  'Совет: сверьте остатки по кассе до того, как уйдёте домой.',
+  'Совет: обновите справочник контрагентов — вычистите дубли.',
+  'Совет: поставьте напоминание на срок сдачи НДС.',
+  'Совет: проверьте, все ли ЭСФ приняты за прошлый месяц.',
+  'Совет: не бойтесь красной строки в отчёте — исправьте и идите дальше.',
 ];
 
 // 3. Число и цвет дня (как в настоящем гороскопе)
-const luckyAccounts: string[] = ['51', '60', '62', '68', '70', '71', '90', '99', '10', '01', '50', '84'];
-const colors: string[] = ['зелёный (как сошедшийся баланс)', 'синий', 'золотой', 'спокойный серый', 'бодрящий оранжевый', 'белый, как чистая отчётность'];
+const luckyAccounts: string[] = ['51', '60', '62', '68', '70', '71', '90', '99', '10', '01', '50', '84', '20', '26', '44', '19'];
+const colors: string[] = ['зелёный (как сошедшийся баланс)', 'синий', 'золотой', 'спокойный серый', 'бодрящий оранжевый', 'белый, как чистая отчётность', 'изумрудный', 'глубокий фиолетовый', 'тёплый янтарный'];
 
 // 4. Предостережение / нота дня
 const warnings: string[] = [
@@ -61,6 +78,39 @@ const warnings: string[] = [
   'Не верьте тому, кто говорит «это быстро поправить».',
   'Будьте бдительны с копипастом реквизитов.',
   'Сегодня лучше дважды нажать «Сохранить».',
+  'Осторожно: соблазн «доделаю завтра» сегодня особенно силён.',
+  'Не закрывайте период, не сверив НДС — звёзды предупреждают.',
+  'Берегите нервы на созвоне — Меркурий любит недопонимание.',
+  'Сегодня легко перепутать 68.01 и 68.02. Смотрите внимательно.',
+];
+
+// 5. Десять визуальных тем оформления виджета.
+// Арт (SVG) для каждой темы живёт в HoroscopeWidget по id.
+export interface HoroscopeVariant {
+  id: string;
+  label: string;      // подпись-чип темы
+  emoji: string;
+  bg: string;         // фон-градиент карточки
+  border: string;     // цвет рамки
+  accent: string;     // основной акцент (заголовок, точка)
+  accentSoft: string; // мягкий акцент (счёт дня)
+  textMain: string;   // цвет главной строки предсказания
+  textSub: string;    // цвет совета
+  glow1: string;      // свечение 1 (rgba/hex)
+  glow2: string;      // свечение 2
+}
+
+export const VARIANTS: HoroscopeVariant[] = [
+  { id: 'cosmos',  label: 'Космос',           emoji: '🌌', bg: 'linear-gradient(135deg,#1a0d35 0%,#130a22 55%,#0d071a 100%)', border: '#6d28d955', accent: '#a855f7', accentSoft: '#c4b5fd', textMain: '#ede9fe', textSub: '#a78bca', glow1: '#a855f733', glow2: '#f59e0b1f' },
+  { id: 'sunrise', label: 'Рассвет баланса',  emoji: '🌅', bg: 'linear-gradient(135deg,#3a1c0a 0%,#241206 55%,#160a04 100%)', border: '#f59e0b55', accent: '#fbbf24', accentSoft: '#fde68a', textMain: '#fef3c7', textSub: '#d6b483', glow1: '#f59e0b33', glow2: '#ef444422' },
+  { id: 'zen',     label: 'Зелёный дзен',     emoji: '🍃', bg: 'linear-gradient(135deg,#052e1f 0%,#04241a 55%,#031712 100%)', border: '#10b98155', accent: '#34d399', accentSoft: '#a7f3d0', textMain: '#d1fae5', textSub: '#7fbfa4', glow1: '#10b98133', glow2: '#22d3ee1f' },
+  { id: 'retro',   label: 'Ретро-Меркурий',   emoji: '🕹', bg: 'linear-gradient(135deg,#2a0a3d 0%,#1a0730 55%,#0d0420 100%)', border: '#ec489955', accent: '#f472b6', accentSoft: '#f9a8d4', textMain: '#fce7f3', textSub: '#c99bd0', glow1: '#ec489933', glow2: '#22d3ee2a' },
+  { id: 'night',   label: 'Ночная смена',     emoji: '🌙', bg: 'linear-gradient(135deg,#0b1b3a 0%,#08122a 55%,#050b1a 100%)', border: '#3b82f655', accent: '#60a5fa', accentSoft: '#bfdbfe', textMain: '#dbeafe', textSub: '#8fa9cf', glow1: '#3b82f633', glow2: '#818cf822' },
+  { id: 'coffee',  label: 'Кофейная гуща',    emoji: '☕️', bg: 'linear-gradient(135deg,#2e1b10 0%,#22140b 55%,#160c06 100%)', border: '#b4530955', accent: '#f0a868', accentSoft: '#f5c99b', textMain: '#f5e6d8', textSub: '#c69f80', glow1: '#d9770633', glow2: '#78350f2a' },
+  { id: 'storm',   label: 'Налоговый шторм',  emoji: '⛈', bg: 'linear-gradient(135deg,#111827 0%,#0d1420 55%,#080c14 100%)', border: '#64748b55', accent: '#94a3b8', accentSoft: '#cbd5e1', textMain: '#e2e8f0', textSub: '#8593a8', glow1: '#38bdf833', glow2: '#facc1522' },
+  { id: 'gold',    label: 'Золотая жила',     emoji: '💰', bg: 'linear-gradient(135deg,#2a2408 0%,#1c1805 55%,#100e03 100%)', border: '#ca8a0455', accent: '#facc15', accentSoft: '#fde68a', textMain: '#fef9c3', textSub: '#cbb96b', glow1: '#eab30833', glow2: '#f59e0b2a' },
+  { id: 'sea',     label: 'Морской бриз',     emoji: '🌊', bg: 'linear-gradient(135deg,#062a2e 0%,#042023 55%,#031416 100%)', border: '#06b6d455', accent: '#22d3ee', accentSoft: '#a5f3fc', textMain: '#cffafe', textSub: '#7bb6bf', glow1: '#06b6d433', glow2: '#3b82f622' },
+  { id: 'fire',    label: 'Огненный дедлайн', emoji: '🔥', bg: 'linear-gradient(135deg,#3a0f0a 0%,#260906 55%,#160504 100%)', border: '#ef444455', accent: '#fb7185', accentSoft: '#fecaca', textMain: '#fee2e2', textSub: '#d69a99', glow1: '#ef444433', glow2: '#f9731622' },
 ];
 
 // FNV-1a хэш для детерминированного выбора по строке-дате
@@ -83,6 +133,7 @@ export interface DailyHoroscope {
   luckyAccount: string;
   color: string;
   warning: string;
+  variant: HoroscopeVariant;
 }
 
 /** Предсказание на конкретную дату (по умолчанию — сегодня). */
@@ -95,9 +146,11 @@ export function getHoroscope(date = new Date()): DailyHoroscope {
     luckyAccount: pick(luckyAccounts, base >> 7),
     color: pick(colors, base >> 11),
     warning: pick(warnings, base >> 15),
+    variant: pick(VARIANTS, base >> 19),
   };
 }
 
 // Общее число теоретических комбинаций (для интереса):
-// 20 × 16 × 12 × 6 × 8 = 184 320 вариаций.
-export const TOTAL_VARIATIONS = moods.length * advices.length * luckyAccounts.length * colors.length * warnings.length;
+// moods × advices × luckyAccounts × colors × warnings × variants.
+export const TOTAL_VARIATIONS =
+  moods.length * advices.length * luckyAccounts.length * colors.length * warnings.length * VARIANTS.length;
