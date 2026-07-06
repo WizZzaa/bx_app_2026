@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/db/supabase'
 import { usePlan } from '../lib/plan'
 import { useToast } from '../lib/ui/ToastContext'
+import { KB_ARTICLES } from '../data/knowledge'
 
 // Панель администратора BX: пользователи и тарифы, справочник БРВ/МРОТ,
 // CMS базы знаний, чат техподдержки. Доступ — только role='admin' (RLS).
@@ -40,6 +41,7 @@ interface Article {
   category: string
   is_published: boolean
   created_at: string
+  is_local?: boolean
 }
 
 interface Ticket {
@@ -156,9 +158,41 @@ export default function AdminDashboard() {
   }
 
   const loadArticles = async () => {
-    const { data } = await supabase
-      .from('bx_knowledge_articles').select('*').order('created_at', { ascending: false })
-    setArticles((data as Article[]) || [])
+    try {
+      const { data, error } = await supabase
+        .from('bx_knowledge_articles').select('*').order('created_at', { ascending: false })
+      if (error) throw error
+      
+      const cloudArticles = (data as Article[]) || []
+      const cloudTitles = new Set(cloudArticles.map(a => a.title.trim().toLowerCase().replace(/ё/g, 'е')))
+      
+      // Слияние: добавляем локальные статьи, которых нет в облаке
+      const localArticlesMapped: Article[] = KB_ARTICLES.filter(
+        a => !cloudTitles.has(a.title.trim().toLowerCase().replace(/ё/g, 'е'))
+      ).map(a => ({
+        id: a.id,
+        title: a.title,
+        body: a.body,
+        category: a.category,
+        is_published: true,
+        created_at: a.updated ? `${a.updated}T00:00:00Z` : new Date().toISOString(),
+        is_local: true
+      }))
+      
+      setArticles([...cloudArticles, ...localArticlesMapped])
+    } catch (err) {
+      console.error('Failed to load articles from Supabase, loading locals only:', err)
+      const localArticlesMapped: Article[] = KB_ARTICLES.map(a => ({
+        id: a.id,
+        title: a.title,
+        body: a.body,
+        category: a.category,
+        is_published: true,
+        created_at: a.updated ? `${a.updated}T00:00:00Z` : new Date().toISOString(),
+        is_local: true
+      }))
+      setArticles(localArticlesMapped)
+    }
   }
 
   const loadTickets = async () => {
@@ -230,21 +264,25 @@ export default function AdminDashboard() {
       toast.error('Заполните заголовок, категорию и содержание'); return
     }
     try {
-      if (editingArticle.id) {
+      // Статья считается локальной, если у неё взведен флаг is_local или её ID не является UUID
+      const isLocal = editingArticle.is_local || !editingArticle.id || !editingArticle.id.includes('-') || editingArticle.id.length !== 36
+      
+      if (editingArticle.id && !isLocal) {
         const { error } = await supabase.from('bx_knowledge_articles').update({
           title: editingArticle.title, body: editingArticle.body,
           category: editingArticle.category, is_published: editingArticle.is_published ?? true,
           updated_at: new Date().toISOString(),
         }).eq('id', editingArticle.id)
         if (error) throw error
-        toast.success('Статья обновлена')
+        toast.success('Статья обновлена в облаке')
       } else {
+        // Для локальных статей или новых при сохранении вставляем новую запись (база сама сгенерирует UUID)
         const { error } = await supabase.from('bx_knowledge_articles').insert({
           title: editingArticle.title, body: editingArticle.body,
           category: editingArticle.category, is_published: editingArticle.is_published ?? true,
         })
         if (error) throw error
-        toast.success('Статья создана')
+        toast.success('Статья сохранена в облако')
       }
       setCmsMode('list'); setEditingArticle(null)
       loadArticles()
@@ -508,8 +546,13 @@ export default function AdminDashboard() {
                         <p className="text-[10px] text-slate-600 mt-0.5">{a.category} · {new Date(a.created_at).toLocaleDateString('ru-RU')}</p>
                       </div>
                       <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold flex-shrink-0 ${
-                        a.is_published ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}`}>
-                        {a.is_published ? 'опубликована' : 'черновик'}
+                        a.is_local 
+                          ? 'bg-blue-500/15 text-blue-400' 
+                          : a.is_published 
+                            ? 'bg-emerald-500/15 text-emerald-400' 
+                            : 'bg-amber-500/15 text-amber-400'
+                      }`}>
+                        {a.is_local ? 'в бандле' : a.is_published ? 'опубликована' : 'черновик'}
                       </span>
                     </button>
                   ))}
