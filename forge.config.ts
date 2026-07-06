@@ -13,7 +13,7 @@ const config: ForgeConfig = {
     new PublisherGithub({
       repository: { owner: 'WizZzaa', name: 'bx_app_2026' },
       prerelease: false,
-      draft: true, // релиз публикуется вручную после проверки
+      draft: false, // публикуем сразу: update.electronjs.org отдаёт только опубликованные релизы
     }),
   ],
   packagerConfig: {
