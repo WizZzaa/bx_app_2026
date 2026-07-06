@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { APP_VERSION, CHANGELOG } from '../../../shared/version'
 
 interface Props {
   onSignIn: (email: string, password: string) => Promise<string | null>
@@ -16,6 +17,10 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
   const [loading, setLoading] = useState(false)
   const [showResend, setShowResend] = useState(false)
   const [resending, setResending] = useState(false)
+  const [showChangelog, setShowChangelog] = useState(false)
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'latest' | 'error'>('idle')
+
+  const latestEntry = CHANGELOG[0]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,6 +87,26 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
     setError(null)
     setInfo(null)
     setShowResend(false)
+  }
+
+  const handleCheckUpdate = async () => {
+    setUpdateStatus('checking')
+    try {
+      const res = await fetch('https://api.github.com/repos/WizZzaa/bx_app_2026/releases/latest')
+      if (!res.ok) throw new Error('Не удалось проверить')
+      const data = await res.json()
+      const remoteTag = (data.tag_name || '').replace(/^v/, '')
+      if (remoteTag && remoteTag !== APP_VERSION) {
+        window.open(`https://github.com/WizZzaa/bx_app_2026/releases/tag/${data.tag_name}`, '_blank')
+        setUpdateStatus('idle')
+      } else {
+        setUpdateStatus('latest')
+        setTimeout(() => setUpdateStatus('idle'), 3000)
+      }
+    } catch {
+      setUpdateStatus('error')
+      setTimeout(() => setUpdateStatus('idle'), 3000)
+    }
   }
 
   const modeLabel = mode === 'in'
@@ -268,7 +293,122 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
             )}
           </div>
         </form>
+
+        {/* ── Version badge + update check ── */}
+        <div className="mt-5 flex items-center justify-center gap-3">
+          <span className="text-[10px] text-slate-500 font-mono bg-slate-800/50 border border-slate-700/50 rounded-lg px-2.5 py-1">
+            v{APP_VERSION}
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowChangelog(true)}
+            className="text-[10px] text-slate-500 hover:text-blue-400 transition-colors font-medium"
+            tabIndex={0}
+            aria-label="Показать что нового в этой версии"
+          >
+            Что нового
+          </button>
+          <span className="text-slate-700">·</span>
+          <button
+            type="button"
+            onClick={handleCheckUpdate}
+            disabled={updateStatus === 'checking'}
+            className="text-[10px] text-slate-500 hover:text-blue-400 transition-colors font-medium flex items-center gap-1 disabled:opacity-50"
+            tabIndex={0}
+            aria-label="Проверить наличие обновлений"
+          >
+            {updateStatus === 'checking' && (
+              <span className="w-2.5 h-2.5 border border-slate-500/50 border-t-blue-400 rounded-full animate-spin" />
+            )}
+            {updateStatus === 'latest' && (
+              <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+            {updateStatus === 'error' && (
+              <svg className="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01" />
+              </svg>
+            )}
+            {updateStatus === 'idle' && 'Обновления'}
+            {updateStatus === 'checking' && 'Проверяю…'}
+            {updateStatus === 'latest' && 'Актуальная версия'}
+            {updateStatus === 'error' && 'Ошибка проверки'}
+          </button>
+        </div>
       </div>
+
+      {/* ── Changelog modal ── */}
+      {showChangelog && latestEntry && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowChangelog(false)}
+        >
+          <div
+            className="bg-[#111420] border border-bx-border rounded-2xl shadow-2xl w-[440px] max-h-[80vh] overflow-hidden bx-animate-fade"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/60">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Что нового в v{latestEntry.version}</h3>
+                  <p className="text-[10px] text-slate-500">{latestEntry.date} · {latestEntry.title}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowChangelog(false)}
+                className="w-7 h-7 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-white transition-colors"
+                aria-label="Закрыть"
+                tabIndex={0}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Changes list */}
+            <div className="px-6 py-4 space-y-2.5 overflow-y-auto max-h-[50vh] custom-scrollbar">
+              {latestEntry.changes.map((change, i) => (
+                <div key={i} className="flex items-start gap-2.5 group">
+                  <div className="w-5 h-5 mt-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/20 transition-colors">
+                    <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">{change}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer with previous versions */}
+            <div className="px-6 py-3 border-t border-slate-800/60 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                <span>Предыдущие:</span>
+                {CHANGELOG.slice(1, 4).map(entry => (
+                  <span key={entry.version} className="bg-slate-800/60 border border-slate-700/40 rounded px-1.5 py-0.5 font-mono">
+                    {entry.version}
+                  </span>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowChangelog(false)}
+                className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                tabIndex={0}
+                aria-label="Закрыть модалку с обновлениями"
+              >
+                Понятно
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
