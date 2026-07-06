@@ -1,4 +1,4 @@
-import { KB_ARTICLES } from '../../data/knowledge'
+import { getAllArticlesSync } from '../db/knowledgeRepo'
 
 const STOP = new Set(['и','в','на','по','с','за','для','как','что','это','о','об','от','до','при','или','а','но','не','ли','же','бы','то','так','уже','если','есть','быть','мне','мой','моя','мои','нужно','можно','какой','какая','какие','сколько'])
 
@@ -70,7 +70,8 @@ export function retrieveArticles(query: string, topK = 3): RetrievedArticle[] {
   const qTokens = tokenize(query)
   if (qTokens.length === 0) return []
 
-  const scored = KB_ARTICLES.map(a => {
+  // Локальные статьи + кэш облачной CMS — AI видит и статьи из админки
+  const scored = getAllArticlesSync().map(a => {
     // Токенизируем (и стеблируем) поля статьи для точного совпадения
     const titleTokens = tokenize(a.title)
     const tagTokens = tokenize((a.tags || []).join(' '))

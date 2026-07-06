@@ -13,11 +13,12 @@ export const indicators: Indicator[] = [
     hint: 'Применяется для расчёта штрафов, госпошлин, патентов и иных платежей.',
     meta: { verified: true, source: 'lex.uz / buxgalter.uz', updatedAt: '2026-07-03' },
     history: [
-      { value: 412000, from: '2025-08-01', basis: 'С 01.08.2025, действует на весь 2026 (сверено 03.07.2026)', verified: true },
-      { value: 375000, from: '2024-09-01', basis: 'требует проверки' },
-      { value: 340000, from: '2024-04-01', basis: 'требует проверки' },
-      { value: 330000, from: '2023-05-01', basis: 'требует проверки' },
-      { value: 300000, from: '2022-06-01', basis: 'требует проверки' },
+      { value: 412000, from: '2025-08-01', basis: 'С 01.08.2025, действует на весь 2026 (сверено 06.07.2026)', verified: true },
+      { value: 375000, from: '2024-10-01', basis: 'С 01.10.2024 (сверено 06.07.2026, norma.uz)', verified: true },
+      { value: 340000, from: '2023-12-01', basis: 'С 01.12.2023 (сверено 06.07.2026, norma.uz)', verified: true },
+      { value: 330000, from: '2023-05-01', basis: 'С 01.05.2023 (сверено 06.07.2026, norma.uz)', verified: true },
+      { value: 300000, from: '2022-06-01', basis: 'С 01.06.2022 (сверено 06.07.2026, norma.uz)', verified: true },
+      { value: 270000, from: '2021-09-01', basis: 'С 01.09.2021 (сверено 06.07.2026, norma.uz)', verified: true },
     ],
   },
   {

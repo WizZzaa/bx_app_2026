@@ -14,12 +14,23 @@ interface Profile {
   email?: string
 }
 
-interface Indicator {
+// Живая схема справочника показателей:
+//   bx_ref_indicators       — сам показатель (key = 'brv' | 'mrot' | 'refi')
+//   bx_ref_indicator_values — история значений с привязкой по indicator_id
+interface IndicatorMeta {
   id: string
-  indicator_type: 'brv' | 'mrot'
+  key: string
+  short_name: string
+  unit: string
+}
+
+interface IndicatorValueRow {
+  id: string
+  indicator_id: string
   value: number
-  date_from: string
-  description?: string
+  valid_from: string
+  basis: string | null
+  verified: boolean
 }
 
 interface Article {
@@ -63,6 +74,12 @@ const TICKET_STATUS: Record<Ticket['status'], { label: string; cls: string }> = 
   closed:   { label: 'Закрыт',     cls: 'bg-slate-500/15 text-slate-500' },
 }
 
+const INDICATOR_BADGE: Record<string, string> = {
+  brv:  'bg-blue-500/15 text-blue-400',
+  mrot: 'bg-purple-500/15 text-purple-400',
+  refi: 'bg-amber-500/15 text-amber-400',
+}
+
 function initials(email?: string): string {
   return (email ?? '??').slice(0, 2).toUpperCase()
 }
@@ -76,7 +93,7 @@ function avatarHue(id: string): string {
 }
 
 export default function AdminDashboard() {
-  const { isAdmin, loading: planLoading } = usePlan()
+  const { isAdmin, loading: planLoading, refresh: refreshPlan } = usePlan()
   const toast = useToast()
   const [activeTab, setActiveTab] = useState<Tab>('users')
 
@@ -86,11 +103,13 @@ export default function AdminDashboard() {
   const [userSearch, setUserSearch] = useState('')
 
   // Indicators
-  const [indicators, setIndicators] = useState<Indicator[]>([])
+  const [indMeta, setIndMeta] = useState<IndicatorMeta[]>([])
+  const [indValues, setIndValues] = useState<IndicatorValueRow[]>([])
   const [indType, setIndType] = useState<'brv' | 'mrot'>('brv')
   const [indValue, setIndValue] = useState('')
   const [indDate, setIndDate] = useState('')
-  const [indDesc, setIndDesc] = useState('')
+  const [indBasis, setIndBasis] = useState('')
+  const [indVerified, setIndVerified] = useState(true)
 
   // CMS
   const [articles, setArticles] = useState<Article[]>([])
@@ -126,9 +145,14 @@ export default function AdminDashboard() {
   }
 
   const loadIndicators = async () => {
-    const { data } = await supabase
-      .from('bx_ref_indicator_values').select('*').order('date_from', { ascending: false })
-    setIndicators((data as Indicator[]) || [])
+    const { data: meta } = await supabase
+      .from('bx_ref_indicators').select('id, key, short_name, unit')
+    setIndMeta((meta as IndicatorMeta[]) || [])
+    const { data: vals } = await supabase
+      .from('bx_ref_indicator_values')
+      .select('id, indicator_id, value, valid_from, basis, verified')
+      .order('valid_from', { ascending: false })
+    setIndValues((vals as IndicatorValueRow[]) || [])
   }
 
   const loadArticles = async () => {
@@ -144,6 +168,10 @@ export default function AdminDashboard() {
   }
 
   // ВСЕ хуки — до ранних return (правила хуков React)
+  // При входе в админку перечитываем роль/план из облака: свежая выдача прав
+  // (например, role='admin', выставленная в Supabase) применяется без перезапуска.
+  useEffect(() => { refreshPlan() }, [refreshPlan])
+
   useEffect(() => {
     if (!isAdmin) return
     loadUsers(); loadTickets(); loadArticles(); loadIndicators()
@@ -178,13 +206,19 @@ export default function AdminDashboard() {
   const handleAddIndicator = async () => {
     const valNum = parseFloat(indValue)
     if (!valNum || !indDate) { toast.error('Заполните значение и дату'); return }
+    const indicator = indMeta.find(m => m.key === indType)
+    if (!indicator) { toast.error('Показатель не найден в справочнике'); return }
     try {
       const { error } = await supabase.from('bx_ref_indicator_values').insert({
-        indicator_type: indType, value: valNum, date_from: indDate, description: indDesc || undefined,
+        indicator_id: indicator.id,
+        value: valNum,
+        valid_from: indDate,
+        basis: indBasis || null,
+        verified: indVerified,
       })
       if (error) throw error
       toast.success('Показатель добавлен')
-      setIndValue(''); setIndDesc('')
+      setIndValue(''); setIndBasis('')
       loadIndicators()
     } catch {
       toast.error('Ошибка сохранения')
@@ -265,6 +299,10 @@ export default function AdminDashboard() {
         <p className="text-sm text-slate-500 max-w-sm mt-1">
           Раздел доступен только администраторам системы. Если это ошибка — обратитесь в поддержку.
         </p>
+        <button onClick={() => refreshPlan()}
+          className="mt-4 px-4 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-slate-300 transition-colors">
+          ⟳ Проверить права заново
+        </button>
       </div>
     )
   }
@@ -401,10 +439,16 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="text-[10px] text-slate-500 block mb-1">Основание (указ/ПКМ)</label>
-                  <input value={indDesc} onChange={e => setIndDesc(e.target.value)}
+                  <input value={indBasis} onChange={e => setIndBasis(e.target.value)}
                     placeholder="Указ Президента от…"
                     className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
                 </div>
+                <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+                  <input type="checkbox" checked={indVerified}
+                    onChange={e => setIndVerified(e.target.checked)}
+                    className="accent-emerald-500 w-3.5 h-3.5" />
+                  Сверено с официальным источником
+                </label>
                 <button onClick={handleAddIndicator}
                   className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-colors">
                   Опубликовать значение
@@ -420,17 +464,24 @@ export default function AdminDashboard() {
                 <h3 className="text-sm font-bold text-bx-text">История значений</h3>
               </div>
               <div className="flex-1 overflow-y-auto divide-y divide-bx-border/60">
-                {indicators.map(ind => (
-                  <div key={ind.id} className="flex items-center gap-3 px-4 py-2.5">
-                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-black flex-shrink-0 ${
-                      ind.indicator_type === 'brv' ? 'bg-blue-500/15 text-blue-400' : 'bg-purple-500/15 text-purple-400'}`}>
-                      {ind.indicator_type.toUpperCase()}
-                    </span>
-                    <span className="text-sm font-bold text-bx-text tabular-nums">{Number(ind.value).toLocaleString('ru-RU')} сум</span>
-                    <span className="text-[10px] text-slate-500 ml-auto flex-shrink-0">с {new Date(ind.date_from).toLocaleDateString('ru-RU')}</span>
-                  </div>
-                ))}
-                {indicators.length === 0 && <p className="text-xs text-slate-600 text-center py-8">Значений пока нет</p>}
+                {indValues.map(v => {
+                  const meta = indMeta.find(m => m.id === v.indicator_id)
+                  const key = meta?.key ?? '—'
+                  const unit = meta?.unit ?? 'сум'
+                  return (
+                    <div key={v.id} className="flex items-center gap-3 px-4 py-2.5">
+                      <span className={`text-[9px] px-2 py-0.5 rounded-full font-black flex-shrink-0 ${INDICATOR_BADGE[key] ?? 'bg-slate-500/15 text-slate-400'}`}>
+                        {meta?.short_name ?? key.toUpperCase()}
+                      </span>
+                      <span className="text-sm font-bold text-bx-text tabular-nums">
+                        {unit === '%' ? `${Number(v.value)}%` : `${Number(v.value).toLocaleString('ru-RU')} ${unit}`}
+                      </span>
+                      {v.verified && <span className="text-[10px] text-emerald-400 flex-shrink-0" title="Сверено">✓</span>}
+                      <span className="text-[10px] text-slate-500 ml-auto flex-shrink-0">с {new Date(v.valid_from).toLocaleDateString('ru-RU')}</span>
+                    </div>
+                  )
+                })}
+                {indValues.length === 0 && <p className="text-xs text-slate-600 text-center py-8">Значений пока нет</p>}
               </div>
             </div>
           </div>

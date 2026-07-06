@@ -5,10 +5,9 @@ import Topbar from './components/layout/Topbar';
 import CommandPalette from './components/CommandPalette';
 import Dashboard from './pages/Dashboard';
 import Tools from './pages/Tools';
-import Reference from './pages/Reference';
+import Library from './pages/library/Library';
 import Calc from './pages/Calc';
 import Planner from './pages/Planner';
-import Knowledge from './pages/Knowledge';
 import Templates from './pages/Templates';
 import Ai from './pages/Ai';
 import Support from './pages/Support';
@@ -112,10 +111,10 @@ export default function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/tools" element={<Tools />} />
-                <Route path="/reference" element={<Reference />} />
+                <Route path="/reference" element={<Library initialZone="reference" />} />
                 <Route path="/services" element={<Services />} />
                 <Route path="/news" element={<News />} />
-                <Route path="/knowledge" element={<Knowledge />} />
+                <Route path="/knowledge" element={<Library />} />
                 <Route path="/templates" element={<Templates />} />
                 <Route path="/hr" element={<Hr />} />
                 <Route path="/finance" element={<Finance />} />
