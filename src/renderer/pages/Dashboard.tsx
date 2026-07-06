@@ -4,6 +4,7 @@ import WeatherWidget from '../components/widgets/WeatherWidget';
 import NotificationsWidget from '../components/widgets/NotificationsWidget';
 import HoroscopeWidget from '../components/widgets/HoroscopeWidget';
 import CurrencyWidget from '../components/widgets/CurrencyWidget';
+import WidgetBoundary from '../components/WidgetBoundary';
 import { useCompany } from '../lib/CompanyContext';
 import { useEvents } from './planner/useEvents';
 import { useTransactions } from './finance/useTransactions';
@@ -186,10 +187,10 @@ export default function Dashboard() {
 
       {/* Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        {widgetVisibility.weather && <WeatherWidget />}
-        {widgetVisibility.currency && <CurrencyWidget />}
-        {widgetVisibility.notifications && <NotificationsWidget />}
-        {widgetVisibility.horoscope && <HoroscopeWidget />}
+        {widgetVisibility.weather && <WidgetBoundary name="Погода"><WeatherWidget /></WidgetBoundary>}
+        {widgetVisibility.currency && <WidgetBoundary name="Курсы валют"><CurrencyWidget /></WidgetBoundary>}
+        {widgetVisibility.notifications && <WidgetBoundary name="Оповещения"><NotificationsWidget /></WidgetBoundary>}
+        {widgetVisibility.horoscope && <WidgetBoundary name="Бухо-гороскоп"><HoroscopeWidget /></WidgetBoundary>}
       </div>
 
       {/* Контроль оплат */}

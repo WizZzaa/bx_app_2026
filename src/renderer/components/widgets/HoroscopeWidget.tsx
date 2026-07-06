@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { getHoroscope, TOTAL_VARIATIONS, type DailyHoroscope, type HoroscopeVariant } from '../../lib/horoscope'
+import { getHoroscope, TOTAL_VARIATIONS, VARIANTS, type DailyHoroscope, type HoroscopeVariant } from '../../lib/horoscope'
 
 // «Бухо-гороскоп» — предсказание дня для бухгалтера.
 // Одна из 10 визуальных тем выбирается по дате; у каждой свой SVG-арт и палитра.
 // По умолчанию детерминировано на сегодня; кнопка «Ещё» крутит случайные.
 
 // ── SVG-арт для каждой темы (декоративный фон) ──────────────────────────────
-function Art({ v }: { v: HoroscopeVariant }) {
+export function Art({ v }: { v: HoroscopeVariant }) {
   const a = v.accent
   const s = v.accentSoft
   const common = { position: 'absolute' as const, inset: 0, width: '100%', height: '100%', pointerEvents: 'none' as const }
@@ -133,13 +133,13 @@ export default function HoroscopeWidget() {
     setRandomMode(false)
   }
 
-  const v = h.variant
+  const v = h.variant ?? VARIANTS[0]
   const today = new Date()
   const dateStr = today.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
 
   return (
     <div
-      className="rounded-xl h-full overflow-hidden relative flex flex-col transition-all duration-500"
+      className="rounded-xl h-full min-h-[300px] overflow-hidden relative flex flex-col transition-all duration-500"
       style={{ border: `1px solid ${v.border}`, background: v.bg }}
     >
       {/* Тематический SVG-арт */}
