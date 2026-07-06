@@ -206,14 +206,14 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
           <div className="mb-4 bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between text-xs text-emerald-300 bx-animate-fade">
             <div>
               <p className="font-bold text-white mb-0.5">Обновление скачано!</p>
-              <p className="text-[10px] text-slate-400">Приложение готово к обновлению</p>
+              <p className="text-[10px] text-slate-400">Нажмите, чтобы установить новую версию</p>
             </div>
             <button
               type="button"
               onClick={handleInstallUpdate}
               className="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-semibold px-3 py-1.5 rounded-lg transition-all"
             >
-              Перезапустить
+              Установить
             </button>
           </div>
         )}

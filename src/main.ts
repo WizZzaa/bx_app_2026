@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, autoUpdater, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, shell, net } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs'
 import started from 'electron-squirrel-startup'
@@ -10,68 +10,16 @@ if (started) {
   app.quit()
 }
 
-// ── Автообновление через autoUpdater + Squirrel ──────────────────────────────
-// update.electronjs.org предоставляет совместимый сервер обновлений для публичных GitHub-репо.
-// autoUpdater скачивает обновление в фоне и предлагает перезапуск.
-let updateStatus: 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error' = 'idle'
+// ── Автообновление: собственный загрузчик (работает без подписи) ─────────────
+// Нативный autoUpdater (Squirrel.Mac) требует подпись Apple Developer ID и на
+// неподписанной сборке даже не начинает скачивание. Поэтому качаем сами:
+// проверяем последний релиз на GitHub, скачиваем ассет под платформу в фоне,
+// показываем «готово», а по кнопке открываем файл для установки.
+let updateStatus: 'idle' | 'checking' | 'downloading' | 'ready' | 'error' = 'idle'
 let updateError = ''
+let downloadedPath: string | null = null
 
-const setupAutoUpdater = () => {
-  if (!app.isPackaged) return
-
-  const server = 'https://update.electronjs.org'
-  const repo = 'WizZzaa/bx_app_2026'
-  const platform = `${process.platform}-${process.arch}`
-  const version = app.getVersion()
-  const feedURL = `${server}/${repo}/${platform}/${version}`
-
-  try {
-    autoUpdater.setFeedURL({ url: feedURL })
-  } catch (e) {
-    console.warn('Автообновление: не удалось настроить feed URL:', e)
-    return
-  }
-
-  autoUpdater.on('checking-for-update', () => {
-    updateStatus = 'checking'
-    broadcastUpdateStatus()
-  })
-
-  autoUpdater.on('update-available', () => {
-    updateStatus = 'downloading'
-    broadcastUpdateStatus()
-  })
-
-  autoUpdater.on('update-not-available', () => {
-    updateStatus = 'idle'
-    broadcastUpdateStatus()
-  })
-
-  autoUpdater.on('update-downloaded', () => {
-    updateStatus = 'ready'
-    broadcastUpdateStatus()
-  })
-
-  autoUpdater.on('error', (err) => {
-    updateStatus = 'error'
-    updateError = err?.message || 'Неизвестная ошибка'
-    broadcastUpdateStatus()
-    // Сбрасываем ошибку через 10 секунд
-    setTimeout(() => {
-      updateStatus = 'idle'
-      updateError = ''
-    }, 10000)
-  })
-
-  // Проверяем обновления при запуске и потом каждый час
-  setTimeout(() => {
-    try { autoUpdater.checkForUpdates() } catch { /* ignore */ }
-  }, 5000)
-
-  setInterval(() => {
-    try { autoUpdater.checkForUpdates() } catch { /* ignore */ }
-  }, 60 * 60 * 1000)
-}
+const GH_REPO = 'WizZzaa/bx_app_2026'
 
 const broadcastUpdateStatus = () => {
   BrowserWindow.getAllWindows().forEach(win => {
@@ -81,11 +29,81 @@ const broadcastUpdateStatus = () => {
   })
 }
 
-// IPC: рендерер запрашивает текущий статус или проверку
-ipcMain.handle('app:check-for-updates', () => {
-  if (app.isPackaged) {
-    try { autoUpdater.checkForUpdates() } catch { /* ignore */ }
+// Сравнение версий «a новее b» (semver x.y.z)
+const isNewerVersion = (a: string, b: string): boolean => {
+  const pa = a.split('.').map(n => parseInt(n, 10) || 0)
+  const pb = b.split('.').map(n => parseInt(n, 10) || 0)
+  for (let i = 0; i < 3; i++) {
+    if ((pa[i] || 0) > (pb[i] || 0)) return true
+    if ((pa[i] || 0) < (pb[i] || 0)) return false
   }
+  return false
+}
+
+// Ассет релиза под текущую платформу+архитектуру (имя вида *-darwin-arm64-*.zip)
+const pickAsset = (assets: Array<{ name: string; browser_download_url: string }>) => {
+  const plat = process.platform === 'darwin' ? 'darwin' : 'win32'
+  const arch = process.arch
+  return assets.find(a => a.name.includes(`-${plat}-${arch}-`))
+    || assets.find(a => a.name.includes(`-${plat}-`))
+    || null
+}
+
+// Скачивание ассета в «Загрузки» (net сам следует редиректам GitHub→CDN)
+const downloadAsset = (url: string, name: string): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const dest = path.join(app.getPath('downloads'), name)
+    const file = fs.createWriteStream(dest)
+    const request = net.request(url)
+    request.on('response', (response) => {
+      if (response.statusCode !== 200) {
+        file.close(); fs.rm(dest, () => { /* ignore */ })
+        reject(new Error(`HTTP ${response.statusCode}`)); return
+      }
+      response.on('data', (chunk: Buffer) => { file.write(chunk) })
+      response.on('end', () => { file.end(() => resolve(dest)) })
+      response.on('error', (e) => { file.close(); reject(e) })
+    })
+    request.on('error', reject)
+    request.end()
+  })
+
+const checkForUpdatesAndDownload = async () => {
+  if (!app.isPackaged) return
+  if (updateStatus === 'checking' || updateStatus === 'downloading') return
+  try {
+    updateStatus = 'checking'; broadcastUpdateStatus()
+    const res = await net.fetch(`https://api.github.com/repos/${GH_REPO}/releases/latest`, {
+      headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'BX-Updater' },
+    })
+    const data = await res.json() as { tag_name?: string; assets?: Array<{ name: string; browser_download_url: string }> }
+    const latest = String(data.tag_name || '').replace(/^v/, '')
+    if (!latest || !isNewerVersion(latest, app.getVersion())) {
+      updateStatus = 'idle'; broadcastUpdateStatus(); return
+    }
+    const asset = pickAsset(data.assets || [])
+    if (!asset) { updateStatus = 'idle'; broadcastUpdateStatus(); return }
+    updateStatus = 'downloading'; broadcastUpdateStatus()
+    downloadedPath = await downloadAsset(asset.browser_download_url, asset.name)
+    updateStatus = 'ready'; broadcastUpdateStatus()
+  } catch (e) {
+    updateStatus = 'error'
+    updateError = (e as Error)?.message || 'Ошибка обновления'
+    broadcastUpdateStatus()
+    setTimeout(() => { updateStatus = 'idle'; updateError = ''; broadcastUpdateStatus() }, 8000)
+  }
+}
+
+const setupAutoUpdater = () => {
+  if (!app.isPackaged) return
+  // Проверяем и качаем при запуске и далее раз в час
+  setTimeout(() => { checkForUpdatesAndDownload() }, 5000)
+  setInterval(() => { checkForUpdatesAndDownload() }, 60 * 60 * 1000)
+}
+
+// IPC: статус / ручная проверка+загрузка / открытие скачанного апдейта
+ipcMain.handle('app:check-for-updates', async () => {
+  await checkForUpdatesAndDownload()
   return { status: updateStatus, error: updateError, version: app.getVersion() }
 })
 
@@ -93,9 +111,13 @@ ipcMain.handle('app:get-update-status', () => {
   return { status: updateStatus, error: updateError, version: app.getVersion() }
 })
 
-ipcMain.handle('app:install-update', () => {
-  if (updateStatus === 'ready') {
-    autoUpdater.quitAndInstall()
+ipcMain.handle('app:install-update', async () => {
+  if (updateStatus === 'ready' && downloadedPath) {
+    // Открываем скачанный архив (macOS распакует .app, Windows — установщик/архив)
+    // и подсвечиваем файл в проводнике, затем выходим для замены приложения.
+    try { await shell.openPath(downloadedPath) } catch { /* ignore */ }
+    try { shell.showItemInFolder(downloadedPath) } catch { /* ignore */ }
+    setTimeout(() => app.quit(), 1500)
   }
 })
 
