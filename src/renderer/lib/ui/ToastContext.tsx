@@ -21,10 +21,11 @@ export function useToast(): ToastApi {
   return ctx;
 }
 
-const STYLE: Record<ToastKind, { icon: string; cls: string }> = {
-  success: { icon: '✓', cls: 'border-emerald-500/40 text-emerald-300' },
-  error:   { icon: '✕', cls: 'border-red-500/40 text-red-300' },
-  info:    { icon: 'ℹ', cls: 'border-blue-500/40 text-blue-300' },
+// Иконки в весе 500 — читаются и на тёмном (#141820), и на светлом (#fff) фоне
+const STYLE: Record<ToastKind, { icon: string; border: string; accent: string }> = {
+  success: { icon: '✓', border: 'border-emerald-500/40', accent: 'text-emerald-500' },
+  error:   { icon: '✕', border: 'border-red-500/40', accent: 'text-red-500' },
+  info:    { icon: 'ℹ', border: 'border-blue-500/40', accent: 'text-blue-500' },
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -55,9 +56,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           return (
             <div key={t.id}
               onClick={() => remove(t.id)}
-              className={`bx-animate-toast pointer-events-auto cursor-pointer flex items-center gap-2.5 bg-[#141820] border ${s.cls} rounded-xl px-4 py-2.5 shadow-2xl max-w-sm`}>
-              <span className="text-sm font-bold flex-shrink-0">{s.icon}</span>
-              <span className="text-xs text-slate-200 leading-snug">{t.text}</span>
+              className={`bx-animate-toast pointer-events-auto cursor-pointer flex items-center gap-2.5 bg-bx-surface border ${s.border} rounded-xl px-4 py-2.5 shadow-2xl max-w-sm`}>
+              <span className={`text-sm font-bold flex-shrink-0 ${s.accent}`}>{s.icon}</span>
+              <span className="text-xs text-bx-text leading-snug">{t.text}</span>
             </div>
           );
         })}
