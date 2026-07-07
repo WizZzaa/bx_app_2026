@@ -6,6 +6,8 @@ import { buildIndex, type SearchItem } from '../../lib/searchIndex';
 import { Icon, catColor, excerpt, highlight } from './shared';
 import ArticlesView from './ArticlesView';
 import ReferenceView, { type RefTabId } from './ReferenceView';
+import { usePlan } from '../../lib/plan';
+import PaywallModal from '../../components/PaywallModal';
 
 // Объединённая «База знаний»: статьи + справочные данные под единым поиском.
 // Заменяет прежние /knowledge и /reference (v1.47).
@@ -22,6 +24,8 @@ const REF_TAB_BY_CATEGORY: Record<string, RefTabId> = {
 const REF_CATEGORIES = new Set(Object.keys(REF_TAB_BY_CATEGORY));
 
 export default function Library({ initialZone }: { initialZone?: Zone }) {
+  const { plan } = usePlan();
+  const [paywall, setPaywall] = useState(false);
   const [zone, setZone] = useState<Zone>(initialZone ?? 'articles');
   const [refTab, setRefTab] = useState<RefTabId | undefined>();
   const [search, setSearch] = useState('');
@@ -33,9 +37,10 @@ export default function Library({ initialZone }: { initialZone?: Zone }) {
 
   // Подтянуть облачные статьи и справочный индекс при открытии
   useEffect(() => {
+    if (plan === 'free') return;
     refreshArticles().then(setArticles).catch(() => { void 0 });
     buildIndex().then(items => setRefItems(items.filter(i => REF_CATEGORIES.has(i.category)))).catch(() => { void 0 });
-  }, []);
+  }, [plan]);
 
   // Открыть статью по ссылке из ⌘K (?article=id)
   useEffect(() => {
@@ -77,6 +82,49 @@ export default function Library({ initialZone }: { initialZone?: Zone }) {
     setSearch('');
   }
 
+  if (plan === 'free') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[#07090e] relative overflow-hidden">
+        {/* Декоративное свечение */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/5 rounded-full blur-[100px] pointer-events-none" />
+        
+        <div className="max-w-md w-full bg-[#0b0e17] border border-bx-border rounded-3xl p-8 text-center relative z-10 shadow-2xl">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-3xl shadow-xl shadow-purple-500/10 mb-6">
+            🔒
+          </div>
+          
+          <h2 className="text-xl font-extrabold text-white mb-3 tracking-tight">База знаний недоступна</h2>
+          <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+            Доступ к статьям, нормативным справочникам НК РУз, шаблонам документов и умному поиску входит в тарифные планы <span className="text-purple-400 font-bold">Standard</span> и <span className="text-purple-400 font-bold">Premium</span>.
+          </p>
+
+          <div className="space-y-3.5 text-left bg-[#121624] border border-bx-border/40 rounded-2xl p-4.5 mb-6 text-xs text-slate-300">
+            <div className="flex items-center gap-2.5">
+              <span className="text-emerald-400 font-bold">✓</span>
+              <span>Детальный анализ Налогового Кодекса РУз</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="text-emerald-400 font-bold">✓</span>
+              <span>Готовые шаблоны договоров, актов и отчетов</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="text-emerald-400 font-bold">✓</span>
+              <span>Справочные данные: ставки налогов, БРВ, МРОТ</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setPaywall(true)}
+            className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-purple-500/10 hover:scale-[1.02]"
+          >
+            Активировать тариф
+          </button>
+        </div>
+
+        {paywall && <PaywallModal feature="Доступ к Базе знаний РУз" onClose={() => setPaywall(false)} />}
+      </div>
+    );
+  }
   const showSearchResults = search.trim().length > 0;
 
   return (
