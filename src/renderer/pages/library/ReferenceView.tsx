@@ -3,6 +3,9 @@ import FinanceTab from '../reference/FinanceTab';
 import AccountingTab from '../reference/AccountingTab';
 import { GovTab, VedTab, LawTab } from '../reference/MiscTabs';
 
+import { usePlan } from '../../lib/plan';
+import PaywallModal from '../../components/PaywallModal';
+
 // Зона «Справочные данные» объединённой Базы знаний — прежние 5 вкладок
 // Справочников (v1.47). Сами табы не менялись.
 
@@ -17,8 +20,18 @@ const tabs: { id: RefTabId; label: string }[] = [
 ];
 
 export default function ReferenceView({ initialTab }: { initialTab?: RefTabId }) {
+  const { plan } = usePlan();
+  const [paywall, setPaywall] = useState(false);
   const [active, setActive] = useState<RefTabId>(initialTab ?? 'finance');
   useEffect(() => { if (initialTab) setActive(initialTab); }, [initialTab]);
+
+  const handleTabClick = (tabId: RefTabId) => {
+    if (plan === 'free') {
+      setPaywall(true);
+      return;
+    }
+    setActive(tabId);
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-5">
@@ -38,7 +51,7 @@ export default function ReferenceView({ initialTab }: { initialTab?: RefTabId })
         {tabs.map(t => (
           <button
             key={t.id}
-            onClick={() => setActive(t.id)}
+            onClick={() => handleTabClick(t.id)}
             className={`px-3.5 py-1.5 rounded-lg text-sm transition-colors ${
               active === t.id
                 ? 'bg-blue-600 text-white'
@@ -55,6 +68,7 @@ export default function ReferenceView({ initialTab }: { initialTab?: RefTabId })
       {active === 'gov' && <GovTab />}
       {active === 'ved' && <VedTab />}
       {active === 'law' && <LawTab />}
+      {paywall && <PaywallModal feature="Справочные данные и показатели РУз" onClose={() => setPaywall(false)} />}
     </div>
   );
 }
