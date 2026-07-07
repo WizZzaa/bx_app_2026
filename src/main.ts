@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, shell, net } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, shell, net, Notification } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs'
 import started from 'electron-squirrel-startup'
@@ -350,6 +350,16 @@ const createWindow = () => {
     if (!(app as any).isQuitting) {
       e.preventDefault()
       mainWindow?.hide()
+      // Однократно за запуск подсказываем, что приложение свёрнуто в трей
+      if (!(app as any).trayNoticeShown) {
+        ;(app as any).trayNoticeShown = true
+        try {
+          new Notification({
+            title: 'BX работает в фоне',
+            body: 'Приложение свёрнуто в трей, а не закрыто. Значок — рядом с часами. Для полного выхода: правый клик по значку → «Выйти».',
+          }).show()
+        } catch { /* ignore */ }
+      }
     }
   })
 }
@@ -378,7 +388,11 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
+  // Клик по иконке в доке: показать скрытое окно (свёрнуто в трей) или создать
+  if (mainWindow) {
+    mainWindow.show()
+    mainWindow.focus()
+  } else if (BrowserWindow.getAllWindows().length === 0) {
     createWindow()
   }
 })
