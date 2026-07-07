@@ -75,6 +75,7 @@ export default function TrayView() {
   const [supportText, setSupportText] = useState('')
   const [supportSending, setSupportSending] = useState(false)
   const [ticketCreated, setTicketCreated] = useState(false)
+  const [supportError, setSupportError] = useState('')
 
   const togglePin = () => { const n = !pinned; setPinned(n); (window as any).bx?.tray?.setPinned(n) }
 
@@ -155,15 +156,22 @@ export default function TrayView() {
   const handleCreateSupportTicket = async () => {
     if (!supportText.trim() || supportSending) return
     setSupportSending(true)
+    setSupportError('')
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setSupportSending(false); return }
+      if (!user) { setSupportError('Сессия не найдена. Войдите в аккаунт заново.'); setSupportSending(false); return }
       const { data: ticket, error: tErr } = await supabase.from('bx_tickets')
-        .insert({ user_id: user.id, subject: 'Срочный вызов из Трей-агента', status: 'open', category: 'emergency' }).select().single()
-      if (tErr || !ticket) throw tErr
-      await supabase.from('bx_ticket_messages').insert({ ticket_id: ticket.id, sender_id: user.id, message: supportText.trim() })
+        .insert({ user_id: user.id, subject: '🚨 Экстренный вызов инженера (из виджета)' })
+        .select().single()
+      if (tErr || !ticket) throw tErr || new Error('Тикет не создан')
+      const { error: mErr } = await supabase.from('bx_ticket_messages')
+        .insert({ ticket_id: ticket.id, user_id: user.id, author: 'user', body: supportText.trim() })
+      if (mErr) throw mErr
       setTicketCreated(true); setSupportText('')
-    } catch (err) { console.error('support:', err) } finally { setSupportSending(false) }
+    } catch (err) {
+      console.error('support:', err)
+      setSupportError('Не удалось отправить запрос. Попробуйте ещё раз или из раздела «Поддержка».')
+    } finally { setSupportSending(false) }
   }
 
   const convRate = rates.find(r => r.code === convCode)?.value || 0
@@ -445,6 +453,9 @@ export default function TrayView() {
                   className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all active:scale-95">
                   {supportSending ? 'Отправка…' : 'Отправить запрос'}
                 </button>
+                {supportError && (
+                  <p className="text-[10px] text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg px-2.5 py-1.5 leading-snug">{supportError}</p>
+                )}
               </div>
             )}
           </div>
