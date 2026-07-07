@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { supabase } from '../lib/db/supabase'
 import { usePlan } from '../lib/plan'
 import type { CurrencyRate } from '../../shared/types'
@@ -6,6 +6,7 @@ import { getHoroscope } from '../lib/horoscope'
 import { buildNotices, type Notice, type NoticeLevel, type EcpKeyLite } from '../lib/notices'
 import { loadEcpKeys } from '../lib/ecpStorage'
 import { toWordsRu } from '../lib/numToWords'
+import { todayISO } from '../lib/dates'
 
 interface Deadline { id: string; title: string; date: string; type: string }
 type Tab = 'overview' | 'alerts' | 'ai' | 'tools' | 'support'
@@ -28,6 +29,12 @@ const noticeStyle: Record<NoticeLevel, { dot: string; chip: string; label: strin
   info: { dot: 'bg-blue-400', chip: 'bg-blue-500/15 text-blue-300', label: 'Инфо' },
 }
 
+const typeIcon: Record<string, string> = { task: '📝', reminder: '⏰', tax_deadline: '🏛', event: '📌' }
+const fmtDay = (iso: string) => {
+  if (iso === todayISO()) return 'сегодня'
+  try { return new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) } catch { return iso }
+}
+
 export default function TrayView() {
   const { isPro } = usePlan()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -36,6 +43,11 @@ export default function TrayView() {
   const [ratesLoading, setRatesLoading] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
   const [pinned, setPinned] = useState(false)
+
+  // Быстрое создание дела прямо из виджета
+  const [newTask, setNewTask] = useState('')
+  const [addingTask, setAddingTask] = useState(false)
+  const [taskAdded, setTaskAdded] = useState(false)
 
   // Гороскоп
   const horo = useMemo(() => getHoroscope(), [])
@@ -50,7 +62,7 @@ export default function TrayView() {
   const [aiSending, setAiSending] = useState(false)
   const aiEndRef = useRef<HTMLDivElement>(null)
 
-  // Инструменты
+  // Утилиты
   const [vatSum, setVatSum] = useState('')
   const [vatType, setVatType] = useState<'extra' | 'extract'>('extra')
   const [vatResult, setVatResult] = useState({ vat: 0, total: 0, net: 0 })
@@ -66,6 +78,35 @@ export default function TrayView() {
 
   const togglePin = () => { const n = !pinned; setPinned(n); (window as any).bx?.tray?.setPinned(n) }
 
+  const reloadDeadlines = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase.from('bx_events').select('id, title, date, type')
+        .eq('user_id', user.id).gte('date', todayISO()).order('date', { ascending: true }).limit(8)
+      if (data) setDeadlines(data)
+    } catch (err) { console.error('deadlines:', err) }
+  }, [])
+
+  const addTask = async () => {
+    const title = newTask.trim()
+    if (!title || addingTask) return
+    setAddingTask(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setAddingTask(false); return }
+      const { error } = await supabase.from('bx_events').insert({
+        user_id: user.id, company_id: null, type: 'task', title,
+        date: todayISO(), due_date: null, status: 'todo', priority: 'normal',
+        tags: null, tax_type: null, kind: null, regime: null, note: null,
+        source: 'manual', reminder_at: null,
+      })
+      if (error) throw error
+      setNewTask(''); setTaskAdded(true); setTimeout(() => setTaskAdded(false), 1600)
+      await reloadDeadlines()
+    } catch (err) { console.error('addTask:', err) } finally { setAddingTask(false) }
+  }
+
   useEffect(() => {
     const loadRates = async () => {
       setRatesLoading(true)
@@ -74,19 +115,9 @@ export default function TrayView() {
         if (bridge) setRates((await bridge(['USD', 'EUR', 'RUB'])) || [])
       } catch (err) { console.error('rates:', err) } finally { setRatesLoading(false) }
     }
-    const loadDeadlines = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-        const today = new Date().toISOString().split('T')[0]
-        const { data } = await supabase.from('bx_events').select('id, title, date, type')
-          .eq('user_id', user.id).gte('date', today).order('date', { ascending: true }).limit(5)
-        if (data) setDeadlines(data)
-      } catch (err) { console.error('deadlines:', err) }
-    }
-    loadRates(); loadDeadlines()
+    loadRates(); reloadDeadlines()
     loadEcpKeys().then(setEcpKeys).catch(() => {})
-  }, [])
+  }, [reloadDeadlines])
 
   useEffect(() => {
     const num = parseFloat(vatSum.replace(/\s/g, '')) || 0
@@ -142,7 +173,8 @@ export default function TrayView() {
   const fmt = (n: number, max = 2) => n.toLocaleString('ru-RU', { maximumFractionDigits: max })
 
   return (
-    <div className="w-screen h-screen bg-bx-surface flex flex-col overflow-hidden text-bx-text select-none relative">
+    <div className="bx-tray-dark w-screen h-screen flex flex-col overflow-hidden text-slate-100 select-none relative"
+      style={{ background: 'linear-gradient(165deg, #0f1629 0%, #131b31 55%, #0b1120 100%)' }}>
       <div className="pointer-events-none absolute -top-16 -right-10 w-52 h-52 rounded-full bg-blue-600/20 blur-3xl" />
       <div className="pointer-events-none absolute top-24 -left-16 w-48 h-48 rounded-full bg-violet-600/15 blur-3xl" />
       <div className="pointer-events-none absolute bottom-0 right-0 w-40 h-40 rounded-full bg-emerald-600/10 blur-3xl" />
@@ -227,38 +259,80 @@ export default function TrayView() {
         )}
 
         {activeTab === 'alerts' && (
-          <div className="rounded-2xl p-3 border border-white/10 bg-white/[0.03]">
-            <div className="flex items-center justify-between mb-2.5">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">🔔 Уведомления</span>
-              <span className="text-[9px] text-slate-500">{notices.length || 'нет новых'}</span>
+          <>
+            {/* Быстро добавить дело */}
+            <div className="rounded-2xl p-3 border border-white/10 bg-white/[0.03] space-y-2">
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">➕ Новое дело</span>
+              <div className="flex gap-2">
+                <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addTask() }}
+                  placeholder="Что нужно сделать…" className="flex-1 min-w-0 bg-white/5 text-white text-xs px-3 py-2 rounded-xl border border-white/10 focus:outline-none focus:border-blue-500/50" />
+                <button onClick={addTask} disabled={!newTask.trim() || addingTask}
+                  className="px-3.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 disabled:opacity-40 text-white text-base font-bold rounded-xl transition-all active:scale-95 leading-none">+</button>
+              </div>
+              <p className="text-[9px] leading-snug">
+                {taskAdded
+                  ? <span className="text-emerald-400 font-semibold">✓ Дело добавлено на сегодня</span>
+                  : <span className="text-slate-500">Добавится в Планировщик задачей на сегодня</span>}
+              </p>
             </div>
-            {notices.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-3xl mb-1">✓</p>
-                <p className="text-xs text-slate-400 font-semibold">Всё спокойно</p>
-                <p className="text-[10px] text-slate-600 mt-0.5">Ни просрочек, ни горящих сроков</p>
+
+            {/* Ближайшие дела */}
+            <div className="rounded-2xl p-3 border border-white/10 bg-white/[0.03]">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">🗓 Ближайшие дела</span>
+                <span className="text-[9px] text-slate-500">{deadlines.length || '—'}</span>
               </div>
-            ) : (
-              <div className="space-y-1.5">
-                {notices.map(n => {
-                  const s = noticeStyle[n.level]
-                  return (
-                    <button key={n.id} onClick={() => openApp(n.to)}
-                      className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 hover:border-blue-500/30 text-left transition-colors">
-                      <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${s.dot}`} />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[12px] text-slate-100 leading-snug">{n.text}</div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded ${s.chip}`}>{s.label}</span>
-                          <span className="text-[9px] text-slate-500">{n.time}</span>
-                        </div>
-                      </div>
+              {deadlines.length === 0 ? (
+                <p className="text-[10px] text-slate-500 text-center py-4">Пока нет запланированных дел</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {deadlines.map(d => (
+                    <button key={d.id} onClick={() => openApp('/planner')}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 hover:border-blue-500/30 text-left transition-colors">
+                      <span className="text-sm flex-shrink-0">{typeIcon[d.type] || '📌'}</span>
+                      <span className="flex-1 min-w-0 text-[12px] text-slate-100 leading-snug truncate">{d.title}</span>
+                      <span className="text-[9px] text-slate-400 flex-shrink-0">{fmtDay(d.date)}</span>
                     </button>
-                  )
-                })}
+                  ))}
+                </div>
+              )}
+              <button onClick={() => openApp('/planner')} className="w-full mt-2 text-[10px] text-blue-400 hover:text-blue-300 font-semibold">Открыть Планировщик →</button>
+            </div>
+
+            {/* Оповещения */}
+            <div className="rounded-2xl p-3 border border-white/10 bg-white/[0.03]">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">🔔 Оповещения</span>
+                <span className="text-[9px] text-slate-500">{notices.length || 'нет новых'}</span>
               </div>
-            )}
-          </div>
+              {notices.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-2xl mb-1">✓</p>
+                  <p className="text-xs text-slate-400 font-semibold">Всё спокойно</p>
+                  <p className="text-[10px] text-slate-600 mt-0.5">Ни просрочек, ни горящих сроков</p>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {notices.map(n => {
+                    const s = noticeStyle[n.level]
+                    return (
+                      <button key={n.id} onClick={() => openApp(n.to)}
+                        className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 hover:border-blue-500/30 text-left transition-colors">
+                        <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${s.dot}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[12px] text-slate-100 leading-snug">{n.text}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded ${s.chip}`}>{s.label}</span>
+                            <span className="text-[9px] text-slate-500">{n.time}</span>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         {activeTab === 'ai' && (
@@ -383,7 +457,7 @@ export default function TrayView() {
 
       {/* Tabs */}
       <div className="relative flex-shrink-0 border-t border-white/10 bg-black/20 backdrop-blur flex p-1.5 gap-0.5" style={NODRAG}>
-        {([['overview', 'Обзор', '📊'], ['alerts', 'Дела', '🔔'], ['ai', 'ИИ', '🤖'], ['tools', 'Инстр.', '🧮'], ['support', 'Помощь', '🎧']] as const).map(([t, label, icon]) => (
+        {([['overview', 'Обзор', '📊'], ['alerts', 'Дела', '🔔'], ['ai', 'ИИ', '🤖'], ['tools', 'Утилиты', '🛠'], ['support', 'Помощь', '🎧']] as const).map(([t, label, icon]) => (
           <button key={t} onClick={() => setActiveTab(t)} className={`flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl text-[9px] font-bold transition-all relative ${activeTab === t ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
             <span className="text-sm leading-none">{icon}</span>
             {label}
