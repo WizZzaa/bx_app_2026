@@ -124,7 +124,10 @@ function hashStr(s: string): number {
 }
 
 function pick<T>(arr: T[], seed: number): T {
-  return arr[seed % arr.length];
+  // seed может быть отрицательным (знаковый сдвиг >> над uint32) — нормализуем,
+  // иначе arr[отрицательный % len] === undefined.
+  const i = ((seed % arr.length) + arr.length) % arr.length;
+  return arr[i];
 }
 
 export interface DailyHoroscope {

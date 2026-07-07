@@ -179,24 +179,28 @@ let tray: Tray | null = null
 // Закрепление трей-окна: когда true — окно не прячется при потере фокуса.
 let trayPinned = false
 
-// Запоминаем размер трей-окна между запусками
-const traySizeFile = () => path.join(app.getPath('userData'), 'tray-size.json')
-const loadTraySize = (): { width: number; height: number } => {
+// Запоминаем размер И позицию трей-окна между запусками.
+// custom=true — пользователь сам перетащил окно, тогда не «прыгаем» к трею.
+interface TrayState { width: number; height: number; x?: number; y?: number; custom?: boolean }
+const trayStateFile = () => path.join(app.getPath('userData'), 'tray-window.json')
+let trayState: TrayState = { width: 380, height: 560 }
+const loadTrayState = () => {
   try {
-    const s = JSON.parse(fs.readFileSync(traySizeFile(), 'utf-8'))
-    if (typeof s?.width === 'number' && typeof s?.height === 'number') return s
+    const s = JSON.parse(fs.readFileSync(trayStateFile(), 'utf-8'))
+    if (typeof s?.width === 'number' && typeof s?.height === 'number') trayState = s
   } catch { /* default */ }
-  return { width: 380, height: 520 }
 }
-const saveTraySize = (width: number, height: number) => {
-  try { fs.writeFileSync(traySizeFile(), JSON.stringify({ width, height })) } catch { /* ignore */ }
+const saveTrayState = () => {
+  try { fs.writeFileSync(trayStateFile(), JSON.stringify(trayState)) } catch { /* ignore */ }
 }
+// Флаг: подавляем сохранение позиции при программном перемещении (к трею)
+let suppressTrayMove = false
 
 const createTrayWindow = () => {
-  const size = loadTraySize()
+  loadTrayState()
   trayWindow = new BrowserWindow({
-    width: size.width,
-    height: size.height,
+    width: trayState.width,
+    height: trayState.height,
     minWidth: 320,
     minHeight: 400,
     maxWidth: 680,
@@ -225,8 +229,19 @@ const createTrayWindow = () => {
   trayWindow.on('resize', () => {
     if (!trayWindow) return
     const [w, h] = trayWindow.getSize()
+    trayState.width = w; trayState.height = h
     if (saveTimer) clearTimeout(saveTimer)
-    saveTimer = setTimeout(() => saveTraySize(w, h), 400)
+    saveTimer = setTimeout(saveTrayState, 400)
+  })
+
+  // Пользователь перетащил окно за ручку → запоминаем позицию как «свою»
+  let moveTimer: ReturnType<typeof setTimeout> | null = null
+  trayWindow.on('move', () => {
+    if (!trayWindow || suppressTrayMove) return
+    const [x, y] = trayWindow.getPosition()
+    trayState.x = x; trayState.y = y; trayState.custom = true
+    if (moveTimer) clearTimeout(moveTimer)
+    moveTimer = setTimeout(saveTrayState, 400)
   })
 
   trayWindow.on('blur', () => {
@@ -242,6 +257,17 @@ const toggleTrayWindow = () => {
     return
   }
 
+  // Если пользователь сам перетащил окно — показываем на его позиции,
+  // не «прыгаем» к иконке трея.
+  if (trayState.custom && typeof trayState.x === 'number' && typeof trayState.y === 'number') {
+    suppressTrayMove = true
+    trayWindow.setPosition(trayState.x, trayState.y, false)
+    setTimeout(() => { suppressTrayMove = false }, 150)
+    trayWindow.show()
+    trayWindow.focus()
+    return
+  }
+
   const trayBounds = tray.getBounds()
   const windowBounds = trayWindow.getBounds()
 
@@ -253,7 +279,9 @@ const toggleTrayWindow = () => {
     y = Math.round(trayBounds.y + trayBounds.height)
   }
 
+  suppressTrayMove = true
   trayWindow.setPosition(x, y, false)
+  setTimeout(() => { suppressTrayMove = false }, 150)
   trayWindow.show()
   trayWindow.focus()
 }

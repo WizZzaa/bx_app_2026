@@ -1,101 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { todayISO } from '../../lib/dates';
 import { loadEcpKeys } from '../../lib/ecpStorage';
+import { buildNotices, type NoticeLevel, type EcpKeyLite } from '../../lib/notices';
 
 // Виджет оповещений — реальные данные из Планировщика (кэш bx_events)
 // и менеджера ЭЦП (bx_ecp_keys). Клик ведёт в соответствующий раздел.
+// Логика построения — в lib/notices (общая с трей-агентом).
 
-type Level = 'critical' | 'warning' | 'info';
-
-interface Notice {
-  id: string;
-  level: Level;
-  text: string;
-  time: string;
-  to: string; // маршрут по клику
-}
-
-const styleByLevel: Record<Level, { dot: string; chip: string; label: string }> = {
+const styleByLevel: Record<NoticeLevel, { dot: string; chip: string; label: string }> = {
   critical: { dot: 'bg-red-400', chip: 'bg-red-500/10 text-red-400', label: 'Важно' },
   warning: { dot: 'bg-amber-400', chip: 'bg-amber-500/10 text-amber-400', label: 'Срок' },
   info: { dot: 'bg-blue-400', chip: 'bg-blue-500/10 text-blue-400', label: 'Инфо' },
 };
 
-interface CachedEvent { type: string; title: string; date: string; due_date?: string | null; status: string }
-interface EcpKey { name: string; expiresAt: string }
-
-function daysTo(dateISO: string, today: string): number {
-  return Math.round((new Date(dateISO).getTime() - new Date(today).getTime()) / 86400000);
-}
-
-function buildNotices(keys: EcpKey[]): Notice[] {
-  const today = todayISO();
-  const notices: Notice[] = [];
-
-  let events: CachedEvent[] = [];
-  try { events = JSON.parse(localStorage.getItem('bx_events_cache_v1') || '[]'); } catch { /* пусто */ }
-  const active = events.filter(e => e.status !== 'done');
-
-  // Просроченные задачи и напоминания
-  const overdue = active.filter(e => {
-    const d = e.due_date || e.date;
-    return d < today && (e.type === 'task' || e.type === 'reminder');
-  });
-  if (overdue.length) {
-    notices.push({
-      id: 'overdue', level: 'critical', to: '/planner',
-      text: overdue.length === 1
-        ? `Просрочено: ${overdue[0].title}`
-        : `Просрочено задач: ${overdue.length} — «${overdue[0].title}»${overdue.length > 1 ? ' и другие' : ''}`,
-      time: 'требует внимания',
-    });
-  }
-
-  // Ближайшие налоговые дедлайны (7 дней)
-  const deadlines = active
-    .filter(e => e.type === 'tax_deadline')
-    .map(e => ({ e, d: daysTo(e.due_date || e.date, today) }))
-    .filter(x => x.d >= 0 && x.d <= 7)
-    .sort((a, b) => a.d - b.d);
-  for (const { e, d } of deadlines.slice(0, 2)) {
-    notices.push({
-      id: `dl-${e.title}-${d}`, level: d <= 2 ? 'critical' : 'warning', to: '/planner',
-      text: e.title,
-      time: d === 0 ? 'сегодня' : d === 1 ? 'завтра' : `через ${d} дн.`,
-    });
-  }
-
-  // Задачи на сегодня
-  const todayTasks = active.filter(e => (e.due_date || e.date) === today && e.type === 'task');
-  if (todayTasks.length) {
-    notices.push({
-      id: 'today', level: 'info', to: '/planner',
-      text: `Задач на сегодня: ${todayTasks.length}`,
-      time: 'сегодня',
-    });
-  }
-
-  // ЭЦП: истекающие ключи
-  const expiring = keys
-    .map(k => ({ k, d: daysTo(k.expiresAt.slice(0, 10), today) }))
-    .filter(x => x.d >= 0 && x.d <= 30)
-    .sort((a, b) => a.d - b.d);
-  for (const { k, d } of expiring.slice(0, 2)) {
-    notices.push({
-      id: `ecp-${k.name}`, level: d <= 14 ? 'critical' : 'warning', to: '/ecp',
-      text: `ЭЦП «${k.name}» истекает`,
-      time: d === 0 ? 'сегодня' : `через ${d} дн.`,
-    });
-  }
-
-  const order: Level[] = ['critical', 'warning', 'info'];
-  return notices.sort((a, b) => order.indexOf(a.level) - order.indexOf(b.level)).slice(0, 5);
-}
-
 export default function NotificationsWidget() {
   const navigate = useNavigate();
-  const [ecpKeys, setEcpKeys] = useState<EcpKey[]>([]);
+  const [ecpKeys, setEcpKeys] = useState<EcpKeyLite[]>([]);
   useEffect(() => { loadEcpKeys().then(setEcpKeys); }, []);
   const notices = useMemo(() => buildNotices(ecpKeys), [ecpKeys]);
 
