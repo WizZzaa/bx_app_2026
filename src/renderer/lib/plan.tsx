@@ -42,8 +42,7 @@ const Ctx = createContext<PlanCtx>({
 export function PlanProvider({ children }: { children: React.ReactNode }) {
   const [plan, setPlan] = useState<Plan>(() =>
     (localStorage.getItem(CACHE_KEY) === 'pro' ? 'pro' : 'free'))
-  const [role, setRole] = useState<'user' | 'admin'>(
-    typeof window !== 'undefined' && localStorage.getItem('bx_dev_bypass') === '1' ? 'admin' : 'user') // TEMP-DEV-BYPASS: НЕ КОММИТИТЬ
+  const [role, setRole] = useState<'user' | 'admin'>('user')
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {

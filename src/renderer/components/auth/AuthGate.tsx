@@ -35,11 +35,6 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     await signOut()
   }, [signOut])
 
-  // TEMP-DEV-BYPASS: только для локального ревью тем. НЕ КОММИТИТЬ.
-  if (typeof window !== 'undefined' && localStorage.getItem('bx_dev_bypass') === '1') {
-    return <>{children}</>
-  }
-
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-bx-bg">
