@@ -5,7 +5,7 @@ import { supabase } from './db/supabase'
 // Источник правды — bx_profiles.plan (клиент менять план не может, только читать).
 // Мягкая деградация: нет таблицы / офлайн / нет сессии → 'free' (или кэш).
 
-export type Plan = 'free' | 'pro'
+export type Plan = 'free' | 'standard' | 'premium'
 
 export const PLAN_LIMITS = {
   free: {
@@ -14,34 +14,56 @@ export const PLAN_LIMITS = {
     aiPerMonth: 10,
     innPerDay: 5,
     paymentsControl: false,
+    anydeskSupport: false,
+    signingControl: false,
+    backupsControl: false,
+    textHumanizer: false,
   },
-  pro: {
+  standard: {
+    boards: 5,
+    companies: 3,
+    aiPerMonth: 150,
+    innPerDay: 30,
+    paymentsControl: true,
+    anydeskSupport: false,
+    signingControl: true,
+    backupsControl: false,
+    textHumanizer: true,
+  },
+  premium: {
     boards: Infinity,
     companies: Infinity,
     aiPerMonth: Infinity,
     innPerDay: Infinity,
     paymentsControl: true,
+    anydeskSupport: true,
+    signingControl: true,
+    backupsControl: true,
+    textHumanizer: true,
   },
 } as const
 
 interface PlanCtx {
   plan: Plan
-  isPro: boolean
+  isPro: boolean // true для standard и premium (обратная совместимость)
+  isPremium: boolean
   role: 'user' | 'admin'
   isAdmin: boolean
   loading: boolean
-  limits: (typeof PLAN_LIMITS)['free' | 'pro']
+  limits: (typeof PLAN_LIMITS)['free' | 'standard' | 'premium']
   refresh: () => Promise<void>
 }
 
 const CACHE_KEY = 'bx_plan_cache'
 const Ctx = createContext<PlanCtx>({
-  plan: 'free', isPro: false, role: 'user', isAdmin: false, loading: true, limits: PLAN_LIMITS.free, refresh: async () => {},
+  plan: 'free', isPro: false, isPremium: false, role: 'user', isAdmin: false, loading: true, limits: PLAN_LIMITS.free, refresh: async () => {},
 })
 
 export function PlanProvider({ children }: { children: React.ReactNode }) {
-  const [plan, setPlan] = useState<Plan>(() =>
-    (localStorage.getItem(CACHE_KEY) === 'pro' ? 'pro' : 'free'))
+  const [plan, setPlan] = useState<Plan>(() => {
+    const cached = localStorage.getItem(CACHE_KEY) as Plan
+    return ['free', 'standard', 'premium'].includes(cached) ? cached : 'free'
+  })
   const [role, setRole] = useState<'user' | 'admin'>('user')
   const [loading, setLoading] = useState(true)
 
@@ -60,7 +82,11 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(CACHE_KEY, 'free')
       } else {
         const expired = data.plan_expires_at && new Date(data.plan_expires_at) < new Date()
-        const p: Plan = data.plan === 'pro' && !expired ? 'pro' : 'free'
+        let p: Plan = 'free'
+        if (!expired) {
+          if (data.plan === 'premium' || data.plan === 'pro') p = 'premium'
+          else if (data.plan === 'standard') p = 'standard'
+        }
         setPlan(p)
         setRole((data.role as 'user' | 'admin') || 'user')
         localStorage.setItem(CACHE_KEY, p)
@@ -75,7 +101,16 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { refresh() }, [refresh])
 
   return (
-    <Ctx.Provider value={{ plan, isPro: plan === 'pro', role, isAdmin: role === 'admin', loading, limits: PLAN_LIMITS[plan], refresh }}>
+    <Ctx.Provider value={{ 
+      plan, 
+      isPro: plan === 'standard' || plan === 'premium', 
+      isPremium: plan === 'premium',
+      role, 
+      isAdmin: role === 'admin', 
+      loading, 
+      limits: PLAN_LIMITS[plan], 
+      refresh 
+    }}>
       {children}
     </Ctx.Provider>
   )

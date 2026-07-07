@@ -24,6 +24,19 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
 
   // Подписка на нативный autoUpdater из Electron
   React.useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const savedTheme = localStorage.getItem('bx_theme')
+      document.documentElement.classList.remove('light')
+      return () => {
+        if (savedTheme === 'light') {
+          document.documentElement.classList.add('light')
+        }
+      }
+    }
+  }, [])
+
+  // Подписка на нативный autoUpdater из Electron
+  React.useEffect(() => {
     if (typeof window !== 'undefined' && window.bx && window.bx.updater) {
       // Запросить начальный статус
       window.bx.updater.getStatus().then((res: any) => {

@@ -14,7 +14,7 @@ type NotifyDays = '1' | '3' | '7' | 'off'
 type IdleLock = 'off' | '5' | '10' | '30' | '60'
 
 export default function Settings() {
-  const { plan, isPro } = usePlan()
+  const { plan, isPro, isPremium } = usePlan()
   const navigate = useNavigate()
   const [userEmail, setUserEmail] = useState('')
   const [notifyDays, setNotifyDays] = useState<NotifyDays>('3')
@@ -207,37 +207,60 @@ export default function Settings() {
 
         {/* Тариф */}
         <Section title="Тариф и оплата">
-          <div className={`rounded-xl border px-4 py-3 mb-3 ${isPro
-            ? 'bg-gradient-to-br from-emerald-600/15 to-transparent border-emerald-500/30'
-            : 'bg-gradient-to-br from-blue-600/15 to-transparent border-blue-500/30'}`}>
+          <div className={`rounded-xl border px-4 py-3 mb-3 ${plan === 'premium'
+            ? 'bg-gradient-to-br from-purple-600/15 to-transparent border-purple-500/30'
+            : plan === 'standard'
+              ? 'bg-gradient-to-br from-emerald-600/15 to-transparent border-emerald-500/30'
+              : 'bg-gradient-to-br from-blue-600/15 to-transparent border-blue-500/30'}`}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-bx-text">
-                  Ваш план: {isPro ? 'Pro' : 'Free'}
-                  <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-full ${isPro ? 'bg-emerald-500/15 text-emerald-400' : 'bg-blue-500/15 text-blue-400'}`}>
-                    {isPro ? 'активен' : 'бесплатный'}
+                  Ваш план: {plan === 'premium' ? 'Premium' : plan === 'standard' ? 'Standard' : 'Free'}
+                  <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-full ${
+                    plan === 'premium' ? 'bg-purple-500/15 text-purple-400' : plan === 'standard' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-blue-500/15 text-blue-400'
+                  }`}>
+                    {plan !== 'free' ? 'активен' : 'бесплатный'}
                   </span>
                 </p>
                 <p className="text-xs text-bx-muted mt-0.5">
-                  {isPro ? 'Спасибо, что поддерживаете BX!' : 'Pro открывает мультикомпанию, безлимитный AI и контроль оплат'}
+                  {plan === 'premium' 
+                    ? 'Максимальные возможности и приоритетная поддержка 24/7' 
+                    : plan === 'standard' 
+                      ? 'Оптимальный пакет для индивидуальной работы' 
+                      : 'Free-версия имеет лимиты. Перейдите на Standard или Premium для комфортной работы'}
                 </p>
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-bx-border overflow-hidden text-xs">
-            <div className="grid grid-cols-3 bg-bx-surface px-4 py-2 font-semibold text-bx-text">
-              <span>Возможность</span><span className="text-center">Free</span><span className="text-center text-blue-400">Pro</span>
+          <div className="rounded-xl border border-bx-border overflow-hidden text-[11px]">
+            <div className="grid grid-cols-4 bg-bx-surface px-3 py-2 font-semibold text-bx-text">
+              <span>Пакет</span>
+              <span className="text-center">Free</span>
+              <span className="text-center text-emerald-400">Standard</span>
+              <span className="text-center text-purple-400">Premium</span>
+            </div>
+            <div className="grid grid-cols-4 bg-bx-surface/50 px-3 py-1 text-[10px] text-bx-muted border-t border-bx-border/60">
+              <span>Стоимость</span>
+              <span className="text-center font-bold">0 сум</span>
+              <span className="text-center font-bold text-emerald-500">99k / мес</span>
+              <span className="text-center font-bold text-purple-500">199k / мес</span>
             </div>
             {[
-              ['Справочники, БЗ, калькуляторы, шаблоны', '✓', '✓ + свои шаблоны'],
-              ['Компании', String(PLAN_LIMITS.free.companies), 'безлимит'],
-              ['Доски Планировщика', String(PLAN_LIMITS.free.boards), 'безлимит'],
-              ['AI-Консультант, вопросов/мес', String(PLAN_LIMITS.free.aiPerMonth), 'безлимит'],
-              ['Контроль оплат', '—', '✓'],
-              ['Живой специалист', '—', '✓'],
-            ].map(([f, a, b]) => (
-              <div key={f} className="grid grid-cols-3 px-4 py-2 border-t border-bx-border/60 text-bx-muted">
-                <span>{f}</span><span className="text-center text-bx-muted">{a}</span><span className="text-center text-bx-text">{b}</span>
+              ['Справочники, БЗ, калькуляторы', '✓', '✓', '✓'],
+              ['Компании', '1', 'до 3', 'безлимит'],
+              ['Доски Планировщика', '1', 'до 5', 'безлимит'],
+              ['AI-вопросов в месяц', '10', '150', 'безлимит'],
+              ['Очеловечивание текстов', '—', '50 / мес', 'безлимит'],
+              ['Контроль долгов и оплат', 'просмотр', 'до 20 зап.', 'безлимит'],
+              ['ЭЦП (подписание)', '—', 'до 5 / мес', 'безлимит'],
+              ['Бэкапы 1С', '—', 'ручной', 'автомат'],
+              ['Техподдержка (AnyDesk)', '—', 'чат', 'живой спец.'],
+            ].map(([f, a, b, c]) => (
+              <div key={f} className="grid grid-cols-4 px-3 py-2 border-t border-bx-border/60 text-bx-muted">
+                <span>{f}</span>
+                <span className="text-center text-bx-muted">{a}</span>
+                <span className="text-center text-emerald-500/90">{b}</span>
+                <span className="text-center text-purple-500/90 font-medium">{c}</span>
               </div>
             ))}
           </div>

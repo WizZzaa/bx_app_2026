@@ -17,16 +17,49 @@ interface WeatherTheme {
   gradFrom: string     // from-color overlay
   gradTo: string
   tempColor: string
+  // ── Светлая тема ──
+  accentLight: string
+  gradFromLight: string
+  gradToLight: string
+  tempColorLight: string
 }
 
 const THEMES: Record<string, WeatherTheme> = {
-  sunny:        { img: imgSunny,  accent: '#f59e0b', gradFrom: '#1a1200', gradTo: '#0a1628', tempColor: '#fbbf24' },
-  partly_cloudy:{ img: imgPartly, accent: '#60a5fa', gradFrom: '#0f1a2e', gradTo: '#141820', tempColor: '#93c5fd' },
-  cloudy:       { img: imgCloudy, accent: '#94a3b8', gradFrom: '#111827', gradTo: '#0d1117', tempColor: '#cbd5e1' },
-  rainy:        { img: imgRainy,  accent: '#38bdf8', gradFrom: '#0a1828', gradTo: '#0a1117', tempColor: '#7dd3fc' },
-  storm:        { img: imgStorm,  accent: '#a855f7', gradFrom: '#1a0d2e', gradTo: '#0d0d14', tempColor: '#c084fc' },
-  snow:         { img: imgSnow,   accent: '#bae6fd', gradFrom: '#0a1a2e', gradTo: '#0a1117', tempColor: '#e0f2fe' },
-  fog:          { img: imgFog,    accent: '#9ca3af', gradFrom: '#111115', gradTo: '#0f1015', tempColor: '#d1d5db' },
+  sunny: { 
+    img: imgSunny,  
+    accent: '#f59e0b', gradFrom: '#1a1200', gradTo: '#0a1628', tempColor: '#fbbf24',
+    accentLight: '#d97706', gradFromLight: '#fffbeb', gradToLight: '#fef3c7', tempColorLight: '#b45309'
+  },
+  partly_cloudy: { 
+    img: imgPartly, 
+    accent: '#60a5fa', gradFrom: '#0f1a2e', gradTo: '#141820', tempColor: '#93c5fd',
+    accentLight: '#1d4ed8', gradFromLight: '#f0f9ff', gradToLight: '#e0f2fe', tempColorLight: '#1e40af'
+  },
+  cloudy: { 
+    img: imgCloudy, 
+    accent: '#94a3b8', gradFrom: '#111827', gradTo: '#0d1117', tempColor: '#cbd5e1',
+    accentLight: '#475569', gradFromLight: '#f8fafc', gradToLight: '#f1f5f9', tempColorLight: '#1e293b'
+  },
+  rainy: { 
+    img: imgRainy,  
+    accent: '#38bdf8', gradFrom: '#0a1828', gradTo: '#0a1117', tempColor: '#7dd3fc',
+    accentLight: '#0369a1', gradFromLight: '#e0f2fe', gradToLight: '#bae6fd', tempColorLight: '#075985'
+  },
+  storm: { 
+    img: imgStorm,  
+    accent: '#a855f7', gradFrom: '#1a0d2e', gradTo: '#0d0d14', tempColor: '#c084fc',
+    accentLight: '#7e22ce', gradFromLight: '#faf5ff', gradToLight: '#f3e8ff', tempColorLight: '#581c87'
+  },
+  snow: { 
+    img: imgSnow,   
+    accent: '#bae6fd', gradFrom: '#0a1a2e', gradTo: '#0a1117', tempColor: '#e0f2fe',
+    accentLight: '#0284c7', gradFromLight: '#f0f9ff', gradToLight: '#e0f2fe', tempColorLight: '#075985'
+  },
+  fog: { 
+    img: imgFog,    
+    accent: '#9ca3af', gradFrom: '#111115', gradTo: '#0f1015', tempColor: '#d1d5db',
+    accentLight: '#4b5563', gradFromLight: '#f9fafb', gradToLight: '#f3f4f6', tempColorLight: '#374151'
+  },
 }
 
 // Краткий прогноз по температуре для Ташкента
@@ -45,6 +78,9 @@ const getTip = (temp: number, condition: string) => {
 export default function WeatherWidget() {
   const [w, setW] = useState<WeatherData | null>(null)
   const [error, setError] = useState(false)
+  const [isLight, setIsLight] = useState(() => 
+    typeof document !== 'undefined' ? document.documentElement.classList.contains('light') : false
+  )
 
   useEffect(() => {
     let alive = true
@@ -54,15 +90,33 @@ export default function WeatherWidget() {
     return () => { alive = false }
   }, [])
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const observer = new MutationObserver(() => {
+      setIsLight(document.documentElement.classList.contains('light'))
+    })
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    })
+    return () => observer.disconnect()
+  }, [])
+
   const condition = w?.condition ?? 'sunny'
   const theme = THEMES[condition] ?? THEMES.sunny
 
+  // Выбираем цвета в зависимости от темы
+  const themeAccent = isLight ? theme.accentLight : theme.accent
+  const themeGradFrom = isLight ? theme.gradFromLight : theme.gradFrom
+  const themeGradTo = isLight ? theme.gradToLight : theme.gradTo
+  const themeTempColor = isLight ? theme.tempColorLight : theme.tempColor
+
   return (
     <div
-      className="rounded-xl h-full overflow-hidden relative"
+      className="rounded-xl h-full overflow-hidden relative shadow-sm transition-all duration-500"
       style={{
-        border: `1px solid ${theme.accent}25`,
-        background: theme.gradFrom,
+        border: `1px solid ${themeAccent}33`,
+        background: themeGradFrom,
       }}
     >
       {/* Фоновая картинка */}
@@ -75,17 +129,19 @@ export default function WeatherWidget() {
           width: '100%', height: '100%',
           objectFit: 'cover',
           objectPosition: 'center',
-          opacity: 0.22,
+          opacity: isLight ? 0.15 : 0.22,
           pointerEvents: 'none',
           userSelect: 'none',
         }}
       />
 
-      {/* Темный градиент для читабельности */}
+      {/* Градиент для читабельности */}
       <div
         style={{
           position: 'absolute', inset: 0,
-          background: `linear-gradient(135deg, ${theme.gradFrom}f0 0%, ${theme.gradFrom}a0 50%, ${theme.gradTo}80 100%)`,
+          background: isLight 
+            ? `linear-gradient(135deg, ${themeGradFrom}b0 0%, ${themeGradFrom}80 50%, ${themeGradTo}50 100%)`
+            : `linear-gradient(135deg, ${themeGradFrom}f0 0%, ${themeGradFrom}a0 50%, ${themeGradTo}80 100%)`,
           pointerEvents: 'none',
         }}
       />
@@ -95,7 +151,7 @@ export default function WeatherWidget() {
         style={{
           position: 'absolute', top: -20, right: -20,
           width: 120, height: 120, borderRadius: '50%',
-          background: theme.accent + '15',
+          background: themeAccent + '15',
           filter: 'blur(30px)',
           pointerEvents: 'none',
         }}
@@ -108,12 +164,12 @@ export default function WeatherWidget() {
           <div className="flex items-center gap-1.5">
             <div
               className="w-1.5 h-1.5 rounded-full"
-              style={{ background: theme.accent, boxShadow: `0 0 6px ${theme.accent}` }}
+              style={{ background: themeAccent, boxShadow: `0 0 6px ${themeAccent}` }}
             />
             <h2 className="text-xs font-semibold text-bx-text uppercase tracking-wider">Погода</h2>
           </div>
-          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-            style={{ background: theme.accent + '20', color: theme.accent }}>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{ background: themeAccent + '1f', color: themeAccent }}>
             {w?.city || 'Ташкент'}
           </span>
         </div>
@@ -129,7 +185,7 @@ export default function WeatherWidget() {
           <div className="flex-1 flex items-center justify-center">
             <div className="flex gap-1">
               {[0, 1, 2].map(i => (
-                <div key={i} className="w-1.5 h-1.5 rounded-full bg-slate-600 animate-pulse" style={{ animationDelay: `${i * 0.15}s` }} />
+                <div key={i} className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600 animate-pulse" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
           </div>
@@ -137,14 +193,14 @@ export default function WeatherWidget() {
           <>
             {/* Основная температура */}
             <div className="flex items-end gap-3 mb-3">
-              <div className="text-5xl leading-none" style={{ filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.2))' }}>
+              <div className="text-5xl leading-none" style={{ filter: isLight ? 'none' : 'drop-shadow(0 0 8px rgba(255,255,255,0.2))' }}>
                 {w.icon}
               </div>
               <div>
-                <div className="text-4xl font-black leading-none" style={{ color: theme.tempColor }}>
+                <div className="text-4xl font-black leading-none" style={{ color: themeTempColor }}>
                   {w.temp}°
                 </div>
-                <div className="text-xs mt-0.5" style={{ color: theme.accent + 'cc' }}>{w.desc}</div>
+                <div className="text-xs mt-0.5 font-semibold" style={{ color: isLight ? themeAccent : themeAccent + 'cc' }}>{w.desc}</div>
               </div>
             </div>
 
@@ -156,10 +212,13 @@ export default function WeatherWidget() {
                 { label: 'Ветер', value: `${w.wind} м/с` },
               ].map(({ label, value }) => (
                 <div key={label}
-                  className="rounded-lg px-2 py-1.5 text-center"
-                  style={{ background: theme.accent + '12', border: `1px solid ${theme.accent}20` }}>
-                  <div className="text-[9px] text-bx-muted mb-0.5 uppercase tracking-wider">{label}</div>
-                  <div className="text-xs font-semibold text-bx-text">{value}</div>
+                  className="rounded-lg px-2 py-1.5 text-center border"
+                  style={{ 
+                    background: isLight ? 'rgba(255, 255, 255, 0.4)' : themeAccent + '12', 
+                    borderColor: isLight ? 'rgba(0,0,0,0.05)' : `${themeAccent}20` 
+                  }}>
+                  <div className="text-[9px] text-bx-muted mb-0.5 uppercase tracking-wider font-semibold">{label}</div>
+                  <div className="text-xs font-bold text-bx-text">{value}</div>
                 </div>
               ))}
             </div>
