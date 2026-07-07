@@ -47,7 +47,7 @@ export default function ProcessKiller() {
       }
     >
       {!procs && !loading && (
-        <p className="text-sm text-slate-500 text-center py-6">
+        <p className="text-sm text-bx-muted text-center py-6">
           Нажмите «Обновить список», чтобы увидеть запущенные процессы 1С.
         </p>
       )}
@@ -55,26 +55,26 @@ export default function ProcessKiller() {
       {procs && (
         <div className="space-y-3">
           {procs.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-6">Запущенных процессов 1С не обнаружено ✨</p>
+            <p className="text-sm text-bx-muted text-center py-6">Запущенных процессов 1С не обнаружено ✨</p>
           ) : (
             <>
               <div className="space-y-1.5">
                 {procs.map(p => (
                   <div
                     key={p.pid}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#0f1117]"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-bx-bg"
                   >
                     <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
-                    <span className="text-sm text-slate-300 font-mono">{p.name}</span>
-                    <span className="text-xs text-slate-500">PID {p.pid}</span>
-                    <span className="text-xs text-slate-500 ml-auto">{formatBytes(p.memoryBytes)}</span>
+                    <span className="text-sm text-bx-text font-mono">{p.name}</span>
+                    <span className="text-xs text-bx-muted">PID {p.pid}</span>
+                    <span className="text-xs text-bx-muted ml-auto">{formatBytes(p.memoryBytes)}</span>
                     <Button variant="danger" onClick={() => killOne(p.pid)} loading={killing} className="!py-1 !px-3 !text-xs">
                       Завершить
                     </Button>
                   </div>
                 ))}
               </div>
-              <div className="flex justify-end pt-2 border-t border-[#1e2535]">
+              <div className="flex justify-end pt-2 border-t border-bx-border">
                 <Button variant="danger" onClick={killAll} loading={killing}>
                   Завершить все ({procs.length})
                 </Button>

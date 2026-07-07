@@ -6,7 +6,9 @@
   --sidebar-width: 220px;
   color-scheme: dark;
 
-  /* Дизайн-токены BX (семантические — единый источник цветов/радиусов) */
+  /* Дизайн-токены BX (семантические — единый источник цветов/радиусов).
+     Значения дублируются как RGB-триплеты (*-rgb) для поддержки
+     Tailwind-классов с прозрачностью: bg-bx-surface/50 и т.п. */
   --bx-bg: #0f1117;          /* фон приложения */
   --bx-surface: #141820;     /* карточки/панели */
   --bx-surface-2: #1a1f2b;   /* всплывающие меню */
@@ -16,18 +18,36 @@
   --bx-muted: #64748b;       /* приглушённый текст */
   --bx-accent: #2563eb;      /* акцент (blue-600) */
   --bx-radius: 0.75rem;
+
+  --bx-bg-rgb: 15 17 23;
+  --bx-surface-rgb: 20 24 32;
+  --bx-surface-2-rgb: 26 31 43;
+  --bx-border-rgb: 30 37 53;
+  --bx-border-2-rgb: 42 52 71;
+  --bx-text-rgb: 226 232 240;
+  --bx-muted-rgb: 100 116 139;
+  --bx-accent-rgb: 37 99 235;
 }
 
 .light {
   color-scheme: light;
-  --bx-bg: #f8fafc;          /* фон приложения */
+  --bx-bg: #f1f5f9;          /* фон приложения (мягкий серо-голубой) */
   --bx-surface: #ffffff;     /* карточки/панели */
-  --bx-surface-2: #f1f5f9;   /* всплывающие меню/инпуты */
+  --bx-surface-2: #eef2f7;   /* всплывающие меню/инпуты/hover */
   --bx-border: #e2e8f0;      /* основные границы */
   --bx-border-2: #cbd5e1;    /* инпуты/акцентные границы */
   --bx-text: #0f172a;        /* основной текст */
-  --bx-muted: #64748b;       /* приглушённый текст */
+  --bx-muted: #5b6675;       /* приглушённый текст (чуть темнее для контраста) */
   --bx-accent: #2563eb;      /* акцент (blue-600) */
+
+  --bx-bg-rgb: 241 245 249;
+  --bx-surface-rgb: 255 255 255;
+  --bx-surface-2-rgb: 238 242 247;
+  --bx-border-rgb: 226 232 240;
+  --bx-border-2-rgb: 203 213 225;
+  --bx-text-rgb: 15 23 42;
+  --bx-muted-rgb: 91 102 117;
+  --bx-accent-rgb: 37 99 235;
 }
 
 /* Анимации */
@@ -63,5 +83,5 @@ body {
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+::-webkit-scrollbar-thumb { background: var(--bx-border-2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--bx-muted); }

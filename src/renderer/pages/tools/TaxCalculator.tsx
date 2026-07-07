@@ -124,16 +124,16 @@ export default function TaxCalculator() {
     <div className="space-y-5 max-w-xl">
 
       {/* Параметры */}
-      <div className="bg-[#0f1117] border border-[#1e2535] rounded-xl p-4 space-y-4">
-        <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Параметры расчёта</p>
+      <div className="bg-bx-bg border border-bx-border rounded-xl p-4 space-y-4">
+        <p className="text-xs font-semibold text-bx-text uppercase tracking-wider">Параметры расчёта</p>
 
         {/* Режим */}
         <div>
-          <label className="text-[11px] text-slate-500 block mb-1.5">Налоговый режим</label>
+          <label className="text-[11px] text-bx-muted block mb-1.5">Налоговый режим</label>
           <div className="flex gap-2">
             {REGIMES.map(r => (
               <button key={r.id} onClick={() => setRegime(r.id)}
-                className={`flex-1 py-1.5 text-xs rounded-lg border transition-colors ${regime === r.id ? 'border-blue-500 bg-blue-600/20 text-blue-300' : 'border-[#1e2535] text-slate-400 hover:border-slate-600'}`}>
+                className={`flex-1 py-1.5 text-xs rounded-lg border transition-colors ${regime === r.id ? 'border-blue-500 bg-blue-600/20 text-blue-300' : 'border-bx-border text-bx-muted hover:border-bx-border-2'}`}>
                 {r.label}
                 <span className="ml-1 text-[10px] opacity-60">({(r.rate * 100).toFixed(0)}%)</span>
               </button>
@@ -144,16 +144,16 @@ export default function TaxCalculator() {
         {/* Период */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[11px] text-slate-500 block mb-1">Год</label>
+            <label className="text-[11px] text-bx-muted block mb-1">Год</label>
             <select value={year} onChange={e => setYear(Number(e.target.value))}
-              className="w-full bg-[#141820] text-slate-300 text-xs px-2 py-1.5 rounded border border-[#1e2535] focus:outline-none focus:border-blue-500/50">
+              className="w-full bg-bx-surface text-bx-text text-xs px-2 py-1.5 rounded border border-bx-border focus:outline-none focus:border-blue-500/50">
               {[thisYear - 1, thisYear, thisYear + 1].map(y => <option key={y}>{y}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-[11px] text-slate-500 block mb-1">Период</label>
+            <label className="text-[11px] text-bx-muted block mb-1">Период</label>
             <select value={quarter} onChange={e => setQuarter(Number(e.target.value))}
-              className="w-full bg-[#141820] text-slate-300 text-xs px-2 py-1.5 rounded border border-[#1e2535] focus:outline-none focus:border-blue-500/50">
+              className="w-full bg-bx-surface text-bx-text text-xs px-2 py-1.5 rounded border border-bx-border focus:outline-none focus:border-blue-500/50">
               <option value={0}>Весь год</option>
               <option value={1}>I квартал (Янв–Мар)</option>
               <option value={2}>II квартал (Апр–Июн)</option>
@@ -166,14 +166,14 @@ export default function TaxCalculator() {
         {/* Автоматическая выручка */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-[11px] text-slate-500">Источник выручки</label>
+            <label className="text-[11px] text-bx-muted">Источник выручки</label>
             <div className="flex items-center gap-1.5">
               <button onClick={() => setUseAuto(true)}
-                className={`px-2 py-0.5 text-[10px] rounded ${useAuto ? 'bg-blue-600/30 text-blue-400' : 'text-slate-600 hover:text-slate-400'}`}>
+                className={`px-2 py-0.5 text-[10px] rounded ${useAuto ? 'bg-blue-600/30 text-blue-400' : 'text-bx-muted hover:text-bx-muted'}`}>
                 Из базы
               </button>
               <button onClick={() => setUseAuto(false)}
-                className={`px-2 py-0.5 text-[10px] rounded ${!useAuto ? 'bg-blue-600/30 text-blue-400' : 'text-slate-600 hover:text-slate-400'}`}>
+                className={`px-2 py-0.5 text-[10px] rounded ${!useAuto ? 'bg-blue-600/30 text-blue-400' : 'text-bx-muted hover:text-bx-muted'}`}>
                 Вручную
               </button>
             </div>
@@ -181,26 +181,26 @@ export default function TaxCalculator() {
 
           {useAuto ? (
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-[#141820] rounded-lg px-3 py-2 border border-[#1e2535]">
-                <p className="text-[10px] text-slate-500 mb-0.5">Доходы (из Finance)</p>
+              <div className="bg-bx-surface rounded-lg px-3 py-2 border border-bx-border">
+                <p className="text-[10px] text-bx-muted mb-0.5">Доходы (из Finance)</p>
                 <p className="text-emerald-400 font-mono">{fmtNum(autoRevenue)} сум</p>
               </div>
-              <div className="bg-[#141820] rounded-lg px-3 py-2 border border-[#1e2535]">
-                <p className="text-[10px] text-slate-500 mb-0.5">Расходы (из Finance)</p>
+              <div className="bg-bx-surface rounded-lg px-3 py-2 border border-bx-border">
+                <p className="text-[10px] text-bx-muted mb-0.5">Расходы (из Finance)</p>
                 <p className="text-red-400 font-mono">{fmtNum(autoExpenses)} сум</p>
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[10px] text-slate-500 block mb-0.5">Выручка, сум</label>
+                <label className="text-[10px] text-bx-muted block mb-0.5">Выручка, сум</label>
                 <input type="text" value={manualRev} onChange={e => setManualRev(e.target.value)} placeholder="0"
-                  className="w-full bg-[#141820] text-slate-200 text-xs px-2 py-1.5 rounded border border-[#1e2535] focus:outline-none focus:border-blue-500/50 font-mono" />
+                  className="w-full bg-bx-surface text-bx-text text-xs px-2 py-1.5 rounded border border-bx-border focus:outline-none focus:border-blue-500/50 font-mono" />
               </div>
               <div>
-                <label className="text-[10px] text-slate-500 block mb-0.5">Расходы, сум</label>
+                <label className="text-[10px] text-bx-muted block mb-0.5">Расходы, сум</label>
                 <input type="text" value={manualExp} onChange={e => setManualExp(e.target.value)} placeholder="0"
-                  className="w-full bg-[#141820] text-slate-200 text-xs px-2 py-1.5 rounded border border-[#1e2535] focus:outline-none focus:border-blue-500/50 font-mono" />
+                  className="w-full bg-bx-surface text-bx-text text-xs px-2 py-1.5 rounded border border-bx-border focus:outline-none focus:border-blue-500/50 font-mono" />
               </div>
             </div>
           )}
@@ -209,21 +209,21 @@ export default function TaxCalculator() {
         {/* Зарплата и сотрудники */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[11px] text-slate-500 block mb-1">Кол-во сотрудников</label>
+            <label className="text-[11px] text-bx-muted block mb-1">Кол-во сотрудников</label>
             <input type="number" min={0} value={employees} onChange={e => setEmployees(Number(e.target.value))}
-              className="w-full bg-[#141820] text-slate-200 text-xs px-2 py-1.5 rounded border border-[#1e2535] focus:outline-none focus:border-blue-500/50" />
+              className="w-full bg-bx-surface text-bx-text text-xs px-2 py-1.5 rounded border border-bx-border focus:outline-none focus:border-blue-500/50" />
           </div>
           <div>
-            <label className="text-[11px] text-slate-500 block mb-1">Средняя ЗП, сум/мес</label>
+            <label className="text-[11px] text-bx-muted block mb-1">Средняя ЗП, сум/мес</label>
             <input type="number" min={0} step={100000} value={avgSalary} onChange={e => setAvgSalary(Number(e.target.value))}
-              className="w-full bg-[#141820] text-slate-200 text-xs px-2 py-1.5 rounded border border-[#1e2535] focus:outline-none focus:border-blue-500/50" />
+              className="w-full bg-bx-surface text-bx-text text-xs px-2 py-1.5 rounded border border-bx-border focus:outline-none focus:border-blue-500/50" />
           </div>
         </div>
       </div>
 
       {/* Результат */}
-      <div className="bg-[#0f1117] border border-[#1e2535] rounded-xl p-4 space-y-3">
-        <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+      <div className="bg-bx-bg border border-bx-border rounded-xl p-4 space-y-3">
+        <p className="text-xs font-semibold text-bx-text uppercase tracking-wider">
           Налоговая нагрузка · {periodLabel(year, quarter)}
         </p>
 
@@ -237,24 +237,24 @@ export default function TaxCalculator() {
               <TaxRow label="НДС (12%)" value={calc.vatTax} color="text-orange-400" />
             </>
           )}
-          <TaxRow label={`ФОТ · ${employees} чел × ${fmtNum(avgSalary)} сум`} value={calc.totalSalary} color="text-slate-400" note="база" />
+          <TaxRow label={`ФОТ · ${employees} чел × ${fmtNum(avgSalary)} сум`} value={calc.totalSalary} color="text-bx-muted" note="база" />
           <TaxRow label="НДФЛ (12%)" value={calc.personalIncome} color="text-purple-400" />
           <TaxRow label="Соцналог (12%)" value={calc.socialTax} color="text-purple-400" />
         </div>
 
-        <div className="pt-3 border-t border-[#1e2535] flex items-center justify-between">
+        <div className="pt-3 border-t border-bx-border flex items-center justify-between">
           <div>
-            <p className="text-[11px] text-slate-500">ИТОГО налогов</p>
-            <p className="text-xl font-bold text-white font-mono">{fmtNum(calc.totalTaxBurden)} <span className="text-xs font-normal text-slate-500">сум</span></p>
+            <p className="text-[11px] text-bx-muted">ИТОГО налогов</p>
+            <p className="text-xl font-bold text-bx-text font-mono">{fmtNum(calc.totalTaxBurden)} <span className="text-xs font-normal text-bx-muted">сум</span></p>
           </div>
           <div className="text-right">
-            <p className="text-[11px] text-slate-500">Налоговая нагрузка</p>
+            <p className="text-[11px] text-bx-muted">Налоговая нагрузка</p>
             <p className={`text-lg font-bold ${calc.effectiveRate > 25 ? 'text-red-400' : calc.effectiveRate > 15 ? 'text-amber-400' : 'text-emerald-400'}`}>
               {calc.effectiveRate.toFixed(1)}%
             </p>
           </div>
         </div>
-        <p className="text-[10px] text-slate-600 leading-relaxed">
+        <p className="text-[10px] text-bx-muted leading-relaxed">
           ⚠ Расчёт приблизительный. Уточняйте ставки на soliq.uz и в НК РУз.
           Не учитываются: налоговые льготы, вычеты, авансы, земельный налог, акцизы.
         </p>
@@ -262,8 +262,8 @@ export default function TaxCalculator() {
 
       {/* Дедлайны квартала */}
       {deadlines.length > 0 && (
-        <div className="bg-[#0f1117] border border-[#1e2535] rounded-xl p-4">
-          <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">
+        <div className="bg-bx-bg border border-bx-border rounded-xl p-4">
+          <p className="text-xs font-semibold text-bx-text uppercase tracking-wider mb-3">
             📋 Сроки сдачи и уплаты
           </p>
           <div className="space-y-1.5">
@@ -271,9 +271,9 @@ export default function TaxCalculator() {
               const isPast = d.date < today
               const isSoon = !isPast && d.date <= daysFromNowISO(7)
               return (
-                <div key={i} className={`flex items-center gap-3 text-xs rounded-lg px-3 py-2 ${isPast ? 'opacity-40' : ''} ${isSoon ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-[#141820]'}`}>
-                  <span className={`font-mono text-[10px] ${isPast ? 'text-slate-600' : isSoon ? 'text-amber-400' : 'text-slate-400'}`}>{d.date}</span>
-                  <span className={`flex-1 ${isPast ? 'text-slate-600 line-through' : 'text-slate-300'}`}>{d.title}</span>
+                <div key={i} className={`flex items-center gap-3 text-xs rounded-lg px-3 py-2 ${isPast ? 'opacity-40' : ''} ${isSoon ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-bx-surface'}`}>
+                  <span className={`font-mono text-[10px] ${isPast ? 'text-bx-muted' : isSoon ? 'text-amber-400' : 'text-bx-muted'}`}>{d.date}</span>
+                  <span className={`flex-1 ${isPast ? 'text-bx-muted line-through' : 'text-bx-text'}`}>{d.title}</span>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded ${d.kind === 'payment' ? 'bg-red-500/15 text-red-400' : 'bg-blue-500/15 text-blue-400'}`}>
                     {d.kind === 'payment' ? 'уплата' : 'отчёт'}
                   </span>
@@ -290,9 +290,9 @@ export default function TaxCalculator() {
 function TaxRow({ label, value, color, note }: { label: string; value: number; color: string; note?: string }) {
   return (
     <div className="flex items-center justify-between text-xs">
-      <span className="text-slate-400 truncate max-w-[60%]">{label}</span>
+      <span className="text-bx-muted truncate max-w-[60%]">{label}</span>
       <span className={`font-mono font-semibold ${color}`}>
-        {note ? <span className="text-slate-600 font-normal mr-1">{note}</span> : null}
+        {note ? <span className="text-bx-muted font-normal mr-1">{note}</span> : null}
         {fmtNum(value)} сум
       </span>
     </div>

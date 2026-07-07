@@ -105,9 +105,9 @@ export default function Dashboard() {
 
   const stats = [
     { label: 'На сегодня',  value: String(todayEvents.length),   color: 'text-blue-400',   bg: 'bg-blue-500/10',   to: '/planner' },
-    { label: 'Просрочено',  value: String(overdueEvents.length),  color: overdueEvents.length > 0 ? 'text-red-400' : 'text-slate-400', bg: overdueEvents.length > 0 ? 'bg-red-500/10' : 'bg-bx-surface', to: '/planner' },
+    { label: 'Просрочено',  value: String(overdueEvents.length),  color: overdueEvents.length > 0 ? 'text-red-400' : 'text-bx-muted', bg: overdueEvents.length > 0 ? 'bg-red-500/10' : 'bg-bx-surface', to: '/planner' },
     { label: 'Компаний',    value: String(companies.length),      color: 'text-emerald-400', bg: 'bg-emerald-500/10', to: '/settings' },
-    { label: 'ЭЦП истекает',value: ecpExpiring > 0 ? String(ecpExpiring) : '—', color: ecpExpiring > 0 ? 'text-amber-400' : 'text-slate-500', bg: ecpExpiring > 0 ? 'bg-amber-500/10' : 'bg-bx-surface', to: '/ecp' },
+    { label: 'ЭЦП истекает',value: ecpExpiring > 0 ? String(ecpExpiring) : '—', color: ecpExpiring > 0 ? 'text-amber-400' : 'text-bx-muted', bg: ecpExpiring > 0 ? 'bg-amber-500/10' : 'bg-bx-surface', to: '/ecp' },
   ];
 
   function fmtDate(d: string) {
@@ -120,11 +120,11 @@ export default function Dashboard() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-semibold text-bx-text">{greeting()}!</h1>
-          <p className="text-sm text-slate-500 capitalize mt-0.5">{today}</p>
+          <p className="text-sm text-bx-muted capitalize mt-0.5">{today}</p>
         </div>
         <button
           onClick={() => setShowWidgetConfig(o => !o)}
-          className="px-3 py-1.5 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border text-slate-300 text-xs rounded-lg transition-colors flex items-center gap-1.5 font-medium"
+          className="px-3 py-1.5 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border text-bx-text text-xs rounded-lg transition-colors flex items-center gap-1.5 font-medium"
         >
           ⚙ Настроить виджеты
         </button>
@@ -132,9 +132,9 @@ export default function Dashboard() {
 
       {showWidgetConfig && (
         <div className="bg-bx-surface border border-bx-border rounded-xl p-4 space-y-2">
-          <p className="text-xs font-semibold text-slate-300 mb-2">Настройка видимости виджетов</p>
+          <p className="text-xs font-semibold text-bx-text mb-2">Настройка видимости виджетов</p>
           <div className="flex flex-wrap gap-4 text-xs">
-            <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+            <label className="flex items-center gap-2 cursor-pointer text-bx-text">
               <input
                 type="checkbox"
                 checked={widgetVisibility.weather}
@@ -143,7 +143,7 @@ export default function Dashboard() {
               />
               Погода
             </label>
-            <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+            <label className="flex items-center gap-2 cursor-pointer text-bx-text">
               <input
                 type="checkbox"
                 checked={widgetVisibility.currency}
@@ -152,7 +152,7 @@ export default function Dashboard() {
               />
               Курсы валют
             </label>
-            <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+            <label className="flex items-center gap-2 cursor-pointer text-bx-text">
               <input
                 type="checkbox"
                 checked={widgetVisibility.notifications}
@@ -161,7 +161,7 @@ export default function Dashboard() {
               />
               Уведомления
             </label>
-            <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+            <label className="flex items-center gap-2 cursor-pointer text-bx-text">
               <input
                 type="checkbox"
                 checked={widgetVisibility.horoscope}
@@ -180,7 +180,7 @@ export default function Dashboard() {
           <button key={s.label} onClick={() => navigate(s.to)}
             className={`rounded-xl border border-bx-border ${s.bg} p-4 text-left hover:border-bx-accent/30 transition-colors`}>
             <div className={`text-2xl font-bold ${s.color}`}>{loading ? '…' : s.value}</div>
-            <div className="text-xs text-slate-500 mt-1">{s.label}</div>
+            <div className="text-xs text-bx-muted mt-1">{s.label}</div>
           </button>
         ))}
       </div>
@@ -204,7 +204,7 @@ export default function Dashboard() {
           <FinCell label={`Мы должны · ${fin.payableN}`} value={fmtMoney(fin.payable)} color="text-red-400" currency="UZS" />
         </div>
         {fin.receivableN === 0 && fin.payableN === 0 && (
-          <p className="text-[11px] text-slate-600 mt-2">Открытых оплат нет — все счета закрыты ✓</p>
+          <p className="text-[11px] text-bx-muted mt-2">Открытых оплат нет — все счета закрыты ✓</p>
         )}
       </div>
 
@@ -227,7 +227,7 @@ export default function Dashboard() {
           )}
           <div className="space-y-1.5">
             {todayEvents.length === 0 && !loading && (
-              <p className="text-xs text-slate-600 text-center py-3">Задач на сегодня нет</p>
+              <p className="text-xs text-bx-muted text-center py-3">Задач на сегодня нет</p>
             )}
             {todayEvents.slice(0,5).map(e => (
               <div key={e.id} className="flex items-center gap-2 py-1.5 border-b border-bx-border/50 last:border-0">
@@ -236,12 +236,12 @@ export default function Dashboard() {
                 </span>
                 <p className="text-xs text-bx-text truncate flex-1">{e.title}</p>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                  e.priority === 'high' ? 'bg-red-500/20 text-red-400' : 'bg-bx-surface-2 text-slate-600'
+                  e.priority === 'high' ? 'bg-red-500/20 text-red-400' : 'bg-bx-surface-2 text-bx-muted'
                 }`}>{e.priority === 'high' ? 'Срочно' : e.type === 'tax_deadline' ? 'Налог' : 'Задача'}</span>
               </div>
             ))}
             {todayEvents.length > 5 && (
-              <button onClick={() => navigate('/planner')} className="text-xs text-slate-600 hover:text-slate-400">
+              <button onClick={() => navigate('/planner')} className="text-xs text-bx-muted hover:text-bx-muted">
                 +{todayEvents.length - 5} ещё...
               </button>
             )}
@@ -256,7 +256,7 @@ export default function Dashboard() {
           </div>
           {upcomingTax.length === 0 && !loading && (
             <div className="text-center py-4">
-              <p className="text-xs text-slate-600 mb-2">Нет загруженных дедлайнов</p>
+              <p className="text-xs text-bx-muted mb-2">Нет загруженных дедлайнов</p>
               <button onClick={() => navigate('/planner')} className="text-xs text-blue-400 hover:text-blue-300">
                 Открыть Планировщик →
               </button>
@@ -267,19 +267,19 @@ export default function Dashboard() {
               const d = e.due_date || e.date;
               const daysLeft = Math.ceil((new Date(d).getTime() - new Date(todayStr).getTime()) / 86400000);
               return (
-                <div key={e.id} className="flex items-center gap-3 py-2 border-b border-[#1e2535]/50 last:border-0">
+                <div key={e.id} className="flex items-center gap-3 py-2 border-b border-bx-border/50 last:border-0">
                   <div className={`w-10 h-10 rounded-lg flex-shrink-0 flex flex-col items-center justify-center text-center
                     ${daysLeft <= 3 ? 'bg-red-500/15' : daysLeft <= 7 ? 'bg-amber-500/15' : 'bg-blue-500/10'}`}>
                     <span className={`text-[11px] font-bold ${daysLeft <= 3 ? 'text-red-400' : daysLeft <= 7 ? 'text-amber-400' : 'text-blue-400'}`}>
                       {fmtDate(d).split(' ')[0]}
                     </span>
-                    <span className={`text-[9px] ${daysLeft <= 3 ? 'text-red-400/60' : 'text-slate-600'}`}>
+                    <span className={`text-[9px] ${daysLeft <= 3 ? 'text-red-400/60' : 'text-bx-muted'}`}>
                       {fmtDate(d).split(' ')[1]}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-bx-text truncate">{e.title}</p>
-                    <p className="text-[10px] text-slate-600">{daysLeft === 0 ? 'сегодня' : `через ${daysLeft} д.`}</p>
+                    <p className="text-[10px] text-bx-muted">{daysLeft === 0 ? 'сегодня' : `через ${daysLeft} д.`}</p>
                   </div>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0
                     ${e.kind === 'payment' ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/15 text-blue-400'}`}>
@@ -294,7 +294,7 @@ export default function Dashboard() {
 
       {/* Quick actions */}
       <div>
-        <h2 className="text-sm font-medium text-slate-400 mb-3">Быстрые действия</h2>
+        <h2 className="text-sm font-medium text-bx-muted mb-3">Быстрые действия</h2>
         <div className="grid grid-cols-3 gap-3">
           {[
             { icon: 'planner',   label: 'Добавить задачу',     to: '/planner' },
@@ -305,7 +305,7 @@ export default function Dashboard() {
             { icon: 'templates', label: 'Шаблоны документов',  to: '/templates' },
           ].map(a => (
             <button key={a.label} onClick={() => navigate(a.to)}
-              className="flex items-center gap-3 bg-bx-surface border border-bx-border hover:border-bx-accent/30 hover:bg-bx-surface-2 rounded-xl px-4 py-3 text-sm text-slate-300 transition-all text-left">
+              className="flex items-center gap-3 bg-bx-surface border border-bx-border hover:border-bx-accent/30 hover:bg-bx-surface-2 rounded-xl px-4 py-3 text-sm text-bx-text transition-all text-left">
               <span className="w-9 h-9 rounded-lg bg-blue-600/15 text-blue-400 flex items-center justify-center flex-shrink-0"><Icon name={a.icon} className="w-[18px] h-[18px]" /></span>
               <span>{a.label}</span>
             </button>
@@ -321,8 +321,8 @@ function FinCell({ label, value, color, currency, hint }: { label: string; value
   const sym = symMap[currency] || ` ${currency}`
   return (
     <div className="bg-bx-bg rounded-lg px-3 py-2">
-      <p className="text-[10px] text-slate-500">{label}{hint && <span className="text-slate-700"> · {hint}</span>}</p>
-      <p className={`text-base font-semibold ${color} mt-0.5 leading-tight`}>{value}<span className="text-[9px] text-slate-700 font-normal">{sym}</span></p>
+      <p className="text-[10px] text-bx-muted">{label}{hint && <span className="text-bx-muted"> · {hint}</span>}</p>
+      <p className={`text-base font-semibold ${color} mt-0.5 leading-tight`}>{value}<span className="text-[9px] text-bx-muted font-normal">{sym}</span></p>
     </div>
   )
 }

@@ -27,20 +27,20 @@ export default function NdflCalc() {
       <div className="flex gap-2">
         <button
           onClick={() => setPeriod('month')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${period === 'month' ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${period === 'month' ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
         >
           Месяц
         </button>
         <button
           onClick={() => setPeriod('year')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${period === 'year' ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${period === 'year' ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
         >
           Год
         </button>
       </div>
 
       <div>
-        <label className="block text-xs text-slate-400 mb-1.5">Начисленная зарплата (UZS)</label>
+        <label className="block text-xs text-bx-muted mb-1.5">Начисленная зарплата (UZS)</label>
         <MoneyInput value={gross} onChange={setGross} big autoFocus />
       </div>
 
@@ -51,7 +51,7 @@ export default function NdflCalc() {
           onChange={e => setDeduction(e.target.checked)}
           className="w-4 h-4 rounded accent-blue-500"
         />
-        <span className="text-sm text-slate-300">Льгота — необлагаемый минимум (1 БРВ/мес = {fmt(brv)} UZS)</span>
+        <span className="text-sm text-bx-text">Льгота — необлагаемый минимум (1 БРВ/мес = {fmt(brv)} UZS)</span>
       </label>
 
       <CalcResult
@@ -65,7 +65,7 @@ export default function NdflCalc() {
         ]}
       />
 
-      <p className="text-[11px] text-slate-600">Ставка 12% — плоская, ст. 366 НК РУз. Льготы: ст. 378–380 НК РУз.</p>
+      <p className="text-[11px] text-bx-muted">Ставка 12% — плоская, ст. 366 НК РУз. Льготы: ст. 378–380 НК РУз.</p>
     </div>
   )
 }

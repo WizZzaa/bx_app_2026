@@ -115,23 +115,23 @@ export default function CurrencyHistory({ onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#141820] border border-[#2a3447] rounded-2xl w-[520px] max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-bx-surface border border-bx-border-2 rounded-2xl w-[520px] max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1e2535]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-bx-border">
           <div className="flex items-center gap-3">
-            <h2 className="text-base font-semibold text-white">История курсов ЦБ РУз</h2>
-            <div className="flex gap-1 bg-[#0f1117] border border-[#1e2535] rounded-lg p-0.5">
+            <h2 className="text-base font-semibold text-bx-text">История курсов ЦБ РУз</h2>
+            <div className="flex gap-1 bg-bx-bg border border-bx-border rounded-lg p-0.5">
               <button onClick={() => setOnDateMode(false)}
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${!onDateMode ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${!onDateMode ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
                 График
               </button>
               <button onClick={() => setOnDateMode(true)}
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${onDateMode ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${onDateMode ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
                 На дату
               </button>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 text-lg">✕</button>
+          <button onClick={onClose} className="text-bx-muted hover:text-bx-text text-lg">✕</button>
         </div>
 
         <div className="px-6 py-5 space-y-5">
@@ -139,10 +139,10 @@ export default function CurrencyHistory({ onClose }: Props) {
             <>
               {/* Period selector */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">Период:</span>
+                <span className="text-xs text-bx-muted">Период:</span>
                 {PERIODS.map(p => (
                   <button key={p.days} onClick={() => setPeriod(p.days)}
-                    className={`px-3 py-1 text-xs rounded-lg transition-colors ${period === p.days ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}>
+                    className={`px-3 py-1 text-xs rounded-lg transition-colors ${period === p.days ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}>
                     {p.label}
                   </button>
                 ))}
@@ -152,7 +152,7 @@ export default function CurrencyHistory({ onClose }: Props) {
               <div className="flex gap-2">
                 {CODES.map(code => (
                   <button key={code} onClick={() => setActiveCode(code)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${activeCode === code ? 'bg-[#1e2535] text-slate-200' : 'text-slate-500 hover:text-slate-400'}`}>
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${activeCode === code ? 'bg-bx-surface-2 text-bx-text' : 'text-bx-muted hover:text-bx-muted'}`}>
                     <span>{FLAGS[code]}</span>
                     <span className="font-medium">{code}</span>
                   </button>
@@ -160,50 +160,50 @@ export default function CurrencyHistory({ onClose }: Props) {
               </div>
 
               {/* Chart area */}
-              <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] p-4">
+              <div className="bg-bx-bg rounded-xl border border-bx-border p-4">
                 {loading ? (
                   <div className="h-14 flex items-center justify-center">
-                    <span className="w-5 h-5 border-2 border-slate-600 border-t-blue-500 rounded-full animate-spin" />
+                    <span className="w-5 h-5 border-2 border-bx-border-2 border-t-blue-500 rounded-full animate-spin" />
                   </div>
                 ) : pts.length > 1 ? (
                   <>
                     <div className="flex items-baseline justify-between mb-3">
                       <div>
-                        <span className="text-2xl font-bold text-slate-200 font-mono">
+                        <span className="text-2xl font-bold text-bx-text font-mono">
                           {last ? fmtVal(last.value) : '—'}
                         </span>
-                        <span className="text-xs text-slate-500 ml-1.5">сум</span>
+                        <span className="text-xs text-bx-muted ml-1.5">сум</span>
                       </div>
                       <div className={`text-sm font-medium ${up ? 'text-emerald-400' : 'text-red-400'}`}>
                         {up ? '▲' : '▼'} {Math.abs(diff).toFixed(1)} за период
                       </div>
                     </div>
                     <Sparkline points={pts} color={COLORS[activeCode] ?? '#3b82f6'} />
-                    <div className="flex justify-between mt-2 text-[10px] text-slate-600">
+                    <div className="flex justify-between mt-2 text-[10px] text-bx-muted">
                       <span>{pts[0] ? fmt(pts[0].date) : ''}</span>
                       <span>{last ? fmt(last.date) : ''}</span>
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-slate-600 text-center py-4">Нет данных</p>
+                  <p className="text-sm text-bx-muted text-center py-4">Нет данных</p>
                 )}
               </div>
 
               {/* Table of last values */}
               {pts.length > 0 && (
-                <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
-                  <div className="grid grid-cols-3 px-4 py-2 border-b border-[#1e2535] text-[11px] text-slate-600 font-medium">
+                <div className="bg-bx-bg rounded-xl border border-bx-border overflow-hidden">
+                  <div className="grid grid-cols-3 px-4 py-2 border-b border-bx-border text-[11px] text-bx-muted font-medium">
                     <span>Дата</span><span className="text-right">Курс (сум)</span><span className="text-right">Изм.</span>
                   </div>
-                  <div className="max-h-48 overflow-y-auto divide-y divide-[#1e2535]">
+                  <div className="max-h-48 overflow-y-auto divide-y divide-bx-border">
                     {[...pts].reverse().slice(0, 15).map((p, i, arr) => {
                       const prev = arr[i + 1];
                       const d = prev ? p.value - prev.value : 0;
                       return (
                         <div key={p.date} className="grid grid-cols-3 px-4 py-2 text-xs">
-                          <span className="text-slate-400">{fmt(p.date)}</span>
-                          <span className="text-slate-200 text-right font-mono">{fmtVal(p.value)}</span>
-                          <span className={`text-right font-mono text-[11px] ${d > 0 ? 'text-emerald-400' : d < 0 ? 'text-red-400' : 'text-slate-600'}`}>
+                          <span className="text-bx-muted">{fmt(p.date)}</span>
+                          <span className="text-bx-text text-right font-mono">{fmtVal(p.value)}</span>
+                          <span className={`text-right font-mono text-[11px] ${d > 0 ? 'text-emerald-400' : d < 0 ? 'text-red-400' : 'text-bx-muted'}`}>
                             {d !== 0 ? `${d > 0 ? '+' : ''}${d.toFixed(1)}` : '—'}
                           </span>
                         </div>
@@ -217,39 +217,39 @@ export default function CurrencyHistory({ onClose }: Props) {
             /* Курс на дату */
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-slate-500 block mb-1.5">Выберите дату</label>
+                <label className="text-xs text-bx-muted block mb-1.5">Выберите дату</label>
                 <div className="flex gap-2">
                   <input type="date" value={onDateVal}
                     max={dateStr(new Date())}
                     onChange={e => { setOnDateVal(e.target.value); setOnDateRates(null); }}
-                    className="bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm flex-1" />
+                    className="bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm flex-1" />
                   <button onClick={fetchOnDate} disabled={onDateLoading}
                     className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm rounded-lg transition-colors flex items-center gap-2">
                     {onDateLoading && <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                     Получить
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-600 mt-1.5">Используется для расчёта таможенной стоимости (ГТД) и пересчёта в СКВ</p>
+                <p className="text-[11px] text-bx-muted mt-1.5">Используется для расчёта таможенной стоимости (ГТД) и пересчёта в СКВ</p>
               </div>
 
               {onDateRates && (
-                <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
-                  <div className="px-4 py-2.5 border-b border-[#1e2535]">
-                    <p className="text-xs text-slate-500">Курс ЦБ РУз на {new Date(onDateVal).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <div className="bg-bx-bg rounded-xl border border-bx-border overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-bx-border">
+                    <p className="text-xs text-bx-muted">Курс ЦБ РУз на {new Date(onDateVal).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                   </div>
                   {onDateRates.map(r => (
-                    <div key={r.code} className="flex items-center gap-3 px-4 py-3 border-b border-[#1e2535] last:border-0">
+                    <div key={r.code} className="flex items-center gap-3 px-4 py-3 border-b border-bx-border last:border-0">
                       <span className="text-lg">{FLAGS[r.code]}</span>
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-slate-200">{r.code}</p>
-                        <p className="text-[10px] text-slate-600">{r.name}</p>
+                        <p className="text-sm font-semibold text-bx-text">{r.code}</p>
+                        <p className="text-[10px] text-bx-muted">{r.name}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-mono text-slate-200">{fmtVal(r.value)}</p>
-                        <p className="text-[10px] text-slate-600">сум</p>
+                        <p className="text-sm font-mono text-bx-text">{fmtVal(r.value)}</p>
+                        <p className="text-[10px] text-bx-muted">сум</p>
                       </div>
                       <button onClick={() => navigator.clipboard.writeText(r.value.toFixed(2))}
-                        className="text-[10px] px-2 py-0.5 bg-[#1e2535] text-slate-500 hover:text-slate-300 rounded transition-colors ml-1">
+                        className="text-[10px] px-2 py-0.5 bg-bx-surface-2 text-bx-muted hover:text-bx-text rounded transition-colors ml-1">
                         Копировать
                       </button>
                     </div>
@@ -260,7 +260,7 @@ export default function CurrencyHistory({ onClose }: Props) {
           )}
         </div>
 
-        <div className="px-6 pb-4 text-[11px] text-slate-700 text-center">
+        <div className="px-6 pb-4 text-[11px] text-bx-muted text-center">
           Источник данных: cbu.uz — Центральный банк Республики Узбекистан
         </div>
       </div>

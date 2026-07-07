@@ -87,17 +87,17 @@ export default function Library({ initialZone }: { initialZone?: Zone }) {
           <span className="w-10 h-10 rounded-xl bg-blue-600/15 text-blue-400 flex items-center justify-center flex-shrink-0"><Icon name="book" className="w-5 h-5" /></span>
           <div>
             <h1 className="text-lg font-bold text-bx-text leading-tight">База знаний</h1>
-            <p className="text-[11px] text-slate-500">{articles.length} статей и нормативные справочники РУз</p>
+            <p className="text-[11px] text-bx-muted">{articles.length} статей и нормативные справочники РУз</p>
           </div>
         </div>
 
         <div className="relative max-w-2xl">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"><Icon name="search" className="w-4 h-4" /></span>
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-bx-muted"><Icon name="search" className="w-4 h-4" /></span>
           <input value={search} onChange={e => setSearch(e.target.value)} autoFocus
             placeholder="Искать по статьям и справочникам: НДС, БРВ, отпускные, счёт 6410…"
             className="w-full bg-bx-surface text-bx-text pl-10 pr-9 py-2.5 rounded-xl border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm shadow-sm transition-colors" />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-lg leading-none">×</button>
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-bx-muted hover:text-bx-text text-lg leading-none">×</button>
           )}
         </div>
 
@@ -105,7 +105,7 @@ export default function Library({ initialZone }: { initialZone?: Zone }) {
           <div className="flex gap-1.5 mt-3">
             {([['articles', 'Статьи'], ['reference', 'Справочные данные']] as const).map(([z, label]) => (
               <button key={z} onClick={() => { setZone(z); setActiveId(null); }}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${zone === z ? 'bg-blue-600 text-white' : 'bg-bx-border text-slate-400 hover:text-slate-200 hover:bg-bx-border-2'}`}>
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${zone === z ? 'bg-blue-600 text-white' : 'bg-bx-border text-bx-muted hover:text-bx-text hover:bg-bx-border-2'}`}>
                 {label}
               </button>
             ))}
@@ -118,12 +118,12 @@ export default function Library({ initialZone }: { initialZone?: Zone }) {
         <div className="flex-1 overflow-y-auto px-6 py-5">
           <div className="max-w-2xl">
             {foundArticles.length === 0 && foundRef.length === 0 && (
-              <p className="text-sm text-slate-600 text-center py-12">Ничего не найдено. Попробуйте другой запрос.</p>
+              <p className="text-sm text-bx-muted text-center py-12">Ничего не найдено. Попробуйте другой запрос.</p>
             )}
 
             {foundArticles.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Статьи · {foundArticles.length}</h3>
+                <h3 className="text-[11px] font-semibold text-bx-muted uppercase tracking-wide mb-2">Статьи · {foundArticles.length}</h3>
                 <div className="space-y-2">
                   {foundArticles.map(a => {
                     const cc = catColor(a.category);
@@ -132,7 +132,7 @@ export default function Library({ initialZone }: { initialZone?: Zone }) {
                         <span className={`w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center ${cc.bg} ${cc.text}`}><Icon name="book" className="w-4 h-4" /></span>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-bx-text group-hover:text-blue-400 transition-colors">{highlight(a.title, search)}</p>
-                          <p className="text-xs text-slate-500 mt-0.5 truncate">{excerpt(a.body)}</p>
+                          <p className="text-xs text-bx-muted mt-0.5 truncate">{excerpt(a.body)}</p>
                         </div>
                       </button>
                     );
@@ -143,14 +143,14 @@ export default function Library({ initialZone }: { initialZone?: Zone }) {
 
             {foundRef.length > 0 && (
               <div>
-                <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Справочные данные · {foundRef.length}</h3>
+                <h3 className="text-[11px] font-semibold text-bx-muted uppercase tracking-wide mb-2">Справочные данные · {foundRef.length}</h3>
                 <div className="space-y-1.5">
                   {foundRef.map((it, i) => (
                     <button key={it.title + i} onClick={() => openRef(it)} className="w-full text-left bg-bx-surface border border-bx-border hover:border-emerald-500/30 rounded-lg px-4 py-2.5 flex items-center gap-3 transition-colors group">
                       <span className="w-7 h-7 rounded-md flex-shrink-0 flex items-center justify-center bg-emerald-500/10 text-emerald-400"><Icon name="table" className="w-3.5 h-3.5" /></span>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-bx-text group-hover:text-emerald-400 transition-colors truncate">{highlight(it.title, search)}</p>
-                        <p className="text-[11px] text-slate-500 truncate">{it.category} · {it.subtitle}</p>
+                        <p className="text-[11px] text-bx-muted truncate">{it.category} · {it.subtitle}</p>
                       </div>
                     </button>
                   ))}

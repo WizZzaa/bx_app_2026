@@ -61,7 +61,7 @@ const EMPTY_CP: NewCounterparty = {
   address: ''
 }
 
-const inputCls = 'w-full bg-[#0f1117] text-slate-200 px-3 py-2 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm'
+const inputCls = 'w-full bg-bx-bg text-bx-text px-3 py-2 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm'
 
 export default function Counterparties() {
   const { active } = useCompany()
@@ -197,19 +197,19 @@ export default function Counterparties() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Вкладки: контрагенты / мои компании */}
-      <div className="flex-shrink-0 border-b border-[#1e2535] px-4 py-2.5 flex items-center gap-3">
-        <h1 className="text-base font-semibold text-white">Организации</h1>
-        <div className="flex bg-[#0f1117] border border-[#1e2535] rounded-lg p-0.5">
+      <div className="flex-shrink-0 border-b border-bx-border px-4 py-2.5 flex items-center gap-3">
+        <h1 className="text-base font-semibold text-bx-text">Организации</h1>
+        <div className="flex bg-bx-bg border border-bx-border rounded-lg p-0.5">
           <button onClick={() => setOrgTab('counterparties')}
-            className={`px-3 py-1 text-xs rounded-md transition-colors ${orgTab === 'counterparties' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+            className={`px-3 py-1 text-xs rounded-md transition-colors ${orgTab === 'counterparties' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
             Контрагенты
           </button>
           <button onClick={() => setOrgTab('mine')}
-            className={`px-3 py-1 text-xs rounded-md transition-colors ${orgTab === 'mine' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+            className={`px-3 py-1 text-xs rounded-md transition-colors ${orgTab === 'mine' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
             Мои компании
           </button>
         </div>
-        <span className="text-[11px] text-slate-600">
+        <span className="text-[11px] text-bx-muted">
           {orgTab === 'counterparties' ? 'база партнёров с рейтингом риска' : 'реквизиты ваших фирм — р/с, МФО, ОКЭД'}
         </span>
       </div>
@@ -221,10 +221,10 @@ export default function Counterparties() {
       ) : (
       <div className="flex-1 flex overflow-hidden">
       {/* Список контрагентов */}
-      <aside className="w-68 flex-shrink-0 border-r border-[#1e2535] flex flex-col bg-[#141820]/30">
+      <aside className="w-68 flex-shrink-0 border-r border-bx-border flex flex-col bg-bx-surface/30">
         <div className="px-4 pt-5 pb-2">
-          <h1 className="text-base font-semibold text-white">Контрагенты</h1>
-          <p className="text-xs text-slate-500 mt-0.5 font-medium">База партнеров и клиентов</p>
+          <h1 className="text-base font-semibold text-bx-text">Контрагенты</h1>
+          <p className="text-xs text-bx-muted mt-0.5 font-medium">База партнеров и клиентов</p>
         </div>
         <div className="px-3 pb-2 space-y-1.5">
           <button 
@@ -254,14 +254,14 @@ export default function Counterparties() {
               <button 
                 key={c.id} 
                 onClick={() => openCp(c)}
-                className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors flex items-start gap-2.5 ${activeId === c.id && !creating ? 'bg-blue-600/20' : 'hover:bg-[#1e2535]/50'}`}
+                className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors flex items-start gap-2.5 ${activeId === c.id && !creating ? 'bg-blue-600/20' : 'hover:bg-bx-surface-2/50'}`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${dotColor}`} />
                 <div className="min-w-0 flex-1">
-                  <p className={`text-xs font-semibold truncate ${activeId === c.id && !creating ? 'text-blue-400' : 'text-slate-200'}`}>
+                  <p className={`text-xs font-semibold truncate ${activeId === c.id && !creating ? 'text-blue-400' : 'text-bx-text'}`}>
                     {c.name}
                   </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5 truncate">
+                  <p className="text-[10px] text-bx-muted mt-0.5 truncate">
                     ИНН: {c.inn} {c.bank_name ? `· ${c.bank_name}` : ''}
                   </p>
                 </div>
@@ -269,18 +269,18 @@ export default function Counterparties() {
             )
           })}
           {filtered.length === 0 && (
-            <p className="text-[11px] text-slate-600 text-center py-8">Контрагенты не найдены</p>
+            <p className="text-[11px] text-bx-muted text-center py-8">Контрагенты не найдены</p>
           )}
         </nav>
       </aside>
 
       {/* Детали */}
-      <div className="flex-1 overflow-y-auto bg-[#0f1117]/10">
+      <div className="flex-1 overflow-y-auto bg-bx-bg/10">
         {!editing ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-8">
             <p className="text-5xl mb-4">🏢</p>
-            <h2 className="text-base font-semibold text-white mb-2">Справочник контрагентов</h2>
-            <p className="text-xs text-slate-500 max-w-sm mb-6 leading-relaxed">
+            <h2 className="text-base font-semibold text-bx-text mb-2">Справочник контрагентов</h2>
+            <p className="text-xs text-bx-muted max-w-sm mb-6 leading-relaxed">
               Создайте базу ваших клиентов и поставщиков. Реквизиты контрагентов будут автоматически подставляться при заполнении договоров в разделе документов.
             </p>
             <button 
@@ -293,15 +293,15 @@ export default function Counterparties() {
         ) : (
           <div className="max-w-2xl mx-auto px-8 py-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-base font-bold text-white">
+              <h2 className="text-base font-bold text-bx-text">
                 {creating ? 'Новый контрагент' : data.name || 'Карточка контрагента'}
               </h2>
             </div>
 
             {/* Анализ рисков */}
             {!creating && current && (
-              <div className="bg-[#141820] border border-[#1e2535] rounded-xl p-5 mb-4">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Оценка надежности партнера</h3>
+              <div className="bg-bx-surface border border-bx-border rounded-xl p-5 mb-4">
+                <h3 className="text-xs font-semibold text-bx-muted uppercase tracking-wider mb-2">Оценка надежности партнера</h3>
                 {(() => {
                   const { score, reasons } = calculateRiskScore(current)
                   let colorClass = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
@@ -321,8 +321,8 @@ export default function Counterparties() {
                         <span className="font-mono text-sm">{100 - score} / 100 баллов</span>
                       </div>
                       {reasons.length > 0 ? (
-                        <div className="text-[11px] text-slate-500 space-y-1">
-                          <p className="font-semibold text-slate-400">Факторы риска:</p>
+                        <div className="text-[11px] text-bx-muted space-y-1">
+                          <p className="font-semibold text-bx-muted">Факторы риска:</p>
                           {reasons.map((r, idx) => (
                             <p key={idx} className="flex items-start gap-1.5">
                               <span className="text-red-400/70 mt-0.5">•</span>
@@ -340,9 +340,9 @@ export default function Counterparties() {
             )}
 
             {/* Карточка */}
-            <div className="bg-[#141820] border border-[#1e2535] rounded-xl p-5 space-y-4 mb-6">
+            <div className="bg-bx-surface border border-bx-border rounded-xl p-5 space-y-4 mb-6">
               <div>
-                <label className="text-[10px] font-semibold text-slate-500 block mb-1 uppercase tracking-wider">
+                <label className="text-[10px] font-semibold text-bx-muted block mb-1 uppercase tracking-wider">
                   Наименование организации / ФИО партнера *
                 </label>
                 <input 
@@ -355,7 +355,7 @@ export default function Counterparties() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-semibold text-slate-500 block mb-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-bx-muted block mb-1 uppercase tracking-wider">
                     ИНН *
                   </label>
                   <input 
@@ -369,7 +369,7 @@ export default function Counterparties() {
                   )}
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold text-slate-500 block mb-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-bx-muted block mb-1 uppercase tracking-wider">
                     МФО Банка
                   </label>
                   <input 
@@ -383,7 +383,7 @@ export default function Counterparties() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className="text-[10px] font-semibold text-slate-500 block mb-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-bx-muted block mb-1 uppercase tracking-wider">
                     Название банка (автозаполнение по МФО)
                   </label>
                   <input 
@@ -394,7 +394,7 @@ export default function Counterparties() {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="text-[10px] font-semibold text-slate-500 block mb-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-bx-muted block mb-1 uppercase tracking-wider">
                     Расчетный счет (20 знаков)
                   </label>
                   <input 
@@ -411,7 +411,7 @@ export default function Counterparties() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-semibold text-slate-500 block mb-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-bx-muted block mb-1 uppercase tracking-wider">
                     Телефон
                   </label>
                   <input 
@@ -422,7 +422,7 @@ export default function Counterparties() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold text-slate-500 block mb-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-bx-muted block mb-1 uppercase tracking-wider">
                     Юридический адрес
                   </label>
                   <input 
@@ -441,7 +441,7 @@ export default function Counterparties() {
                 <div className="flex gap-2 ml-auto">
                   <button 
                     onClick={() => setCreating(false)} 
-                    className="px-4 py-2 border border-[#2a3447] text-slate-400 hover:text-white text-xs font-medium rounded-lg hover:bg-[#1e2535] transition-colors"
+                    className="px-4 py-2 border border-bx-border-2 text-bx-muted hover:text-bx-text text-xs font-medium rounded-lg hover:bg-bx-surface-2 transition-colors"
                   >
                     Отмена
                   </button>
@@ -458,12 +458,12 @@ export default function Counterparties() {
                     <div className="flex items-center gap-2 text-xs">
                       <span className="text-red-400">Удалить контрагента из базы?</span>
                       <button onClick={handleDelete} className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg">Да, удалить</button>
-                      <button onClick={() => setConfirmDel(false)} className="text-slate-500 hover:text-slate-300">Отмена</button>
+                      <button onClick={() => setConfirmDel(false)} className="text-bx-muted hover:text-bx-text">Отмена</button>
                     </div>
                   ) : (
                     <button 
                       onClick={() => setConfirmDel(true)} 
-                      className="text-xs text-slate-600 hover:text-red-400 transition-colors"
+                      className="text-xs text-bx-muted hover:text-red-400 transition-colors"
                     >
                       Удалить контрагента
                     </button>

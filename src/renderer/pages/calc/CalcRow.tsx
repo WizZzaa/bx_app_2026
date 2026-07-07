@@ -18,12 +18,12 @@ export function Row({ label, value, highlight }: { label: string; value: string;
 
   return (
     <div className="flex items-center justify-between px-4 py-3 group">
-      <span className="text-sm text-slate-400">{label}</span>
+      <span className="text-sm text-bx-muted">{label}</span>
       <button
         onClick={copy}
         title="Скопировать число"
         className={`text-sm font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
-          copied ? 'text-emerald-400' : highlight ? 'text-blue-400 hover:text-blue-300' : 'text-slate-200 hover:text-white'
+          copied ? 'text-emerald-400' : highlight ? 'text-blue-400 hover:text-blue-300' : 'text-bx-text hover:text-bx-text'
         }`}
       >
         {copied ? 'Скопировано ✓' : value}

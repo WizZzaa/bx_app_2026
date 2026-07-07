@@ -101,21 +101,21 @@ export default function PcCleaner() {
   const totalSelected = dirs.filter(d => selected.has(d.id)).reduce((s, d) => s + d.sizeBytes, 0);
 
   return (
-    <div className="rounded-xl border border-[#1e2535] bg-[#141820] p-4 space-y-4">
+    <div className="rounded-xl border border-bx-border bg-bx-surface p-4 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-lg">🧽</span>
-            <h3 className="text-sm font-semibold text-slate-200">Очистка ПК</h3>
+            <h3 className="text-sm font-semibold text-bx-text">Очистка ПК</h3>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5 ml-7">Temp-файлы Windows, кэш браузеров — не только 1С</p>
+          <p className="text-xs text-bx-muted mt-0.5 ml-7">Temp-файлы Windows, кэш браузеров — не только 1С</p>
         </div>
         {state === 'idle' || state === 'done' ? (
           <button onClick={scan} className="flex-shrink-0 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-lg transition-colors">
             Сканировать
           </button>
         ) : state === 'scanning' ? (
-          <span className="text-xs text-slate-500 animate-pulse">Сканирование…</span>
+          <span className="text-xs text-bx-muted animate-pulse">Сканирование…</span>
         ) : state === 'scanned' ? (
           <button
             onClick={clean}
@@ -125,7 +125,7 @@ export default function PcCleaner() {
             Очистить {totalSelected > 0 ? fmtSize(totalSelected) : ''}
           </button>
         ) : (
-          <span className="text-xs text-slate-500 animate-pulse">Очистка…</span>
+          <span className="text-xs text-bx-muted animate-pulse">Очистка…</span>
         )}
       </div>
 
@@ -143,7 +143,7 @@ export default function PcCleaner() {
 
       {(state === 'scanned' || state === 'done') && dirs.length > 0 && (
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[10px] text-slate-600 px-1">
+          <div className="flex items-center justify-between text-[10px] text-bx-muted px-1">
             <span>Папка</span>
             <span>Размер / Файлов</span>
           </div>
@@ -151,8 +151,8 @@ export default function PcCleaner() {
             <label
               key={d.id}
               className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                d.accessible && d.fileCount > 0 ? 'hover:bg-[#1e2535]' : 'opacity-40 cursor-default'
-              } ${selected.has(d.id) ? 'bg-[#1e2535]' : ''}`}
+                d.accessible && d.fileCount > 0 ? 'hover:bg-bx-surface-2' : 'opacity-40 cursor-default'
+              } ${selected.has(d.id) ? 'bg-bx-surface-2' : ''}`}
             >
               <input
                 type="checkbox"
@@ -162,14 +162,14 @@ export default function PcCleaner() {
                 className="w-3.5 h-3.5 accent-blue-500 flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-slate-300 truncate">{d.label}</p>
-                <p className="text-[10px] text-slate-600 truncate">{d.dirPath}</p>
+                <p className="text-xs text-bx-text truncate">{d.label}</p>
+                <p className="text-[10px] text-bx-muted truncate">{d.dirPath}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className={`text-xs font-medium ${d.sizeBytes > 100_000_000 ? 'text-red-400' : d.sizeBytes > 0 ? 'text-amber-400' : 'text-slate-600'}`}>
+                <p className={`text-xs font-medium ${d.sizeBytes > 100_000_000 ? 'text-red-400' : d.sizeBytes > 0 ? 'text-amber-400' : 'text-bx-muted'}`}>
                   {d.accessible ? fmtSize(d.sizeBytes) : 'нет доступа'}
                 </p>
-                {d.accessible && <p className="text-[10px] text-slate-600">{d.fileCount} файл.</p>}
+                {d.accessible && <p className="text-[10px] text-bx-muted">{d.fileCount} файл.</p>}
               </div>
             </label>
           ))}
@@ -179,7 +179,7 @@ export default function PcCleaner() {
       {result && (
         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-4 py-3">
           <p className="text-sm font-medium text-emerald-400">Очистка завершена</p>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-bx-muted mt-0.5">
             Освобождено: {fmtSize(result.freedBytes)} · удалено {result.deletedCount} файл.
             {result.errors.length > 0 && ` · ${result.errors.length} пропущено (заняты)`}
           </p>

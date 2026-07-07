@@ -41,19 +41,19 @@ export default function RegimeCompareCalc() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="block text-xs text-slate-400 mb-1.5">Выручка за период, с НДС (UZS)</label>
+          <label className="block text-xs text-bx-muted mb-1.5">Выручка за период, с НДС (UZS)</label>
           <MoneyInput value={revenue} onChange={setRevenue} big autoFocus />
         </div>
         <div>
-          <label className="block text-xs text-slate-400 mb-1.5">Расходы за период, с НДС (UZS)</label>
+          <label className="block text-xs text-bx-muted mb-1.5">Расходы за период, с НДС (UZS)</label>
           <MoneyInput value={expenses} onChange={setExpenses} />
         </div>
         <div>
-          <label className="block text-xs text-slate-400 mb-1.5">Доля расходов с входящим НДС (%)</label>
+          <label className="block text-xs text-bx-muted mb-1.5">Доля расходов с входящим НДС (%)</label>
           <input
             type="number" min="0" max="100" value={vatShare}
             onChange={e => setVatShare(e.target.value)}
-            className="w-full bg-[#0f1117] text-slate-200 text-sm px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 tabular-nums"
+            className="w-full bg-bx-bg text-bx-text text-sm px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 tabular-nums"
           />
         </div>
       </div>
@@ -80,7 +80,7 @@ export default function RegimeCompareCalc() {
         ]}
       />
 
-      <p className="text-[11px] text-slate-600">
+      <p className="text-[11px] text-bx-muted">
         Упрощённая модель. Ставка оборота 4% — базовая (ст. 467 НК РУз, зависит от вида деятельности
         и региона), прибыль 15% (ст. 337), для IT-льгот — 7.5%. ОСН обязательна при выручке свыше 1 млрд сум/год.
       </p>

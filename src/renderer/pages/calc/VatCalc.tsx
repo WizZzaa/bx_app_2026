@@ -24,20 +24,20 @@ export default function VatCalc() {
       <div className="flex gap-2">
         <button
           onClick={() => setMode('add')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${mode === 'add' ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${mode === 'add' ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
         >
           Начислить НДС
         </button>
         <button
           onClick={() => setMode('extract')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${mode === 'extract' ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${mode === 'extract' ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
         >
           Выделить НДС
         </button>
       </div>
 
       <div>
-        <label className="block text-xs text-slate-400 mb-1.5">
+        <label className="block text-xs text-bx-muted mb-1.5">
           {mode === 'add' ? 'Сумма без НДС (UZS)' : 'Сумма с НДС (UZS)'}
         </label>
         <MoneyInput value={amount} onChange={setAmount} big autoFocus />
@@ -53,7 +53,7 @@ export default function VatCalc() {
         ]}
       />
 
-      <p className="text-[11px] text-slate-600">Ставка НДС в Узбекистане — 12% (ст. 258 НК РУз)</p>
+      <p className="text-[11px] text-bx-muted">Ставка НДС в Узбекистане — 12% (ст. 258 НК РУз)</p>
     </div>
   );
 }

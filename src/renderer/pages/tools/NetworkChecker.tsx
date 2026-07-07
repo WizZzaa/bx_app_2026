@@ -46,7 +46,7 @@ function StatusDot({ ok }: { ok: boolean | null }) {
 }
 
 function msColor(ms: number | null) {
-  if (ms === null) return 'text-slate-600';
+  if (ms === null) return 'text-bx-muted';
   if (ms < 0) return 'text-red-400';
   if (ms < 500) return 'text-emerald-400';
   if (ms < 1500) return 'text-amber-400';
@@ -87,14 +87,14 @@ export default function NetworkChecker() {
   const offline = results.filter(r => r.ok === false).length;
 
   return (
-    <div className="rounded-xl border border-[#1e2535] bg-[#141820] p-4 space-y-4">
+    <div className="rounded-xl border border-bx-border bg-bx-surface p-4 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-lg">📶</span>
-            <h3 className="text-sm font-semibold text-slate-200">Проверка сети</h3>
+            <h3 className="text-sm font-semibold text-bx-text">Проверка сети</h3>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5 ml-7">Пинг госсайтов — видно, что «лежит»</p>
+          <p className="text-xs text-bx-muted mt-0.5 ml-7">Пинг госсайтов — видно, что «лежит»</p>
         </div>
         <button
           onClick={check}
@@ -119,11 +119,11 @@ export default function NetworkChecker() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             {results.map(r => (
-              <div key={r.id} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#0f1117]">
+              <div key={r.id} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-bx-bg">
                 <StatusDot ok={r.ok} />
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs text-slate-300">{r.label}</span>
-                  <span className="ml-1.5 text-[10px] text-slate-600">{r.category}</span>
+                  <span className="text-xs text-bx-text">{r.label}</span>
+                  <span className="ml-1.5 text-[10px] text-bx-muted">{r.category}</span>
                 </div>
                 <span className={`text-xs font-mono font-medium flex-shrink-0 ${msColor(r.ms)}`}>
                   {r.ok === null
@@ -139,7 +139,7 @@ export default function NetworkChecker() {
       )}
 
       {state === 'idle' && (
-        <p className="text-xs text-slate-600 ml-7">Нажмите «Проверить всё» для диагностики доступности сайтов</p>
+        <p className="text-xs text-bx-muted ml-7">Нажмите «Проверить всё» для диагностики доступности сайтов</p>
       )}
     </div>
   );

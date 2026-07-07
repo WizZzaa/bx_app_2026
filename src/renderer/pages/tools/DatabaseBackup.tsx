@@ -85,10 +85,10 @@ export default function DatabaseBackup() {
       <div className="space-y-4">
         {/* Source */}
         <div>
-          <label className="text-xs text-slate-500 block mb-1.5">Файл базы (1Cv8.1CD)</label>
+          <label className="text-xs text-bx-muted block mb-1.5">Файл базы (1Cv8.1CD)</label>
           <div className="flex gap-2">
-            <div className="flex-1 text-sm text-slate-300 bg-[#0f1117] rounded-lg px-3 py-2 truncate border border-[#1e2535]">
-              {source || <span className="text-slate-600">Файл не выбран</span>}
+            <div className="flex-1 text-sm text-bx-text bg-bx-bg rounded-lg px-3 py-2 truncate border border-bx-border">
+              {source || <span className="text-bx-muted">Файл не выбран</span>}
             </div>
             <Button variant="ghost" onClick={pickSource}>Выбрать…</Button>
           </div>
@@ -96,16 +96,16 @@ export default function DatabaseBackup() {
 
         {/* Dest */}
         <div>
-          <label className="text-xs text-slate-500 block mb-1.5">Папка для копии</label>
+          <label className="text-xs text-bx-muted block mb-1.5">Папка для копии</label>
           <div className="flex gap-2">
-            <div className="flex-1 text-sm text-slate-300 bg-[#0f1117] rounded-lg px-3 py-2 truncate border border-[#1e2535]">
-              {dest || <span className="text-slate-600">Папка не выбрана</span>}
+            <div className="flex-1 text-sm text-bx-text bg-bx-bg rounded-lg px-3 py-2 truncate border border-bx-border">
+              {dest || <span className="text-bx-muted">Папка не выбрана</span>}
             </div>
             <Button variant="ghost" onClick={pickDest}>Выбрать…</Button>
           </div>
         </div>
 
-        <div className="flex justify-end pt-2 border-t border-[#1e2535]">
+        <div className="flex justify-end pt-2 border-t border-bx-border">
           <Button variant="success" onClick={run} loading={running} disabled={!source || !dest}>
             Сделать бэкап
           </Button>
@@ -115,7 +115,7 @@ export default function DatabaseBackup() {
           result.success ? (
             <div className="text-sm text-green-400 bg-green-500/10 rounded-lg px-4 py-3">
               ✓ Бэкап создан: {result.destPath}
-              {result.sizeBytes != null && <span className="text-slate-400"> ({formatBytes(result.sizeBytes)})</span>}
+              {result.sizeBytes != null && <span className="text-bx-muted"> ({formatBytes(result.sizeBytes)})</span>}
             </div>
           ) : (
             <div className="text-sm text-red-400 bg-red-500/10 rounded-lg px-4 py-3">
@@ -125,11 +125,11 @@ export default function DatabaseBackup() {
         )}
 
         {/* Автобэкап */}
-        <div className="pt-4 border-t border-[#1e2535] space-y-3">
+        <div className="pt-4 border-t border-bx-border space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-300">⏰ Автоматическое резервное копирование</p>
-              <p className="text-[10px] text-slate-500">Автоматически делать бэкап выбранной базы в фоне</p>
+              <p className="text-xs font-semibold text-bx-text">⏰ Автоматическое резервное копирование</p>
+              <p className="text-[10px] text-bx-muted">Автоматически делать бэкап выбранной базы в фоне</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -143,14 +143,14 @@ export default function DatabaseBackup() {
                 }}
                 className="sr-only peer"
               />
-              <div className="w-9 h-5 bg-[#0f1117] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white"></div>
+              <div className="w-9 h-5 bg-bx-bg peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white"></div>
             </label>
           </div>
 
           {autoEnabled && (
-            <div className="grid grid-cols-2 gap-3 bg-[#0f1117] p-3 rounded-lg border border-[#1e2535]">
+            <div className="grid grid-cols-2 gap-3 bg-bx-bg p-3 rounded-lg border border-bx-border">
               <div>
-                <label className="text-[10px] text-slate-500 block mb-1">Периодичность бэкапа</label>
+                <label className="text-[10px] text-bx-muted block mb-1">Периодичность бэкапа</label>
                 <select
                   value={intervalHours}
                   onChange={async (e) => {
@@ -158,7 +158,7 @@ export default function DatabaseBackup() {
                     setIntervalHours(hours)
                     await saveAutoConfig(autoEnabled, hours)
                   }}
-                  className="bg-[#141820] text-slate-300 text-xs px-2 py-1.5 rounded border border-[#1e2535] focus:outline-none focus:border-blue-500/50 w-full"
+                  className="bg-bx-surface text-bx-text text-xs px-2 py-1.5 rounded border border-bx-border focus:outline-none focus:border-blue-500/50 w-full"
                 >
                   <option value={12}>Каждые 12 часов</option>
                   <option value={24}>Раз в сутки (24 ч)</option>
@@ -166,7 +166,7 @@ export default function DatabaseBackup() {
                   <option value={168}>Раз в неделю (168 ч)</option>
                 </select>
               </div>
-              <div className="flex items-end justify-end text-[10px] text-slate-600">
+              <div className="flex items-end justify-end text-[10px] text-bx-muted">
                 {saving ? 'Сохранение...' : 'Планировщик активен'}
               </div>
             </div>

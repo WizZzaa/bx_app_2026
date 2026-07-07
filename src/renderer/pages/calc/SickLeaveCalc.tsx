@@ -45,13 +45,13 @@ export default function SickLeaveCalc() {
   return (
     <div className="space-y-5">
       <div>
-        <label className="block text-xs text-slate-400 mb-2">Трудовой стаж</label>
+        <label className="block text-xs text-bx-muted mb-2">Трудовой стаж</label>
         <div className="flex gap-2">
           {STAZH_RULES.map((r, i) => (
             <button
               key={i}
               onClick={() => setStazh(i)}
-              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${stazh === i ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${stazh === i ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
             >
               {r.label}<br />
               <span className="opacity-80">{r.pct}%</span>
@@ -62,19 +62,19 @@ export default function SickLeaveCalc() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="block text-xs text-slate-400 mb-1.5">Совокупный доход за 12 месяцев (UZS)</label>
+          <label className="block text-xs text-bx-muted mb-1.5">Совокупный доход за 12 месяцев (UZS)</label>
           <MoneyInput value={annualIncome} onChange={setAnnualIncome} big autoFocus />
         </div>
         <div>
-          <label className="block text-xs text-slate-400 mb-1.5">Дней болезни (раб.)</label>
+          <label className="block text-xs text-bx-muted mb-1.5">Дней болезни (раб.)</label>
           <input
             type="number" value={sickDays} onChange={e => setSickDays(e.target.value)} min="1"
-            className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm"
+            className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm"
           />
         </div>
         <div className="flex flex-col justify-end">
-          <p className="text-xs text-slate-500">МРОТ (справочник): {fmt(mrot)} UZS</p>
-          <p className="text-xs text-slate-500">Коэфф. стажа: {rule.pct}%</p>
+          <p className="text-xs text-bx-muted">МРОТ (справочник): {fmt(mrot)} UZS</p>
+          <p className="text-xs text-bx-muted">Коэфф. стажа: {rule.pct}%</p>
         </div>
       </div>
 
@@ -91,7 +91,7 @@ export default function SickLeaveCalc() {
         ]}
       />
 
-      <p className="text-[11px] text-slate-600">Ст. 284 ТК РУз. Минимум — среднедневной МРОТ × дни. Финансируется из ГФСН.</p>
+      <p className="text-[11px] text-bx-muted">Ст. 284 ТК РУз. Минимум — среднедневной МРОТ × дни. Финансируется из ГФСН.</p>
     </div>
   );
 }

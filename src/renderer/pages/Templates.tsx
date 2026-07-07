@@ -74,7 +74,7 @@ function substituteVars(body: string, vals: Record<string, string>, vars: Templa
 }
 
 function InputField({ v, value, onChange }: { v: TemplateVar; value: string; onChange: (val: string) => void }) {
-  const cls = 'w-full bg-[#0f1117] text-slate-200 border border-[#2a3447] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-500/50 transition-colors'
+  const cls = 'w-full bg-bx-bg text-bx-text border border-bx-border-2 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-500/50 transition-colors'
   if (v.type === 'textarea') return <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={v.placeholder} rows={3} className={`${cls} resize-none`} />
   if (v.type === 'select' && v.options) return <select value={value} onChange={e => onChange(e.target.value)} className={cls}>{v.options.map(o => <option key={o} value={o}>{o}</option>)}</select>
   return <input type={v.type === 'date' ? 'date' : v.type === 'number' ? 'number' : 'text'} value={value} onChange={e => onChange(e.target.value)} placeholder={v.placeholder} className={cls} />
@@ -344,38 +344,38 @@ export default function Templates() {
   // ── Режим создания шаблона ──
   if (creatingTpl) {
     return (
-      <div className="flex-1 flex overflow-hidden bg-[#0f1117]">
+      <div className="flex-1 flex overflow-hidden bg-bx-bg">
         {/* Форма слева */}
-        <div className="w-80 flex-shrink-0 border-r border-[#1e2535] flex flex-col p-4 bg-[#141820]/30 space-y-4">
+        <div className="w-80 flex-shrink-0 border-r border-bx-border flex flex-col p-4 bg-bx-surface/30 space-y-4">
           <div>
-            <button onClick={() => setCreatingTpl(false)} className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-300 mb-2">
+            <button onClick={() => setCreatingTpl(false)} className="flex items-center gap-1.5 text-[11px] text-bx-muted hover:text-bx-text mb-2">
               <Icon name="arrowL" className="w-3 h-3" />Назад
             </button>
-            <h2 className="text-sm font-bold text-white">Новый шаблон</h2>
-            <p className="text-[10px] text-slate-500">Создание динамического бланка</p>
+            <h2 className="text-sm font-bold text-bx-text">Новый шаблон</h2>
+            <p className="text-[10px] text-bx-muted">Создание динамического бланка</p>
           </div>
 
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Название *</label>
-              <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Договор субподряда..." className="w-full bg-[#0f1117] text-slate-200 border border-[#2a3447] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-500/50" />
+              <label className="block text-[10px] font-semibold text-bx-muted uppercase tracking-wider mb-1">Название *</label>
+              <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Договор субподряда..." className="w-full bg-bx-bg text-bx-text border border-bx-border-2 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-500/50" />
             </div>
 
             <div>
-              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Описание</label>
-              <input value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Для выполнения отдельных ИТ-работ..." className="w-full bg-[#0f1117] text-slate-200 border border-[#2a3447] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-500/50" />
+              <label className="block text-[10px] font-semibold text-bx-muted uppercase tracking-wider mb-1">Описание</label>
+              <input value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Для выполнения отдельных ИТ-работ..." className="w-full bg-bx-bg text-bx-text border border-bx-border-2 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-500/50" />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Категория</label>
-                <select value={newCat} onChange={e => setNewCat(e.target.value)} className="w-full bg-[#0f1117] text-slate-200 border border-[#2a3447] rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500/50">
+                <label className="block text-[10px] font-semibold text-bx-muted uppercase tracking-wider mb-1">Категория</label>
+                <select value={newCat} onChange={e => setNewCat(e.target.value)} className="w-full bg-bx-bg text-bx-text border border-bx-border-2 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500/50">
                   {TEMPLATE_CATEGORIES.filter(c => c !== 'Все').map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Эмодзи-иконка</label>
-                <input value={newIcon} onChange={e => setNewIcon(e.target.value)} placeholder="📄" className="w-full bg-[#0f1117] text-slate-200 border border-[#2a3447] rounded-lg px-3 py-1.5 text-xs focus:outline-none text-center focus:border-blue-500/50" />
+                <label className="block text-[10px] font-semibold text-bx-muted uppercase tracking-wider mb-1">Эмодзи-иконка</label>
+                <input value={newIcon} onChange={e => setNewIcon(e.target.value)} placeholder="📄" className="w-full bg-bx-bg text-bx-text border border-bx-border-2 rounded-lg px-3 py-1.5 text-xs focus:outline-none text-center focus:border-blue-500/50" />
               </div>
             </div>
           </div>
@@ -390,8 +390,8 @@ export default function Templates() {
         {/* Редактор текста справа */}
         <div className="flex-1 flex flex-col p-6 space-y-4">
           <div className="flex-shrink-0">
-            <h3 className="text-sm font-semibold text-slate-200">Текст шаблона документа</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h3 className="text-sm font-semibold text-bx-text">Текст шаблона документа</h3>
+            <p className="text-xs text-bx-muted mt-0.5">
               Вставляйте переменные в двойных фигурных скобках. Например: <code className="text-blue-400 font-mono font-bold bg-blue-500/10 px-1 py-0.5 rounded">{"{{buyer_name}}"}</code>, <code className="text-blue-400 font-mono font-bold bg-blue-500/10 px-1 py-0.5 rounded">{"{{amount}}"}</code>, <code className="text-blue-400 font-mono font-bold bg-blue-500/10 px-1 py-0.5 rounded">{"{{contract_date}}"}</code>.
             </p>
           </div>
@@ -400,7 +400,7 @@ export default function Templates() {
               value={newBody}
               onChange={e => setNewBody(e.target.value)}
               placeholder="ДОГОВОР № {{contract_num}}&#10;&#10;г. {{city}}                  «{{contract_date}}»&#10;&#10;Мы, нижеподписавшиеся..."
-              className="w-full h-full bg-[#141820] text-slate-200 border border-[#2a3447] rounded-xl p-4 text-xs font-mono focus:outline-none focus:border-blue-500/50 resize-none leading-relaxed"
+              className="w-full h-full bg-bx-surface text-bx-text border border-bx-border-2 rounded-xl p-4 text-xs font-mono focus:outline-none focus:border-blue-500/50 resize-none leading-relaxed"
             />
           </div>
         </div>
@@ -413,11 +413,11 @@ export default function Templates() {
     const cc = catColor(tpl.category)
     const isCustom = tpl.id.startsWith('custom-')
     return (
-      <div className="flex-1 flex overflow-hidden bg-[#0f1117]">
+      <div className="flex-1 flex overflow-hidden bg-bx-bg">
         {/* Форма */}
-        <div className="w-80 flex-shrink-0 border-r border-[#1e2535] flex flex-col bg-[#141820]/10">
-          <div className="px-4 py-3 border-b border-[#1e2535]">
-            <button onClick={() => setActiveId(null)} className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-300 mb-2">
+        <div className="w-80 flex-shrink-0 border-r border-bx-border flex flex-col bg-bx-surface/10">
+          <div className="px-4 py-3 border-b border-bx-border">
+            <button onClick={() => setActiveId(null)} className="flex items-center gap-1.5 text-[11px] text-bx-muted hover:text-bx-text mb-2">
               <Icon name="arrowL" className="w-3 h-3" />Все шаблоны
             </button>
             <div className="flex items-center gap-2.5">
@@ -425,18 +425,18 @@ export default function Templates() {
                 {isCustom ? <span className="text-lg">{tpl.icon}</span> : <Icon name={catMeta(tpl.category).icon} className="w-5 h-5" />}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-white leading-tight truncate">{tpl.title}</p>
-                <p className="text-[10px] text-slate-500">{tpl.category}</p>
+                <p className="text-sm font-semibold text-bx-text leading-tight truncate">{tpl.title}</p>
+                <p className="text-[10px] text-bx-muted">{tpl.category}</p>
               </div>
             </div>
             {/* Автозаполнение сторон из Организаций */}
             {myCompanies.length > 0 && (
               <div className="mt-3">
-                <label className="block text-[10px] font-semibold text-slate-500 mb-1 uppercase tracking-wider">Моя компания (продавец / исполнитель)</label>
+                <label className="block text-[10px] font-semibold text-bx-muted mb-1 uppercase tracking-wider">Моя компания (продавец / исполнитель)</label>
                 <select
                   onChange={e => handleApplyMyCompany(e.target.value)}
                   defaultValue=""
-                  className="w-full bg-[#0f1117] text-slate-300 text-[11px] rounded-lg border border-[#2a3447] px-2 py-1.5 focus:outline-none focus:border-blue-500/50"
+                  className="w-full bg-bx-bg text-bx-text text-[11px] rounded-lg border border-bx-border-2 px-2 py-1.5 focus:outline-none focus:border-blue-500/50"
                 >
                   <option value="">-- Выберите компанию --</option>
                   {myCompanies.map(r => (
@@ -447,11 +447,11 @@ export default function Templates() {
             )}
             {counterparties.length > 0 && (
               <div className="mt-2">
-                <label className="block text-[10px] font-semibold text-slate-500 mb-1 uppercase tracking-wider">Контрагент (покупатель / заказчик)</label>
+                <label className="block text-[10px] font-semibold text-bx-muted mb-1 uppercase tracking-wider">Контрагент (покупатель / заказчик)</label>
                 <select
                   onChange={e => handleApplyCounterparty(e.target.value)}
                   defaultValue=""
-                  className="w-full bg-[#0f1117] text-slate-300 text-[11px] rounded-lg border border-[#2a3447] px-2 py-1.5 focus:outline-none focus:border-blue-500/50"
+                  className="w-full bg-bx-bg text-bx-text text-[11px] rounded-lg border border-bx-border-2 px-2 py-1.5 focus:outline-none focus:border-blue-500/50"
                 >
                   <option value="">-- Выберите контрагента --</option>
                   {counterparties.map(c => (
@@ -461,15 +461,15 @@ export default function Templates() {
               </div>
             )}
             {myCompanies.length === 0 && (
-              <p className="mt-3 text-[10px] text-slate-600">
+              <p className="mt-3 text-[10px] text-bx-muted">
                 Добавьте свою фирму в «Организации → Мои компании» — реквизиты будут подставляться сюда одним кликом.
               </p>
             )}
             {/* Прогресс */}
             {tpl.vars.length > 0 && (
               <div className="mt-3">
-                <div className="flex justify-between text-[10px] text-slate-500 mb-1"><span>Заполнено</span><span>{filledCount}/{tpl.vars.length}</span></div>
-                <div className="h-1.5 bg-[#0f1117] rounded-full overflow-hidden">
+                <div className="flex justify-between text-[10px] text-bx-muted mb-1"><span>Заполнено</span><span>{filledCount}/{tpl.vars.length}</span></div>
+                <div className="h-1.5 bg-bx-bg rounded-full overflow-hidden">
                   <div className="h-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
                 </div>
               </div>
@@ -477,30 +477,30 @@ export default function Templates() {
           </div>
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {tpl.vars.length === 0 ? (
-              <p className="text-xs text-slate-500 text-center py-8">В этом шаблоне нет переменных для заполнения.</p>
+              <p className="text-xs text-bx-muted text-center py-8">В этом шаблоне нет переменных для заполнения.</p>
             ) : (
               tpl.vars.map(v => (
                 <div key={v.key}>
-                  <label className="block text-[10px] font-medium text-slate-400 mb-1">{v.label}</label>
+                  <label className="block text-[10px] font-medium text-bx-muted mb-1">{v.label}</label>
                   <InputField v={v} value={vals[v.key] ?? ''} onChange={val => handleSetVal(v.key, val)} />
                 </div>
               ))
             )}
           </div>
           
-          <div className="px-4 py-3 border-t border-[#1e2535] space-y-2">
+          <div className="px-4 py-3 border-t border-bx-border space-y-2">
             <div className="grid grid-cols-4 gap-1.5">
               <button onClick={handlePrintDoc} className="flex flex-col items-center gap-1 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] rounded-lg transition-colors">
                 <Icon name="printer" className="w-4 h-4" />Печать
               </button>
-              <button onClick={handleExportPDF} className="flex flex-col items-center gap-1 py-2 bg-[#1e2535] hover:bg-[#252c3a] text-slate-300 text-[10px] rounded-lg transition-colors">
+              <button onClick={handleExportPDF} className="flex flex-col items-center gap-1 py-2 bg-bx-surface-2 hover:bg-bx-surface-2 text-bx-text text-[10px] rounded-lg transition-colors">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                 PDF
               </button>
-              <button onClick={handleDownloadDoc} className="flex flex-col items-center gap-1 py-2 bg-[#1e2535] hover:bg-[#252c3a] text-slate-300 text-[10px] rounded-lg transition-colors">
+              <button onClick={handleDownloadDoc} className="flex flex-col items-center gap-1 py-2 bg-bx-surface-2 hover:bg-bx-surface-2 text-bx-text text-[10px] rounded-lg transition-colors">
                 <Icon name="word" className="w-4 h-4" />Word
               </button>
-              <button onClick={handleCopyText} className={`flex flex-col items-center gap-1 py-2 text-[10px] rounded-lg transition-colors ${copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[#1e2535] hover:bg-[#252c3a] text-slate-300'}`}>
+              <button onClick={handleCopyText} className={`flex flex-col items-center gap-1 py-2 text-[10px] rounded-lg transition-colors ${copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-bx-surface-2 hover:bg-bx-surface-2 text-bx-text'}`}>
                 <Icon name={copied ? 'check' : 'copy'} className="w-4 h-4" />{copied ? 'Готово' : 'Копир.'}
               </button>
             </div>
@@ -514,9 +514,9 @@ export default function Templates() {
         </div>
 
         {/* Предпросмотр */}
-        <div className="flex-1 overflow-y-auto bg-[#0a0d13] p-6">
+        <div className="flex-1 overflow-y-auto bg-bx-bg p-6">
           <div className="max-w-3xl mx-auto">
-            <p className="text-[11px] text-slate-600 mb-3 text-center">Предпросмотр · незаполненные поля показаны [в скобках]</p>
+            <p className="text-[11px] text-bx-muted mb-3 text-center">Предпросмотр · незаполненные поля показаны [в скобках]</p>
             <div className="bg-white rounded-xl shadow-2xl p-10">
               <pre className="text-[11px] leading-relaxed text-gray-900 whitespace-pre-wrap break-words" style={{ fontFamily: "'Times New Roman', serif" }}>{preview}</pre>
             </div>
@@ -528,7 +528,7 @@ export default function Templates() {
 
   // ── Галерея ──
   return (
-    <div className="flex-1 overflow-y-auto bg-[#0f1117]">
+    <div className="flex-1 overflow-y-auto bg-bx-bg">
       <div className="max-w-4xl mx-auto px-8 py-10">
         <div className="text-center mb-8 relative">
           <button onClick={() => setCreatingTpl(true)} className="absolute right-0 top-0 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all cursor-pointer">
@@ -538,12 +538,12 @@ export default function Templates() {
           <span className="inline-flex w-14 h-14 rounded-2xl bg-blue-600/15 text-blue-400 items-center justify-center mb-4">
             <Icon name="file" className="w-7 h-7" />
           </span>
-          <h1 className="text-2xl font-bold text-white mb-2">Шаблоны документов</h1>
-          <p className="text-sm text-slate-500 max-w-lg mx-auto mb-6">Готовые бланки для бухгалтера РУз. Заполните поля — документ соберётся сам. Печать, Word и копирование.</p>
+          <h1 className="text-2xl font-bold text-bx-text mb-2">Шаблоны документов</h1>
+          <p className="text-sm text-bx-muted max-w-lg mx-auto mb-6">Готовые бланки для бухгалтера РУз. Заполните поля — документ соберётся сам. Печать, Word и копирование.</p>
           <div className="relative max-w-xl mx-auto">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"><Icon name="search" className="w-5 h-5" /></span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-bx-muted"><Icon name="search" className="w-5 h-5" /></span>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Найти шаблон: договор, приказ, акт..."
-              className="w-full bg-[#141820] text-slate-200 pl-12 pr-4 py-3.5 rounded-2xl border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm shadow-lg transition-colors" />
+              className="w-full bg-bx-surface text-bx-text pl-12 pr-4 py-3.5 rounded-2xl border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm shadow-lg transition-colors" />
           </div>
         </div>
 
@@ -551,31 +551,31 @@ export default function Templates() {
         <div className="flex flex-wrap justify-center gap-1.5 mb-8">
           {TEMPLATE_CATEGORIES.map(c => (
             <button key={c} onClick={() => { setCategory(c); setSearch(''); }}
-              className={`px-3 py-1 text-xs rounded-full transition-colors ${category === c && !search ? 'bg-blue-600 text-white' : 'bg-[#141820] border border-[#1e2535] text-slate-400 hover:text-slate-200'}`}>{c}</button>
+              className={`px-3 py-1 text-xs rounded-full transition-colors ${category === c && !search ? 'bg-blue-600 text-white' : 'bg-bx-surface border border-bx-border text-bx-muted hover:text-bx-text'}`}>{c}</button>
           ))}
         </div>
 
         {/* Сетка шаблонов */}
-        {search.trim() && <p className="text-xs text-slate-500 mb-3">Найдено: {filtered.length}</p>}
+        {search.trim() && <p className="text-xs text-bx-muted mb-3">Найдено: {filtered.length}</p>}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map(t => {
             const cc = catColor(t.category)
             const isCustom = t.id.startsWith('custom-')
             return (
               <button key={t.id} onClick={() => handleSelectTemplate(t)}
-                className={`text-left bg-[#141820] border border-[#1e2535] ${cc.ring} rounded-2xl p-4 transition-colors group flex items-start gap-3`}>
+                className={`text-left bg-bx-surface border border-bx-border ${cc.ring} rounded-2xl p-4 transition-colors group flex items-start gap-3`}>
                 <span className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${cc.bg} ${cc.text}`}>
                   {isCustom ? <span className="text-lg">{t.icon}</span> : <Icon name={catMeta(t.category).icon} className="w-5 h-5" />}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors leading-tight truncate">{t.title}</p>
-                  <p className="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2">{t.description}</p>
+                  <p className="text-sm font-semibold text-bx-text group-hover:text-white transition-colors leading-tight truncate">{t.title}</p>
+                  <p className="text-[11px] text-bx-muted mt-1 leading-snug line-clamp-2">{t.description}</p>
                   <p className={`text-[10px] mt-2 ${cc.text}`}>{t.category} · {t.vars.length} полей</p>
                 </div>
               </button>
             )
           })}
-          {filtered.length === 0 && <p className="text-sm text-slate-600 text-center py-10 col-span-2">Шаблоны не найдены</p>}
+          {filtered.length === 0 && <p className="text-sm text-bx-muted text-center py-10 col-span-2">Шаблоны не найдены</p>}
         </div>
       </div>
     </div>

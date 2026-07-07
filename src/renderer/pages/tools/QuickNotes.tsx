@@ -40,11 +40,11 @@ export default function QuickNotes() {
   const visible = expanded ? notes : notes.slice(0, 3);
 
   return (
-    <div className="rounded-xl border border-[#1e2535] bg-[#141820] p-4 space-y-3">
+    <div className="rounded-xl border border-bx-border bg-bx-surface p-4 space-y-3">
       <div className="flex items-center gap-2">
         <span className="text-lg">📸</span>
-        <h3 className="text-sm font-semibold text-slate-200">Быстрые заметки</h3>
-        {notes.length > 0 && <span className="ml-auto text-[10px] text-slate-600">{notes.length} заметок</span>}
+        <h3 className="text-sm font-semibold text-bx-text">Быстрые заметки</h3>
+        {notes.length > 0 && <span className="ml-auto text-[10px] text-bx-muted">{notes.length} заметок</span>}
       </div>
 
       <div className="flex gap-2">
@@ -54,7 +54,7 @@ export default function QuickNotes() {
           onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) add(); }}
           placeholder="Быстрая заметка… (Ctrl+Enter)"
           rows={2}
-          className="flex-1 bg-[#0f1117] text-slate-200 placeholder-slate-600 text-xs px-3 py-2 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 resize-none"
+          className="flex-1 bg-bx-bg text-bx-text placeholder-slate-600 text-xs px-3 py-2 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 resize-none"
         />
         <button
           onClick={add}
@@ -67,17 +67,17 @@ export default function QuickNotes() {
 
       {visible.map(n => (
         <div key={n.id} className="flex items-start gap-2 group">
-          <div className="flex-1 min-w-0 bg-[#0f1117] rounded-lg px-3 py-2">
-            <p className="text-xs text-slate-300 whitespace-pre-wrap break-words">{n.text}</p>
-            <p className="text-[10px] text-slate-700 mt-1">{n.createdAt}</p>
+          <div className="flex-1 min-w-0 bg-bx-bg rounded-lg px-3 py-2">
+            <p className="text-xs text-bx-text whitespace-pre-wrap break-words">{n.text}</p>
+            <p className="text-[10px] text-bx-muted mt-1">{n.createdAt}</p>
           </div>
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button onClick={() => copy(n.text)} title="Копировать"
-              className="p-1.5 text-slate-500 hover:text-slate-300 bg-[#0f1117] hover:bg-[#1e2535] rounded transition-colors text-xs">
+              className="p-1.5 text-bx-muted hover:text-bx-text bg-bx-bg hover:bg-bx-surface-2 rounded transition-colors text-xs">
               ⎘
             </button>
             <button onClick={() => remove(n.id)} title="Удалить"
-              className="p-1.5 text-slate-500 hover:text-red-400 bg-[#0f1117] hover:bg-red-500/10 rounded transition-colors text-xs">
+              className="p-1.5 text-bx-muted hover:text-red-400 bg-bx-bg hover:bg-red-500/10 rounded transition-colors text-xs">
               ✕
             </button>
           </div>
@@ -85,7 +85,7 @@ export default function QuickNotes() {
       ))}
 
       {notes.length > 3 && (
-        <button onClick={() => setExpanded(e => !e)} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+        <button onClick={() => setExpanded(e => !e)} className="text-xs text-bx-muted hover:text-bx-text transition-colors">
           {expanded ? '▲ Скрыть' : `▼ Показать ещё ${notes.length - 3}`}
         </button>
       )}

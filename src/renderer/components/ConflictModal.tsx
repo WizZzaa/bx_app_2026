@@ -82,12 +82,12 @@ export default function ConflictModal({ isOpen, onClose, onResolved }: ConflictM
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Разрешение конфликтов">
-      <div className="bg-[#141820] border border-[#2a3447] rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+      <div className="bg-bx-surface border border-bx-border-2 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
         {/* Заголовок */}
-        <div className="px-6 py-4 border-b border-[#1e2535] flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-bx-border flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-white">Обнаружены конфликты синхронизации</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Данные были изменены и локально, и на сервере. Выберите правильную версию.</p>
+            <h2 className="text-base font-semibold text-bx-text">Обнаружены конфликты синхронизации</h2>
+            <p className="text-xs text-bx-muted mt-0.5">Данные были изменены и локально, и на сервере. Выберите правильную версию.</p>
           </div>
           <span className="bg-red-500/10 text-red-400 text-xs px-2.5 py-1 rounded-full font-semibold">
             Конфликтов: {conflicts.length}
@@ -96,13 +96,13 @@ export default function ConflictModal({ isOpen, onClose, onResolved }: ConflictM
 
         <div className="flex-1 flex overflow-hidden">
           {/* Левый список конфликтов */}
-          <aside className="w-56 border-r border-[#1e2535] overflow-y-auto bg-[#0f1117] p-2 space-y-1">
+          <aside className="w-56 border-r border-bx-border overflow-y-auto bg-bx-bg p-2 space-y-1">
             {conflicts.map((c, i) => (
               <button
                 key={c.id}
                 onClick={() => { setActiveIdx(i); setCustomMerge(null); }}
                 className={`w-full text-left px-3 py-2.5 rounded-lg text-xs transition-colors ${
-                  activeIdx === i ? 'bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/20' : 'text-slate-400 hover:bg-[#1e2535] hover:text-slate-200'
+                  activeIdx === i ? 'bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/20' : 'text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text'
                 }`}
               >
                 <p className="truncate">
@@ -110,14 +110,14 @@ export default function ConflictModal({ isOpen, onClose, onResolved }: ConflictM
                     ? `Транзакция от ${c.localData.date}` 
                     : `Сотрудник: ${c.localData.full_name}`}
                 </p>
-                <p className="text-[10px] text-slate-600 truncate mt-0.5">ID: {c.targetId.substring(0, 8)}</p>
+                <p className="text-[10px] text-bx-muted truncate mt-0.5">ID: {c.targetId.substring(0, 8)}</p>
               </button>
             ))}
           </aside>
 
           {/* Правая панель сравнения */}
           <div className="flex-1 flex flex-col overflow-y-auto p-6 space-y-6">
-            <div className="grid grid-cols-3 gap-4 text-xs font-semibold text-slate-400 pb-2 border-b border-[#1e2535]">
+            <div className="grid grid-cols-3 gap-4 text-xs font-semibold text-bx-muted pb-2 border-b border-bx-border">
               <div>ПОЛЕ</div>
               <div>ЛОКАЛЬНО (ВАШИ ИЗМЕНЕНИЯ)</div>
               <div>НА СЕРВЕРЕ (ОБЛАКО)</div>
@@ -146,7 +146,7 @@ export default function ConflictModal({ isOpen, onClose, onResolved }: ConflictM
               </div>
             )}
 
-            <div className="pt-4 border-t border-[#1e2535] flex items-center justify-between gap-4">
+            <div className="pt-4 border-t border-bx-border flex items-center justify-between gap-4">
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={handleChooseLocal} loading={loading}>
                   Использовать локальную
@@ -166,7 +166,7 @@ export default function ConflictModal({ isOpen, onClose, onResolved }: ConflictM
         </div>
 
         {/* Подвал */}
-        <div className="px-6 py-4 bg-[#0f1117] border-t border-[#1e2535] flex justify-end gap-3 flex-shrink-0">
+        <div className="px-6 py-4 bg-bx-bg border-t border-bx-border flex justify-end gap-3 flex-shrink-0">
           <Button variant="ghost" onClick={onClose}>
             Закрыть
           </Button>
@@ -191,13 +191,13 @@ const CompareFieldRow = ({ label, field, localVal, serverVal, mergeVal, onMerge 
     <div className={`grid grid-cols-3 gap-4 items-center py-2.5 rounded-lg px-2 text-xs transition-colors ${
       isDiff ? 'bg-amber-500/5' : ''
     }`}>
-      <div className="font-medium text-slate-400">{label}</div>
+      <div className="font-medium text-bx-muted">{label}</div>
       <button
         onClick={() => onMerge(field, localVal)}
         className={`text-left p-2 rounded border truncate ${
           mergeVal === localVal 
             ? 'bg-blue-600/10 border-blue-500/40 text-blue-400 font-medium' 
-            : 'bg-[#181d28] border-slate-700 hover:border-slate-500 text-slate-300'
+            : 'bg-bx-surface-2 border-bx-border-2 hover:border-bx-border-2 text-bx-text'
         }`}
       >
         {String(localVal ?? '—')}
@@ -207,7 +207,7 @@ const CompareFieldRow = ({ label, field, localVal, serverVal, mergeVal, onMerge 
         className={`text-left p-2 rounded border truncate ${
           mergeVal === serverVal 
             ? 'bg-blue-600/10 border-blue-500/40 text-blue-400 font-medium' 
-            : 'bg-[#181d28] border-slate-700 hover:border-slate-500 text-slate-300'
+            : 'bg-bx-surface-2 border-bx-border-2 hover:border-bx-border-2 text-bx-text'
         }`}
       >
         {String(serverVal ?? '—')}

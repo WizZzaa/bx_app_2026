@@ -8,7 +8,7 @@ import { useCompany } from '../lib/CompanyContext'
 const STATUS: Record<BxTicket['status'], { label: string; cls: string }> = {
   open:     { label: 'Открыт',   cls: 'bg-blue-500/15 text-blue-400' },
   answered: { label: 'Есть ответ', cls: 'bg-emerald-500/15 text-emerald-400' },
-  closed:   { label: 'Закрыт',   cls: 'bg-slate-500/15 text-slate-500' },
+  closed:   { label: 'Закрыт',   cls: 'bg-slate-500/15 text-bx-muted' },
 }
 
 const Support = () => {
@@ -127,7 +127,7 @@ const Support = () => {
       <aside className="w-72 flex-shrink-0 border-r border-bx-border flex flex-col">
         <div className="px-4 pt-5 pb-3">
           <h1 className="text-base font-semibold text-bx-text">Поддержка</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Техподдержка по ПК, 1С и E-Imzo</p>
+          <p className="text-xs text-bx-muted mt-0.5">Техподдержка по ПК, 1С и E-Imzo</p>
         </div>
         <div className="px-3 pb-2">
           <button onClick={handleStartCreate}
@@ -136,9 +136,9 @@ const Support = () => {
           </button>
         </div>
         <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-1">
-          {loading && <p className="text-xs text-slate-600 text-center py-4">Загрузка…</p>}
+          {loading && <p className="text-xs text-bx-muted text-center py-4">Загрузка…</p>}
           {!loading && tickets.length === 0 && (
-            <p className="text-xs text-slate-600 text-center py-6 px-3 leading-relaxed">
+            <p className="text-xs text-bx-muted text-center py-6 px-3 leading-relaxed">
               Обращений пока нет. Нужна помощь с 1С, E-Imzo или настройкой ПК? Откройте новое обращение.
             </p>
           )}
@@ -150,7 +150,7 @@ const Support = () => {
                 <p className={`text-xs font-medium truncate ${activeId === t.id ? 'text-blue-400' : 'text-bx-text'}`}>{t.subject}</p>
                 <span className={`text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${STATUS[t.status].cls}`}>{STATUS[t.status].label}</span>
               </div>
-              <p className="text-[10px] text-slate-600 mt-0.5">{new Date(t.updated_at).toLocaleDateString('ru-RU')}</p>
+              <p className="text-[10px] text-bx-muted mt-0.5">{new Date(t.updated_at).toLocaleDateString('ru-RU')}</p>
             </button>
           ))}
         </nav>
@@ -165,7 +165,7 @@ const Support = () => {
               
               {/* Информация о компании */}
               {activeCompany ? (
-                <div className="bg-[#1e2535] border border-blue-500/20 rounded-lg px-3.5 py-2.5 text-xs text-slate-300">
+                <div className="bg-bx-surface-2 border border-blue-500/20 rounded-lg px-3.5 py-2.5 text-xs text-bx-text">
                   <span className="text-[10px] uppercase font-bold text-blue-400 block mb-0.5">Организация обращения</span>
                   <b>{activeCompany.name}</b> {activeCompany.inn ? `(ИНН: ${activeCompany.inn})` : ''}
                 </div>
@@ -178,13 +178,13 @@ const Support = () => {
               {/* Контакты человека */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-500 block mb-1.5">Ваше ФИО *</label>
+                  <label className="text-xs text-bx-muted block mb-1.5">Ваше ФИО *</label>
                   <input value={contactName} onChange={e => setContactName(e.target.value)}
                     placeholder="Иван Иванов"
                     className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500 block mb-1.5">Телефон для связи *</label>
+                  <label className="text-xs text-bx-muted block mb-1.5">Телефон для связи *</label>
                   <input value={contactPhone} onChange={e => setContactPhone(e.target.value)}
                     placeholder="+998 (90) 123-45-67"
                     className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
@@ -194,17 +194,17 @@ const Support = () => {
               {/* ID удаленного доступа */}
               <div className="bg-bx-surface/40 p-4 rounded-xl border border-bx-border/60 space-y-2.5">
                 <div>
-                  <label className="text-xs text-slate-400 font-medium block mb-1.5">ID AnyDesk / RustDesk (для удалённой помощи)</label>
+                  <label className="text-xs text-bx-muted font-medium block mb-1.5">ID AnyDesk / RustDesk (для удалённой помощи)</label>
                   <input value={remoteId} onChange={e => setRemoteId(e.target.value)}
                     placeholder="Например: 123 456 789"
-                    className="w-full bg-[#0d1017] text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm font-mono tracking-wider" />
+                    className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm font-mono tracking-wider" />
                 </div>
-                <div className="flex gap-4 items-center text-[11px] text-slate-500">
+                <div className="flex gap-4 items-center text-[11px] text-bx-muted">
                   <span>Если у вас нет программ удаленного доступа, скачайте:</span>
                   <div className="flex gap-2.5">
                     <a href="https://anydesk.com/download" target="_blank" rel="noreferrer"
                       className="text-blue-400 hover:text-blue-300 font-semibold underline transition-colors">AnyDesk</a>
-                    <span className="text-slate-700">|</span>
+                    <span className="text-bx-muted">|</span>
                     <a href="https://rustdesk.com/download" target="_blank" rel="noreferrer"
                       className="text-blue-400 hover:text-blue-300 font-semibold underline transition-colors">RustDesk</a>
                   </div>
@@ -212,14 +212,14 @@ const Support = () => {
               </div>
 
               <div>
-                <label className="text-xs text-slate-500 block mb-1.5">Тема *</label>
+                <label className="text-xs text-bx-muted block mb-1.5">Тема *</label>
                 <input value={subject} onChange={e => setSubject(e.target.value)}
                   placeholder="Например: Ошибка при входе в E-Imzo или Настройка принтера"
                   className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
               </div>
               
               <div>
-                <label className="text-xs text-slate-500 block mb-1.5">Описание проблемы *</label>
+                <label className="text-xs text-bx-muted block mb-1.5">Описание проблемы *</label>
                 <textarea value={body} onChange={e => setBody(e.target.value)} rows={6}
                   placeholder="Опишите проблему: какая программа не работает, код ошибки или что требуется настроить…"
                   className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm resize-none" />
@@ -230,9 +230,9 @@ const Support = () => {
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-sm font-medium rounded-lg transition-colors">
                   Отправить
                 </button>
-                <button onClick={() => setCreating(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Отмена</button>
+                <button onClick={() => setCreating(false)} className="px-4 py-2 text-sm text-bx-muted hover:text-bx-text">Отмена</button>
               </div>
-              <p className="text-[11px] text-slate-600">Специалист техподдержки ответит в этом же обращении. Обычно — в течение рабочего дня.</p>
+              <p className="text-[11px] text-bx-muted">Специалист техподдержки ответит в этом же обращении. Обычно — в течение рабочего дня.</p>
             </div>
           </div>
         ) : active ? (
@@ -244,7 +244,7 @@ const Support = () => {
               </div>
               {active.status !== 'closed' && (
                 <button onClick={handleCloseTicket}
-                  className="text-xs text-slate-500 hover:text-slate-300 flex-shrink-0 transition-colors">Закрыть обращение</button>
+                  className="text-xs text-bx-muted hover:text-bx-text flex-shrink-0 transition-colors">Закрыть обращение</button>
               )}
             </div>
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-3">
@@ -257,7 +257,7 @@ const Support = () => {
                     {m.author === 'staff' && <p className="text-[10px] text-emerald-400 font-semibold mb-1">👤 Техподдержка BX</p>}
                     <p className="whitespace-pre-wrap">{m.body}</p>
                   </div>
-                  <p className={`text-[10px] text-slate-600 mt-1 ${m.author === 'user' ? 'text-right' : ''}`}>
+                  <p className={`text-[10px] text-bx-muted mt-1 ${m.author === 'user' ? 'text-right' : ''}`}>
                     {new Date(m.created_at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -281,7 +281,7 @@ const Support = () => {
             <div className="max-w-sm text-center">
               <p className="text-3xl mb-3">🎧</p>
               <h2 className="text-base font-semibold text-bx-text mb-1.5">Нужна помощь с ПК или 1С?</h2>
-              <p className="text-sm text-slate-400 leading-relaxed">
+              <p className="text-sm text-bx-muted leading-relaxed">
                 Здесь вы можете задать вопросы специалистам технической поддержки по установке программ, настройке E-Imzo, кэша 1С или бэкапам.
               </p>
               <button onClick={handleStartCreate}

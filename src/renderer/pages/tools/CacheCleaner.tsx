@@ -56,7 +56,7 @@ export default function CacheCleaner() {
       }
     >
       {!scan && !scanning && (
-        <p className="text-sm text-slate-500 text-center py-6">
+        <p className="text-sm text-bx-muted text-center py-6">
           Нажмите «Сканировать», чтобы найти кэш 1С на этом компьютере.
         </p>
       )}
@@ -70,19 +70,19 @@ export default function CacheCleaner() {
       {scan && scan.platformSupported && (
         <div className="space-y-3">
           {scan.entries.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-6">Кэш 1С не найден — всё чисто! ✨</p>
+            <p className="text-sm text-bx-muted text-center py-6">Кэш 1С не найден — всё чисто! ✨</p>
           ) : (
             <>
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-bx-muted">
                 Найдено {scan.entries.length} папок кэша, всего{' '}
-                <span className="text-slate-300 font-medium">{formatBytes(scan.totalBytes)}</span>
+                <span className="text-bx-text font-medium">{formatBytes(scan.totalBytes)}</span>
               </div>
 
               <div className="space-y-1.5 max-h-72 overflow-y-auto">
                 {scan.entries.map(e => (
                   <label
                     key={e.path}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#0f1117] hover:bg-[#1a2030] cursor-pointer transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-bx-bg hover:bg-bx-surface-2 cursor-pointer transition-colors"
                   >
                     <input
                       type="checkbox"
@@ -90,16 +90,16 @@ export default function CacheCleaner() {
                       onChange={() => toggle(e.path)}
                       className="accent-blue-500"
                     />
-                    <span className="flex-1 text-sm text-slate-300 truncate" title={e.path}>
+                    <span className="flex-1 text-sm text-bx-text truncate" title={e.path}>
                       {e.label}
                     </span>
-                    <span className="text-xs text-slate-500 flex-shrink-0">{formatBytes(e.sizeBytes)}</span>
+                    <span className="text-xs text-bx-muted flex-shrink-0">{formatBytes(e.sizeBytes)}</span>
                   </label>
                 ))}
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-[#1e2535]">
-                <span className="text-xs text-slate-500">
+              <div className="flex items-center justify-between pt-2 border-t border-bx-border">
+                <span className="text-xs text-bx-muted">
                   Выбрано {selected.size} · освободится{' '}
                   <span className="text-blue-400 font-medium">{formatBytes(selectedBytes)}</span>
                 </span>

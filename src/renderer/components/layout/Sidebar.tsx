@@ -43,7 +43,7 @@ export default function Sidebar() {
         title="На главную"
       >
         <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-sm flex-shrink-0 transition-all duration-200"
+          className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-bx-text text-sm flex-shrink-0 transition-all duration-200"
           style={{
             background: logoHovered
               ? 'linear-gradient(135deg, #3b82f6, #6366f1)'
@@ -58,7 +58,7 @@ export default function Sidebar() {
           <div className="text-sm font-semibold text-white leading-tight group-hover:text-blue-300 transition-colors">
             BX
           </div>
-          <div className="text-[10px] text-slate-500 leading-tight group-hover:text-slate-400 transition-colors">
+          <div className="text-[10px] text-bx-muted leading-tight group-hover:text-bx-muted transition-colors">
             {logoHovered ? '↩ На главную' : 'Помощник Бухгалтера'}
           </div>
         </div>
@@ -74,7 +74,7 @@ export default function Sidebar() {
               `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors cursor-pointer rounded-lg mx-2 my-0.5 ${
                 isActive
                   ? 'bg-blue-600/20 text-blue-400 font-medium'
-                  : 'text-slate-400 hover:bg-bx-surface-2 hover:text-slate-200'
+                  : 'text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text'
               }`
             }
           >
@@ -92,8 +92,8 @@ export default function Sidebar() {
         <div className="flex items-center gap-2">
           <span className="text-sm group-hover:scale-110 transition-transform">ℹ️</span>
           <div className="flex-1">
-            <div className="text-[11px] text-slate-400 group-hover:text-slate-200 transition-colors">О программе</div>
-            <div className="text-[10px] text-slate-600">версия {APP_VERSION}</div>
+            <div className="text-[11px] text-bx-muted group-hover:text-bx-text transition-colors">О программе</div>
+            <div className="text-[10px] text-bx-muted">версия {APP_VERSION}</div>
           </div>
         </div>
       </button>

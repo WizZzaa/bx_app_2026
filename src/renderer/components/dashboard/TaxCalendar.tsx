@@ -50,20 +50,20 @@ export default function TaxCalendar({ onPickDeadline }: Props) {
   const selectedDeadlines = selected ? deadlines.get(selected) ?? [] : [];
 
   return (
-    <div className="rounded-xl border border-[#1e2535] bg-[#141820] p-4">
+    <div className="rounded-xl border border-bx-border bg-bx-surface p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-medium text-slate-300">📅 Налоговый календарь</h2>
+        <h2 className="text-sm font-medium text-bx-text">📅 Налоговый календарь</h2>
         <div className="flex items-center gap-1">
-          <button onClick={prev} className="w-6 h-6 rounded hover:bg-[#1e2535] text-slate-400 text-xs">‹</button>
-          <span className="text-xs text-slate-300 w-28 text-center">{MONTHS[month]} {year}</span>
-          <button onClick={next} className="w-6 h-6 rounded hover:bg-[#1e2535] text-slate-400 text-xs">›</button>
+          <button onClick={prev} className="w-6 h-6 rounded hover:bg-bx-surface-2 text-bx-muted text-xs">‹</button>
+          <span className="text-xs text-bx-text w-28 text-center">{MONTHS[month]} {year}</span>
+          <button onClick={next} className="w-6 h-6 rounded hover:bg-bx-surface-2 text-bx-muted text-xs">›</button>
         </div>
       </div>
 
       {/* Weekdays */}
       <div className="grid grid-cols-7 gap-1 mb-1">
-        {WEEKDAYS.map(w => <div key={w} className="text-[10px] text-slate-600 text-center">{w}</div>)}
+        {WEEKDAYS.map(w => <div key={w} className="text-[10px] text-bx-muted text-center">{w}</div>)}
       </div>
 
       {/* Grid */}
@@ -81,7 +81,7 @@ export default function TaxCalendar({ onPickDeadline }: Props) {
               className={`relative h-8 rounded text-xs transition-colors ${
                 isSel ? 'bg-blue-600 text-white'
                 : isToday ? 'bg-blue-500/20 text-blue-300'
-                : 'text-slate-400 hover:bg-[#1e2535]'
+                : 'text-bx-muted hover:bg-bx-surface-2'
               }`}
             >
               {d}
@@ -93,15 +93,15 @@ export default function TaxCalendar({ onPickDeadline }: Props) {
 
       {/* Selected day deadlines */}
       {selected && (
-        <div className="mt-3 pt-3 border-t border-[#1e2535]">
+        <div className="mt-3 pt-3 border-t border-bx-border">
           {selectedDeadlines.length === 0 ? (
-            <p className="text-xs text-slate-500">На {selected} нет дедлайнов</p>
+            <p className="text-xs text-bx-muted">На {selected} нет дедлайнов</p>
           ) : (
             <div className="space-y-1.5">
               {selectedDeadlines.map(dl => (
                 <div key={dl.id} className="flex items-center gap-2 text-xs">
                   <span className={`w-1.5 h-1.5 rounded-full ${dl.kind === 'payment' ? 'bg-red-400' : 'bg-blue-400'}`} />
-                  <span className="text-slate-300 flex-1">{dl.title}</span>
+                  <span className="text-bx-text flex-1">{dl.title}</span>
                   <button
                     onClick={() => onPickDeadline(selected, dl)}
                     className="text-[11px] text-blue-400 hover:text-blue-300"

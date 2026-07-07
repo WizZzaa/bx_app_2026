@@ -96,16 +96,16 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#141820] border border-[#1e2535] rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+      <div className="bg-bx-surface border border-bx-border rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
         {/* Шапка */}
-        <div className="px-6 py-4 border-b border-[#1e2535] flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-bx-border flex items-center justify-between">
           <div>
-            <h3 className="text-base font-semibold text-white">Импорт банковской выписки</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h3 className="text-base font-semibold text-bx-text">Импорт банковской выписки</h3>
+            <p className="text-xs text-bx-muted mt-0.5">
               Найдено операций: {items.length}. Выбрано для импорта: {selectedIndices.length}
             </p>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors">
+          <button onClick={onClose} className="text-bx-muted hover:text-bx-text transition-colors">
             ✕
           </button>
         </div>
@@ -115,13 +115,13 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#1e2535] text-[11px] text-slate-500 uppercase tracking-wider">
+                <tr className="border-b border-bx-border text-[11px] text-bx-muted uppercase tracking-wider">
                   <th className="py-2 px-3 w-10">
                     <input 
                       type="checkbox" 
                       checked={selectedIndices.length === items.length && items.length > 0}
                       onChange={handleToggleAll}
-                      className="rounded border-[#2a3447] bg-[#0f1117] text-blue-600 focus:ring-0 cursor-pointer"
+                      className="rounded border-bx-border-2 bg-bx-bg text-blue-600 focus:ring-0 cursor-pointer"
                     />
                   </th>
                   <th className="py-2 px-3 w-28">Дата</th>
@@ -131,20 +131,20 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
                   <th className="py-2 px-3 w-36 text-right">Сумма (сум)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1e2535]/50 text-xs text-slate-300">
+              <tbody className="divide-y divide-bx-border/50 text-xs text-bx-text">
                 {items.map((tx, idx) => {
                   const isChecked = selectedIndices.includes(idx)
                   return (
                     <tr 
                       key={idx} 
-                      className={`hover:bg-[#1e2535]/20 transition-colors ${!isChecked ? 'opacity-50' : ''}`}
+                      className={`hover:bg-bx-surface-2/20 transition-colors ${!isChecked ? 'opacity-50' : ''}`}
                     >
                       <td className="py-3 px-3">
                         <input 
                           type="checkbox" 
                           checked={isChecked}
                           onChange={() => handleToggleSelect(idx)}
-                          className="rounded border-[#2a3447] bg-[#0f1117] text-blue-600 focus:ring-0 cursor-pointer"
+                          className="rounded border-bx-border-2 bg-bx-bg text-blue-600 focus:ring-0 cursor-pointer"
                         />
                       </td>
                       <td className="py-3 px-3 font-mono text-[11px]">
@@ -159,13 +159,13 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
                       </td>
                       <td className="py-3 px-3 max-w-xs truncate" title={tx.description}>
                         <div className="font-medium truncate">{tx.counterparty}</div>
-                        <div className="text-[10px] text-slate-500 truncate mt-0.5">{tx.description}</div>
+                        <div className="text-[10px] text-bx-muted truncate mt-0.5">{tx.description}</div>
                       </td>
                       <td className="py-3 px-3">
                         <select
                           value={itemCategories[idx] || ''}
                           onChange={e => handleCategoryChange(idx, e.target.value)}
-                          className="w-full bg-[#0f1117] text-slate-300 text-xs rounded border border-[#2a3447] px-2 py-1 focus:outline-none focus:border-blue-500/50"
+                          className="w-full bg-bx-bg text-bx-text text-xs rounded border border-bx-border-2 px-2 py-1 focus:outline-none focus:border-blue-500/50"
                         >
                           {categories.map(cat => (
                             <option key={cat} value={cat}>{cat}</option>
@@ -186,14 +186,14 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
         </div>
 
         {/* Подвал / Итоги */}
-        <div className="px-6 py-4 border-t border-[#1e2535] bg-[#0f1117]/50 flex items-center justify-between flex-wrap gap-4">
+        <div className="px-6 py-4 border-t border-bx-border bg-bx-bg/50 flex items-center justify-between flex-wrap gap-4">
           <div className="flex gap-6 text-xs">
             <div>
-              <span className="text-slate-500">Доходы к импорту:</span>
+              <span className="text-bx-muted">Доходы к импорту:</span>
               <span className="text-emerald-400 font-semibold font-mono ml-2">{fmt(totalIncome)} сум</span>
             </div>
             <div>
-              <span className="text-slate-500">Расходы к импорту:</span>
+              <span className="text-bx-muted">Расходы к импорту:</span>
               <span className="text-red-400 font-semibold font-mono ml-2">{fmt(totalExpense)} сум</span>
             </div>
           </div>
@@ -201,14 +201,14 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
             <button
               onClick={onClose}
               disabled={saving}
-              className="px-4 py-2 border border-[#2a3447] text-slate-300 hover:text-white text-xs font-medium rounded-lg hover:bg-[#1e2535] transition-colors"
+              className="px-4 py-2 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-medium rounded-lg hover:bg-bx-surface-2 transition-colors"
             >
               Отмена
             </button>
             <button
               onClick={handleSaveClick}
               disabled={selectedIndices.length === 0 || saving}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-800 disabled:text-slate-600 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-bx-surface-2 disabled:text-bx-muted text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
             >
               {saving ? 'Импорт...' : `Импортировать (${selectedIndices.length})`}
             </button>

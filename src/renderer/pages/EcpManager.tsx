@@ -152,8 +152,8 @@ export default function EcpManager() {
         {/* Заголовок */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-white">Менеджер ЭЦП</h1>
-            <p className="text-sm text-slate-500 mt-0.5">Ключи E-Imzo · Подписание документов · Верификация</p>
+            <h1 className="text-xl font-semibold text-bx-text">Менеджер ЭЦП</h1>
+            <p className="text-sm text-bx-muted mt-0.5">Ключи E-Imzo · Подписание документов · Верификация</p>
           </div>
           {mainTab === 'keys' && (
             <button
@@ -166,10 +166,10 @@ export default function EcpManager() {
         </div>
 
         {/* Вкладки */}
-        <div className="flex bg-[#0f1117] border border-[#1e2535] rounded-lg p-0.5 w-fit">
+        <div className="flex bg-bx-bg border border-bx-border rounded-lg p-0.5 w-fit">
           {([['keys','🔑 Мои ключи'],['sign','✍ Подписать'],['verify','🔍 Проверить']] as const).map(([id, label]) => (
             <button key={id} onClick={() => setMainTab(id)}
-              className={`px-3 py-1 text-xs rounded-md transition-colors ${mainTab === id ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+              className={`px-3 py-1 text-xs rounded-md transition-colors ${mainTab === id ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
               {label}
             </button>
           ))}
@@ -177,7 +177,7 @@ export default function EcpManager() {
 
         {/* Автодиагностика E-Imzo */}
         {eimzoStatus === 'checking' && (
-          <div className="text-xs text-slate-400 bg-[#0f1117] border border-[#1e2535] rounded-xl px-4 py-2 flex items-center gap-2">
+          <div className="text-xs text-bx-muted bg-bx-bg border border-bx-border rounded-xl px-4 py-2 flex items-center gap-2">
             <span className="animate-spin text-sm">⏳</span> Диагностика подключения к модулю E-Imzo...
           </div>
         )}
@@ -191,7 +191,7 @@ export default function EcpManager() {
             <span className="text-sm">🔴</span>
             <div>
               <p className="font-bold text-red-400">Модуль E-Imzo не обнаружен на порту 64443</p>
-              <p className="text-slate-500 mt-0.5">
+              <p className="text-bx-muted mt-0.5">
                 Для подписания отчетов убедитесь, что приложение <b>E-Imzo</b> запущено на вашем компьютере.
               </p>
             </div>
@@ -206,7 +206,7 @@ export default function EcpManager() {
               <p className="text-sm font-medium text-amber-400">
                 {urgentCount === 1 ? '1 ключ истекает' : `${urgentCount} ключа истекают`} в ближайшие 14 дней
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-bx-muted mt-0.5">
                 Обновите ключи через my.gov.uz или территориальный ЦЭКТТ
               </p>
             </div>
@@ -215,15 +215,15 @@ export default function EcpManager() {
 
         {/* Форма добавления/редактирования */}
         {mainTab === 'keys' && adding && (
-          <div className="bg-[#0f1117] border border-[#2a3447] rounded-xl p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-slate-200">
+          <div className="bg-bx-bg border border-bx-border-2 rounded-xl p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-bx-text">
               {editingId ? 'Редактировать ключ' : 'Добавить ключ'}
             </h3>
             
             {/* Быстрый импорт из .pfx */}
             {!editingId && (
-              <div className="bg-[#141820] border border-[#2a3447] rounded-lg p-3 space-y-2 mb-2">
-                <p className="text-xs font-semibold text-slate-300">⚡ Быстрый импорт из файла ключа</p>
+              <div className="bg-bx-surface border border-bx-border-2 rounded-lg p-3 space-y-2 mb-2">
+                <p className="text-xs font-semibold text-bx-text">⚡ Быстрый импорт из файла ключа</p>
                 <div className="flex gap-2 items-center">
                   <div className="flex-1">
                     <input
@@ -231,7 +231,7 @@ export default function EcpManager() {
                       value={pfxPassword}
                       onChange={e => setPfxPassword(e.target.value)}
                       placeholder="Пароль от ключа (по умолчанию 123456)"
-                      className="w-full bg-[#0f1117] text-slate-200 text-xs px-3 py-2 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50"
+                      className="w-full bg-bx-bg text-bx-text text-xs px-3 py-2 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50"
                     />
                   </div>
                   <button
@@ -248,42 +248,42 @@ export default function EcpManager() {
             )}
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
-                <label className="block text-xs text-slate-400 mb-1">Название ключа (понятное имя) *</label>
+                <label className="block text-xs text-bx-muted mb-1">Название ключа (понятное имя) *</label>
                 <input
                   value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   placeholder="напр. «ООО Альфа — Иванов И.И.»"
-                  className="w-full bg-[#141820] text-slate-200 text-sm px-3 py-2 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50"
+                  className="w-full bg-bx-surface text-bx-text text-sm px-3 py-2 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Владелец (ФИО)</label>
+                <label className="block text-xs text-bx-muted mb-1">Владелец (ФИО)</label>
                 <input
                   value={form.owner} onChange={e => setForm(f => ({ ...f, owner: e.target.value }))}
                   placeholder="Иванов Иван Иванович"
-                  className="w-full bg-[#141820] text-slate-200 text-sm px-3 py-2 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50"
+                  className="w-full bg-bx-surface text-bx-text text-sm px-3 py-2 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">ИНН организации/ИП</label>
+                <label className="block text-xs text-bx-muted mb-1">ИНН организации/ИП</label>
                 <input
                   value={form.inn} onChange={e => setForm(f => ({ ...f, inn: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
                   placeholder="000000000"
-                  className="w-full bg-[#141820] text-slate-200 text-sm px-3 py-2 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50"
+                  className="w-full bg-bx-surface text-bx-text text-sm px-3 py-2 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Организация</label>
+                <label className="block text-xs text-bx-muted mb-1">Организация</label>
                 <input
                   value={form.org} onChange={e => setForm(f => ({ ...f, org: e.target.value }))}
                   placeholder="ООО Ромашка"
-                  className="w-full bg-[#141820] text-slate-200 text-sm px-3 py-2 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50"
+                  className="w-full bg-bx-surface text-bx-text text-sm px-3 py-2 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Срок действия *</label>
+                <label className="block text-xs text-bx-muted mb-1">Срок действия *</label>
                 <input
                   type="date" value={form.expiresAt} onChange={e => setForm(f => ({ ...f, expiresAt: e.target.value }))}
-                  className="w-full bg-[#141820] text-slate-200 text-sm px-3 py-2 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50"
+                  className="w-full bg-bx-surface text-bx-text text-sm px-3 py-2 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50"
                 />
               </div>
             </div>
@@ -293,7 +293,7 @@ export default function EcpManager() {
                 {editingId ? 'Сохранить' : 'Добавить'}
               </button>
               <button onClick={() => { setAdding(false); setEditingId(null); }}
-                className="px-4 py-1.5 bg-[#1e2535] hover:bg-[#2a3447] text-slate-300 text-sm rounded-lg transition-colors">
+                className="px-4 py-1.5 bg-bx-surface-2 hover:bg-bx-surface-2 text-bx-text text-sm rounded-lg transition-colors">
                 Отмена
               </button>
             </div>
@@ -302,7 +302,7 @@ export default function EcpManager() {
 
         {/* Список ключей */}
         {sorted.length === 0 && !adding ? (
-          <div className="text-center py-14 text-slate-600">
+          <div className="text-center py-14 text-bx-muted">
             <div className="text-4xl mb-3">🔑</div>
             <p className="text-sm">Ключей пока нет</p>
             <p className="text-xs mt-1">Добавьте данные своих ЭЦП-сертификатов для мониторинга срока</p>
@@ -314,20 +314,20 @@ export default function EcpManager() {
               const expired = days < 0;
               return (
                 <div key={k.id}
-                  className={`rounded-xl border p-4 transition-colors ${expired ? 'border-red-500/30 bg-red-500/5' : days <= 14 ? 'border-amber-500/30 bg-amber-500/5' : 'border-[#1e2535] bg-[#141820]'}`}
+                  className={`rounded-xl border p-4 transition-colors ${expired ? 'border-red-500/30 bg-red-500/5' : days <= 14 ? 'border-amber-500/30 bg-amber-500/5' : 'border-bx-border bg-bx-surface'}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
                       <span className="text-xl mt-0.5">{expired ? '🔴' : days <= 14 ? '🟡' : '🟢'}</span>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-semibold text-slate-200">{k.name}</span>
+                          <span className="text-sm font-semibold text-bx-text">{k.name}</span>
                           <ExpiryBadge expiresAt={k.expiresAt} />
                         </div>
                         <div className="mt-1 space-y-0.5">
-                          {k.owner && <p className="text-xs text-slate-400">{k.owner}</p>}
-                          {k.org && <p className="text-xs text-slate-500">{k.org}</p>}
-                          <div className="flex items-center gap-3 text-[11px] text-slate-600 mt-1">
+                          {k.owner && <p className="text-xs text-bx-muted">{k.owner}</p>}
+                          {k.org && <p className="text-xs text-bx-muted">{k.org}</p>}
+                          <div className="flex items-center gap-3 text-[11px] text-bx-muted mt-1">
                             {k.inn && <span>ИНН: {k.inn}</span>}
                             <span>Истекает: {k.expiresAt}</span>
                             <span>Добавлен: {k.addedAt}</span>
@@ -337,11 +337,11 @@ export default function EcpManager() {
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <button onClick={() => startEdit(k)}
-                        className="px-2.5 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-[#0f1117] hover:bg-[#1e2535] rounded-lg transition-colors">
+                        className="px-2.5 py-1.5 text-xs text-bx-muted hover:text-bx-text bg-bx-bg hover:bg-bx-surface-2 rounded-lg transition-colors">
                         ✏
                       </button>
                       <button onClick={() => remove(k.id)}
-                        className="px-2.5 py-1.5 text-xs text-red-400/60 hover:text-red-400 bg-[#0f1117] hover:bg-red-500/10 rounded-lg transition-colors">
+                        className="px-2.5 py-1.5 text-xs text-red-400/60 hover:text-red-400 bg-bx-bg hover:bg-red-500/10 rounded-lg transition-colors">
                         ✕
                       </button>
                     </div>
@@ -388,17 +388,17 @@ function RenewalGuide() {
   const [tab, setTab] = React.useState<'online' | 'offline'>('online');
 
   return (
-    <div className="border border-[#1e2535] rounded-xl overflow-hidden">
+    <div className="border border-bx-border rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[#1e2535] flex items-center justify-between">
-        <p className="text-sm font-medium text-slate-300">🔐 Как получить / обновить ЭЦП E-Imzo</p>
-        <div className="flex gap-1 bg-[#0f1117] rounded-lg p-0.5">
+      <div className="px-4 py-3 border-b border-bx-border flex items-center justify-between">
+        <p className="text-sm font-medium text-bx-text">🔐 Как получить / обновить ЭЦП E-Imzo</p>
+        <div className="flex gap-1 bg-bx-bg rounded-lg p-0.5">
           <button onClick={() => setTab('online')}
-            className={`px-3 py-1 text-xs rounded-md transition-colors ${tab === 'online' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+            className={`px-3 py-1 text-xs rounded-md transition-colors ${tab === 'online' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
             Онлайн
           </button>
           <button onClick={() => setTab('offline')}
-            className={`px-3 py-1 text-xs rounded-md transition-colors ${tab === 'offline' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+            className={`px-3 py-1 text-xs rounded-md transition-colors ${tab === 'offline' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
             Лично в ЦЭКТТ
           </button>
         </div>
@@ -413,22 +413,22 @@ function RenewalGuide() {
               <span className="text-xl">🏛</span>
               <div>
                 <p className="text-xs font-semibold text-blue-400">my.gov.uz</p>
-                <p className="text-[10px] text-slate-500">Единый портал гос. услуг</p>
+                <p className="text-[10px] text-bx-muted">Единый портал гос. услуг</p>
               </div>
             </button>
             <button onClick={() => openLink('https://e-imzo.uz')}
-              className="flex items-center gap-2.5 bg-[#1e2535] hover:bg-[#2a3447] border border-[#2a3447] rounded-xl px-3 py-2.5 transition-colors text-left">
+              className="flex items-center gap-2.5 bg-bx-surface-2 hover:bg-bx-surface-2 border border-bx-border-2 rounded-xl px-3 py-2.5 transition-colors text-left">
               <span className="text-xl">🔑</span>
               <div>
-                <p className="text-xs font-semibold text-slate-300">e-imzo.uz</p>
-                <p className="text-[10px] text-slate-500">Официальный сайт E-Imzo</p>
+                <p className="text-xs font-semibold text-bx-text">e-imzo.uz</p>
+                <p className="text-[10px] text-bx-muted">Официальный сайт E-Imzo</p>
               </div>
             </button>
           </div>
 
           {/* Шаги */}
           <div className="space-y-2.5">
-            <p className="text-xs font-semibold text-slate-400">Пошаговая инструкция (my.gov.uz):</p>
+            <p className="text-xs font-semibold text-bx-muted">Пошаговая инструкция (my.gov.uz):</p>
             {[
               { n: '1', text: 'Откройте my.gov.uz → войдите через ID.UZ или одноразовый пароль на телефон' },
               { n: '2', text: 'Меню «Услуги» → поиск «Получить ЭЦП» (или раздел «Электронная подпись»)' },
@@ -439,19 +439,19 @@ function RenewalGuide() {
             ].map(s => (
               <div key={s.n} className="flex gap-2.5">
                 <span className="w-5 h-5 rounded-full bg-blue-600/20 text-blue-400 text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.n}</span>
-                <p className="text-xs text-slate-400 leading-relaxed">{s.text}</p>
+                <p className="text-xs text-bx-muted leading-relaxed">{s.text}</p>
               </div>
             ))}
           </div>
 
-          <div className="bg-[#0f1117] rounded-lg px-3 py-2.5 space-y-1">
-            <p className="text-[11px] text-slate-500">
+          <div className="bg-bx-bg rounded-lg px-3 py-2.5 space-y-1">
+            <p className="text-[11px] text-bx-muted">
               <span className="text-emerald-400 font-medium">✓ Бесплатно</span> для физлиц и ИП
             </p>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-bx-muted">
               <span className="text-blue-400 font-medium">⏱ Срок:</span> 2 года с момента выпуска
             </p>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-bx-muted">
               <span className="text-amber-400 font-medium">⚠ Важно:</span> обновляйте за 30 дней до истечения — в период налоговой отчётности могут быть очереди
             </p>
           </div>
@@ -462,18 +462,18 @@ function RenewalGuide() {
         <div className="px-4 py-4 space-y-4">
           {/* Ссылка на ЦЭКТТ */}
           <button onClick={() => openLink('https://cektт.uz')}
-            className="w-full flex items-center gap-2.5 bg-[#1e2535] hover:bg-[#2a3447] border border-[#2a3447] rounded-xl px-3 py-2.5 transition-colors text-left">
+            className="w-full flex items-center gap-2.5 bg-bx-surface-2 hover:bg-bx-surface-2 border border-bx-border-2 rounded-xl px-3 py-2.5 transition-colors text-left">
             <span className="text-xl">🏢</span>
             <div>
-              <p className="text-xs font-semibold text-slate-300">ЦЭКТТ — Центр электронного ключа</p>
-              <p className="text-[10px] text-slate-500">Отделения во всех областях Узбекистана</p>
+              <p className="text-xs font-semibold text-bx-text">ЦЭКТТ — Центр электронного ключа</p>
+              <p className="text-[10px] text-bx-muted">Отделения во всех областях Узбекистана</p>
             </div>
             <span className="ml-auto text-xs text-blue-400">↗</span>
           </button>
 
           {/* Что взять */}
           <div>
-            <p className="text-xs font-semibold text-slate-400 mb-2">Что взять с собой:</p>
+            <p className="text-xs font-semibold text-bx-muted mb-2">Что взять с собой:</p>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { icon: '🪪', label: 'Паспорт', sub: 'оригинал' },
@@ -481,11 +481,11 @@ function RenewalGuide() {
                 { icon: '💻', label: 'Флешка или ноутбук', sub: 'для записи ключа' },
                 { icon: '💳', label: 'Оплата', sub: 'для юрлиц по прайсу' },
               ].map(d => (
-                <div key={d.label} className="flex items-center gap-2 bg-[#0f1117] rounded-lg px-2.5 py-2">
+                <div key={d.label} className="flex items-center gap-2 bg-bx-bg rounded-lg px-2.5 py-2">
                   <span className="text-base">{d.icon}</span>
                   <div>
-                    <p className="text-xs text-slate-300 leading-tight">{d.label}</p>
-                    <p className="text-[10px] text-slate-600">{d.sub}</p>
+                    <p className="text-xs text-bx-text leading-tight">{d.label}</p>
+                    <p className="text-[10px] text-bx-muted">{d.sub}</p>
                   </div>
                 </div>
               ))}
@@ -494,7 +494,7 @@ function RenewalGuide() {
 
           {/* Шаги */}
           <div className="space-y-2.5">
-            <p className="text-xs font-semibold text-slate-400">Порядок действий:</p>
+            <p className="text-xs font-semibold text-bx-muted">Порядок действий:</p>
             {[
               { n: '1', text: 'Найдите ближайший ЦЭКТТ — через cektт.uz или карты' },
               { n: '2', text: 'Возьмите талон (очередь). Лучше приходить с утра в будний день' },
@@ -503,20 +503,20 @@ function RenewalGuide() {
               { n: '5', text: 'Установите ключ в E-Imzo на рабочем ПК' },
             ].map(s => (
               <div key={s.n} className="flex gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-slate-700 text-slate-400 text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.n}</span>
-                <p className="text-xs text-slate-400 leading-relaxed">{s.text}</p>
+                <span className="w-5 h-5 rounded-full bg-slate-700 text-bx-muted text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.n}</span>
+                <p className="text-xs text-bx-muted leading-relaxed">{s.text}</p>
               </div>
             ))}
           </div>
 
-          <div className="bg-[#0f1117] rounded-lg px-3 py-2.5 space-y-1">
-            <p className="text-[11px] text-slate-500">
+          <div className="bg-bx-bg rounded-lg px-3 py-2.5 space-y-1">
+            <p className="text-[11px] text-bx-muted">
               <span className="text-emerald-400 font-medium">✓ Физлица:</span> бесплатно
             </p>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-bx-muted">
               <span className="text-amber-400 font-medium">₸ Юрлица:</span> от ~100 000 сум, уточняйте в ЦЭКТТ
             </p>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-bx-muted">
               <span className="text-blue-400 font-medium">⏱ Время:</span> 15–40 минут при наличии очереди
             </p>
           </div>
@@ -524,7 +524,7 @@ function RenewalGuide() {
       )}
 
       {/* Общие ссылки внизу */}
-      <div className="px-4 py-3 border-t border-[#1e2535] flex flex-wrap gap-x-4 gap-y-1">
+      <div className="px-4 py-3 border-t border-bx-border flex flex-wrap gap-x-4 gap-y-1">
         <LinkBtn url="https://my.gov.uz" label="my.gov.uz" />
         <LinkBtn url="https://e-imzo.uz" label="e-imzo.uz" />
         <LinkBtn url="https://e-imzo.uz/main/downloads/" label="Скачать E-Imzo" />
@@ -569,40 +569,40 @@ function EcpSigner({ keys }: { keys: SignerKey[] }) {
 
   return (
     <div className="space-y-4 max-w-lg">
-      <div className="bg-[#0f1117] border border-[#1e2535] rounded-xl p-4 space-y-4">
-        <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">✍ Подписание файла (PKCS#7)</p>
+      <div className="bg-bx-bg border border-bx-border rounded-xl p-4 space-y-4">
+        <p className="text-xs font-semibold text-bx-text uppercase tracking-wider">✍ Подписание файла (PKCS#7)</p>
 
         <div>
-          <label className="text-[11px] text-slate-500 block mb-1.5">Файл ключа .pfx / .p12</label>
+          <label className="text-[11px] text-bx-muted block mb-1.5">Файл ключа .pfx / .p12</label>
           <div className="flex gap-2">
-            <div className="flex-1 text-xs text-slate-300 bg-[#141820] rounded-lg px-3 py-2 border border-[#1e2535] truncate">
-              {basename(pfxPath) ?? <span className="text-slate-600">Файл не выбран</span>}
+            <div className="flex-1 text-xs text-bx-text bg-bx-surface rounded-lg px-3 py-2 border border-bx-border truncate">
+              {basename(pfxPath) ?? <span className="text-bx-muted">Файл не выбран</span>}
             </div>
-            <button onClick={handlePickPfx} className="px-3 py-1.5 text-xs bg-[#1e2535] hover:bg-[#2a3447] text-slate-300 rounded-lg transition-colors">
+            <button onClick={handlePickPfx} className="px-3 py-1.5 text-xs bg-bx-surface-2 hover:bg-bx-surface-2 text-bx-text rounded-lg transition-colors">
               Выбрать…
             </button>
           </div>
         </div>
 
         <div>
-          <label className="text-[11px] text-slate-500 block mb-1.5">Пароль ключа</label>
+          <label className="text-[11px] text-bx-muted block mb-1.5">Пароль ключа</label>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="123456"
-            className="w-full bg-[#141820] text-slate-200 text-xs px-3 py-2 rounded-lg border border-[#1e2535] focus:outline-none focus:border-blue-500/50" />
+            className="w-full bg-bx-surface text-bx-text text-xs px-3 py-2 rounded-lg border border-bx-border focus:outline-none focus:border-blue-500/50" />
         </div>
 
         <div>
-          <label className="text-[11px] text-slate-500 block mb-1.5">Документ для подписания</label>
+          <label className="text-[11px] text-bx-muted block mb-1.5">Документ для подписания</label>
           <div className="flex gap-2">
-            <div className="flex-1 text-xs text-slate-300 bg-[#141820] rounded-lg px-3 py-2 border border-[#1e2535] truncate">
-              {basename(filePath) ?? <span className="text-slate-600">Файл не выбран</span>}
+            <div className="flex-1 text-xs text-bx-text bg-bx-surface rounded-lg px-3 py-2 border border-bx-border truncate">
+              {basename(filePath) ?? <span className="text-bx-muted">Файл не выбран</span>}
             </div>
-            <button onClick={handlePickFile} className="px-3 py-1.5 text-xs bg-[#1e2535] hover:bg-[#2a3447] text-slate-300 rounded-lg transition-colors">
+            <button onClick={handlePickFile} className="px-3 py-1.5 text-xs bg-bx-surface-2 hover:bg-bx-surface-2 text-bx-text rounded-lg transition-colors">
               Выбрать…
             </button>
           </div>
         </div>
 
-        <div className="flex justify-end pt-1 border-t border-[#1e2535]">
+        <div className="flex justify-end pt-1 border-t border-bx-border">
           <button onClick={handleSign} disabled={!pfxPath || !filePath || running}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm rounded-lg transition-colors">
             {running ? '⏳ Подписание...' : '✍ Подписать файл'}
@@ -614,7 +614,7 @@ function EcpSigner({ keys }: { keys: SignerKey[] }) {
             <div className="text-xs text-emerald-400 bg-emerald-500/10 rounded-lg px-4 py-3 space-y-1">
               <p className="font-semibold">✓ Файл подписан успешно</p>
               <p className="text-emerald-400/70 font-mono text-[11px] break-all">{result.sigPath}</p>
-              <p className="text-slate-500">Файл подписи (.sig) сохранён рядом с оригиналом</p>
+              <p className="text-bx-muted">Файл подписи (.sig) сохранён рядом с оригиналом</p>
             </div>
           ) : (
             <div className="text-xs text-red-400 bg-red-500/10 rounded-lg px-4 py-3">
@@ -623,7 +623,7 @@ function EcpSigner({ keys }: { keys: SignerKey[] }) {
           )
         )}
       </div>
-      <div className="bg-[#0f1117] border border-amber-500/10 rounded-xl px-4 py-3">
+      <div className="bg-bx-bg border border-amber-500/10 rounded-xl px-4 py-3">
         <p className="text-[11px] text-amber-400/80">
           ⚠ Создаётся detached PKCS#7 подпись через openssl smime. Для юридически значимого ЭДО используйте E-Imzo Plug-in или лицензированный криптопровайдер.
         </p>
@@ -664,34 +664,34 @@ function EcpVerifier() {
 
   return (
     <div className="space-y-4 max-w-lg">
-      <div className="bg-[#0f1117] border border-[#1e2535] rounded-xl p-4 space-y-4">
-        <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">🔍 Проверка ЭЦП-подписи</p>
+      <div className="bg-bx-bg border border-bx-border rounded-xl p-4 space-y-4">
+        <p className="text-xs font-semibold text-bx-text uppercase tracking-wider">🔍 Проверка ЭЦП-подписи</p>
 
         <div>
-          <label className="text-[11px] text-slate-500 block mb-1.5">Исходный документ</label>
+          <label className="text-[11px] text-bx-muted block mb-1.5">Исходный документ</label>
           <div className="flex gap-2">
-            <div className="flex-1 text-xs text-slate-300 bg-[#141820] rounded-lg px-3 py-2 border border-[#1e2535] truncate">
-              {basename(filePath) ?? <span className="text-slate-600">Файл не выбран</span>}
+            <div className="flex-1 text-xs text-bx-text bg-bx-surface rounded-lg px-3 py-2 border border-bx-border truncate">
+              {basename(filePath) ?? <span className="text-bx-muted">Файл не выбран</span>}
             </div>
-            <button onClick={handlePickFile} className="px-3 py-1.5 text-xs bg-[#1e2535] hover:bg-[#2a3447] text-slate-300 rounded-lg transition-colors">
+            <button onClick={handlePickFile} className="px-3 py-1.5 text-xs bg-bx-surface-2 hover:bg-bx-surface-2 text-bx-text rounded-lg transition-colors">
               Выбрать…
             </button>
           </div>
         </div>
 
         <div>
-          <label className="text-[11px] text-slate-500 block mb-1.5">Файл подписи (.sig / .p7s)</label>
+          <label className="text-[11px] text-bx-muted block mb-1.5">Файл подписи (.sig / .p7s)</label>
           <div className="flex gap-2">
-            <div className="flex-1 text-xs text-slate-300 bg-[#141820] rounded-lg px-3 py-2 border border-[#1e2535] truncate">
-              {basename(sigPath) ?? <span className="text-slate-600">Файл не выбран</span>}
+            <div className="flex-1 text-xs text-bx-text bg-bx-surface rounded-lg px-3 py-2 border border-bx-border truncate">
+              {basename(sigPath) ?? <span className="text-bx-muted">Файл не выбран</span>}
             </div>
-            <button onClick={handlePickSig} className="px-3 py-1.5 text-xs bg-[#1e2535] hover:bg-[#2a3447] text-slate-300 rounded-lg transition-colors">
+            <button onClick={handlePickSig} className="px-3 py-1.5 text-xs bg-bx-surface-2 hover:bg-bx-surface-2 text-bx-text rounded-lg transition-colors">
               Выбрать…
             </button>
           </div>
         </div>
 
-        <div className="flex justify-end pt-1 border-t border-[#1e2535]">
+        <div className="flex justify-end pt-1 border-t border-bx-border">
           <button onClick={handleVerify} disabled={!filePath || !sigPath || running}
             className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 text-white text-sm rounded-lg transition-colors">
             {running ? '⏳ Проверка...' : '🔍 Проверить подпись'}
@@ -702,8 +702,8 @@ function EcpVerifier() {
           result.success ? (
             <div className="text-xs text-emerald-400 bg-emerald-500/10 rounded-lg px-4 py-3 space-y-1.5">
               <p className="font-semibold text-sm">✓ Подпись действительна</p>
-              {result.signer && <p>Подписант: <span className="text-white">{result.signer}</span></p>}
-              {result.signedAt && <p>Дата сертификата: <span className="text-white">{result.signedAt}</span></p>}
+              {result.signer && <p>Подписант: <span className="text-bx-text">{result.signer}</span></p>}
+              {result.signedAt && <p>Дата сертификата: <span className="text-bx-text">{result.signedAt}</span></p>}
               <p className="text-emerald-400/60">Файл не изменён с момента подписания</p>
             </div>
           ) : (

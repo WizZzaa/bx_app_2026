@@ -35,13 +35,13 @@ const InpsCalc = () => {
       <div className="flex gap-2">
         <button
           onClick={() => handleDirectionChange('gross')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${direction === 'gross' ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${direction === 'gross' ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
         >
           Начислено → ИНПС
         </button>
         <button
           onClick={() => handleDirectionChange('net')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${direction === 'net' ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${direction === 'net' ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
         >
           На руки → ИНПС
         </button>
@@ -49,7 +49,7 @@ const InpsCalc = () => {
 
       {/* Ввод суммы */}
       <div>
-        <label className="block text-xs text-slate-400 mb-1.5">
+        <label className="block text-xs text-bx-muted mb-1.5">
           {direction === 'gross' ? 'Начисленная зарплата (ФОТ) (UZS)' : 'Сумма к получению «на руки» (UZS)'}
         </label>
         <MoneyInput value={amount} onChange={setAmount} big autoFocus />
@@ -66,9 +66,9 @@ const InpsCalc = () => {
         ]}
       />
 
-      <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] p-3.5 space-y-2">
-        <h4 className="text-xs font-semibold text-slate-300">Памятка бухгалтеру по ИНПС в РУз:</h4>
-        <ul className="list-disc list-inside text-[11px] text-slate-500 space-y-1">
+      <div className="bg-bx-bg rounded-xl border border-bx-border p-3.5 space-y-2">
+        <h4 className="text-xs font-semibold text-bx-text">Памятка бухгалтеру по ИНПС в РУз:</h4>
+        <ul className="list-disc list-inside text-[11px] text-bx-muted space-y-1">
           <li>Ставка ИНПС составляет <b>0.1%</b> от фонда оплаты труда работников.</li>
           <li>Сумма взносов ИНПС вычитается из начисленного НДФЛ (12%). На руки работник получает сумму за вычетом полных 12%.</li>
           <li>Взносы перечисляются в Народный Банк (Халк Банк) через реестры ИНПС не позднее даты выплаты зарплаты.</li>

@@ -79,7 +79,7 @@ export default function EimzoDiag() {
   }
 
   function StatusIcon({ status }: { status: CheckItem['status'] }) {
-    if (status === 'idle') return <span className="w-5 h-5 flex items-center justify-center text-slate-600 text-sm">○</span>;
+    if (status === 'idle') return <span className="w-5 h-5 flex items-center justify-center text-bx-muted text-sm">○</span>;
     if (status === 'checking') return <span className="w-5 h-5 flex items-center justify-center text-blue-400 text-sm animate-spin">⟳</span>;
     if (status === 'ok') return <span className="w-5 h-5 flex items-center justify-center text-emerald-400 text-sm">✓</span>;
     if (status === 'warn') return <span className="w-5 h-5 flex items-center justify-center text-amber-400 text-sm">⚠</span>;
@@ -89,14 +89,14 @@ export default function EimzoDiag() {
   const issues = items.filter(i => i.status === 'warn' || i.status === 'error');
 
   return (
-    <div className="rounded-xl border border-[#1e2535] bg-[#141820] p-4 space-y-4">
+    <div className="rounded-xl border border-bx-border bg-bx-surface p-4 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-lg">🩺</span>
-            <h3 className="text-sm font-semibold text-slate-200">Диагностика E-Imzo</h3>
+            <h3 className="text-sm font-semibold text-bx-text">Диагностика E-Imzo</h3>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5 ml-7">Проверка плагина, локального сервиса и доступности сайтов</p>
+          <p className="text-xs text-bx-muted mt-0.5 ml-7">Проверка плагина, локального сервиса и доступности сайтов</p>
         </div>
         <button
           onClick={run}
@@ -109,11 +109,11 @@ export default function EimzoDiag() {
 
       <div className="space-y-1.5">
         {items.map(item => (
-          <div key={item.id} className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-[#0f1117]">
+          <div key={item.id} className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-bx-bg">
             <StatusIcon status={item.status} />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-300">{item.label}</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-xs font-medium text-bx-text">{item.label}</p>
+              <p className="text-[11px] text-bx-muted mt-0.5">
                 {item.detail || item.desc}
               </p>
             </div>
@@ -122,20 +122,20 @@ export default function EimzoDiag() {
       </div>
 
       {issues.length > 0 && (
-        <div className="border border-[#2a3447] rounded-lg px-4 py-3 space-y-2">
-          <p className="text-xs font-semibold text-slate-300">Рекомендации</p>
+        <div className="border border-bx-border-2 rounded-lg px-4 py-3 space-y-2">
+          <p className="text-xs font-semibold text-bx-text">Рекомендации</p>
           {items.find(i => i.id === 'local' && i.status !== 'ok') && (
-            <p className="text-xs text-slate-500">
-              • Для перезапуска E-Imzo: <code className="text-slate-300">Панель управления → Службы → E-Imzo → Перезапустить</code>
+            <p className="text-xs text-bx-muted">
+              • Для перезапуска E-Imzo: <code className="text-bx-text">Панель управления → Службы → E-Imzo → Перезапустить</code>
             </p>
           )}
           {items.find(i => i.id === 'plugin' && i.status !== 'ok') && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-bx-muted">
               • Установить/обновить плагин: <span className="text-blue-400">e-imzo.uz → Загрузки</span>
             </p>
           )}
           {items.find(i => i.id === 'site' && i.status !== 'ok') && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-bx-muted">
               • Проверьте интернет-соединение и настройки DNS / корпоративного прокси
             </p>
           )}

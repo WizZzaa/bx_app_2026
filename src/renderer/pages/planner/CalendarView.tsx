@@ -89,7 +89,7 @@ export default function CalendarView({ events, cards = [], onDayClick, onEventCl
         onDragStart={e => { e.dataTransfer.setData('bx/event', ev.id); e.dataTransfer.effectAllowed = 'move'; }}
         onClick={e => { e.stopPropagation(); onEventClick(ev); }}
         title={`${ev.title} (перетащите, чтобы перенести срок)`}
-        className={`text-[9px] leading-tight px-1 py-0.5 rounded text-white truncate cursor-grab active:cursor-grabbing hover:opacity-80 ${TYPE_COLOR[ev.type]} ${ev.status === 'done' ? 'opacity-40 line-through' : ''}`}>
+        className={`text-[9px] leading-tight px-1 py-0.5 rounded text-bx-text truncate cursor-grab active:cursor-grabbing hover:opacity-80 ${TYPE_COLOR[ev.type]} ${ev.status === 'done' ? 'opacity-40 line-through' : ''}`}>
         {ev.recurrence ? '🔁 ' : ''}{ev.title}
       </div>
     );
@@ -134,28 +134,28 @@ export default function CalendarView({ events, cards = [], onDayClick, onEventCl
     <div className="flex flex-col h-full">
       {/* Nav */}
       <div className="flex items-center gap-3 mb-4 flex-shrink-0">
-        <button onClick={prev} className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#1e2535] text-slate-400 hover:text-slate-200 transition-colors">‹</button>
-        <h2 className="text-base font-semibold text-white min-w-[190px] text-center">{periodTitle}</h2>
-        <button onClick={next} className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#1e2535] text-slate-400 hover:text-slate-200 transition-colors">›</button>
-        <button onClick={goToday} className="ml-2 text-xs px-2.5 py-1 bg-[#1e2535] text-slate-400 hover:text-slate-200 rounded-lg transition-colors">Сегодня</button>
+        <button onClick={prev} className="w-7 h-7 flex items-center justify-center rounded-lg bg-bx-surface-2 text-bx-muted hover:text-bx-text transition-colors">‹</button>
+        <h2 className="text-base font-semibold text-bx-text min-w-[190px] text-center">{periodTitle}</h2>
+        <button onClick={next} className="w-7 h-7 flex items-center justify-center rounded-lg bg-bx-surface-2 text-bx-muted hover:text-bx-text transition-colors">›</button>
+        <button onClick={goToday} className="ml-2 text-xs px-2.5 py-1 bg-bx-surface-2 text-bx-muted hover:text-bx-text rounded-lg transition-colors">Сегодня</button>
 
         {/* Месяц / Неделя */}
-        <div className="flex bg-[#0f1117] border border-[#1e2535] rounded-lg p-0.5">
+        <div className="flex bg-bx-bg border border-bx-border rounded-lg p-0.5">
           {([['month','Месяц'],['week','Неделя']] as const).map(([m, l]) => (
             <button key={m} onClick={() => setMode(m)}
-              className={`px-2.5 py-0.5 text-[11px] rounded-md transition-colors ${mode === m ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{l}</button>
+              className={`px-2.5 py-0.5 text-[11px] rounded-md transition-colors ${mode === m ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>{l}</button>
           ))}
         </div>
 
         {/* Legend */}
         <div className="ml-auto flex items-center gap-3">
           {[['tax_deadline','Дедлайн'],['task','Задача'],['reminder','Напомин.'],['event','Событие']].map(([type,label]) => (
-            <span key={type} className="flex items-center gap-1 text-[10px] text-slate-500">
+            <span key={type} className="flex items-center gap-1 text-[10px] text-bx-muted">
               <span className={`w-2 h-2 rounded-full ${TYPE_COLOR[type]}`} />
               {label}
             </span>
           ))}
-          <span className="flex items-center gap-1 text-[10px] text-slate-500">
+          <span className="flex items-center gap-1 text-[10px] text-bx-muted">
             <span className="w-2 h-2 rounded-full bg-cyan-500" />
             Карточка
           </span>
@@ -179,16 +179,16 @@ export default function CalendarView({ events, cards = [], onDayClick, onEventCl
                 onDrop={e => handleDrop(e, ds)}
                 title={holiday ?? undefined}
                 className={`flex flex-col rounded-lg border p-2 cursor-pointer transition-all overflow-hidden
-                  ${isToday ? 'border-blue-500/60 bg-blue-500/5' : holiday ? 'border-red-500/25' : 'border-[#1e2535] hover:border-[#2a3447]'}
-                  ${holiday ? 'bg-red-500/[0.04]' : isWeekend ? 'bg-[#0a0d14]' : 'bg-[#0f1117]'}
+                  ${isToday ? 'border-blue-500/60 bg-blue-500/5' : holiday ? 'border-red-500/25' : 'border-bx-border hover:border-bx-border-2'}
+                  ${holiday ? 'bg-red-500/[0.04]' : isWeekend ? 'bg-bx-bg' : 'bg-bx-bg'}
                 `}
               >
                 <div className="flex items-center gap-1.5 mb-1.5 flex-shrink-0">
                   <span className={`text-[11px] font-semibold w-6 h-6 flex items-center justify-center rounded-full
-                    ${isToday ? 'bg-blue-600 text-white' : holiday ? 'text-red-400' : isWeekend ? 'text-slate-600' : 'text-slate-300'}`}>
+                    ${isToday ? 'bg-blue-600 text-white' : holiday ? 'text-red-400' : isWeekend ? 'text-bx-muted' : 'text-bx-text'}`}>
                     {day.getDate()}
                   </span>
-                  <span className={`text-[10px] uppercase ${isWeekend ? 'text-red-400/50' : 'text-slate-600'}`}>{WEEKDAYS[ci]}</span>
+                  <span className={`text-[10px] uppercase ${isWeekend ? 'text-red-400/50' : 'text-bx-muted'}`}>{WEEKDAYS[ci]}</span>
                 </div>
                 {holiday && <span className="text-[9px] text-red-400/70 mb-1 truncate flex-shrink-0">🎉 {holiday}</span>}
                 <div className="space-y-1 overflow-y-auto">
@@ -207,7 +207,7 @@ export default function CalendarView({ events, cards = [], onDayClick, onEventCl
         {/* Header */}
         <div className="grid grid-cols-7 mb-1">
           {WEEKDAYS.map((d,i) => (
-            <div key={d} className={`text-center text-[11px] font-medium py-1 ${i >= 5 ? 'text-slate-600' : 'text-slate-500'}`}>{d}</div>
+            <div key={d} className={`text-center text-[11px] font-medium py-1 ${i >= 5 ? 'text-bx-muted' : 'text-bx-muted'}`}>{d}</div>
           ))}
         </div>
 
@@ -216,7 +216,7 @@ export default function CalendarView({ events, cards = [], onDayClick, onEventCl
           {rows.map((row, ri) => (
             <div key={ri} className="grid grid-cols-7 gap-1">
               {row.map((day, ci) => {
-                if (!day) return <div key={ci} className="h-20 rounded-lg bg-[#0a0d13]" />;
+                if (!day) return <div key={ci} className="h-20 rounded-lg bg-bx-bg" />;
                 const ds = toISO(day);
                 const dayEvents = byDate[ds] ?? [];
                 const dayCards = cardsByDate[ds] ?? [];
@@ -231,14 +231,14 @@ export default function CalendarView({ events, cards = [], onDayClick, onEventCl
                     onDrop={e => handleDrop(e, ds)}
                     title={holiday ?? undefined}
                     className={`h-20 rounded-lg border p-1.5 cursor-pointer transition-all overflow-hidden
-                      ${isToday ? 'border-blue-500/60 bg-blue-500/5' : holiday ? 'border-red-500/25 hover:border-red-500/40' : 'border-[#1e2535] hover:border-[#2a3447]'}
+                      ${isToday ? 'border-blue-500/60 bg-blue-500/5' : holiday ? 'border-red-500/25 hover:border-red-500/40' : 'border-bx-border hover:border-bx-border-2'}
                       ${isPast && !isToday ? 'opacity-60' : ''}
-                      ${holiday ? 'bg-red-500/[0.04]' : isWeekend ? 'bg-[#0a0d14]' : 'bg-[#0f1117]'}
+                      ${holiday ? 'bg-red-500/[0.04]' : isWeekend ? 'bg-bx-bg' : 'bg-bx-bg'}
                     `}
                   >
                     <div className="flex items-center gap-1 mb-1">
                       <div className={`text-[11px] font-medium w-5 h-5 flex items-center justify-center rounded-full flex-shrink-0
-                        ${isToday ? 'bg-blue-600 text-white' : holiday ? 'text-red-400 font-semibold' : isWeekend ? 'text-slate-600' : 'text-slate-400'}`}>
+                        ${isToday ? 'bg-blue-600 text-white' : holiday ? 'text-red-400 font-semibold' : isWeekend ? 'text-bx-muted' : 'text-bx-muted'}`}>
                         {day.getDate()}
                       </div>
                       {holiday && <span className="text-[8px] text-red-400/70 truncate leading-tight">{holiday}</span>}
@@ -246,7 +246,7 @@ export default function CalendarView({ events, cards = [], onDayClick, onEventCl
                     <div className="space-y-0.5">
                       {dayEvents.slice(0,3).map(ev => <EventChip key={ev.id} ev={ev} />)}
                       {dayEvents.length > 3 && (
-                        <div className="text-[9px] text-slate-600">+{dayEvents.length - 3}</div>
+                        <div className="text-[9px] text-bx-muted">+{dayEvents.length - 3}</div>
                       )}
                       {dayCards.slice(0, Math.max(0, 3 - dayEvents.length) + 1).map(cd => <CardChip key={cd.id} cd={cd} />)}
                     </div>

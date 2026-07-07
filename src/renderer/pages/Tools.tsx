@@ -77,10 +77,10 @@ const Tools = () => {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Левая панель */}
-      <aside className="w-60 flex-shrink-0 border-r border-[#1e2535] flex flex-col overflow-hidden">
+      <aside className="w-60 flex-shrink-0 border-r border-bx-border flex flex-col overflow-hidden">
         <div className="px-4 pt-5 pb-3 flex-shrink-0">
-          <h1 className="text-base font-semibold text-white">Утилиты</h1>
-          <p className="text-xs text-slate-500 mt-0.5">{TOOLS.length} инструментов бухгалтера</p>
+          <h1 className="text-base font-semibold text-bx-text">Утилиты</h1>
+          <p className="text-xs text-bx-muted mt-0.5">{TOOLS.length} инструментов бухгалтера</p>
         </div>
 
         <div className="px-3 pb-2 flex-shrink-0">
@@ -88,13 +88,13 @@ const Tools = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Найти инструмент..."
-            className="w-full bg-[#0f1117] text-slate-200 placeholder-slate-600 text-xs px-3 py-2 rounded-lg border border-[#1e2535] focus:outline-none focus:border-blue-500/50"
+            className="w-full bg-bx-bg text-bx-text placeholder-slate-600 text-xs px-3 py-2 rounded-lg border border-bx-border focus:outline-none focus:border-blue-500/50"
           />
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 pb-4">
           {visible.length === 0 && (
-            <p className="text-xs text-slate-600 text-center py-4">Ничего не найдено</p>
+            <p className="text-xs text-bx-muted text-center py-4">Ничего не найдено</p>
           )}
           {GROUPS.map(g => {
             const items = visible.filter(t => t.group === g)
@@ -107,14 +107,14 @@ const Tools = () => {
                   {items.map(t => (
                     <button key={t.id} onClick={() => handleSetActive(t.id)}
                       className={`w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
-                        active === t.id ? `${ga.activeBg} ${ga.text}` : 'text-slate-400 hover:bg-[#1e2535] hover:text-slate-200'
+                        active === t.id ? `${ga.activeBg} ${ga.text}` : 'text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text'
                       }`}>
-                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${active === t.id ? ga.iconBg : 'bg-[#1e2535] text-slate-500'}`}>
+                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${active === t.id ? ga.iconBg : 'bg-bx-surface-2 text-bx-muted'}`}>
                         <Icon name={t.icon} className="w-4 h-4" />
                       </span>
                       <span className="min-w-0">
                         <span className={`block text-sm leading-tight ${active === t.id ? 'font-medium' : ''}`}>{t.label}</span>
-                        <span className={`block text-[10px] mt-0.5 leading-tight ${active === t.id ? 'opacity-70' : 'text-slate-600'}`}>{t.desc}</span>
+                        <span className={`block text-[10px] mt-0.5 leading-tight ${active === t.id ? 'opacity-70' : 'text-bx-muted'}`}>{t.desc}</span>
                       </span>
                     </button>
                   ))}
@@ -129,17 +129,17 @@ const Tools = () => {
       <div className={`flex-1 ${isFullHeight ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'}`}>
         <div className={isFullHeight ? 'px-6 pt-6 flex-shrink-0' : 'max-w-2xl mx-auto px-6 pt-6'}>
           {/* Hero-шапка с акцентом группы */}
-          <div className={`rounded-2xl bg-gradient-to-br ${a.grad} via-transparent to-transparent border border-[#1e2535] px-5 py-4 mb-4`}>
+          <div className={`rounded-2xl bg-gradient-to-br ${a.grad} via-transparent to-transparent border border-bx-border px-5 py-4 mb-4`}>
             <div className="flex items-center gap-3.5">
               <span className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${a.iconBg}`}>
                 <Icon name={tool.icon} className="w-6 h-6" />
               </span>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-white leading-tight">{tool.label}</h2>
+                  <h2 className="text-xl font-bold text-bx-text leading-tight">{tool.label}</h2>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full border ${a.chipBg} ${a.text} font-semibold`}>{tool.group}</span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">{tool.desc}</p>
+                <p className="text-xs text-bx-muted mt-0.5">{tool.desc}</p>
               </div>
             </div>
             {/* Быстрое переключение внутри группы */}
@@ -149,7 +149,7 @@ const Tools = () => {
                   className={`px-2.5 py-1 text-[11px] rounded-lg border transition-colors ${
                     t.id === tool.id
                       ? `${a.chipBg} ${a.text} font-medium`
-                      : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-[#1e2535]'
+                      : 'border-transparent text-bx-muted hover:text-bx-text hover:bg-bx-surface-2'
                   }`}>
                   {t.label}
                 </button>
@@ -167,13 +167,13 @@ const Tools = () => {
         {/* Верстак инструмента */}
         {!isFullHeight ? (
           <div className="max-w-2xl mx-auto px-6 pb-6">
-            <div className="rounded-2xl bg-[#10141d] border border-[#1e2535] p-5">
+            <div className="rounded-2xl bg-bx-surface border border-bx-border p-5">
               {tool.component}
             </div>
           </div>
         ) : (
           <div className="flex-1 overflow-hidden px-6 pb-6">
-            <div className="rounded-2xl bg-[#10141d] border border-[#1e2535] p-4 h-full overflow-hidden">
+            <div className="rounded-2xl bg-bx-surface border border-bx-border p-4 h-full overflow-hidden">
               {tool.component}
             </div>
           </div>

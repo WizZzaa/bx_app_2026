@@ -229,19 +229,19 @@ const TranslatorTool = () => {
   return (
     <div className="space-y-5">
       {/* Шапка выбора языков */}
-      <div className="flex items-center justify-between bg-[#1e2535] p-2 rounded-xl border border-[#2a3447]">
-        <div className="flex-1 text-center font-semibold text-sm text-slate-200">
+      <div className="flex items-center justify-between bg-bx-surface-2 p-2 rounded-xl border border-bx-border-2">
+        <div className="flex-1 text-center font-semibold text-sm text-bx-text">
           {sourceLang === 'uz' ? '🇺🇿 Узбекский' : '🇷🇺 Русский'}
         </div>
         <button
           onClick={handleSwapLangs}
           aria-label="Сменить направление перевода"
           tabIndex={0}
-          className="w-9 h-9 rounded-lg bg-[#2a3447] hover:bg-[#37455d] text-slate-300 flex items-center justify-center transition-colors active:scale-95"
+          className="w-9 h-9 rounded-lg bg-bx-surface-2 hover:bg-bx-surface-2 text-bx-text flex items-center justify-center transition-colors active:scale-95"
         >
           <Icon name="exchange" className="w-4 h-4" />
         </button>
-        <div className="flex-1 text-center font-semibold text-sm text-slate-200">
+        <div className="flex-1 text-center font-semibold text-sm text-bx-text">
           {targetLang === 'uz' ? '🇺🇿 Узбекский' : '🇷🇺 Русский'}
         </div>
       </div>
@@ -251,11 +251,11 @@ const TranslatorTool = () => {
         {/* Перевод текста */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ввод текста</h3>
+            <h3 className="text-xs font-semibold text-bx-muted uppercase tracking-wider">Ввод текста</h3>
             {inputText && (
               <button
                 onClick={() => { setInputText(''); setTranslatedText(''); setHumanizedText(''); }}
-                className="text-[10px] text-slate-600 hover:text-slate-400"
+                className="text-[10px] text-bx-muted hover:text-bx-muted"
               >
                 Очистить
               </button>
@@ -266,7 +266,7 @@ const TranslatorTool = () => {
             onChange={e => setInputText(e.target.value)}
             placeholder={sourceLang === 'uz' ? 'Matnni bu yerga kiriting...' : 'Введите текст здесь...'}
             rows={6}
-            className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm resize-none"
+            className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm resize-none"
           />
           <button
             onClick={handleTranslateText}
@@ -275,7 +275,7 @@ const TranslatorTool = () => {
           >
             {loading ? (
               <>
-                <span className="w-4 h-4 border-2 border-slate-300 border-t-white rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-bx-border-2 border-t-white rounded-full animate-spin" />
                 Перевод...
               </>
             ) : (
@@ -286,14 +286,14 @@ const TranslatorTool = () => {
 
         {/* Перевод документов */}
         <div className="space-y-3">
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Перевод документов</h3>
+          <h3 className="text-xs font-semibold text-bx-muted uppercase tracking-wider">Перевод документов</h3>
           
           {fileStep === 'idle' ? (
             <div
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-[#2a3447] hover:border-blue-500/50 bg-[#0f1117] hover:bg-[#141820] rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[195px] group"
+              className="border-2 border-dashed border-bx-border-2 hover:border-blue-500/50 bg-bx-bg hover:bg-bx-surface rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[195px] group"
             >
               <input
                 type="file"
@@ -303,22 +303,22 @@ const TranslatorTool = () => {
                 className="hidden"
               />
               <span className="text-3xl mb-2 group-hover:scale-110 transition-transform">📄</span>
-              <p className="text-xs text-slate-300 font-medium">Перетащите документ или выберите файл</p>
-              <p className="text-[10px] text-slate-600 mt-1">Поддерживаются PDF, DOCX, XLSX, TXT (до 10 МБ)</p>
+              <p className="text-xs text-bx-text font-medium">Перетащите документ или выберите файл</p>
+              <p className="text-[10px] text-bx-muted mt-1">Поддерживаются PDF, DOCX, XLSX, TXT (до 10 МБ)</p>
             </div>
           ) : (
-            <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] p-4 min-h-[195px] flex flex-col justify-between">
+            <div className="bg-bx-bg rounded-xl border border-bx-border p-4 min-h-[195px] flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-2.5 mb-2.5">
                   <span className="text-xl">📄</span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-slate-200 truncate">{fileName}</p>
-                    <p className="text-[10px] text-slate-600 font-mono">{fileSize}</p>
+                    <p className="text-xs font-semibold text-bx-text truncate">{fileName}</p>
+                    <p className="text-[10px] text-bx-muted font-mono">{fileSize}</p>
                   </div>
                   {fileStep === 'done' && (
                     <button
                       onClick={handleResetFile}
-                      className="text-slate-600 hover:text-slate-400 text-xs"
+                      className="text-bx-muted hover:text-bx-muted text-xs"
                     >
                       Сбросить
                     </button>
@@ -328,13 +328,13 @@ const TranslatorTool = () => {
                 {/* Индикатор прогресса */}
                 {(fileStep === 'reading' || fileStep === 'translating') && (
                   <div className="space-y-2 mt-4">
-                    <div className="w-full bg-[#1e2535] rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-bx-surface-2 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-blue-500 h-full transition-all duration-500 rounded-full"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                    <p className="text-[11px] text-slate-500 italic animate-pulse">
+                    <p className="text-[11px] text-bx-muted italic animate-pulse">
                       {fileStep === 'reading' ? 'Извлечение текста и анализ структуры...' : 'Выполнение умного перевода ИИ...'}
                     </p>
                   </div>
@@ -363,16 +363,16 @@ const TranslatorTool = () => {
 
       {/* Вывод результата перевода */}
       {translatedText && (
-        <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
+        <div className="bg-bx-bg rounded-xl border border-bx-border overflow-hidden">
           {/* Вкладки переключения */}
-          <div className="px-4 py-2 border-b border-[#1e2535] bg-[#141820] flex items-center justify-between flex-wrap gap-2">
+          <div className="px-4 py-2 border-b border-bx-border bg-bx-surface flex items-center justify-between flex-wrap gap-2">
             <div className="flex gap-1.5">
               <button
                 onClick={() => setActiveOutputTab('official')}
                 className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
                   activeOutputTab === 'official'
                     ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-                    : 'text-slate-400 hover:text-slate-200'
+                    : 'text-bx-muted hover:text-bx-text'
                 }`}
               >
                 📄 Официальный перевод
@@ -382,7 +382,7 @@ const TranslatorTool = () => {
                 className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
                   activeOutputTab === 'simple'
                     ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
-                    : 'text-slate-400 hover:text-slate-200'
+                    : 'text-bx-muted hover:text-bx-text'
                 }`}
               >
                 🗣 Простыми словами
@@ -392,7 +392,7 @@ const TranslatorTool = () => {
             <button
               onClick={handleCopyText}
               className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${
-                copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'
+                copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'
               }`}
             >
               {copied ? '✓ Скопировано' : 'Копировать'}
@@ -400,21 +400,21 @@ const TranslatorTool = () => {
           </div>
 
           {activeOutputTab === 'official' ? (
-            <div className="p-4 max-h-80 overflow-y-auto font-sans text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">
+            <div className="p-4 max-h-80 overflow-y-auto font-sans text-sm text-bx-text leading-relaxed whitespace-pre-wrap">
               {translatedText}
             </div>
           ) : (
-            <div className="p-4 max-h-80 overflow-y-auto font-sans text-sm text-slate-200 leading-relaxed min-h-[120px] flex flex-col justify-center">
+            <div className="p-4 max-h-80 overflow-y-auto font-sans text-sm text-bx-text leading-relaxed min-h-[120px] flex flex-col justify-center">
               {humanizing ? (
                 <div className="flex flex-col items-center justify-center py-6 text-center space-y-2">
                   <span className="w-5 h-5 border-2 border-purple-500/30 border-t-purple-400 rounded-full animate-spin" />
-                  <p className="text-xs text-slate-500 italic">Очеловечиваем текст, переводим на понятный язык...</p>
+                  <p className="text-xs text-bx-muted italic">Очеловечиваем текст, переводим на понятный язык...</p>
                 </div>
               ) : humanizedText ? (
                 <div className="whitespace-pre-wrap">{humanizedText}</div>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-xs text-slate-400 max-w-sm mx-auto mb-3">
+                  <p className="text-xs text-bx-muted max-w-sm mx-auto mb-3">
                     ИИ переведет сухой бухгалтерский/юридический язык на понятные человеку формулировки: объяснит суть, права и обязанности без лишней терминологии.
                   </p>
                   <button
@@ -433,7 +433,7 @@ const TranslatorTool = () => {
       {errorMsg && (
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex gap-2.5 items-start">
           <span className="text-amber-500">⚠</span>
-          <p className="text-[11px] text-slate-400 leading-normal">{errorMsg}</p>
+          <p className="text-[11px] text-bx-muted leading-normal">{errorMsg}</p>
         </div>
       )}
     </div>

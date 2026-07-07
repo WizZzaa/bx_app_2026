@@ -201,7 +201,7 @@ export default function Planner() {
             <div className="flex bg-bx-bg border border-bx-border rounded-lg p-0.5">
               {([['board','Доски'],['all','Все задачи'],['digest','Сводка'],['calendar','Календарь'],['list','Список']] as const).map(([v,l]) => (
                 <button key={v} onClick={() => setView(v as View)}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${view === v ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>{l}</button>
+                  className={`px-3 py-1 text-xs rounded-md transition-colors ${view === v ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>{l}</button>
               ))}
             </div>
             {view === 'board' ? (
@@ -223,23 +223,23 @@ export default function Planner() {
             {boards.map(b => (
               <button key={b.id} onClick={() => setActiveBoardId(b.id)}
                 onDoubleClick={() => { setEditingBoard(b); setBoardModalOpen(true); }}
-                className={`group px-2.5 py-1 text-xs rounded-lg transition-colors flex items-center gap-1.5 ${activeBoardId === b.id ? 'bg-bx-surface-2 text-bx-text font-medium border border-bx-border-2' : 'text-slate-500 hover:text-slate-300'}`}>
+                className={`group px-2.5 py-1 text-xs rounded-lg transition-colors flex items-center gap-1.5 ${activeBoardId === b.id ? 'bg-bx-surface-2 text-bx-text font-medium border border-bx-border-2' : 'text-bx-muted hover:text-bx-text'}`}>
                 <span>{b.icon}</span>{b.name}
                 {activeBoardId === b.id && (
                   <span onClick={(e) => { e.stopPropagation(); setEditingBoard(b); setBoardModalOpen(true); }}
-                    className="text-slate-600 hover:text-slate-300 ml-0.5">⚙</span>
+                    className="text-bx-muted hover:text-bx-text ml-0.5">⚙</span>
                 )}
               </button>
             ))}
-            {boards.length === 0 && <span className="text-[11px] text-slate-600">Создаётся доска по умолчанию...</span>}
+            {boards.length === 0 && <span className="text-[11px] text-bx-muted">Создаётся доска по умолчанию...</span>}
           </div>
         ) : (
           <div className="flex items-center gap-1.5 mt-2.5">
             {TYPE_FILTERS.map(f => (
               <button key={f.id} onClick={() => setTypeF(f.id)}
-                className={`px-2.5 py-0.5 text-[11px] rounded-md transition-colors ${typeF === f.id ? 'bg-blue-600/25 text-blue-400' : 'text-slate-600 hover:text-slate-400'}`}>{f.label}</button>
+                className={`px-2.5 py-0.5 text-[11px] rounded-md transition-colors ${typeF === f.id ? 'bg-blue-600/25 text-blue-400' : 'text-bx-muted hover:text-bx-muted'}`}>{f.label}</button>
             ))}
-            {loading && <span className="text-[10px] text-slate-700 ml-auto">обновление...</span>}
+            {loading && <span className="text-[10px] text-bx-muted ml-auto">обновление...</span>}
           </div>
         )}
       </div>
@@ -258,15 +258,15 @@ export default function Planner() {
           />
         )}
         {view === 'board' && !activeBoard && boardsLoading && (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-600 text-sm">
-            <span className="w-5 h-5 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin" />
+          <div className="flex flex-col items-center justify-center h-full gap-3 text-bx-muted text-sm">
+            <span className="w-5 h-5 border-2 border-bx-border-2 border-t-blue-500 rounded-full animate-spin" />
             Загрузка досок...
           </div>
         )}
         {view === 'board' && !activeBoard && !boardsLoading && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-8">
             <p className="text-4xl">🗂️</p>
-            <p className="text-sm text-slate-400">Пока нет ни одной доски</p>
+            <p className="text-sm text-bx-muted">Пока нет ни одной доски</p>
             {boardsError && <p className="text-[11px] text-red-400/70 max-w-sm">{boardsError}</p>}
             <button onClick={() => { setEditingBoard(null); setBoardModalOpen(true); }}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">

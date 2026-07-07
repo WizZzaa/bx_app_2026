@@ -34,7 +34,7 @@ function fmtDue(d: string, today: string): { text: string; cls: string } {
   if (diff === 1) return { text: 'завтра', cls: 'text-amber-400/80' };
   return {
     text: new Date(d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
-    cls: 'text-slate-500',
+    cls: 'text-bx-muted',
   };
 }
 
@@ -86,42 +86,42 @@ export default function AllTasksView({ events, cards, boards, onEventClick, onCa
     'Просрочено': 'text-red-400',
     'Сегодня': 'text-amber-400',
     'Эта неделя': 'text-blue-400',
-    'Позже': 'text-slate-400',
-    'Без срока': 'text-slate-500',
-    'Выполнено': 'text-slate-600',
+    'Позже': 'text-bx-muted',
+    'Без срока': 'text-bx-muted',
+    'Выполнено': 'text-bx-muted',
   };
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="max-w-3xl mx-auto pb-6">
         {/* Панель */}
-        <div className="flex items-center gap-3 mb-4 sticky top-0 bg-[#0f1117] py-2 z-10">
+        <div className="flex items-center gap-3 mb-4 sticky top-0 bg-bx-bg py-2 z-10">
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Поиск по всем задачам и карточкам..."
-            className="flex-1 bg-[#141820] text-slate-200 placeholder-slate-600 text-sm px-3.5 py-2 rounded-lg border border-[#1e2535] focus:outline-none focus:border-blue-500/50"
+            className="flex-1 bg-bx-surface text-bx-text placeholder-slate-600 text-sm px-3.5 py-2 rounded-lg border border-bx-border focus:outline-none focus:border-blue-500/50"
           />
-          <label className="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer flex-shrink-0">
+          <label className="flex items-center gap-1.5 text-xs text-bx-muted cursor-pointer flex-shrink-0">
             <input type="checkbox" checked={hideDone} onChange={e => setHideDone(e.target.checked)} className="accent-blue-500" />
             скрыть выполненные
           </label>
-          <span className="text-xs text-slate-600 flex-shrink-0">всего: {total}</span>
+          <span className="text-xs text-bx-muted flex-shrink-0">всего: {total}</span>
         </div>
 
         {groups.length === 0 && (
-          <p className="text-sm text-slate-600 text-center py-12">Задач нет — отличный день ✓</p>
+          <p className="text-sm text-bx-muted text-center py-12">Задач нет — отличный день ✓</p>
         )}
 
         {groups.map(g => (
           <div key={g.name} className="mb-5">
-            <p className={`text-[11px] uppercase tracking-widest font-semibold mb-2 ${GROUP_CLS[g.name] ?? 'text-slate-500'}`}>
+            <p className={`text-[11px] uppercase tracking-widest font-semibold mb-2 ${GROUP_CLS[g.name] ?? 'text-bx-muted'}`}>
               {g.name} <span className="opacity-60">· {g.items.length}</span>
             </p>
             <div className="space-y-1">
               {g.items.map(it => it.kind === 'event' ? (
                 <div key={`e${it.ev.id}`}
-                  className="flex items-center gap-3 px-3.5 py-2 bg-[#141820] hover:bg-[#1a2030] border border-[#1e2535] hover:border-blue-500/30 rounded-lg transition-colors group">
+                  className="flex items-center gap-3 px-3.5 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border hover:border-blue-500/30 rounded-lg transition-colors group">
                   <input
                     type="checkbox"
                     checked={it.ev.status === 'done'}
@@ -130,7 +130,7 @@ export default function AllTasksView({ events, cards, boards, onEventClick, onCa
                     title={it.ev.status === 'done' ? 'Вернуть в работу' : 'Отметить выполненной'}
                   />
                   <button onClick={() => onEventClick(it.ev)} className="flex-1 min-w-0 text-left">
-                    <span className={`text-sm truncate block ${it.ev.status === 'done' ? 'text-slate-600 line-through' : 'text-slate-200 group-hover:text-white'}`}>
+                    <span className={`text-sm truncate block ${it.ev.status === 'done' ? 'text-bx-muted line-through' : 'text-bx-text group-hover:text-white'}`}>
                       {it.ev.recurrence ? '🔁 ' : ''}{it.ev.title}
                     </span>
                   </button>
@@ -142,9 +142,9 @@ export default function AllTasksView({ events, cards, boards, onEventClick, onCa
                 </div>
               ) : (
                 <button key={`c${it.card.id}`} onClick={() => onCardClick(it.card.id)}
-                  className="w-full flex items-center gap-3 px-3.5 py-2 bg-[#141820] hover:bg-[#1a2030] border border-[#1e2535] hover:border-cyan-500/30 rounded-lg transition-colors group text-left">
+                  className="w-full flex items-center gap-3 px-3.5 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border hover:border-cyan-500/30 rounded-lg transition-colors group text-left">
                   <span className="w-4 text-center flex-shrink-0 text-xs">{boardIcon(it.card.board_id)}</span>
-                  <span className="flex-1 min-w-0 text-sm text-slate-200 group-hover:text-white truncate">{it.card.title}</span>
+                  <span className="flex-1 min-w-0 text-sm text-bx-text group-hover:text-white truncate">{it.card.title}</span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 flex-shrink-0 max-w-[120px] truncate">
                     {boardName(it.card.board_id)}
                   </span>

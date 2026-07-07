@@ -128,7 +128,7 @@ const TABS: { id: Tab; label: string; icon: string; accent: string; activeCls: s
 const TICKET_STATUS: Record<Ticket['status'], { label: string; cls: string }> = {
   open:     { label: 'Открыт',     cls: 'bg-blue-500/15 text-blue-400' },
   answered: { label: 'Отвечен',    cls: 'bg-emerald-500/15 text-emerald-400' },
-  closed:   { label: 'Закрыт',     cls: 'bg-slate-500/15 text-slate-500' },
+  closed:   { label: 'Закрыт',     cls: 'bg-slate-500/15 text-bx-muted' },
 }
 
 const INDICATOR_BADGE: Record<string, string> = {
@@ -826,26 +826,26 @@ const AdminDashboard = () => {
         const prev = nodes[nodes.length - 1] as React.ReactElement | undefined
         const isHeader = !prev || (prev.props as Record<string, unknown>)?.['data-row'] !== 'true'
         nodes.push(
-          <div key={key++} data-row="true" className={`grid text-[11px] py-1.5 px-2.5 ${isHeader ? 'font-semibold text-slate-300 bg-bx-bg rounded-t-lg border-t border-x border-bx-border' : 'text-slate-400 border border-bx-border bg-bx-surface/20'}`} style={{ gridTemplateColumns: `repeat(${cells.length}, 1fr)` }}>
+          <div key={key++} data-row="true" className={`grid text-[11px] py-1.5 px-2.5 ${isHeader ? 'font-semibold text-bx-text bg-bx-bg rounded-t-lg border-t border-x border-bx-border' : 'text-bx-muted border border-bx-border bg-bx-surface/20'}`} style={{ gridTemplateColumns: `repeat(${cells.length}, 1fr)` }}>
             {cells.map((c, i) => <span key={i} className="pr-2">{inlinePreview(c.trim())}</span>)}
           </div>
         )
         continue
       }
       if (line.startsWith('- ')) {
-        nodes.push(<div key={key++} className="flex gap-2 text-xs text-slate-300 my-0.5"><span className="text-purple-500 flex-shrink-0">•</span><span>{inlinePreview(line.slice(2))}</span></div>)
+        nodes.push(<div key={key++} className="flex gap-2 text-xs text-bx-text my-0.5"><span className="text-purple-500 flex-shrink-0">•</span><span>{inlinePreview(line.slice(2))}</span></div>)
         continue
       }
       if (/^\d+\s/.test(line)) {
         const n = line.match(/^\d+/)?.[0]
-        nodes.push(<div key={key++} className="flex gap-2 text-xs text-slate-300 my-0.5"><span className="text-purple-400 flex-shrink-0 font-medium">{n}.</span><span>{inlinePreview(line.replace(/^\d+\.\s/, ''))}</span></div>)
+        nodes.push(<div key={key++} className="flex gap-2 text-xs text-bx-text my-0.5"><span className="text-purple-400 flex-shrink-0 font-medium">{n}.</span><span>{inlinePreview(line.replace(/^\d+\.\s/, ''))}</span></div>)
         continue
       }
       if (line.startsWith('`') && line.endsWith('`') && line.length > 2) {
         nodes.push(<code key={key++} className="block bg-bx-bg border border-bx-border rounded-lg px-2.5 py-1.5 text-[11px] text-emerald-400 font-mono my-1.5 whitespace-pre-wrap">{line.slice(1, -1)}</code>)
         continue
       }
-      nodes.push(<p key={key++} className="text-xs text-slate-300 my-1">{inlinePreview(line)}</p>)
+      nodes.push(<p key={key++} className="text-xs text-bx-text my-1">{inlinePreview(line)}</p>)
     }
     return nodes
   }
@@ -853,7 +853,7 @@ const AdminDashboard = () => {
   if (planLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <span className="w-6 h-6 border-2 border-slate-600 border-t-blue-500 rounded-full animate-spin" />
+        <span className="w-6 h-6 border-2 border-bx-border-2 border-t-blue-500 rounded-full animate-spin" />
       </div>
     )
   }
@@ -863,11 +863,11 @@ const AdminDashboard = () => {
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
         <p className="text-4xl mb-3">🚫</p>
         <h2 className="text-lg font-bold text-bx-text">Доступ ограничен</h2>
-        <p className="text-sm text-slate-500 max-w-sm mt-1">
+        <p className="text-sm text-bx-muted max-w-sm mt-1">
           Раздел доступен только администраторам системы. Если это ошибка — обратитесь в поддержку.
         </p>
         <button onClick={() => refreshPlan()}
-          className="mt-4 px-4 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-slate-300 transition-colors">
+          className="mt-4 px-4 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-bx-text transition-colors">
           ⟳ Проверить права заново
         </button>
       </div>
@@ -885,19 +885,19 @@ const AdminDashboard = () => {
             <span className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xl shadow-lg shadow-indigo-600/30">👑</span>
             <div>
               <h1 className="text-lg font-black text-bx-text leading-tight">Панель управления BX</h1>
-              <p className="text-xs text-slate-500">Пользователи · тарифы · контент · поддержка · оплаты</p>
+              <p className="text-xs text-bx-muted">Пользователи · тарифы · контент · поддержка · оплаты</p>
             </div>
           </div>
           <div className="grid grid-cols-4 gap-2.5">
             {[
               ['Пользователей', metrics.total, 'text-blue-400'],
               ['Pro-подписок', metrics.pro, 'text-emerald-400'],
-              ['Открытых тикетов', metrics.openTickets, metrics.openTickets > 0 ? 'text-amber-400' : 'text-slate-500'],
+              ['Открытых тикетов', metrics.openTickets, metrics.openTickets > 0 ? 'text-amber-400' : 'text-bx-muted'],
               ['Статей в БЗ', metrics.articles, 'text-purple-400'],
             ].map(([label, value, cls]) => (
               <div key={label as string} className="bg-bx-bg/60 backdrop-blur border border-bx-border rounded-xl px-3.5 py-2 min-w-[110px]">
                 <p className={`text-xl font-black tabular-nums leading-tight ${cls}`}>{value}</p>
-                <p className="text-[9px] text-slate-500 leading-tight">{label}</p>
+                <p className="text-[9px] text-bx-muted leading-tight">{label}</p>
               </div>
             ))}
           </div>
@@ -908,7 +908,7 @@ const AdminDashboard = () => {
           {TABS.map(t => (
             <button key={t.id} onClick={() => setActiveTab(t.id)}
               className={`px-3.5 py-2 text-xs font-bold rounded-xl border transition-all ${
-                activeTab === t.id ? t.activeCls : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-bx-surface-2'
+                activeTab === t.id ? t.activeCls : 'border-transparent text-bx-muted hover:text-bx-text hover:bg-bx-surface-2'
               }`}>
               {t.icon} {t.label}
               {t.id === 'tickets' && metrics.openTickets > 0 && (
@@ -943,7 +943,7 @@ const AdminDashboard = () => {
                     key={f}
                     onClick={() => setUserFilter(f as any)}
                     className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${
-                      userFilter === f ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-500 hover:text-slate-300'
+                      userFilter === f ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-bx-muted hover:text-bx-text'
                     }`}
                   >
                     {label}
@@ -951,14 +951,14 @@ const AdminDashboard = () => {
                 ))}
               </div>
               <button onClick={loadUsers}
-                className="px-3 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-slate-300 transition-colors">
+                className="px-3 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-bx-text transition-colors">
                 ⟳
               </button>
-              <span className="ml-auto text-[11px] text-slate-600 font-mono">{filteredUsers.length} из {users.length}</span>
+              <span className="ml-auto text-[11px] text-bx-muted font-mono">{filteredUsers.length} из {users.length}</span>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-1.5">
-              {usersLoading && <p className="text-xs text-slate-600 text-center py-6">Загрузка…</p>}
+              {usersLoading && <p className="text-xs text-bx-muted text-center py-6">Загрузка…</p>}
               {filteredUsers.map(u => (
                 <div key={u.user_id}
                   className="flex items-center gap-3 px-4 py-2.5 bg-bx-surface border border-bx-border hover:border-bx-border-2 rounded-xl transition-colors group">
@@ -967,13 +967,13 @@ const AdminDashboard = () => {
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-bx-text truncate">{u.email}</p>
-                    <p className="text-[10px] text-slate-600 font-mono truncate">{u.user_id}</p>
+                    <p className="text-[10px] text-bx-muted font-mono truncate">{u.user_id}</p>
                   </div>
                   {u.role === 'admin' && (
                     <span className="text-[9px] px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 font-bold flex-shrink-0">👑 админ</span>
                   )}
                   <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold flex-shrink-0 ${
-                    u.plan === 'pro' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-500/15 text-slate-500'}`}>
+                    u.plan === 'pro' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-500/15 text-bx-muted'}`}>
                     {u.plan === 'pro' ? 'PRO' : 'FREE'}
                   </span>
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
@@ -999,7 +999,7 @@ const AdminDashboard = () => {
         {activeTab === 'indicators' && (
           <div className="h-full flex flex-col gap-4 max-w-5xl mx-auto overflow-hidden">
             {/* Меню переключения под-справочников */}
-            <div className="flex gap-2 bg-[#141820] p-1.5 rounded-xl border border-bx-border">
+            <div className="flex gap-2 bg-bx-surface p-1.5 rounded-xl border border-bx-border">
               {[
                 ['indicators', 'БРВ / МРОТ / Рефинансирование'],
                 ['taxes', 'Ставки налогов'],
@@ -1010,7 +1010,7 @@ const AdminDashboard = () => {
                   key={t}
                   onClick={() => setSubRefTab(t as any)}
                   className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${
-                    subRefTab === t ? 'bg-emerald-600/25 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'
+                    subRefTab === t ? 'bg-emerald-600/25 text-emerald-400 border border-emerald-500/30' : 'text-bx-muted hover:text-bx-text'
                   }`}
                 >
                   {name}
@@ -1028,29 +1028,29 @@ const AdminDashboard = () => {
                       {(['brv', 'mrot', 'refi'] as const).map(t => (
                         <button key={t} onClick={() => setIndType(t)}
                           className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
-                            indType === t ? 'bg-emerald-600/25 text-emerald-400 border border-emerald-500/40' : 'bg-bx-bg text-slate-500 border border-bx-border'}`}>
+                            indType === t ? 'bg-emerald-600/25 text-emerald-400 border border-emerald-500/40' : 'bg-bx-bg text-bx-muted border border-bx-border'}`}>
                           {t.toUpperCase()}
                         </button>
                       ))}
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Значение (сум / %)</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Значение (сум / %)</label>
                       <input value={indValue} onChange={e => setIndValue(e.target.value.replace(/[^\d.]/g, ''))}
                         placeholder="1271000" inputMode="numeric"
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-sm text-bx-text focus:outline-none focus:border-emerald-500/50" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Действует с</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Действует с</label>
                       <input type="date" value={indDate} onChange={e => setIndDate(e.target.value)}
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-sm text-bx-text focus:outline-none focus:border-emerald-500/50" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Основание (указ/ПКМ)</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Основание (указ/ПКМ)</label>
                       <input value={indBasis} onChange={e => setIndBasis(e.target.value)}
                         placeholder="Указ Президента от…"
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
                     </div>
-                    <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs text-bx-muted cursor-pointer">
                       <input type="checkbox" checked={indVerified}
                         onChange={e => setIndVerified(e.target.checked)}
                         className="accent-emerald-500 w-3.5 h-3.5" />
@@ -1066,7 +1066,7 @@ const AdminDashboard = () => {
                 <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col">
                   <div className="px-4 py-3 border-b border-bx-border flex items-center justify-between">
                     <h3 className="text-sm font-bold text-bx-text">История значений</h3>
-                    <button onClick={loadIndicators} className="text-xs text-slate-500 hover:text-slate-300">⟳</button>
+                    <button onClick={loadIndicators} className="text-xs text-bx-muted hover:text-bx-text">⟳</button>
                   </div>
                   <div className="flex-1 overflow-y-auto divide-y divide-bx-border/60">
                     {indValues.map(v => {
@@ -1075,14 +1075,14 @@ const AdminDashboard = () => {
                       const unit = meta?.unit ?? 'сум'
                       return (
                         <div key={v.id} className="flex items-center gap-3 px-4 py-2.5">
-                          <span className={`text-[9px] px-2 py-0.5 rounded-full font-black flex-shrink-0 ${INDICATOR_BADGE[key] ?? 'bg-slate-500/15 text-slate-400'}`}>
+                          <span className={`text-[9px] px-2 py-0.5 rounded-full font-black flex-shrink-0 ${INDICATOR_BADGE[key] ?? 'bg-slate-500/15 text-bx-muted'}`}>
                             {meta?.short_name ?? key.toUpperCase()}
                           </span>
                           <span className="text-sm font-bold text-bx-text tabular-nums">
                             {unit === '%' ? `${Number(v.value)}%` : `${Number(v.value).toLocaleString('ru-RU')} ${unit}`}
                           </span>
                           {v.verified && <span className="text-[10px] text-emerald-400 flex-shrink-0" title="Сверено">✓</span>}
-                          <span className="text-[10px] text-slate-500 ml-auto flex-shrink-0">с {new Date(v.valid_from).toLocaleDateString('ru-RU')}</span>
+                          <span className="text-[10px] text-bx-muted ml-auto flex-shrink-0">с {new Date(v.valid_from).toLocaleDateString('ru-RU')}</span>
                         </div>
                       )
                     })}
@@ -1106,37 +1106,37 @@ const AdminDashboard = () => {
                   <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 h-fit space-y-3">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="text-sm font-bold text-bx-text">{taxMode === 'create' ? 'Новый налог' : 'Редактирование'}</h3>
-                      <button onClick={() => { setTaxMode('list'); setEditingTax(null) }} className="text-xs text-slate-500 hover:text-slate-300">← назад</button>
+                      <button onClick={() => { setTaxMode('list'); setEditingTax(null) }} className="text-xs text-bx-muted hover:text-bx-text">← назад</button>
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Название *</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Название *</label>
                       <input value={editingTax?.name ?? ''} onChange={e => setEditingTax(p => ({ ...p, name: e.target.value }))}
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Ставка *</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Ставка *</label>
                       <input value={editingTax?.rate ?? ''} onChange={e => setEditingTax(p => ({ ...p, rate: e.target.value }))}
                         placeholder="12% или 5%"
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50 font-mono" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Объект (база) *</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Объект (база) *</label>
                       <input value={editingTax?.base ?? ''} onChange={e => setEditingTax(p => ({ ...p, base: e.target.value }))}
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Режим налогообложения</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Режим налогообложения</label>
                       <input value={editingTax?.regime ?? ''} onChange={e => setEditingTax(p => ({ ...p, regime: e.target.value }))}
                         placeholder="ОСН, Оборотный"
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Примечание</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Примечание</label>
                       <input value={editingTax?.note ?? ''} onChange={e => setEditingTax(p => ({ ...p, note: e.target.value }))}
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Сортировка</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Сортировка</label>
                       <input type="number" value={editingTax?.sort ?? 0} onChange={e => setEditingTax(p => ({ ...p, sort: Number(e.target.value) }))}
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50 font-mono" />
                     </div>
@@ -1150,19 +1150,19 @@ const AdminDashboard = () => {
                 <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col">
                   <div className="px-4 py-3 border-b border-bx-border flex items-center justify-between">
                     <h3 className="text-sm font-bold text-bx-text">Ставки налогов в облаке</h3>
-                    <button onClick={loadTaxes} className="text-xs text-slate-500 hover:text-slate-300">⟳</button>
+                    <button onClick={loadTaxes} className="text-xs text-bx-muted hover:text-bx-text">⟳</button>
                   </div>
                   <div className="flex-1 overflow-y-auto divide-y divide-bx-border/60">
                     {taxRates.map((t, idx) => (
                       <button key={idx} onClick={() => { setEditingTax(t); setTaxMode('edit') }}
-                        className="w-full flex items-center justify-between gap-4 px-4 py-3 hover:bg-[#1a2030] text-left transition-colors">
+                        className="w-full flex items-center justify-between gap-4 px-4 py-3 hover:bg-bx-surface-2 text-left transition-colors">
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-slate-200 truncate">{t.name}</p>
-                          <p className="text-[10px] text-slate-500 mt-0.5 truncate">{t.base}</p>
+                          <p className="text-xs font-semibold text-bx-text truncate">{t.name}</p>
+                          <p className="text-[10px] text-bx-muted mt-0.5 truncate">{t.base}</p>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="text-xs font-bold text-blue-400 font-mono">{t.rate}</p>
-                          {t.regime && <p className="text-[9px] text-slate-600 mt-0.5">{t.regime}</p>}
+                          {t.regime && <p className="text-[9px] text-bx-muted mt-0.5">{t.regime}</p>}
                         </div>
                       </button>
                     ))}
@@ -1186,27 +1186,27 @@ const AdminDashboard = () => {
                   <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 h-fit space-y-3">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="text-sm font-bold text-bx-text">{accMode === 'create' ? 'Новый счет' : 'Редактирование'}</h3>
-                      <button onClick={() => { setAccMode('list'); setEditingAcc(null) }} className="text-xs text-slate-500 hover:text-slate-300">← назад</button>
+                      <button onClick={() => { setAccMode('list'); setEditingAcc(null) }} className="text-xs text-bx-muted hover:text-bx-text">← назад</button>
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Код счета (4 цифры) *</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Код счета (4 цифры) *</label>
                       <input value={editingAcc?.code ?? ''} onChange={e => setEditingAcc(p => ({ ...p, code: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
                         placeholder="0110"
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50 font-mono" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Название счета *</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Название счета *</label>
                       <input value={editingAcc?.name ?? ''} onChange={e => setEditingAcc(p => ({ ...p, name: e.target.value }))}
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Раздел/Класс *</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Раздел/Класс *</label>
                       <input value={editingAcc?.account_class ?? ''} onChange={e => setEditingAcc(p => ({ ...p, account_class: e.target.value }))}
                         placeholder="Основные средства"
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Тип счета (Активный/Пассивный)</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Тип счета (Активный/Пассивный)</label>
                       <select value={editingAcc?.type ?? ''} onChange={e => setEditingAcc(p => ({ ...p, type: e.target.value || null }))}
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50">
                         <option value="">Не указан</option>
@@ -1216,7 +1216,7 @@ const AdminDashboard = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Сортировка</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Сортировка</label>
                       <input type="number" value={editingAcc?.sort ?? 0} onChange={e => setEditingAcc(p => ({ ...p, sort: Number(e.target.value) }))}
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50 font-mono" />
                     </div>
@@ -1232,15 +1232,15 @@ const AdminDashboard = () => {
                     <input value={accSearch} onChange={e => setAccSearch(e.target.value)}
                       placeholder="Поиск по коду/имени..."
                       className="flex-1 bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-1.5 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
-                    <button onClick={loadAccounts} className="text-xs text-slate-500 hover:text-slate-300 flex-shrink-0">⟳</button>
+                    <button onClick={loadAccounts} className="text-xs text-bx-muted hover:text-bx-text flex-shrink-0">⟳</button>
                   </div>
                   <div className="flex-1 overflow-y-auto divide-y divide-bx-border/60">
                     {accounts.filter(a => !accSearch || a.code.includes(accSearch) || a.name.toLowerCase().includes(accSearch.toLowerCase())).map((a, idx) => (
                       <button key={idx} onClick={() => { setEditingAcc(a); setAccMode('edit') }}
-                        className="w-full flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-[#1a2030] text-left transition-colors">
+                        className="w-full flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-bx-surface-2 text-left transition-colors">
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-slate-200 font-mono">{a.code} — {a.name}</p>
-                          <p className="text-[10px] text-slate-500 mt-0.5 truncate">{a.account_class}</p>
+                          <p className="text-xs font-semibold text-bx-text font-mono">{a.code} — {a.name}</p>
+                          <p className="text-[10px] text-bx-muted mt-0.5 truncate">{a.account_class}</p>
                         </div>
                         {a.type && (
                           <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-bold flex-shrink-0">
@@ -1269,20 +1269,20 @@ const AdminDashboard = () => {
                   <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 h-fit space-y-3">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="text-sm font-bold text-bx-text">{nsbuMode === 'create' ? 'Новый НСБУ' : 'Редактирование'}</h3>
-                      <button onClick={() => { setNsbuMode('list'); setEditingNsbu(null) }} className="text-xs text-slate-500 hover:text-slate-300">← назад</button>
+                      <button onClick={() => { setNsbuMode('list'); setEditingNsbu(null) }} className="text-xs text-bx-muted hover:text-bx-text">← назад</button>
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Номер НСБУ *</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Номер НСБУ *</label>
                       <input type="number" value={editingNsbu?.number ?? 1} onChange={e => setEditingNsbu(p => ({ ...p, number: Number(e.target.value) }))}
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50 font-mono" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Заголовок *</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Заголовок *</label>
                       <input value={editingNsbu?.title ?? ''} onChange={e => setEditingNsbu(p => ({ ...p, title: e.target.value }))}
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">Описание</label>
+                      <label className="text-[10px] text-bx-muted block mb-1">Описание</label>
                       <textarea value={editingNsbu?.description ?? ''} onChange={e => setEditingNsbu(p => ({ ...p, description: e.target.value }))}
                         rows={5}
                         className="w-full bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50 resize-none" />
@@ -1299,15 +1299,15 @@ const AdminDashboard = () => {
                     <input value={nsbuSearch} onChange={e => setNsbuSearch(e.target.value)}
                       placeholder="Поиск по номеру/заголовку..."
                       className="flex-1 bg-bx-bg border border-bx-border-2 rounded-lg px-3 py-1.5 text-xs text-bx-text focus:outline-none focus:border-emerald-500/50" />
-                    <button onClick={loadNsbu} className="text-xs text-slate-500 hover:text-slate-300 flex-shrink-0">⟳</button>
+                    <button onClick={loadNsbu} className="text-xs text-bx-muted hover:text-bx-text flex-shrink-0">⟳</button>
                   </div>
                   <div className="flex-1 overflow-y-auto divide-y divide-bx-border/60">
                     {nsbuList.filter(n => !nsbuSearch || String(n.number).includes(nsbuSearch) || n.title.toLowerCase().includes(nsbuSearch.toLowerCase())).map((n, idx) => (
                       <button key={idx} onClick={() => { setEditingNsbu(n); setNsbuMode('edit') }}
-                        className="w-full flex items-center justify-between gap-4 px-4 py-3 hover:bg-[#1a2030] text-left transition-colors">
+                        className="w-full flex items-center justify-between gap-4 px-4 py-3 hover:bg-bx-surface-2 text-left transition-colors">
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-slate-200">НСБУ №{n.number} — {n.title}</p>
-                          {n.description && <p className="text-[10px] text-slate-500 mt-1 truncate">{n.description}</p>}
+                          <p className="text-xs font-semibold text-bx-text">НСБУ №{n.number} — {n.title}</p>
+                          {n.description && <p className="text-[10px] text-bx-muted mt-1 truncate">{n.description}</p>}
                         </div>
                       </button>
                     ))}
@@ -1333,7 +1333,7 @@ const AdminDashboard = () => {
                   <select
                     value={cmsFilterCategory}
                     onChange={e => setCmsFilterCategory(e.target.value)}
-                    className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-purple-500/50 text-slate-300"
+                    className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-purple-500/50 text-bx-text"
                   >
                     {['Все', 'Налоги и взносы', 'Трудовое право', 'ВЭД и таможня', 'ЭДО и E-Imzo', 'Работа с 1С', 'Штрафы и санкции'].map(c => (
                       <option key={c} value={c}>{c}</option>
@@ -1342,7 +1342,7 @@ const AdminDashboard = () => {
                   <select
                     value={cmsFilterSource}
                     onChange={e => setCmsFilterSource(e.target.value as any)}
-                    className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-purple-500/50 text-slate-300"
+                    className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-purple-500/50 text-bx-text"
                   >
                     <option value="all">Все типы</option>
                     <option value="local">В бандле</option>
@@ -1361,7 +1361,7 @@ const AdminDashboard = () => {
                       className="w-full flex items-center gap-3 px-4 py-3 bg-bx-surface border border-bx-border hover:border-purple-500/40 rounded-xl text-left transition-colors">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-bx-text truncate">{a.title}</p>
-                        <p className="text-[10px] text-slate-600 mt-0.5">{a.category} · {new Date(a.created_at).toLocaleDateString('ru-RU')}</p>
+                        <p className="text-[10px] text-bx-muted mt-0.5">{a.category} · {new Date(a.created_at).toLocaleDateString('ru-RU')}</p>
                       </div>
                       <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold flex-shrink-0 ${
                         a.is_local 
@@ -1374,7 +1374,7 @@ const AdminDashboard = () => {
                       </span>
                     </button>
                   ))}
-                  {filteredArticles.length === 0 && <p className="text-xs text-slate-600 text-center py-8">Статей не найдено</p>}
+                  {filteredArticles.length === 0 && <p className="text-xs text-bx-muted text-center py-8">Статей не найдено</p>}
                 </div>
               </>
             ) : (
@@ -1386,7 +1386,7 @@ const AdminDashboard = () => {
                       {cmsMode === 'create' ? 'Новая статья' : 'Редактирование'}
                     </h3>
                     <button onClick={() => { setCmsMode('list'); setEditingArticle(null) }}
-                      className="text-xs text-slate-500 hover:text-slate-300 transition-colors">← к списку</button>
+                      className="text-xs text-bx-muted hover:text-bx-text transition-colors">← к списку</button>
                   </div>
                   <input value={editingArticle?.title ?? ''} placeholder="Заголовок статьи"
                     onChange={e => setEditingArticle(p => ({ ...p, title: e.target.value }))}
@@ -1395,13 +1395,13 @@ const AdminDashboard = () => {
                   <div className="grid grid-cols-2 gap-2.5">
                     <select value={editingArticle?.category ?? ''}
                       onChange={e => setEditingArticle(p => ({ ...p, category: e.target.value }))}
-                      className="w-full bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs text-bx-text focus:outline-none focus:border-purple-500/50 text-slate-300">
+                      className="w-full bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs text-bx-text focus:outline-none focus:border-purple-500/50 text-bx-text">
                       <option value="" disabled>Выберите категорию</option>
                       {['Налоги и взносы', 'Трудовое право', 'ВЭД и таможня', 'ЭДО и E-Imzo', 'Работа с 1С', 'Штрафы и санкции'].map(c => (
                         <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
-                    <label className="flex items-center gap-2 text-xs text-slate-400 bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs text-bx-muted bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 cursor-pointer">
                       <input type="checkbox" checked={editingArticle?.is_published ?? true}
                         onChange={e => setEditingArticle(p => ({ ...p, is_published: e.target.checked }))}
                         className="accent-purple-500 w-3.5 h-3.5" />
@@ -1432,8 +1432,8 @@ const AdminDashboard = () => {
                     <h2 className="text-base font-black text-bx-text leading-snug border-b border-bx-border/60 pb-2">
                       {editingArticle?.title || 'Заголовок статьи...'}
                     </h2>
-                    <div className="text-xs text-slate-300 leading-relaxed font-sans">
-                      {editingArticle?.body ? renderPreviewBody(editingArticle.body) : <p className="text-slate-600 italic">Начните писать в редакторе...</p>}
+                    <div className="text-xs text-bx-text leading-relaxed font-sans">
+                      {editingArticle?.body ? renderPreviewBody(editingArticle.body) : <p className="text-bx-muted italic">Начните писать в редакторе...</p>}
                     </div>
                   </div>
                 </div>
@@ -1454,11 +1454,11 @@ const AdminDashboard = () => {
                     placeholder="Поиск сервиса…"
                     className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-cyan-500/50 w-full sm:max-w-xs"
                   />
-                  <span className="text-[11px] text-slate-500 font-mono">
+                  <span className="text-[11px] text-bx-muted font-mono">
                     {services.length} в облаке · {servicesBySection.reduce((acc, val) => acc + val.items.length, 0)} всего
                   </span>
                   <button onClick={loadServices}
-                    className="px-3 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-slate-300 transition-colors">⟳</button>
+                    className="px-3 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-bx-text transition-colors">⟳</button>
                   <button
                     onClick={() => { setEditingSvc({ is_published: true, is_hot: false, icon: '🔗', section_id: BUNDLED_SECTIONS[0]?.id }); setSvcMode('create') }}
                     className="ml-auto px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-cyan-600/20 active:scale-95">
@@ -1469,7 +1469,7 @@ const AdminDashboard = () => {
                 <div className="flex-1 overflow-y-auto space-y-4 pr-1">
                   {servicesBySection.map(sec => (
                     <div key={sec.id}>
-                      <p className="text-[11px] font-bold text-slate-400 mb-1.5 sticky top-0 bg-bx-bg/80 py-1">{sec.title}</p>
+                      <p className="text-[11px] font-bold text-bx-muted mb-1.5 sticky top-0 bg-bx-bg/80 py-1">{sec.title}</p>
                       <div className="space-y-1.5">
                         {sec.items.map(s => (
                           <button key={s.id || s.url} onClick={() => { setEditingSvc(s); setSvcMode('edit') }}
@@ -1477,15 +1477,15 @@ const AdminDashboard = () => {
                             <span className="text-lg flex-shrink-0">{s.icon}</span>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-bx-text truncate">{s.title}</p>
-                              <p className="text-[11px] text-slate-500 truncate font-mono">{s.url}</p>
+                              <p className="text-[11px] text-bx-muted truncate font-mono">{s.url}</p>
                             </div>
                             {s.is_local ? (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-500/10 text-slate-400 font-bold flex-shrink-0 border border-slate-500/10">Встроенный</span>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-500/10 text-bx-muted font-bold flex-shrink-0 border border-slate-500/10">Встроенный</span>
                             ) : (
                               <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 font-bold flex-shrink-0 border border-cyan-500/10">В облаке</span>
                             )}
                             {s.is_hot && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-bold flex-shrink-0">ЧАСТО</span>}
-                            {!s.is_published && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-500/20 text-slate-400 font-bold flex-shrink-0">СКРЫТ</span>}
+                            {!s.is_published && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-500/20 text-bx-muted font-bold flex-shrink-0">СКРЫТ</span>}
                             {s.tag && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/12 text-cyan-400 flex-shrink-0">{s.tag}</span>}
                           </button>
                         ))}
@@ -1493,7 +1493,7 @@ const AdminDashboard = () => {
                     </div>
                   ))}
                   {servicesBySection.length === 0 && (
-                    <p className="text-xs text-slate-600 text-center py-8">Сервисов не найдено.</p>
+                    <p className="text-xs text-bx-muted text-center py-8">Сервисов не найдено.</p>
                   )}
                 </div>
               </>
@@ -1506,7 +1506,7 @@ const AdminDashboard = () => {
                       {svcMode === 'create' ? 'Новый сервис' : 'Редактирование сервиса'}
                     </h3>
                     <button onClick={() => { setSvcMode('list'); setEditingSvc(null) }}
-                      className="text-xs text-slate-500 hover:text-slate-300 transition-colors">← к списку</button>
+                      className="text-xs text-bx-muted hover:text-bx-text transition-colors">← к списку</button>
                   </div>
 
                   <div className="grid grid-cols-[64px_1fr] gap-2.5">
@@ -1533,7 +1533,7 @@ const AdminDashboard = () => {
                         const bundled = BUNDLED_SECTIONS.find(b => b.id === id)
                         setEditingSvc(p => ({ ...p, section_id: id, section_title: bundled?.title ?? p?.section_title ?? '' }))
                       }}
-                      className="bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500/50">
+                      className="bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 text-xs text-bx-text focus:outline-none focus:border-cyan-500/50">
                       {BUNDLED_SECTIONS.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
                     </select>
                     <input value={editingSvc?.tag ?? ''} placeholder="Тег (напр. ЛКН)"
@@ -1542,13 +1542,13 @@ const AdminDashboard = () => {
                   </div>
 
                   <div className="grid grid-cols-[1fr_1fr_100px] gap-2.5">
-                    <label className="flex items-center gap-2 text-xs text-slate-400 bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs text-bx-muted bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 cursor-pointer">
                       <input type="checkbox" checked={editingSvc?.is_hot ?? false}
                         onChange={e => setEditingSvc(p => ({ ...p, is_hot: e.target.checked }))}
                         className="accent-blue-500 w-3.5 h-3.5" />
                       Часто используется
                     </label>
-                    <label className="flex items-center gap-2 text-xs text-slate-400 bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs text-bx-muted bg-bx-surface border border-bx-border-2 rounded-xl px-4 py-2.5 cursor-pointer">
                       <input type="checkbox" checked={editingSvc?.is_published ?? true}
                         onChange={e => setEditingSvc(p => ({ ...p, is_published: e.target.checked }))}
                         className="accent-cyan-500 w-3.5 h-3.5" />
@@ -1582,25 +1582,25 @@ const AdminDashboard = () => {
           <div className="h-full flex flex-col gap-3 max-w-5xl mx-auto overflow-hidden">
             {/* Панель метрик */}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-bx-surface/40 p-3 rounded-2xl border border-bx-border">
-              <div className="bg-[#141820] border border-bx-border p-3.5 rounded-xl">
-                <span className="text-[10px] text-slate-500 uppercase font-black block">Общая выручка</span>
+              <div className="bg-bx-surface border border-bx-border p-3.5 rounded-xl">
+                <span className="text-[10px] text-bx-muted uppercase font-black block">Общая выручка</span>
                 <p className="text-lg font-black text-rose-400 mt-1 tabular-nums">{fmtSum(totalRevenue)} UZS</p>
               </div>
-              <div className="bg-[#141820] border border-bx-border p-3.5 rounded-xl">
-                <span className="text-[10px] text-slate-500 uppercase font-black block">Всего оплат</span>
-                <p className="text-lg font-black text-slate-200 mt-1 tabular-nums">
+              <div className="bg-bx-surface border border-bx-border p-3.5 rounded-xl">
+                <span className="text-[10px] text-bx-muted uppercase font-black block">Всего оплат</span>
+                <p className="text-lg font-black text-bx-text mt-1 tabular-nums">
                   {orders.filter(o => o.state === 'paid').length} / {orders.length}
                 </p>
               </div>
-              <div className="bg-[#141820] border border-bx-border p-3.5 rounded-xl">
-                <span className="text-[10px] text-slate-500 uppercase font-black block">Выручка Payme</span>
-                <p className="text-lg font-black text-slate-200 mt-1 tabular-nums">
+              <div className="bg-bx-surface border border-bx-border p-3.5 rounded-xl">
+                <span className="text-[10px] text-bx-muted uppercase font-black block">Выручка Payme</span>
+                <p className="text-lg font-black text-bx-text mt-1 tabular-nums">
                   {fmtSum(orders.filter(o => o.state === 'paid' && o.provider === 'payme').reduce((sum, o) => sum + Number(o.amount), 0))} UZS
                 </p>
               </div>
-              <div className="bg-[#141820] border border-bx-border p-3.5 rounded-xl">
-                <span className="text-[10px] text-slate-500 uppercase font-black block">Выручка Click</span>
-                <p className="text-lg font-black text-slate-200 mt-1 tabular-nums">
+              <div className="bg-bx-surface border border-bx-border p-3.5 rounded-xl">
+                <span className="text-[10px] text-bx-muted uppercase font-black block">Выручка Click</span>
+                <p className="text-lg font-black text-bx-text mt-1 tabular-nums">
                   {fmtSum(orders.filter(o => o.state === 'paid' && o.provider === 'click').reduce((sum, o) => sum + Number(o.amount), 0))} UZS
                 </p>
               </div>
@@ -1616,7 +1616,7 @@ const AdminDashboard = () => {
               />
               
               <select value={paymentFilterState} onChange={e => setPaymentFilterState(e.target.value as any)}
-                className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-rose-500/50 text-slate-300">
+                className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-rose-500/50 text-bx-text">
                 <option value="all">Все статусы</option>
                 <option value="paid">Оплачен</option>
                 <option value="waiting">Ожидает</option>
@@ -1625,23 +1625,23 @@ const AdminDashboard = () => {
               </select>
 
               <select value={paymentFilterProvider} onChange={e => setPaymentFilterProvider(e.target.value as any)}
-                className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-rose-500/50 text-slate-300">
+                className="bg-bx-surface border border-bx-border-2 text-bx-text text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-rose-500/50 text-bx-text">
                 <option value="all">Все провайдеры</option>
                 <option value="payme">Payme</option>
                 <option value="click">Click</option>
               </select>
 
               <button onClick={loadOrders}
-                className="px-3 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-slate-300 transition-colors">
+                className="px-3 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-xl text-xs text-bx-text transition-colors">
                 ⟳
               </button>
             </div>
 
             {/* Список платежей */}
             <div className="flex-1 overflow-y-auto space-y-1.5">
-              {ordersLoading && <p className="text-xs text-slate-600 text-center py-6">Загрузка…</p>}
+              {ordersLoading && <p className="text-xs text-bx-muted text-center py-6">Загрузка…</p>}
               {!ordersLoading && filteredOrders.length === 0 && (
-                <p className="text-xs text-slate-600 text-center py-8">Платежей не найдено</p>
+                <p className="text-xs text-bx-muted text-center py-8">Платежей не найдено</p>
               )}
               {filteredOrders.map(order => (
                 <div key={order.id}
@@ -1651,17 +1651,17 @@ const AdminDashboard = () => {
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-bx-text truncate">{emailFor(order.user_id)}</p>
-                    <p className="text-[9px] text-slate-600 font-mono mt-0.5">ID: {order.id} · Срок: {order.months} мес.</p>
+                    <p className="text-[9px] text-bx-muted font-mono mt-0.5">ID: {order.id} · Срок: {order.months} мес.</p>
                   </div>
                   <div className="text-right flex-shrink-0 flex items-center gap-4">
                     <div>
-                      <p className="text-xs font-bold text-slate-200 font-mono">{fmtSum(order.amount)} UZS</p>
-                      <p className="text-[9px] text-slate-600 font-mono mt-0.5">
+                      <p className="text-xs font-bold text-bx-text font-mono">{fmtSum(order.amount)} UZS</p>
+                      <p className="text-[9px] text-bx-muted font-mono mt-0.5">
                         {new Date(order.created_at).toLocaleDateString('ru-RU')} {new Date(order.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                     {order.provider && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 bg-[#0f1117] border border-bx-border text-slate-400 rounded uppercase">
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 bg-bx-bg border border-bx-border text-bx-muted rounded uppercase">
                         {order.provider}
                       </span>
                     )}
@@ -1681,7 +1681,7 @@ const AdminDashboard = () => {
             <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col h-full">
               <div className="px-4 py-3 border-b border-bx-border bg-bx-surface/40 flex items-center justify-between">
                 <h3 className="text-xs font-black text-bx-text">Обращения</h3>
-                <button onClick={loadTickets} className="text-xs text-slate-500 hover:text-slate-300">⟳</button>
+                <button onClick={loadTickets} className="text-xs text-bx-muted hover:text-bx-text">⟳</button>
               </div>
               
               <div className="px-2.5 py-2 border-b border-bx-border bg-bx-bg/30 flex gap-1 overflow-x-auto">
@@ -1695,7 +1695,7 @@ const AdminDashboard = () => {
                     key={f}
                     onClick={() => setTicketFilter(f as any)}
                     className={`px-2 py-1 text-[9px] font-bold rounded-lg transition-all flex-shrink-0 ${
-                      ticketFilter === f ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-slate-500 hover:text-slate-300'
+                      ticketFilter === f ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-bx-muted hover:text-bx-text'
                     }`}
                   >
                     {label}
@@ -1714,8 +1714,8 @@ const AdminDashboard = () => {
                         {TICKET_STATUS[t.status].label}
                       </span>
                     </div>
-                    <p className="text-[9px] text-slate-500 mt-0.5 truncate">{emailFor(t.user_id)}</p>
-                    <p className="text-[9px] text-slate-600 mt-0.5 font-mono">
+                    <p className="text-[9px] text-bx-muted mt-0.5 truncate">{emailFor(t.user_id)}</p>
+                    <p className="text-[9px] text-bx-muted mt-0.5 font-mono">
                       {new Date(t.updated_at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </button>
@@ -1729,7 +1729,7 @@ const AdminDashboard = () => {
                   <div className="px-4 py-3 border-b border-bx-border bg-bx-surface/40 flex items-center justify-between gap-3 flex-wrap">
                     <div className="min-w-0">
                       <p className="text-xs font-black text-bx-text truncate">{activeTicket.subject}</p>
-                      <p className="text-[9px] text-slate-500 mt-0.5">Клиент: <span className="text-slate-400">{emailFor(activeTicket.user_id)}</span></p>
+                      <p className="text-[9px] text-bx-muted mt-0.5">Клиент: <span className="text-bx-muted">{emailFor(activeTicket.user_id)}</span></p>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
                       {activeTicket.status !== 'closed' && (
@@ -1748,12 +1748,12 @@ const AdminDashboard = () => {
 
                   {/* Вывод контактных полей тикета */}
                   {(activeTicket.contact_name || activeTicket.contact_phone || activeTicket.company_name || activeTicket.remote_id) && (
-                    <div className="bg-[#141820] border-b border-bx-border px-4 py-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] text-slate-400">
+                    <div className="bg-bx-surface border-b border-bx-border px-4 py-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] text-bx-muted">
                       {activeTicket.contact_name && (
-                        <div>ФИО: <span className="text-slate-200 font-semibold">{activeTicket.contact_name}</span></div>
+                        <div>ФИО: <span className="text-bx-text font-semibold">{activeTicket.contact_name}</span></div>
                       )}
                       {activeTicket.contact_phone && (
-                        <div>Телефон: <span className="text-slate-200 font-semibold">{activeTicket.contact_phone}</span></div>
+                        <div>Телефон: <span className="text-bx-text font-semibold">{activeTicket.contact_phone}</span></div>
                       )}
                       {activeTicket.company_name && (
                         <div className="col-span-2">Компания: <span className="text-blue-400 font-semibold">{activeTicket.company_name}</span> {activeTicket.company_inn ? `(ИНН: ${activeTicket.company_inn})` : ''}</div>
@@ -1767,7 +1767,7 @@ const AdminDashboard = () => {
                               navigator.clipboard.writeText(activeTicket.remote_id || '')
                               toast.success('ID скопирован в буфер')
                             }}
-                            className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors underline"
+                            className="text-[10px] text-bx-muted hover:text-bx-text transition-colors underline"
                           >
                             Копировать
                           </button>
@@ -1788,7 +1788,7 @@ const AdminDashboard = () => {
                           </p>
                           <p className="whitespace-pre-wrap">{m.body}</p>
                         </div>
-                        <p className={`text-[9px] text-slate-600 mt-1 font-mono ${m.author === 'staff' ? 'text-right' : ''}`}>
+                        <p className={`text-[9px] text-bx-muted mt-1 font-mono ${m.author === 'staff' ? 'text-right' : ''}`}>
                           {new Date(m.created_at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
@@ -1809,7 +1809,7 @@ const AdminDashboard = () => {
                 <div className="flex-1 flex items-center justify-center text-center p-6">
                   <div>
                     <p className="text-3xl mb-2">🎧</p>
-                    <p className="text-xs text-slate-500">Выберите обращение в левой панели для начала общения</p>
+                    <p className="text-xs text-bx-muted">Выберите обращение в левой панели для начала общения</p>
                   </div>
                 </div>
               )}

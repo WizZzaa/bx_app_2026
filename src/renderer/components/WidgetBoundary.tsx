@@ -22,8 +22,8 @@ export default class WidgetBoundary extends React.Component<Props, State> {
       return (
         <div className="rounded-xl min-h-[300px] h-full flex flex-col items-center justify-center gap-2 p-4 text-center bg-bx-surface border border-bx-border">
           <span className="text-2xl opacity-60">⚠️</span>
-          <p className="text-xs text-slate-400">Виджет{this.props.name ? ` «${this.props.name}»` : ''} не загрузился</p>
-          <p className="text-[10px] text-slate-600 font-mono truncate max-w-full">{this.state.error.message}</p>
+          <p className="text-xs text-bx-muted">Виджет{this.props.name ? ` «${this.props.name}»` : ''} не загрузился</p>
+          <p className="text-[10px] text-bx-muted font-mono truncate max-w-full">{this.state.error.message}</p>
         </div>
       )
     }

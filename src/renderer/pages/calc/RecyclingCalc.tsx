@@ -71,7 +71,7 @@ export default function RecyclingCalc() {
       <div className="flex gap-2">
         {(['passenger', 'commercial', 'moto'] as VehicleCategory[]).map(c => (
           <button key={c} onClick={() => switchCategory(c)}
-            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${category === c ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}
+            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${category === c ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
           >
             {c === 'passenger' ? '🚗 Легковые' : c === 'commercial' ? '🚛 Коммерч.' : '🏍 Мото'}
           </button>
@@ -79,11 +79,11 @@ export default function RecyclingCalc() {
       </div>
 
       <div>
-        <label className="block text-xs text-slate-400 mb-1.5">Объём двигателя / тип</label>
+        <label className="block text-xs text-bx-muted mb-1.5">Объём двигателя / тип</label>
         <select
           value={safeEngineIdx}
           onChange={e => setEngineIdx(Number(e.target.value))}
-          className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm"
+          className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm"
         >
           {engines.map((e, i) => (
             <option key={i} value={i}>{e.label} (коэфф. ×{e.coeff})</option>
@@ -92,11 +92,11 @@ export default function RecyclingCalc() {
       </div>
 
       <div>
-        <label className="block text-xs text-slate-400 mb-1.5">Возраст транспортного средства</label>
+        <label className="block text-xs text-bx-muted mb-1.5">Возраст транспортного средства</label>
         <div className="grid grid-cols-2 gap-2">
           {AGE_COEFFS.map((a, i) => (
             <button key={i} onClick={() => setAgeIdx(i)}
-              className={`py-2 px-3 rounded-lg text-xs text-left transition-colors ${ageIdx === i ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}
+              className={`py-2 px-3 rounded-lg text-xs text-left transition-colors ${ageIdx === i ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
             >
               {a.label}<br /><span className="opacity-75">×{a.coeff}</span>
             </button>
@@ -114,7 +114,7 @@ export default function RecyclingCalc() {
         ]}
       />
 
-      <p className="text-[11px] text-slate-600">
+      <p className="text-[11px] text-bx-muted">
         ПП РУз № ПП-3292, с изм. Базовая ставка 3 300 000 UZS (2024–2026).
         Уплачивается до регистрации ТС в ГИБДД. Уточняйте актуальные коэффициенты на сайте ГНК.
       </p>

@@ -110,7 +110,7 @@ export default function WeatherWidget() {
               className="w-1.5 h-1.5 rounded-full"
               style={{ background: theme.accent, boxShadow: `0 0 6px ${theme.accent}` }}
             />
-            <h2 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Погода</h2>
+            <h2 className="text-xs font-semibold text-bx-text uppercase tracking-wider">Погода</h2>
           </div>
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full"
             style={{ background: theme.accent + '20', color: theme.accent }}>
@@ -122,7 +122,7 @@ export default function WeatherWidget() {
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <div className="text-2xl mb-1">🌐</div>
-              <div className="text-xs text-slate-500">Нет данных о погоде</div>
+              <div className="text-xs text-bx-muted">Нет данных о погоде</div>
             </div>
           </div>
         ) : !w ? (
@@ -158,8 +158,8 @@ export default function WeatherWidget() {
                 <div key={label}
                   className="rounded-lg px-2 py-1.5 text-center"
                   style={{ background: theme.accent + '12', border: `1px solid ${theme.accent}20` }}>
-                  <div className="text-[9px] text-slate-500 mb-0.5 uppercase tracking-wider">{label}</div>
-                  <div className="text-xs font-semibold text-slate-200">{value}</div>
+                  <div className="text-[9px] text-bx-muted mb-0.5 uppercase tracking-wider">{label}</div>
+                  <div className="text-xs font-semibold text-bx-text">{value}</div>
                 </div>
               ))}
             </div>

@@ -75,35 +75,35 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
   let lastGroup = '';
   return (
     <div className="fixed inset-0 z-[90] flex items-start justify-center bg-black/50 backdrop-blur-sm pt-[12vh]" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bx-animate-fade w-[560px] max-w-[92vw] bg-[#141820] border border-[#2a3447] rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#1e2535]">
-          <Icon name="search" className="w-4 h-4 text-slate-500" />
+      <div className="bx-animate-fade w-[560px] max-w-[92vw] bg-bx-surface border border-bx-border-2 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-bx-border">
+          <Icon name="search" className="w-4 h-4 text-bx-muted" />
           <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)}
             placeholder="Перейти к разделу или действию…"
-            className="flex-1 bg-transparent text-slate-200 text-sm focus:outline-none placeholder:text-slate-600" />
-          <kbd className="text-[10px] text-slate-600 border border-[#2a3447] rounded px-1.5 py-0.5">esc</kbd>
+            className="flex-1 bg-transparent text-bx-text text-sm focus:outline-none placeholder:text-bx-muted" />
+          <kbd className="text-[10px] text-bx-muted border border-bx-border-2 rounded px-1.5 py-0.5">esc</kbd>
         </div>
         <div ref={listRef} className="max-h-80 overflow-y-auto py-2">
-          {results.length === 0 && <p className="text-xs text-slate-600 text-center py-8">Ничего не найдено</p>}
+          {results.length === 0 && <p className="text-xs text-bx-muted text-center py-8">Ничего не найдено</p>}
           {results.map((c, i) => {
             const showGroup = c.group !== lastGroup; lastGroup = c.group;
             return (
               <React.Fragment key={c.id}>
-                {showGroup && <p className="text-[10px] uppercase tracking-wide text-slate-600 px-4 pt-2 pb-1">{c.group}</p>}
+                {showGroup && <p className="text-[10px] uppercase tracking-wide text-bx-muted px-4 pt-2 pb-1">{c.group}</p>}
                 <button data-i={i}
                   onMouseEnter={() => setSel(i)} onClick={() => run(c)}
-                  className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${sel === i ? 'bg-blue-600/20' : 'hover:bg-[#1e2535]'}`}>
-                  <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${sel === i ? 'bg-blue-600/30 text-blue-300' : 'bg-[#1e2535] text-slate-400'}`}><Icon name={c.icon} className="w-4 h-4" /></span>
-                  <span className={`text-sm ${sel === i ? 'text-white' : 'text-slate-300'}`}>{c.label}</span>
-                  {sel === i && <span className="ml-auto text-slate-600"><Icon name="arrowR" className="w-4 h-4" /></span>}
+                  className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${sel === i ? 'bg-blue-600/20' : 'hover:bg-bx-surface-2'}`}>
+                  <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${sel === i ? 'bg-blue-600/30 text-blue-300' : 'bg-bx-surface-2 text-bx-muted'}`}><Icon name={c.icon} className="w-4 h-4" /></span>
+                  <span className={`text-sm ${sel === i ? 'text-bx-text' : 'text-bx-text'}`}>{c.label}</span>
+                  {sel === i && <span className="ml-auto text-bx-muted"><Icon name="arrowR" className="w-4 h-4" /></span>}
                 </button>
               </React.Fragment>
             );
           })}
         </div>
-        <div className="flex items-center gap-3 px-4 py-2 border-t border-[#1e2535] text-[10px] text-slate-600">
-          <span><kbd className="border border-[#2a3447] rounded px-1">↑</kbd> <kbd className="border border-[#2a3447] rounded px-1">↓</kbd> навигация</span>
-          <span><kbd className="border border-[#2a3447] rounded px-1">↵</kbd> выбрать</span>
+        <div className="flex items-center gap-3 px-4 py-2 border-t border-bx-border text-[10px] text-bx-muted">
+          <span><kbd className="border border-bx-border-2 rounded px-1">↑</kbd> <kbd className="border border-bx-border-2 rounded px-1">↓</kbd> навигация</span>
+          <span><kbd className="border border-bx-border-2 rounded px-1">↵</kbd> выбрать</span>
           <span className="ml-auto">⌘K / Ctrl+K — открыть</span>
         </div>
       </div>

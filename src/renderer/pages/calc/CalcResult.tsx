@@ -69,10 +69,10 @@ export default function CalcResult({ title, rows }: { title: string; rows: CalcR
   }
 
   return (
-    <div className="rounded-2xl border border-[#1e2535] overflow-hidden">
+    <div className="rounded-2xl border border-bx-border overflow-hidden">
       {/* Hero: главный результат */}
       {main && (
-        <div className="relative bg-gradient-to-br from-blue-600/15 via-[#141b2e] to-[#0f1117] px-5 py-4 border-b border-[#1e2535]">
+        <div className="relative bg-gradient-to-br from-blue-600/15 via-bx-surface to-bx-bg px-5 py-4 border-b border-bx-border">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] text-blue-300/70 uppercase tracking-wider font-semibold mb-1">{main.label}</p>
@@ -80,7 +80,7 @@ export default function CalcResult({ title, rows }: { title: string; rows: CalcR
                 onClick={copyMain}
                 title="Скопировать число"
                 className={`text-2xl font-bold tabular-nums leading-tight transition-colors ${
-                  copiedMain ? 'text-emerald-400' : 'text-white hover:text-blue-300'
+                  copiedMain ? 'text-emerald-400' : 'text-bx-text hover:text-blue-300'
                 }`}
               >
                 {copiedMain ? 'Скопировано ✓' : main.value}
@@ -92,7 +92,7 @@ export default function CalcResult({ title, rows }: { title: string; rows: CalcR
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all flex-shrink-0 ${
                 copiedAll
                   ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
-                  : 'bg-[#0f1117]/60 border-[#2a3447] text-slate-300 hover:border-blue-500/50 hover:text-white'
+                  : 'bg-bx-bg/60 border-bx-border-2 text-bx-text hover:border-blue-500/50 hover:text-bx-text'
               }`}
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none">
@@ -106,7 +106,7 @@ export default function CalcResult({ title, rows }: { title: string; rows: CalcR
       )}
 
       {/* Вторичные строки */}
-      <div className="divide-y divide-[#1e2535] bg-[#0f1117]">
+      <div className="divide-y divide-bx-border bg-bx-bg">
         {secondary.map((r, i) => <Row key={i} label={r.label} value={r.value} />)}
       </div>
     </div>

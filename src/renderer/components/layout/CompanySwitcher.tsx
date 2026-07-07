@@ -35,11 +35,11 @@ export default function CompanySwitcher() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 bg-bx-surface-2 hover:bg-bx-border-2 text-slate-300 text-sm px-3 py-1.5 rounded-lg border border-bx-border-2 transition-colors max-w-[220px]"
+        className="flex items-center gap-2 bg-bx-surface-2 hover:bg-bx-border-2 text-bx-text text-sm px-3 py-1.5 rounded-lg border border-bx-border-2 transition-colors max-w-[220px]"
       >
         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: active?.color || '#4ade80' }} />
         <span className="truncate">{active ? active.name : 'Все компании'}</span>
-        <span className="text-slate-500">▾</span>
+        <span className="text-bx-muted">▾</span>
       </button>
 
       {open && (
@@ -59,7 +59,7 @@ export default function CompanySwitcher() {
             >
               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: c.color || '#4ade80' }} />
               <span className="flex-1 truncate">{c.name}</span>
-              {c.inn && <span className="text-[10px] text-slate-600">{c.inn}</span>}
+              {c.inn && <span className="text-[10px] text-bx-muted">{c.inn}</span>}
             </button>
           ))}
 
@@ -70,7 +70,7 @@ export default function CompanySwitcher() {
               <input value={inn} onChange={e => setInn(e.target.value)} placeholder="ИНН (необязательно)" className="w-full bg-bx-bg text-bx-text text-sm px-2.5 py-1.5 rounded border border-bx-border focus:outline-none focus:border-blue-500/50" />
               <div className="flex gap-2">
                 <button onClick={create} disabled={busy} className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs py-1.5 rounded">Добавить</button>
-                <button onClick={() => setAdding(false)} className="px-3 text-slate-500 hover:text-slate-300 text-xs">Отмена</button>
+                <button onClick={() => setAdding(false)} className="px-3 text-bx-muted hover:text-bx-text text-xs">Отмена</button>
               </div>
             </div>
           ) : (

@@ -117,8 +117,8 @@ export default function InnCheck() {
   function Row({ label, value, cls }: { label: string; value: string; cls?: string }) {
     return (
       <div className="flex items-center justify-between px-4 py-2.5">
-        <span className="text-sm text-slate-400">{label}</span>
-        <span className={`text-sm font-medium ${cls ?? 'text-slate-200'}`}>{value}</span>
+        <span className="text-sm text-bx-muted">{label}</span>
+        <span className={`text-sm font-medium ${cls ?? 'text-bx-text'}`}>{value}</span>
       </div>
     );
   }
@@ -129,8 +129,8 @@ export default function InnCheck() {
     <div className="flex-1 overflow-y-auto p-6">
       <div className="max-w-xl mx-auto space-y-6">
         <div>
-          <h1 className="text-xl font-semibold text-white">Проверка ИНН</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Экспресс-сверка контрагента: статус, НДС, режим налогообложения</p>
+          <h1 className="text-xl font-semibold text-bx-text">Проверка ИНН</h1>
+          <p className="text-sm text-bx-muted mt-0.5">Экспресс-сверка контрагента: статус, НДС, режим налогообложения</p>
         </div>
 
         {/* Поиск */}
@@ -142,7 +142,7 @@ export default function InnCheck() {
             onChange={e => setInn(e.target.value.replace(/\D/g, '').slice(0, 12))}
             onKeyDown={e => e.key === 'Enter' && check()}
             placeholder="Введите ИНН (9 или 12 цифр)"
-            className="flex-1 bg-[#1e2535] text-slate-200 placeholder-slate-500 px-4 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm"
+            className="flex-1 bg-bx-surface-2 text-bx-text placeholder-slate-500 px-4 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm"
           />
           <button
             onClick={check}
@@ -155,22 +155,22 @@ export default function InnCheck() {
 
         {/* Результат */}
         {state === 'result' && result && sl && (
-          <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
-            <div className="px-4 py-3 border-b border-[#1e2535] flex items-center justify-between">
+          <div className="bg-bx-bg rounded-xl border border-bx-border overflow-hidden">
+            <div className="px-4 py-3 border-b border-bx-border flex items-center justify-between">
               <div>
-                <p className="text-base font-semibold text-white">{result.name}</p>
-                <p className="text-xs text-slate-500 mt-0.5">ИНН: {result.inn}</p>
+                <p className="text-base font-semibold text-bx-text">{result.name}</p>
+                <p className="text-xs text-bx-muted mt-0.5">ИНН: {result.inn}</p>
               </div>
               <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${sl.cls}`}>{sl.text}</span>
             </div>
-            <div className="divide-y divide-[#1e2535]">
-              <Row label="Плательщик НДС" value={result.vatPayer ? 'Да' : 'Нет'} cls={result.vatPayer ? 'text-emerald-400' : 'text-slate-400'} />
+            <div className="divide-y divide-bx-border">
+              <Row label="Плательщик НДС" value={result.vatPayer ? 'Да' : 'Нет'} cls={result.vatPayer ? 'text-emerald-400' : 'text-bx-muted'} />
               <Row label="Режим налогообложения" value={result.regime} />
               <Row label="Регион" value={result.region} />
               <Row label="Дата регистрации" value={result.registeredAt} />
               {result.riskClass && <Row label="Класс риска ГНК" value={result.riskClass} cls="text-emerald-400" />}
             </div>
-            <div className="px-4 py-2.5 border-t border-[#1e2535]">
+            <div className="px-4 py-2.5 border-t border-bx-border">
               <button
                 onClick={() => window.open(`https://my.soliq.uz`, '_blank')}
                 className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
@@ -184,14 +184,14 @@ export default function InnCheck() {
         {state === 'error' && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
             <p className="text-sm text-red-400 font-medium">Ошибка проверки</p>
-            <p className="text-xs text-slate-400 mt-1">{errorMsg}</p>
+            <p className="text-xs text-bx-muted mt-1">{errorMsg}</p>
           </div>
         )}
 
         {/* История проверок */}
         {history.length > 0 && (
           <div>
-            <h2 className="text-sm font-semibold text-slate-300 mb-2">История проверок</h2>
+            <h2 className="text-sm font-semibold text-bx-text mb-2">История проверок</h2>
             <div className="space-y-1.5">
               {history.map((h, i) => {
                 const hs = statusLabel(h.status);
@@ -199,12 +199,12 @@ export default function InnCheck() {
                   <button
                     key={i}
                     onClick={() => { setInn(h.inn); setResult(h); setState('result'); }}
-                    className="w-full flex items-center gap-3 px-3.5 py-2.5 bg-[#141820] hover:bg-[#1e2535] border border-[#1e2535] rounded-lg text-left transition-colors"
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border rounded-lg text-left transition-colors"
                   >
-                    <span className="text-xs text-slate-600 font-mono w-24 flex-shrink-0">{h.inn}</span>
-                    <span className="flex-1 text-sm text-slate-300 truncate">{h.name}</span>
+                    <span className="text-xs text-bx-muted font-mono w-24 flex-shrink-0">{h.inn}</span>
+                    <span className="flex-1 text-sm text-bx-text truncate">{h.name}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded ${hs.cls}`}>{hs.text}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${h.vatPayer ? 'bg-blue-500/10 text-blue-400' : 'bg-slate-500/10 text-slate-500'}`}>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${h.vatPayer ? 'bg-blue-500/10 text-blue-400' : 'bg-slate-500/10 text-bx-muted'}`}>
                       {h.vatPayer ? 'НДС' : 'б/НДС'}
                     </span>
                   </button>
@@ -215,15 +215,15 @@ export default function InnCheck() {
         )}
 
         {isElectron ? (
-          <div className="text-xs text-slate-600 border border-[#1e2535] rounded-lg px-4 py-3 space-y-1">
-            <p className="font-medium text-slate-400">Источник данных: my.soliq.uz</p>
-            <p>Запрос выполняется напрямую к API ГНК. Если сервис недоступен, показываются демо-данные (тестовые ИНН: <code className="text-slate-300">301845942</code>, <code className="text-slate-300">200000001</code>, <code className="text-slate-300">100000099</code>).</p>
+          <div className="text-xs text-bx-muted border border-bx-border rounded-lg px-4 py-3 space-y-1">
+            <p className="font-medium text-bx-muted">Источник данных: my.soliq.uz</p>
+            <p>Запрос выполняется напрямую к API ГНК. Если сервис недоступен, показываются демо-данные (тестовые ИНН: <code className="text-bx-text">301845942</code>, <code className="text-bx-text">200000001</code>, <code className="text-bx-text">100000099</code>).</p>
           </div>
         ) : (
-          <div className="text-xs text-slate-600 border border-[#1e2535] rounded-lg px-4 py-3 space-y-1">
-            <p className="font-medium text-slate-400">Демо-режим (браузер)</p>
+          <div className="text-xs text-bx-muted border border-bx-border rounded-lg px-4 py-3 space-y-1">
+            <p className="font-medium text-bx-muted">Демо-режим (браузер)</p>
             <p>В браузере используются демо-данные из-за CORS-ограничений. В десктоп-версии Electron данные запрашиваются напрямую с my.soliq.uz.</p>
-            <p>Тестовые ИНН: <code className="text-slate-300">301845942</code>, <code className="text-slate-300">200000001</code>, <code className="text-slate-300">100000099</code></p>
+            <p>Тестовые ИНН: <code className="text-bx-text">301845942</code>, <code className="text-bx-text">200000001</code>, <code className="text-bx-text">100000099</code></p>
           </div>
         )}
       </div>

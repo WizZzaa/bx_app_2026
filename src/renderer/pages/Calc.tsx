@@ -77,22 +77,22 @@ const Calc = () => {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Левая панель — список калькуляторов */}
-      <aside className="w-60 flex-shrink-0 border-r border-[#1e2535] flex flex-col overflow-y-auto">
+      <aside className="w-60 flex-shrink-0 border-r border-bx-border flex flex-col overflow-y-auto">
         <div className="px-4 pt-5 pb-3">
-          <h1 className="text-base font-semibold text-white">Калькуляторы</h1>
-          <p className="text-xs text-slate-500 mt-0.5">{TABS.length} расчётов для бухгалтера</p>
+          <h1 className="text-base font-semibold text-bx-text">Калькуляторы</h1>
+          <p className="text-xs text-bx-muted mt-0.5">{TABS.length} расчётов для бухгалтера</p>
         </div>
         <div className="px-3 pb-2">
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Найти калькулятор..."
-            className="w-full bg-[#0f1117] text-slate-200 placeholder-slate-600 text-xs px-3 py-2 rounded-lg border border-[#1e2535] focus:outline-none focus:border-blue-500/50"
+            className="w-full bg-bx-bg text-bx-text placeholder-slate-600 text-xs px-3 py-2 rounded-lg border border-bx-border focus:outline-none focus:border-blue-500/50"
           />
         </div>
         <nav className="flex-1 px-2 pb-4">
           {visibleTabs.length === 0 && (
-            <p className="text-xs text-slate-600 text-center py-4">Ничего не найдено</p>
+            <p className="text-xs text-bx-muted text-center py-4">Ничего не найдено</p>
           )}
           {GROUPS.map(g => {
             const items = visibleTabs.filter(t => t.group === g)
@@ -109,15 +109,15 @@ const Calc = () => {
                       className={`w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
                         active === t.id
                           ? `${a.activeBg} ${a.text}`
-                          : 'text-slate-400 hover:bg-[#1e2535] hover:text-slate-200'
+                          : 'text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text'
                       }`}
                     >
-                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${active === t.id ? a.iconBg : 'bg-[#1e2535] text-slate-500'}`}>
+                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${active === t.id ? a.iconBg : 'bg-bx-surface-2 text-bx-muted'}`}>
                         <Icon name={t.icon} className="w-4 h-4" />
                       </span>
                       <span className="min-w-0">
                         <span className={`block text-sm leading-tight ${active === t.id ? 'font-medium' : ''}`}>{t.label}</span>
-                        <span className={`block text-[10px] mt-0.5 leading-tight ${active === t.id ? 'opacity-70' : 'text-slate-600'}`}>{t.desc}</span>
+                        <span className={`block text-[10px] mt-0.5 leading-tight ${active === t.id ? 'opacity-70' : 'text-bx-muted'}`}>{t.desc}</span>
                       </span>
                     </button>
                   ))}
@@ -132,19 +132,19 @@ const Calc = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-6 py-6">
           {/* Hero-шапка с акцентом группы */}
-          <div className={`rounded-2xl bg-gradient-to-br ${ACCENT[tab.group].grad} via-transparent to-transparent border border-[#1e2535] px-5 py-4 mb-4`}>
+          <div className={`rounded-2xl bg-gradient-to-br ${ACCENT[tab.group].grad} via-transparent to-transparent border border-bx-border px-5 py-4 mb-4`}>
             <div className="flex items-center gap-3.5">
               <span className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${ACCENT[tab.group].iconBg}`}>
                 <Icon name={tab.icon} className="w-6 h-6" />
               </span>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-white leading-tight">{tab.label}</h2>
+                  <h2 className="text-xl font-bold text-bx-text leading-tight">{tab.label}</h2>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-semibold`}>
                     {tab.group}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">{tab.desc} · законодательство РУз</p>
+                <p className="text-xs text-bx-muted mt-0.5">{tab.desc} · законодательство РУз</p>
               </div>
             </div>
             {/* Быстрое переключение внутри группы */}
@@ -156,7 +156,7 @@ const Calc = () => {
                   className={`px-2.5 py-1 text-[11px] rounded-lg border transition-colors ${
                     t.id === tab.id
                       ? `${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-medium`
-                      : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-[#1e2535]'
+                      : 'border-transparent text-bx-muted hover:text-bx-text hover:bg-bx-surface-2'
                   }`}
                 >
                   {t.label}
@@ -166,7 +166,7 @@ const Calc = () => {
           </div>
 
           {/* Верстак калькулятора */}
-          <div className="rounded-2xl bg-[#10141d] border border-[#1e2535] p-5">
+          <div className="rounded-2xl bg-bx-surface border border-bx-border p-5">
             {tab.component}
           </div>
 
@@ -207,15 +207,15 @@ const CalcHistoryPanel = () => {
     <div className="mt-8 pb-6">
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-2">
-          <span className="w-6 h-6 rounded-lg bg-[#1e2535] text-slate-400 flex items-center justify-center">
+          <span className="w-6 h-6 rounded-lg bg-bx-surface-2 text-bx-muted flex items-center justify-center">
             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3"/>
               <path d="M8 5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
             </svg>
           </span>
-          <p className="text-sm font-semibold text-slate-300">Недавние расчёты</p>
+          <p className="text-sm font-semibold text-bx-text">Недавние расчёты</p>
         </div>
-        <button onClick={handleClearHistory} className="text-[11px] text-slate-600 hover:text-red-400 transition-colors">Очистить</button>
+        <button onClick={handleClearHistory} className="text-[11px] text-bx-muted hover:text-red-400 transition-colors">Очистить</button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {items.slice(0, 8).map(e => (
@@ -223,19 +223,19 @@ const CalcHistoryPanel = () => {
             key={e.ts}
             onClick={() => handleCopyEntry(e)}
             title={`${e.text}\n\nКлик — скопировать снова`}
-            className="group px-3.5 py-2.5 bg-[#141820] hover:bg-[#18202f] border border-[#1e2535] hover:border-blue-500/40 rounded-xl text-left transition-all"
+            className="group px-3.5 py-2.5 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border hover:border-blue-500/40 rounded-xl text-left transition-all"
           >
             <div className="flex items-center justify-between gap-2 mb-0.5">
-              <span className="text-[11px] text-slate-500 truncate">{e.title}</span>
-              <span className="text-[10px] text-slate-600 flex-shrink-0">
+              <span className="text-[11px] text-bx-muted truncate">{e.title}</span>
+              <span className="text-[10px] text-bx-muted flex-shrink-0">
                 {new Date(e.ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className={`text-sm font-semibold tabular-nums truncate ${copiedTs === e.ts ? 'text-emerald-400' : 'text-slate-100'}`}>
+              <span className={`text-sm font-semibold tabular-nums truncate ${copiedTs === e.ts ? 'text-emerald-400' : 'text-bx-text'}`}>
                 {copiedTs === e.ts ? 'Скопировано ✓' : e.main}
               </span>
-              <svg className="w-3.5 h-3.5 text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" viewBox="0 0 16 16" fill="none">
+              <svg className="w-3.5 h-3.5 text-bx-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" viewBox="0 0 16 16" fill="none">
                 <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
                 <path d="M11 5V4a1.5 1.5 0 0 0-1.5-1.5h-5A1.5 1.5 0 0 0 3 4v5A1.5 1.5 0 0 0 4.5 10.5H5" stroke="currentColor" strokeWidth="1.3"/>
               </svg>

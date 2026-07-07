@@ -219,13 +219,13 @@ export default function HoroscopeWidget() {
           </button>
 
           {randomMode && (
-            <button onClick={backToToday} className="ml-auto text-[11px] text-slate-500 hover:text-slate-300 transition-colors">
+            <button onClick={backToToday} className="ml-auto text-[11px] text-bx-muted hover:text-bx-text transition-colors">
               ← сегодня
             </button>
           )}
 
           {!randomMode && (
-            <span className="ml-auto text-[9px] text-slate-600 font-mono" title={`${TOTAL_VARIATIONS.toLocaleString('ru-RU')} вариаций`}>
+            <span className="ml-auto text-[9px] text-bx-muted font-mono" title={`${TOTAL_VARIATIONS.toLocaleString('ru-RU')} вариаций`}>
               {TOTAL_VARIATIONS.toLocaleString('ru-RU')} вар.
             </span>
           )}

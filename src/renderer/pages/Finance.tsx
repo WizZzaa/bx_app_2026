@@ -149,9 +149,9 @@ export default function Finance() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="max-w-md text-center">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-600/15 text-blue-400 flex items-center justify-center text-2xl mb-4">🔒</div>
-          <h1 className="text-lg font-bold text-white mb-2">Контроль оплат — в тарифе Pro</h1>
-          <p className="text-sm text-slate-400 mb-1">Дебиторка и кредиторка по каждому контрагенту, отметка оплат одним кликом и напоминания в Планировщике.</p>
-          <p className="text-xs text-slate-600 mb-5">Полный учёт при этом остаётся в 1С — мы следим только за оплатами.</p>
+          <h1 className="text-lg font-bold text-bx-text mb-2">Контроль оплат — в тарифе Pro</h1>
+          <p className="text-sm text-bx-muted mb-1">Дебиторка и кредиторка по каждому контрагенту, отметка оплат одним кликом и напоминания в Планировщике.</p>
+          <p className="text-xs text-bx-muted mb-5">Полный учёт при этом остаётся в 1С — мы следим только за оплатами.</p>
           <button onClick={() => navigate('/settings')}
             className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors">
             Посмотреть тарифы
@@ -169,16 +169,16 @@ export default function Finance() {
       <div className="flex-shrink-0 border-b border-bx-border px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <h1 className="text-base font-semibold text-bx-text">Контроль оплат</h1>
-          <span className="text-[11px] text-slate-600">who should pay us · who we should pay</span>
+          <span className="text-[11px] text-bx-muted">who should pay us · who we should pay</span>
           {syncStatus && (
-            <span className="text-[10px] text-slate-500 bg-bx-surface-2 px-2 py-0.5 rounded-full">{syncStatus}</span>
+            <span className="text-[10px] text-bx-muted bg-bx-surface-2 px-2 py-0.5 rounded-full">{syncStatus}</span>
           )}
         </div>
         <div className="flex gap-2">
-          <button onClick={handleImportClick} className="px-3 py-1.5 border border-bx-border-2 text-slate-300 hover:text-white text-xs font-medium rounded-lg bg-bx-surface hover:bg-bx-surface-2 transition-colors">
+          <button onClick={handleImportClick} className="px-3 py-1.5 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-medium rounded-lg bg-bx-surface hover:bg-bx-surface-2 transition-colors">
             Импорт выписки
           </button>
-          <button onClick={handleExport} className="px-3 py-1.5 border border-bx-border-2 text-slate-300 hover:text-white text-xs font-medium rounded-lg bg-bx-surface hover:bg-bx-surface-2 transition-colors">
+          <button onClick={handleExport} className="px-3 py-1.5 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-medium rounded-lg bg-bx-surface hover:bg-bx-surface-2 transition-colors">
             Экспорт в Excel
           </button>
           <button onClick={() => openNew('income')} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg">+ Нам должны</button>
@@ -192,11 +192,11 @@ export default function Finance() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-gradient-to-br from-emerald-600/15 via-bx-surface/50 to-bx-bg border border-bx-border rounded-2xl px-5 py-4">
               <p className="text-[11px] text-emerald-300/70 uppercase tracking-wider font-semibold">Нам должны · {receivable.length}</p>
-              <p className="text-2xl font-bold text-emerald-400 mt-1 tabular-nums">{fmt(sums.receivable)} <span className="text-xs font-normal text-slate-500">сум</span></p>
+              <p className="text-2xl font-bold text-emerald-400 mt-1 tabular-nums">{fmt(sums.receivable)} <span className="text-xs font-normal text-bx-muted">сум</span></p>
             </div>
             <div className="bg-gradient-to-br from-red-600/15 via-bx-surface/50 to-bx-bg border border-bx-border rounded-2xl px-5 py-4">
               <p className="text-[11px] text-red-300/70 uppercase tracking-wider font-semibold">Мы должны · {payable.length}</p>
-              <p className="text-2xl font-bold text-red-400 mt-1 tabular-nums">{fmt(sums.payable)} <span className="text-xs font-normal text-slate-500">сум</span></p>
+              <p className="text-2xl font-bold text-red-400 mt-1 tabular-nums">{fmt(sums.payable)} <span className="text-xs font-normal text-bx-muted">сум</span></p>
             </div>
           </div>
 
@@ -218,12 +218,12 @@ export default function Finance() {
           <div className="bg-bx-surface border border-bx-border rounded-xl overflow-hidden">
             <button onClick={() => setShowHistory(v => !v)}
               className="w-full flex items-center justify-between px-5 py-3 hover:bg-bx-surface-2 transition-colors">
-              <h3 className="text-sm font-semibold text-bx-text">История оплат <span className="text-slate-600 font-normal">· последние {paid.length}</span></h3>
-              <span className="text-xs text-slate-500">{showHistory ? 'свернуть ▴' : 'развернуть ▾'}</span>
+              <h3 className="text-sm font-semibold text-bx-text">История оплат <span className="text-bx-muted font-normal">· последние {paid.length}</span></h3>
+              <span className="text-xs text-bx-muted">{showHistory ? 'свернуть ▴' : 'развернуть ▾'}</span>
             </button>
             {showHistory && (
               paid.length === 0 ? (
-                <p className="text-xs text-slate-600 text-center py-8 border-t border-bx-border">Оплаченных операций пока нет.</p>
+                <p className="text-xs text-bx-muted text-center py-8 border-t border-bx-border">Оплаченных операций пока нет.</p>
               ) : (
                 <div className="divide-y divide-bx-border/60 border-t border-bx-border">
                   {paid.map(t => (
@@ -233,10 +233,10 @@ export default function Finance() {
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-bx-text truncate">{t.counterparty || t.category || (t.type === 'income' ? 'Поступление' : 'Оплата')}</p>
-                        <p className="text-[10px] text-slate-600">{new Date(t.date).toLocaleDateString('ru-RU')}{t.description ? ` · ${t.description}` : ''}</p>
+                        <p className="text-[10px] text-bx-muted">{new Date(t.date).toLocaleDateString('ru-RU')}{t.description ? ` · ${t.description}` : ''}</p>
                       </div>
                       <span className={`text-sm font-medium flex-shrink-0 tabular-nums ${t.type === 'income' ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {t.type === 'income' ? '+' : '−'}{fmt(toUzs(t))}<span className="text-[10px] font-normal text-slate-500"> сум</span>
+                        {t.type === 'income' ? '+' : '−'}{fmt(toUzs(t))}<span className="text-[10px] font-normal text-bx-muted"> сум</span>
                       </span>
                     </button>
                   ))}
@@ -245,7 +245,7 @@ export default function Finance() {
             )}
           </div>
 
-          <p className="text-[11px] text-slate-600">
+          <p className="text-[11px] text-bx-muted">
             Контроль оплат — не бухгалтерский учёт: полный учёт ведите в 1С. Напоминания попадают в Планировщик.
           </p>
         </div>
@@ -288,10 +288,10 @@ function DebtList({ title, accent, items, onEdit, onPaid, onRemind, empty }: {
   return (
     <div className="bg-bx-surface border border-bx-border rounded-xl overflow-hidden">
       <div className="px-5 py-3 border-b border-bx-border">
-        <h3 className="text-sm font-semibold text-bx-text">{title} <span className="text-slate-600 font-normal">· {items.length}</span></h3>
+        <h3 className="text-sm font-semibold text-bx-text">{title} <span className="text-bx-muted font-normal">· {items.length}</span></h3>
       </div>
       {items.length === 0 ? (
-        <p className="text-xs text-slate-600 text-center py-8">{empty}</p>
+        <p className="text-xs text-bx-muted text-center py-8">{empty}</p>
       ) : (
         <div className="divide-y divide-bx-border/60">
           {items.map(t => {
@@ -302,14 +302,14 @@ function DebtList({ title, accent, items, onEdit, onPaid, onRemind, empty }: {
                   <button onClick={() => onEdit(t)} className="w-full text-left flex items-center justify-between">
                     <div>
                       <p className="text-xs text-bx-text truncate">{t.counterparty || t.category || 'Без контрагента'}</p>
-                      <p className="text-[10px] text-slate-600">
+                      <p className="text-[10px] text-bx-muted">
                         {new Date(t.date).toLocaleDateString('ru-RU')}
                         {days > 0 && <span className={days > 30 ? ' text-red-400' : ' text-amber-400/70'}> · висит {days} дн.</span>}
                       </p>
                     </div>
                   </button>
                   <span className={`text-sm font-semibold flex-shrink-0 tabular-nums ${accent === 'emerald' ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {fmt(t.amount * ((t as BxTransaction).exchange_rate || 1))}<span className="text-[10px] font-normal text-slate-500"> сум</span>
+                    {fmt(t.amount * ((t as BxTransaction).exchange_rate || 1))}<span className="text-[10px] font-normal text-bx-muted"> сум</span>
                   </span>
                 </div>
                 <div className="flex gap-1.5 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">

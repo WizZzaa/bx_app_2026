@@ -129,65 +129,65 @@ export default function Transliterate() {
   return (
     <div className="space-y-4">
       <div className="flex gap-2 flex-wrap items-center">
-        <span className="text-xs text-slate-500">Направление:</span>
+        <span className="text-xs text-bx-muted">Направление:</span>
         {([
           ['auto',    'Авто-определение'],
           ['cyr-lat', 'Кирилл → Латиница'],
           ['lat-cyr', 'Латиница → Кирилл'],
         ] as const).map(([id, label]) => (
           <button key={id} onClick={() => setDirection(id)}
-            className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${direction === id ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}>
+            className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${direction === id ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}>
             {label}
           </button>
         ))}
       </div>
 
       {direction === 'auto' && input && detected !== 'empty' && (
-        <p className="text-[11px] text-slate-600">
-          Определено: <span className="text-slate-500">{detected === 'cyr' ? 'Кириллица → Латиница' : 'Латиница → Кириллица'}</span>
+        <p className="text-[11px] text-bx-muted">
+          Определено: <span className="text-bx-muted">{detected === 'cyr' ? 'Кириллица → Латиница' : 'Латиница → Кириллица'}</span>
         </p>
       )}
 
       <div className="grid grid-cols-1 gap-3">
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs text-slate-400">
+            <label className="text-xs text-bx-muted">
               {effectiveDir === 'cyr-lat' ? 'Кириллица (ввод)' : 'Латиница (ввод)'}
             </label>
-            <button onClick={() => setInput('')} className="text-[10px] text-slate-700 hover:text-slate-500">Очистить</button>
+            <button onClick={() => setInput('')} className="text-[10px] text-bx-muted hover:text-bx-muted">Очистить</button>
           </div>
           <textarea
             value={input}
             onChange={e => setInput(e.target.value)}
             rows={5}
             placeholder={effectiveDir === 'cyr-lat' ? 'Ўзбекча матн кирилл ҳарфларида...' : "O'zbek matni lotin harflarida..."}
-            className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm resize-none"
+            className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm resize-none"
           />
         </div>
 
         {output && (
           <>
             <div className="flex items-center gap-3">
-              <div className="flex-1 border-t border-dashed border-[#2a3447]" />
+              <div className="flex-1 border-t border-dashed border-bx-border-2" />
               <button onClick={swap} title="Поменять местами"
-                className="text-slate-600 hover:text-slate-400 text-sm transition-colors px-1">
+                className="text-bx-muted hover:text-bx-muted text-sm transition-colors px-1">
                 ⇅ Поменять
               </button>
-              <div className="flex-1 border-t border-dashed border-[#2a3447]" />
+              <div className="flex-1 border-t border-dashed border-bx-border-2" />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs text-slate-400">
+                <label className="text-xs text-bx-muted">
                   {effectiveDir === 'cyr-lat' ? 'Латиница (результат)' : 'Кириллица (результат)'}
                 </label>
                 <button onClick={copy}
-                  className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}>
+                  className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}>
                   {copied ? '✓ Скопировано' : 'Копировать'}
                 </button>
               </div>
-              <div className="bg-[#0f1117] rounded-lg border border-[#1e2535] px-3 py-2.5 min-h-[120px]">
-                <p className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">{output}</p>
+              <div className="bg-bx-bg rounded-lg border border-bx-border px-3 py-2.5 min-h-[120px]">
+                <p className="text-sm text-bx-text whitespace-pre-wrap leading-relaxed">{output}</p>
               </div>
             </div>
           </>
@@ -195,15 +195,15 @@ export default function Transliterate() {
       </div>
 
       {!input && (
-        <div className="text-center py-4 text-slate-600">
+        <div className="text-center py-4 text-bx-muted">
           <p className="text-2xl mb-2">🔤</p>
           <p className="text-sm">Введите текст для транслитерации</p>
           <p className="text-xs mt-1">Алфавит: Ўзбек алифбоси 2019 (официальный)</p>
         </div>
       )}
 
-      <div className="border border-[#1e2535] rounded-xl px-4 py-3">
-        <p className="text-xs font-medium text-slate-500 mb-2">Примеры</p>
+      <div className="border border-bx-border rounded-xl px-4 py-3">
+        <p className="text-xs font-medium text-bx-muted mb-2">Примеры</p>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1">
           {[
             ['Тошкент', "Toshkent"],
@@ -214,8 +214,8 @@ export default function Transliterate() {
             ['Шаҳар', "Shahar"],
           ].map(([cyr, lat]) => (
             <button key={cyr} onClick={() => setInput(effectiveDir === 'cyr-lat' ? cyr : lat)}
-              className="text-left text-[11px] text-slate-600 hover:text-slate-400 transition-colors py-0.5">
-              <span className="text-slate-500">{cyr}</span> → {lat}
+              className="text-left text-[11px] text-bx-muted hover:text-bx-muted transition-colors py-0.5">
+              <span className="text-bx-muted">{cyr}</span> → {lat}
             </button>
           ))}
         </div>

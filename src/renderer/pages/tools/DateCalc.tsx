@@ -101,7 +101,7 @@ export default function DateCalc() {
       <div className="flex gap-2 flex-wrap">
         {MODES.map(m => (
           <button key={m.id} onClick={() => setMode(m.id)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${mode === m.id ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}>
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${mode === m.id ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}>
             {m.label}
           </button>
         ))}
@@ -112,25 +112,25 @@ export default function DateCalc() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-slate-400 mb-1.5">Начальная дата</label>
+              <label className="block text-xs text-bx-muted mb-1.5">Начальная дата</label>
               <input type="date" value={date1} onChange={e => setDate1(e.target.value)}
-                className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm" />
+                className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
             </div>
             <div>
-              <label className="block text-xs text-slate-400 mb-1.5">Конечная дата</label>
+              <label className="block text-xs text-bx-muted mb-1.5">Конечная дата</label>
               <input type="date" value={date2} onChange={e => setDate2(e.target.value)}
-                className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm" />
+                className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
             </div>
           </div>
           <div className="flex gap-2">
             <button onClick={() => { setDate1(today); }}
-              className="text-xs px-2.5 py-1 bg-[#1e2535] text-slate-400 hover:text-slate-200 rounded-lg transition-colors">
+              className="text-xs px-2.5 py-1 bg-bx-surface-2 text-bx-muted hover:text-bx-text rounded-lg transition-colors">
               Сегодня →
             </button>
           </div>
           {calDays !== null && (
-            <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
-              <div className="divide-y divide-[#1e2535]">
+            <div className="bg-bx-bg rounded-xl border border-bx-border overflow-hidden">
+              <div className="divide-y divide-bx-border">
                 <Row label="Календарных дней" value={`${Math.abs(calDays)} дн.${calDays < 0 ? ' (назад)' : ''}`} highlight />
                 <Row label="Рабочих дней (РУз)" value={`${Math.abs(workDays!)} раб. дн.`} highlight />
                 <Row label="Полных недель" value={`${Math.floor(Math.abs(calDays) / 7)} нед. + ${Math.abs(calDays) % 7} дн.`} />
@@ -146,26 +146,26 @@ export default function DateCalc() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-slate-400 mb-1.5">Начальная дата</label>
+              <label className="block text-xs text-bx-muted mb-1.5">Начальная дата</label>
               <input type="date" value={baseDate} onChange={e => setBaseDate(e.target.value)}
-                className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm" />
+                className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
             </div>
             <div>
-              <label className="block text-xs text-slate-400 mb-1.5">Количество дней</label>
+              <label className="block text-xs text-bx-muted mb-1.5">Количество дней</label>
               <input type="number" value={addN} onChange={e => setAddN(e.target.value)}
                 placeholder="30"
-                className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm" />
+                className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <span className="text-xs text-slate-500 self-center">Тип:</span>
+            <span className="text-xs text-bx-muted self-center">Тип:</span>
             {(['calendar', 'work'] as const).map(t => (
               <button key={t} onClick={() => setAddMode(t)}
-                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${addMode === t ? 'bg-blue-600 text-white' : 'bg-[#1e2535] text-slate-400 hover:text-slate-200'}`}>
+                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${addMode === t ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}>
                 {t === 'calendar' ? 'Календарные' : 'Рабочие (РУз)'}
               </button>
             ))}
-            <button onClick={() => setBaseDate(today)} className="ml-auto text-xs px-2.5 py-1 bg-[#1e2535] text-slate-400 hover:text-slate-200 rounded-lg transition-colors">
+            <button onClick={() => setBaseDate(today)} className="ml-auto text-xs px-2.5 py-1 bg-bx-surface-2 text-bx-muted hover:text-bx-text rounded-lg transition-colors">
               Сегодня
             </button>
           </div>
@@ -173,14 +173,14 @@ export default function DateCalc() {
           <div className="flex gap-2 flex-wrap">
             {[7, 10, 14, 30, 45, 60, 90].map(n => (
               <button key={n} onClick={() => setAddN(String(n))}
-                className={`px-2 py-1 text-[11px] rounded transition-colors ${addN === String(n) ? 'bg-blue-600/30 text-blue-400' : 'bg-[#0f1117] text-slate-600 hover:text-slate-400'}`}>
+                className={`px-2 py-1 text-[11px] rounded transition-colors ${addN === String(n) ? 'bg-blue-600/30 text-blue-400' : 'bg-bx-bg text-bx-muted hover:text-bx-muted'}`}>
                 +{n}
               </button>
             ))}
           </div>
           {addResult && (
-            <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
-              <div className="divide-y divide-[#1e2535]">
+            <div className="bg-bx-bg rounded-xl border border-bx-border overflow-hidden">
+              <div className="divide-y divide-bx-border">
                 <Row label="Результат" value={fmt(addResult)} highlight />
                 <Row label="День недели и дата" value={fmtLong(addResult)} />
                 <Row label="Рабочий день?" value={isWorkday(addResult) ? '✓ Да' : isHoliday(addResult) ? `Праздник: ${isHoliday(addResult)}` : '✕ Выходной'} />
@@ -197,19 +197,19 @@ export default function DateCalc() {
       {mode === 'check' && (
         <div className="space-y-4">
           <div>
-            <label className="block text-xs text-slate-400 mb-1.5">Дата для проверки</label>
+            <label className="block text-xs text-bx-muted mb-1.5">Дата для проверки</label>
             <input type="date" value={checkDate} onChange={e => setCheckDate(e.target.value)}
-              className="w-full bg-[#0f1117] text-slate-200 px-3 py-2.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 text-sm" />
+              className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
           </div>
-          <button onClick={() => setCheckDate(today)} className="text-xs px-2.5 py-1 bg-[#1e2535] text-slate-400 hover:text-slate-200 rounded-lg transition-colors">
+          <button onClick={() => setCheckDate(today)} className="text-xs px-2.5 py-1 bg-bx-surface-2 text-bx-muted hover:text-bx-text rounded-lg transition-colors">
             Сегодня
           </button>
           {checkResult && checkDate && (
-            <div className="bg-[#0f1117] rounded-xl border border-[#1e2535] overflow-hidden">
-              <div className="px-4 py-3 border-b border-[#1e2535]">
-                <p className="text-sm font-semibold text-slate-200">{fmtLong(new Date(checkDate))}</p>
+            <div className="bg-bx-bg rounded-xl border border-bx-border overflow-hidden">
+              <div className="px-4 py-3 border-b border-bx-border">
+                <p className="text-sm font-semibold text-bx-text">{fmtLong(new Date(checkDate))}</p>
               </div>
-              <div className="divide-y divide-[#1e2535]">
+              <div className="divide-y divide-bx-border">
                 <Row label="Статус"
                   value={checkResult.holiday ? `🎉 Праздник: ${checkResult.holiday}` : checkResult.weekend ? '🔴 Выходной' : '✅ Рабочий день'}
                   highlight={checkResult.workday}
@@ -223,16 +223,16 @@ export default function DateCalc() {
               </div>
             </div>
           )}
-          <div className="border border-[#1e2535] rounded-xl px-4 py-3">
-            <p className="text-xs font-medium text-slate-400 mb-2">Праздники РУз (фиксированные)</p>
+          <div className="border border-bx-border rounded-xl px-4 py-3">
+            <p className="text-xs font-medium text-bx-muted mb-2">Праздники РУз (фиксированные)</p>
             <div className="grid grid-cols-2 gap-1">
               {UZ_HOLIDAYS.map(h => (
-                <p key={h.name} className="text-[11px] text-slate-600">
-                  <span className="text-slate-500">{String(h.day).padStart(2,'0')}.{String(h.month).padStart(2,'0')}</span> — {h.name}
+                <p key={h.name} className="text-[11px] text-bx-muted">
+                  <span className="text-bx-muted">{String(h.day).padStart(2,'0')}.{String(h.month).padStart(2,'0')}</span> — {h.name}
                 </p>
               ))}
             </div>
-            <p className="text-[11px] text-slate-700 mt-2">* Ураза-байрам и Курбан-байрам — переменные, не включены</p>
+            <p className="text-[11px] text-bx-muted mt-2">* Ураза-байрам и Курбан-байрам — переменные, не включены</p>
           </div>
         </div>
       )}
@@ -243,8 +243,8 @@ export default function DateCalc() {
 function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className={`text-sm font-semibold ${highlight ? 'text-blue-400' : 'text-slate-200'}`}>{value}</span>
+      <span className="text-sm text-bx-muted">{label}</span>
+      <span className={`text-sm font-semibold ${highlight ? 'text-blue-400' : 'text-bx-text'}`}>{value}</span>
     </div>
   );
 }

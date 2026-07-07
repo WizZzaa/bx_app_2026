@@ -20,17 +20,17 @@ export default function NotificationsWidget() {
   const notices = useMemo(() => buildNotices(ecpKeys), [ecpKeys]);
 
   return (
-    <div className="rounded-xl border border-[#1e2535] bg-[#141820] p-4 h-full">
+    <div className="rounded-xl border border-bx-border bg-bx-surface p-4 h-full">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-medium text-slate-300">🔔 Оповещения</h2>
-        <span className="text-[11px] text-slate-500">{notices.length ? notices.length : 'нет новых'}</span>
+        <h2 className="text-sm font-medium text-bx-text">🔔 Оповещения</h2>
+        <span className="text-[11px] text-bx-muted">{notices.length ? notices.length : 'нет новых'}</span>
       </div>
 
       {notices.length === 0 ? (
         <div className="text-center py-6">
           <p className="text-2xl mb-1">✓</p>
-          <p className="text-sm text-slate-500">Всё спокойно</p>
-          <p className="text-[11px] text-slate-600 mt-0.5">Ни просрочек, ни горящих сроков</p>
+          <p className="text-sm text-bx-muted">Всё спокойно</p>
+          <p className="text-[11px] text-bx-muted mt-0.5">Ни просрочек, ни горящих сроков</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -38,13 +38,13 @@ export default function NotificationsWidget() {
             const s = styleByLevel[n.level];
             return (
               <button key={n.id} onClick={() => navigate(n.to)}
-                className="w-full flex items-start gap-2.5 px-3 py-2 rounded-lg bg-[#0f1117] hover:bg-[#1a2030] border border-transparent hover:border-blue-500/30 text-left transition-colors">
+                className="w-full flex items-start gap-2.5 px-3 py-2 rounded-lg bg-bx-bg hover:bg-bx-surface-2 border border-transparent hover:border-blue-500/30 text-left transition-colors">
                 <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${s.dot}`} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-slate-300 leading-snug truncate">{n.text}</div>
+                  <div className="text-sm text-bx-text leading-snug truncate">{n.text}</div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-[10px] px-1.5 py-0.5 rounded ${s.chip}`}>{s.label}</span>
-                    <span className="text-[10px] text-slate-500">{n.time}</span>
+                    <span className="text-[10px] text-bx-muted">{n.time}</span>
                   </div>
                 </div>
               </button>

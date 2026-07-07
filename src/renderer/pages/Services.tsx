@@ -19,7 +19,7 @@ function tagClass(tag?: string): string {
   if (['Платежи', 'Карты', 'НМПС', 'НМПС'].includes(tag)) return 'bg-violet-500/12 text-violet-400';
   if (['ЭЦП', 'ЭДО', 'ЭСФ'].includes(tag)) return 'bg-rose-500/12 text-rose-400';
   if (['1С', 'ERP', 'Учёт', 'ИТ'].includes(tag)) return 'bg-orange-500/12 text-orange-400';
-  return 'bg-slate-500/15 text-slate-300';
+  return 'bg-slate-500/15 text-bx-text';
 }
 
 function ServiceCard({ item }: { item: ServiceItem }) {
@@ -40,9 +40,9 @@ function ServiceCard({ item }: { item: ServiceItem }) {
           {item.hot && <span className="flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-bold">ЧАСТО</span>}
           {item.tag && <span className={`flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${tagClass(item.tag)}`}>{item.tag}</span>}
         </div>
-        <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{item.desc}</p>
+        <p className="text-xs text-bx-muted leading-relaxed line-clamp-2">{item.desc}</p>
       </div>
-      <span className="relative text-slate-600 group-hover:text-blue-400 flex-shrink-0 text-sm mt-0.5 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5">↗</span>
+      <span className="relative text-bx-muted group-hover:text-blue-400 flex-shrink-0 text-sm mt-0.5 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5">↗</span>
     </button>
   );
 }
@@ -74,24 +74,24 @@ export default function Services() {
       {/* Левая панель — категории */}
       <aside className="w-52 flex-shrink-0 border-r border-bx-border overflow-y-auto bg-bx-surface/30">
         <div className="px-3 pt-4 pb-2">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Категории</p>
+          <p className="text-[10px] text-bx-muted uppercase tracking-wider font-semibold">Категории</p>
         </div>
         <nav className="px-2 pb-4 space-y-0.5">
           <button
             onClick={() => setActiveSection(null)}
-            className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-xs transition-colors ${!activeSection ? 'bg-blue-600/20 text-blue-400 font-semibold' : 'text-slate-400 hover:bg-bx-surface-2 hover:text-slate-200'}`}
+            className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-xs transition-colors ${!activeSection ? 'bg-blue-600/20 text-blue-400 font-semibold' : 'text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text'}`}
           >
             <span>Все сервисы</span>
-            <span className="text-[10px] text-slate-600 font-mono">{totalCount}</span>
+            <span className="text-[10px] text-bx-muted font-mono">{totalCount}</span>
           </button>
           {sections.map(s => (
             <button
               key={s.id}
               onClick={() => setActiveSection(s.id === activeSection ? null : s.id)}
-              className={`w-full flex items-center justify-between gap-2 text-left px-3 py-2 rounded-lg text-xs transition-colors leading-snug ${activeSection === s.id ? 'bg-blue-600/20 text-blue-400 font-semibold' : 'text-slate-400 hover:bg-bx-surface-2 hover:text-slate-200'}`}
+              className={`w-full flex items-center justify-between gap-2 text-left px-3 py-2 rounded-lg text-xs transition-colors leading-snug ${activeSection === s.id ? 'bg-blue-600/20 text-blue-400 font-semibold' : 'text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text'}`}
             >
               <span className="truncate">{s.title}</span>
-              <span className="text-[10px] text-slate-600 font-mono flex-shrink-0">{s.items.length}</span>
+              <span className="text-[10px] text-bx-muted font-mono flex-shrink-0">{s.items.length}</span>
             </button>
           ))}
         </nav>
@@ -102,7 +102,7 @@ export default function Services() {
         <div className="sticky top-0 z-10 px-6 pt-5 pb-3 border-b border-bx-border bg-bx-bg/85 backdrop-blur flex items-center gap-4">
           <div>
             <h1 className="text-lg font-bold text-bx-text">Навигатор сервисов</h1>
-            <p className="text-xs text-slate-500">{totalCount} сервисов для бухгалтера РУз · <span className="text-blue-400 font-semibold">ЧАСТО</span> — самые нужные</p>
+            <p className="text-xs text-bx-muted">{totalCount} сервисов для бухгалтера РУз · <span className="text-blue-400 font-semibold">ЧАСТО</span> — самые нужные</p>
           </div>
           <input
             type="text"
@@ -130,7 +130,7 @@ export default function Services() {
             <section key={section.id}>
               <h2 className="flex items-center justify-between text-sm font-bold text-bx-text mb-3">
                 <span>{section.title}</span>
-                <span className="text-[10px] text-slate-600 font-mono font-normal">{section.items.length}</span>
+                <span className="text-[10px] text-bx-muted font-mono font-normal">{section.items.length}</span>
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
                 {section.items.map(item => <ServiceCard key={item.url + item.title} item={item} />)}
@@ -139,7 +139,7 @@ export default function Services() {
           ))}
 
           {filtered.length === 0 && (
-            <div className="text-center py-16 text-slate-500 text-sm">
+            <div className="text-center py-16 text-bx-muted text-sm">
               По запросу «{search}» ничего не найдено
             </div>
           )}

@@ -31,7 +31,7 @@ export default function MoneyInput({ value, onChange, placeholder = '0', big, au
       value={value}
       onChange={e => onChange(format(e.target.value))}
       placeholder={placeholder}
-      className={`w-full bg-[#0f1117] text-slate-200 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 tabular-nums ${
+      className={`w-full bg-bx-bg text-bx-text rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 tabular-nums ${
         big ? 'text-lg px-4 py-3' : 'text-sm px-3 py-2.5'
       }`}
     />

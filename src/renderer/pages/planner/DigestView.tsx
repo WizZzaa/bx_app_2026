@@ -34,7 +34,7 @@ function dueChip(d: string | null, today: string): { text: string; cls: string }
   const diff = Math.round((new Date(d).getTime() - new Date(today).getTime()) / 86400000);
   if (diff < 0)  return { text: `−${Math.abs(diff)} дн.`, cls: 'text-red-400' };
   if (diff === 0) return { text: 'сегодня', cls: 'text-amber-400' };
-  return { text: new Date(d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }), cls: 'text-slate-500' };
+  return { text: new Date(d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }), cls: 'text-bx-muted' };
 }
 
 export default function DigestView({ events, cards, boards, onEventClick, onCardClick, onOpenBoard }: Props) {
@@ -85,7 +85,7 @@ export default function DigestView({ events, cards, boards, onEventClick, onCard
     <div className="h-full overflow-y-auto">
       <div className="max-w-3xl mx-auto pb-6 space-y-5">
         {sections === 0 && (
-          <p className="text-sm text-slate-600 text-center py-12">Ни задач, ни сроков, ни долгов — редкий день ✓</p>
+          <p className="text-sm text-bx-muted text-center py-12">Ни задач, ни сроков, ни долгов — редкий день ✓</p>
         )}
 
         {/* 1. События Планировщика */}
@@ -190,11 +190,11 @@ function Section({ icon, title, count, action, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-[#1e2535] bg-[#10141d] overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#1e2535] bg-[#141820]">
-        <p className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+    <div className="rounded-2xl border border-bx-border bg-bx-surface overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-bx-border bg-bx-surface">
+        <p className="text-sm font-semibold text-bx-text flex items-center gap-2">
           <span>{icon}</span>{title}
-          <span className="text-[11px] font-normal text-slate-500">· {count}</span>
+          <span className="text-[11px] font-normal text-bx-muted">· {count}</span>
         </p>
         {action && (
           <button onClick={action.onClick} className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors">
@@ -214,9 +214,9 @@ function Row({ left, title, badges, right, onClick }: {
 }) {
   return (
     <button onClick={onClick}
-      className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-[#1a2030] text-left transition-colors group">
+      className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-bx-surface-2 text-left transition-colors group">
       <span className="w-5 flex-shrink-0 text-center">{left}</span>
-      <span className="flex-1 min-w-0 text-[13px] text-slate-300 group-hover:text-white truncate">{title}</span>
+      <span className="flex-1 min-w-0 text-[13px] text-bx-text group-hover:text-white truncate">{title}</span>
       {badges.map(b => (
         <span key={b.text} className={`text-[10px] px-1.5 py-0.5 rounded flex-shrink-0 ${b.cls}`}>{b.text}</span>
       ))}
@@ -226,5 +226,5 @@ function Row({ left, title, badges, right, onClick }: {
 }
 
 function More({ n }: { n: number }) {
-  return <p className="text-[11px] text-slate-600 px-2.5 py-1">+{n} ещё…</p>;
+  return <p className="text-[11px] text-bx-muted px-2.5 py-1">+{n} ещё…</p>;
 }

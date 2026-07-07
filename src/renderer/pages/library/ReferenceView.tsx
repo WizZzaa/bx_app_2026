@@ -23,7 +23,7 @@ export default function ReferenceView({ initialTab }: { initialTab?: RefTabId })
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-5">
       {/* Баннер о сверке */}
-      <div className="text-xs text-slate-400 bg-bx-surface border border-bx-border rounded-lg px-4 py-2.5 flex items-start gap-2">
+      <div className="text-xs text-bx-muted bg-bx-surface border border-bx-border rounded-lg px-4 py-2.5 flex items-start gap-2">
         <span className="text-emerald-400">✓</span>
         <span>
           Ключевые показатели (БРВ, МРОТ, ставка ЦБ) сверены 03.07.2026 — отмечены зелёным бейджем.
@@ -42,7 +42,7 @@ export default function ReferenceView({ initialTab }: { initialTab?: RefTabId })
             className={`px-3.5 py-1.5 rounded-lg text-sm transition-colors ${
               active === t.id
                 ? 'bg-blue-600 text-white'
-                : 'bg-bx-border text-slate-400 hover:text-slate-200 hover:bg-bx-border-2'
+                : 'bg-bx-border text-bx-muted hover:text-bx-text hover:bg-bx-border-2'
             }`}
           >
             {t.label}

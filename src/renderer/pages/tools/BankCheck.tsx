@@ -25,15 +25,15 @@ export default function BankCheck() {
     <div className="space-y-5">
       {/* Расчётный счёт */}
       <div>
-        <label className="block text-xs text-slate-400 mb-1.5">Расчётный счёт (20 цифр)</label>
+        <label className="block text-xs text-bx-muted mb-1.5">Расчётный счёт (20 цифр)</label>
         <input
           value={account}
           onChange={e => setAccount(e.target.value.replace(/[^\d\s]/g, '').slice(0, 25))}
           placeholder="2020 8000 9001 2345 6789"
           inputMode="numeric"
           autoFocus
-          className={`w-full bg-[#0f1117] text-slate-200 text-lg px-4 py-3 rounded-lg border focus:outline-none tabular-nums tracking-wide ${
-            accState === null ? 'border-[#2a3447] focus:border-blue-500/50'
+          className={`w-full bg-bx-bg text-bx-text text-lg px-4 py-3 rounded-lg border focus:outline-none tabular-nums tracking-wide ${
+            accState === null ? 'border-bx-border-2 focus:border-blue-500/50'
             : accState ? 'border-emerald-500/50' : 'border-red-500/50'
           }`}
         />
@@ -45,9 +45,9 @@ export default function BankCheck() {
           </p>
         )}
         {accState && (
-          <p className="text-[11px] text-slate-500 mt-1">
-            Балансовый счёт: <span className="text-slate-300 font-mono">{accClean.slice(0, 5)}</span> ·
-            код валюты: <span className="text-slate-300 font-mono">{accClean.slice(5, 8)}</span>
+          <p className="text-[11px] text-bx-muted mt-1">
+            Балансовый счёт: <span className="text-bx-text font-mono">{accClean.slice(0, 5)}</span> ·
+            код валюты: <span className="text-bx-text font-mono">{accClean.slice(5, 8)}</span>
             {accClean.slice(5, 8) === '000' ? ' (сум)' : ''}
           </p>
         )}
@@ -55,13 +55,13 @@ export default function BankCheck() {
 
       {/* МФО → банк */}
       <div>
-        <label className="block text-xs text-slate-400 mb-1.5">МФО банка (5 цифр)</label>
+        <label className="block text-xs text-bx-muted mb-1.5">МФО банка (5 цифр)</label>
         <input
           value={mfo}
           onChange={e => setMfo(e.target.value.replace(/\D/g, '').slice(0, 5))}
           placeholder="00377"
           inputMode="numeric"
-          className="w-full bg-[#0f1117] text-slate-200 text-lg px-4 py-3 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 tabular-nums"
+          className="w-full bg-bx-bg text-bx-text text-lg px-4 py-3 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 tabular-nums"
         />
         {mfo.length === 5 && (
           <p className={`text-xs mt-1.5 ${bank ? 'text-emerald-400' : 'text-amber-400'}`}>
@@ -71,24 +71,24 @@ export default function BankCheck() {
       </div>
 
       {/* Справочник МФО */}
-      <div className="rounded-2xl border border-[#1e2535] overflow-hidden">
-        <div className="px-4 py-2.5 bg-[#141820] border-b border-[#1e2535]">
-          <p className="text-xs font-semibold text-slate-300">Справочник МФО <span className="text-slate-600 font-normal">· клик копирует код</span></p>
+      <div className="rounded-2xl border border-bx-border overflow-hidden">
+        <div className="px-4 py-2.5 bg-bx-surface border-b border-bx-border">
+          <p className="text-xs font-semibold text-bx-text">Справочник МФО <span className="text-bx-muted font-normal">· клик копирует код</span></p>
         </div>
-        <div className="divide-y divide-[#1e2535]/60 max-h-72 overflow-y-auto">
+        <div className="divide-y divide-bx-border/60 max-h-72 overflow-y-auto">
           {Object.entries(BANKS_MFO).map(([code, name]) => (
             <button key={code} onClick={() => copy(code, code)}
-              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#1a2030] text-left transition-colors">
+              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-bx-surface-2 text-left transition-colors">
               <span className={`text-xs font-mono w-14 flex-shrink-0 ${copied === code ? 'text-emerald-400' : 'text-blue-400'}`}>
                 {copied === code ? '✓' : code}
               </span>
-              <span className="text-xs text-slate-300 truncate">{name}</span>
+              <span className="text-xs text-bx-text truncate">{name}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <p className="text-[11px] text-slate-600">
+      <p className="text-[11px] text-bx-muted">
         Формат р/с РУз: 20 цифр (5 — балансовый счёт, 3 — код валюты, 12 — лицевой). Полный список МФО — на cbu.uz.
       </p>
     </div>

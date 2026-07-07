@@ -99,7 +99,7 @@ const STATIC_NEWS: NewsItem[] = [
     date: '2024-01-01',
     url: 'https://e-imzo.uz',
     tag: 'ЭЦП',
-    tagColor: 'bg-slate-500/10 text-slate-400',
+    tagColor: 'bg-slate-500/10 text-bx-muted',
   },
 ];
 
@@ -264,7 +264,7 @@ export default function News() {
         <div className="p-4 space-y-6">
           {/* Меню разделов */}
           <div>
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-2.5 px-2">Категории справки</p>
+            <p className="text-[10px] text-bx-muted uppercase tracking-wider font-bold mb-2.5 px-2">Категории справки</p>
             <nav className="space-y-1">
               {categories.map(cat => (
                 <button
@@ -273,12 +273,12 @@ export default function News() {
                   className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between group ${
                     filter === cat
                       ? 'bg-blue-600/15 text-blue-400 border border-blue-500/20'
-                      : 'text-slate-400 hover:bg-bx-surface-2 hover:text-slate-200'
+                      : 'text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text'
                   }`}
                 >
                   <span className="truncate">{cat === 'all' ? 'Все показатели' : cat}</span>
                   <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
-                    filter === cat ? 'bg-blue-500/20 text-blue-400' : 'bg-bx-bg text-slate-600'
+                    filter === cat ? 'bg-blue-500/20 text-blue-400' : 'bg-bx-bg text-bx-muted'
                   }`}>
                     {cat === 'all' 
                       ? mergedStatic.length + cmsNews.length
@@ -294,7 +294,7 @@ export default function News() {
 
           {/* Быстрые источники */}
           <div>
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-3 px-2">Официальные источники</p>
+            <p className="text-[10px] text-bx-muted uppercase tracking-wider font-bold mb-3 px-2">Официальные источники</p>
             <div className="space-y-1.5">
               {NEWS_SOURCES.map(source => (
                 <button
@@ -305,9 +305,9 @@ export default function News() {
                   <span className="text-base flex-shrink-0 bg-bx-bg/80 w-7 h-7 rounded-lg border border-bx-border/50 grid place-items-center">{source.icon}</span>
                   <div className="min-w-0 flex-1">
                     <p className={`text-xs font-bold leading-tight ${source.color} group-hover:text-white transition-colors`}>{source.name}</p>
-                    <p className="text-[9px] text-slate-500 truncate leading-relaxed mt-0.5">{source.desc}</p>
+                    <p className="text-[9px] text-bx-muted truncate leading-relaxed mt-0.5">{source.desc}</p>
                   </div>
-                  <span className="text-slate-700 group-hover:text-blue-400 text-xs transition-colors self-center">↗</span>
+                  <span className="text-bx-muted group-hover:text-blue-400 text-xs transition-colors self-center">↗</span>
                 </button>
               ))}
             </div>
@@ -316,7 +316,7 @@ export default function News() {
 
         {/* Подвал боковой панели */}
         <div className="p-4 border-t border-bx-border/40 bg-bx-bg/10">
-          <p className="text-[10px] text-slate-500 leading-normal text-center">
+          <p className="text-[10px] text-bx-muted leading-normal text-center">
             Показатели синхронизированы с базой данных в реальном времени.
           </p>
         </div>
@@ -328,9 +328,9 @@ export default function News() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-bx-text">Информационный навигатор</h1>
-            <p className="text-xs text-slate-500">Деловые новости РУз и сводка ключевых фин-показателей на {currentYear}</p>
+            <p className="text-xs text-bx-muted">Деловые новости РУз и сводка ключевых фин-показателей на {currentYear}</p>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-slate-500 bg-bx-surface/30 px-3 py-1.5 rounded-full border border-bx-border/50">
+          <div className="flex items-center gap-1.5 text-[10px] text-bx-muted bg-bx-surface/30 px-3 py-1.5 rounded-full border border-bx-border/50">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span>Синхронизация с БД активна</span>
           </div>
@@ -341,11 +341,11 @@ export default function News() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             {/* КАРТОЧКА 1: Деловая лента (2 колонки, 2 строки) */}
-            <div className="md:col-span-2 md:row-span-2 bg-[#0c0f17] border border-[#1e2535] rounded-3xl p-5 flex flex-col justify-between min-h-[380px] relative overflow-hidden group shadow-xl">
+            <div className="md:col-span-2 md:row-span-2 bg-bx-bg border border-bx-border rounded-3xl p-5 flex flex-col justify-between min-h-[380px] relative overflow-hidden group shadow-xl">
               <span className="pointer-events-none absolute -right-16 -top-16 w-48 h-48 rounded-full bg-blue-500/5 blur-3xl group-hover:scale-125 transition-transform duration-700" />
               
               <div className="flex flex-col h-full justify-between space-y-3 z-10">
-                <div className="flex items-center justify-between border-b border-[#1e2535] pb-3 flex-shrink-0">
+                <div className="flex items-center justify-between border-b border-bx-border pb-3 flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="text-base">📰</span>
                     <h2 className="text-sm font-bold text-bx-text">Деловая лента новостей</h2>
@@ -353,7 +353,7 @@ export default function News() {
                   <button
                     onClick={loadFeed}
                     disabled={feedState === 'loading'}
-                    className="text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors flex items-center gap-1 bg-[#141820] border border-[#1e2535] px-2.5 py-1 rounded-lg"
+                    className="text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors flex items-center gap-1 bg-bx-surface border border-bx-border px-2.5 py-1 rounded-lg"
                   >
                     {feedState === 'loading' ? (
                       <>
@@ -371,7 +371,7 @@ export default function News() {
                   {feed.length === 0 && feedState === 'loading' && (
                     <div className="flex flex-col items-center justify-center h-full py-12">
                       <span className="w-6 h-6 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-2" />
-                      <p className="text-xs text-slate-500 italic">Считываем свежие сводки...</p>
+                      <p className="text-xs text-bx-muted italic">Считываем свежие сводки...</p>
                     </div>
                   )}
                   {feed.length === 0 && feedState === 'error' && (
@@ -383,15 +383,15 @@ export default function News() {
                     <button
                       key={i}
                       onClick={() => openLink(n.link)}
-                      className="w-full flex items-center gap-3 px-3 py-2 bg-[#121622]/40 hover:bg-[#161c2b] border border-[#1e2535]/50 hover:border-blue-500/30 rounded-xl text-left transition-all group/item"
+                      className="w-full flex items-center gap-3 px-3 py-2 bg-bx-surface/40 hover:bg-bx-surface-2 border border-bx-border/50 hover:border-blue-500/30 rounded-xl text-left transition-all group/item"
                     >
-                      <span className="flex-1 text-xs font-medium text-slate-300 group-hover/item:text-white truncate transition-colors">
+                      <span className="flex-1 text-xs font-medium text-bx-text group-hover/item:text-white truncate transition-colors">
                         {n.title}
                       </span>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-slate-500 font-mono flex-shrink-0 group-hover/item:bg-blue-500/10 group-hover/item:text-blue-400 transition-colors">
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-bx-surface-2 text-bx-muted font-mono flex-shrink-0 group-hover/item:bg-blue-500/10 group-hover/item:text-blue-400 transition-colors">
                         {n.source}
                       </span>
-                      <span className="text-[9px] text-slate-600 w-12 text-right flex-shrink-0">
+                      <span className="text-[9px] text-bx-muted w-12 text-right flex-shrink-0">
                         {fmtFeedDate(n.date)}
                       </span>
                     </button>
@@ -401,7 +401,7 @@ export default function News() {
             </div>
 
             {/* КАРТОЧКА 2: МРОТ и БРВ (1 колонка, 2 строки) */}
-            <div className="bg-[#0c0f17] border border-[#1e2535] rounded-3xl p-5 flex flex-col justify-between min-h-[380px] relative overflow-hidden group shadow-xl">
+            <div className="bg-bx-bg border border-bx-border rounded-3xl p-5 flex flex-col justify-between min-h-[380px] relative overflow-hidden group shadow-xl">
               <span className="absolute -right-3 -bottom-6 text-9xl opacity-[0.03] select-none pointer-events-none group-hover:scale-110 transition-transform duration-700">📈</span>
               <span className="pointer-events-none absolute -left-16 -bottom-16 w-44 h-44 rounded-full bg-emerald-500/5 blur-3xl group-hover:scale-125 transition-transform duration-700" />
               
@@ -412,22 +412,22 @@ export default function News() {
                 </div>
 
                 <div className="space-y-4 my-auto">
-                  <div className="bg-[#121622] p-3 rounded-2xl border border-[#1e2535]/60 hover:border-emerald-500/25 transition-all">
-                    <span className="text-[10px] text-slate-500 font-bold block">МРОТ (Мин. оплата труда)</span>
+                  <div className="bg-bx-surface p-3 rounded-2xl border border-bx-border/60 hover:border-emerald-500/25 transition-all">
+                    <span className="text-[10px] text-bx-muted font-bold block">МРОТ (Мин. оплата труда)</span>
                     <div className="flex items-baseline gap-1 mt-1">
                       <span className="text-lg font-bold text-emerald-400">{mrotValue}</span>
-                      <span className="text-[10px] text-slate-500 font-medium">UZS</span>
+                      <span className="text-[10px] text-bx-muted font-medium">UZS</span>
                     </div>
-                    <span className="text-[9px] text-slate-600 block mt-0.5">Установлен Указом Президента</span>
+                    <span className="text-[9px] text-bx-muted block mt-0.5">Установлен Указом Президента</span>
                   </div>
 
-                  <div className="bg-[#121622] p-3 rounded-2xl border border-[#1e2535]/60 hover:border-emerald-500/25 transition-all">
-                    <span className="text-[10px] text-slate-500 font-bold block">БРВ (Базовая расчетная величина)</span>
+                  <div className="bg-bx-surface p-3 rounded-2xl border border-bx-border/60 hover:border-emerald-500/25 transition-all">
+                    <span className="text-[10px] text-bx-muted font-bold block">БРВ (Базовая расчетная величина)</span>
                     <div className="flex items-baseline gap-1 mt-1">
                       <span className="text-lg font-bold text-emerald-400">{brvValue}</span>
-                      <span className="text-[10px] text-slate-500 font-medium">UZS</span>
+                      <span className="text-[10px] text-bx-muted font-medium">UZS</span>
                     </div>
-                    <span className="text-[9px] text-slate-600 block mt-0.5">Для штрафов, пошлин и сборов</span>
+                    <span className="text-[9px] text-bx-muted block mt-0.5">Для штрафов, пошлин и сборов</span>
                   </div>
                 </div>
 
@@ -442,52 +442,52 @@ export default function News() {
             </div>
 
             {/* КАРТОЧКА 3: Ставка НДС (1 колонка, 1 строка) */}
-            <div className="bg-[#0c0f17] border border-[#1e2535] rounded-3xl p-5 flex flex-col justify-between min-h-[175px] relative overflow-hidden group shadow-xl">
+            <div className="bg-bx-bg border border-bx-border rounded-3xl p-5 flex flex-col justify-between min-h-[175px] relative overflow-hidden group shadow-xl">
               <span className="absolute -right-3 -bottom-5 text-8xl opacity-[0.03] select-none pointer-events-none group-hover:scale-110 transition-transform duration-700">📊</span>
               <span className="pointer-events-none absolute -right-12 -bottom-12 w-32 h-32 rounded-full bg-blue-500/5 blur-2xl group-hover:scale-125 transition-transform duration-700" />
 
               <div className="flex flex-col h-full justify-between z-10">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">НДС</span>
-                  <span className="text-[10px] text-slate-500 font-mono">ст. 258 НК РУз</span>
+                  <span className="text-[10px] text-bx-muted font-mono">ст. 258 НК РУз</span>
                 </div>
                 <div>
                   <span className="text-4xl font-extrabold text-blue-400 tracking-tight">
                     {taxesFromDb['ндс'] || '12%'}
                   </span>
                   <h4 className="text-xs font-bold text-bx-text mt-1.5">Ставка НДС в Узбекистане</h4>
-                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Основная ставка налога на добавленную стоимость.</p>
+                  <p className="text-[10px] text-bx-muted mt-0.5 leading-snug">Основная ставка налога на добавленную стоимость.</p>
                 </div>
               </div>
             </div>
 
             {/* КАРТОЧКА 4: Ставка ЦБ (1 колонка, 1 строка) */}
-            <div className="bg-[#0c0f17] border border-[#1e2535] rounded-3xl p-5 flex flex-col justify-between min-h-[175px] relative overflow-hidden group shadow-xl">
+            <div className="bg-bx-bg border border-bx-border rounded-3xl p-5 flex flex-col justify-between min-h-[175px] relative overflow-hidden group shadow-xl">
               <span className="absolute -right-3 -bottom-5 text-8xl opacity-[0.03] select-none pointer-events-none group-hover:scale-110 transition-transform duration-700">🏦</span>
               <span className="pointer-events-none absolute -right-12 -bottom-12 w-32 h-32 rounded-full bg-amber-500/5 blur-2xl group-hover:scale-125 transition-transform duration-700" />
 
               <div className="flex flex-col h-full justify-between z-10">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Ключевая ставка ЦБ</span>
-                  <span className="text-[10px] text-slate-500 font-mono">Ставка ЦБ</span>
+                  <span className="text-[10px] text-bx-muted font-mono">Ставка ЦБ</span>
                 </div>
                 <div>
                   <span className="text-4xl font-extrabold text-amber-400 tracking-tight">{refiValue}</span>
                   <h4 className="text-xs font-bold text-bx-text mt-1.5">Рефинансирование ЦБ РУз</h4>
-                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Действует на расчет пени, кредитные лимиты и дисконты.</p>
+                  <p className="text-[10px] text-bx-muted mt-0.5 leading-snug">Действует на расчет пени, кредитные лимиты и дисконты.</p>
                 </div>
               </div>
             </div>
 
             {/* КАРТОЧКА 5: Налог на прибыль (1 колонка, 1 строка) */}
-            <div className="bg-[#0c0f17] border border-[#1e2535] rounded-3xl p-5 flex flex-col justify-between min-h-[175px] relative overflow-hidden group shadow-xl">
+            <div className="bg-bx-bg border border-bx-border rounded-3xl p-5 flex flex-col justify-between min-h-[175px] relative overflow-hidden group shadow-xl">
               <span className="absolute -right-3 -bottom-5 text-8xl opacity-[0.03] select-none pointer-events-none group-hover:scale-110 transition-transform duration-700">💼</span>
               <span className="pointer-events-none absolute -right-12 -bottom-12 w-32 h-32 rounded-full bg-purple-500/5 blur-2xl group-hover:scale-125 transition-transform duration-700" />
 
               <div className="flex flex-col h-full justify-between z-10">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Налог на прибыль</span>
-                  <span className="text-[10px] text-slate-500 font-mono">ст. 337 НК</span>
+                  <span className="text-[10px] text-bx-muted font-mono">ст. 337 НК</span>
                 </div>
                 <div>
                   <div className="flex items-baseline gap-2">
@@ -497,13 +497,13 @@ export default function News() {
                     <span className="text-xs text-purple-300 font-bold bg-purple-500/10 px-1.5 py-0.5 rounded">IT-парк: 7.5%</span>
                   </div>
                   <h4 className="text-xs font-bold text-bx-text mt-1.5">Прибыль юридических лиц</h4>
-                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Льготная ставка для экспортеров и резидентов технопарков.</p>
+                  <p className="text-[10px] text-bx-muted mt-0.5 leading-snug">Льготная ставка для экспортеров и резидентов технопарков.</p>
                 </div>
               </div>
             </div>
 
             {/* КАРТОЧКА 6: Календарь сдачи деклараций и ЭЦП (2 колонки, 1 строка) */}
-            <div className="md:col-span-2 bg-[#0c0f17] border border-[#1e2535] rounded-3xl p-5 flex flex-col justify-between min-h-[175px] relative overflow-hidden group shadow-xl">
+            <div className="md:col-span-2 bg-bx-bg border border-bx-border rounded-3xl p-5 flex flex-col justify-between min-h-[175px] relative overflow-hidden group shadow-xl">
               <span className="absolute -right-3 -bottom-5 text-8xl opacity-[0.03] select-none pointer-events-none group-hover:scale-110 transition-transform duration-700">⏰</span>
               <span className="pointer-events-none absolute -left-12 -bottom-12 w-36 h-36 rounded-full bg-rose-500/5 blur-2xl group-hover:scale-125 transition-transform duration-700" />
 
@@ -516,15 +516,15 @@ export default function News() {
                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                   <div>
                     <h4 className="text-sm font-bold text-bx-text">Сдача деклараций ЮЛ за 2025 год</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Крайний срок отправки отчётности на портале soliq.uz</p>
+                    <p className="text-[11px] text-bx-muted mt-0.5">Крайний срок отправки отчётности на портале soliq.uz</p>
                   </div>
-                  <div className="bg-[#121622] border border-[#1e2535] px-4 py-2.5 rounded-2xl text-center self-stretch sm:self-auto flex flex-col justify-center">
-                    <span className="text-[9px] text-slate-600 uppercase font-bold">Срок до:</span>
+                  <div className="bg-bx-surface border border-bx-border px-4 py-2.5 rounded-2xl text-center self-stretch sm:self-auto flex flex-col justify-center">
+                    <span className="text-[9px] text-bx-muted uppercase font-bold">Срок до:</span>
                     <span className="text-sm font-bold text-rose-400">01 марта 2026 г.</span>
                   </div>
                 </div>
                 
-                <div className="border-t border-[#1e2535] pt-2 flex items-center justify-between text-[10px] text-slate-500">
+                <div className="border-t border-bx-border pt-2 flex items-center justify-between text-[10px] text-bx-muted">
                   <span>🔐 E-Imzo: новые ключи выдаются сроком на 2 года через my.gov.uz</span>
                   <button onClick={() => openLink('https://my.soliq.uz')} className="text-blue-400 hover:text-blue-300 font-semibold underline transition-colors">Портал ГНК ↗</button>
                 </div>
@@ -532,24 +532,24 @@ export default function News() {
             </div>
 
             {/* КАРТОЧКА 7: Социальный налог и НДФЛ (1 колонка, 1 строка) */}
-            <div className="bg-[#0c0f17] border border-[#1e2535] rounded-3xl p-5 flex flex-col justify-between min-h-[175px] relative overflow-hidden group shadow-xl">
+            <div className="bg-bx-bg border border-bx-border rounded-3xl p-5 flex flex-col justify-between min-h-[175px] relative overflow-hidden group shadow-xl">
               <span className="absolute -right-3 -bottom-5 text-8xl opacity-[0.03] select-none pointer-events-none group-hover:scale-110 transition-transform duration-700">🛡</span>
               <span className="pointer-events-none absolute -right-12 -bottom-12 w-32 h-32 rounded-full bg-cyan-500/5 blur-2xl group-hover:scale-125 transition-transform duration-700" />
 
               <div className="flex flex-col h-full justify-between z-10">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Налоги с ФОТ</span>
-                  <span className="text-[10px] text-slate-500 font-mono">Социальный & НДФЛ</span>
+                  <span className="text-[10px] text-bx-muted font-mono">Социальный & НДФЛ</span>
                 </div>
                 <div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-extrabold text-cyan-400 tracking-tight">
                       {taxesFromDb['социальный налог'] || '12%'}
                     </span>
-                    <span className="text-xs text-slate-500 font-semibold">соц. налог</span>
+                    <span className="text-xs text-bx-muted font-semibold">соц. налог</span>
                   </div>
                   <h4 className="text-xs font-bold text-bx-text mt-1.5">НДФЛ в Узбекистане — {taxesFromDb['ндфл'] || '12%'}</h4>
-                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Плоские ставки подоходного налога и соц. платежа.</p>
+                  <p className="text-[10px] text-bx-muted mt-0.5 leading-snug">Плоские ставки подоходного налога и соц. платежа.</p>
                 </div>
               </div>
             </div>
@@ -567,17 +567,17 @@ export default function News() {
               {cmsNews.map((n, i) => (
                 <div
                   key={n.id || i}
-                  className="bg-[#0c0f17] border border-[#1e2535] hover:border-blue-500/20 rounded-3xl p-5 relative overflow-hidden group shadow-xl min-h-[160px] flex flex-col justify-between transition-all"
+                  className="bg-bx-bg border border-bx-border hover:border-blue-500/20 rounded-3xl p-5 relative overflow-hidden group shadow-xl min-h-[160px] flex flex-col justify-between transition-all"
                 >
                   <span className="pointer-events-none absolute -right-12 -bottom-12 w-28 h-28 rounded-full bg-blue-500/5 blur-2xl group-hover:scale-125 transition-transform duration-700" />
                   
                   <div className="z-10 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] px-2 py-0.5 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-full font-bold uppercase">Новости</span>
-                      <span className="text-[9px] text-slate-600 font-mono">{new Date(n.updated_at).toLocaleDateString('ru-RU')}</span>
+                      <span className="text-[9px] text-bx-muted font-mono">{new Date(n.updated_at).toLocaleDateString('ru-RU')}</span>
                     </div>
-                    <h4 className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors leading-snug">{n.title}</h4>
-                    <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed whitespace-pre-wrap">{n.body}</p>
+                    <h4 className="text-sm font-bold text-bx-text group-hover:text-white transition-colors leading-snug">{n.title}</h4>
+                    <p className="text-xs text-bx-muted line-clamp-3 leading-relaxed whitespace-pre-wrap">{n.body}</p>
                   </div>
 
                   {n.tags?.[0] && (
@@ -596,9 +596,9 @@ export default function News() {
 
         {/* Отфильтрованные карточки быстрой справки (динамический вывод, если выбран конкретный тег) */}
         {filter !== 'all' && filter !== 'Новости' && (
-          <section className="bg-[#0c0f17] border border-[#1e2535] rounded-3xl p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#1e2535] pb-2.5">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Отфильтрованные показатели: {filter}</h3>
+          <section className="bg-bx-bg border border-bx-border rounded-3xl p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-bx-border pb-2.5">
+              <h3 className="text-xs font-bold text-bx-muted uppercase tracking-wider">Отфильтрованные показатели: {filter}</h3>
               <button onClick={() => setFilter('all')} className="text-xs text-blue-400 hover:text-blue-300">Сбросить фильтр</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -606,20 +606,20 @@ export default function News() {
                 <button
                   key={i}
                   onClick={() => openLink(n.url)}
-                  className="flex items-start gap-3 p-4 bg-[#121622] hover:bg-[#161c2b] border border-[#1e2535] hover:border-blue-500/30 rounded-2xl text-left transition-all group"
+                  className="flex items-start gap-3 p-4 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border hover:border-blue-500/30 rounded-2xl text-left transition-all group"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${n.tagColor}`}>{n.tag}</span>
-                      <span className="text-xs font-bold text-slate-200 group-hover:text-white transition-colors">{n.title}</span>
+                      <span className="text-xs font-bold text-bx-text group-hover:text-white transition-colors">{n.title}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                    <div className="flex items-center gap-2 text-[10px] text-bx-muted">
                       <span>{n.source}</span>
                       <span>·</span>
                       <span>{n.date}</span>
                     </div>
                   </div>
-                  <span className="text-slate-600 group-hover:text-slate-400 text-xs transition-colors self-center">↗</span>
+                  <span className="text-bx-muted group-hover:text-bx-muted text-xs transition-colors self-center">↗</span>
                 </button>
               ))}
             </div>

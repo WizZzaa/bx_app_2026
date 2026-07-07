@@ -15,7 +15,7 @@ interface Props {
 }
 
 const COLOR_MAP: Record<string, { border: string; dot: string; text: string; ring: string }> = {
-  slate:   { border: 'border-slate-600/40',   dot: 'bg-slate-500',   text: 'text-slate-300',   ring: 'ring-slate-500' },
+  slate:   { border: 'border-slate-600/40',   dot: 'bg-slate-500',   text: 'text-bx-text',   ring: 'ring-slate-500' },
   blue:    { border: 'border-blue-500/40',    dot: 'bg-blue-500',    text: 'text-blue-300',    ring: 'ring-blue-500' },
   amber:   { border: 'border-amber-500/40',   dot: 'bg-amber-500',   text: 'text-amber-300',   ring: 'ring-amber-500' },
   emerald: { border: 'border-emerald-500/40', dot: 'bg-emerald-500', text: 'text-emerald-300', ring: 'ring-emerald-500' },
@@ -157,7 +157,7 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
     onUpdateColumns([...columns, { id: uid(), title: 'Новая колонка', color: 'slate', wip: null }]);
   }
 
-  const selCls = 'bg-[#0f1117] text-slate-300 text-[11px] px-2 py-1 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50';
+  const selCls = 'bg-bx-bg text-bx-text text-[11px] px-2 py-1 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50';
 
   return (
     <div className="flex flex-col h-full" onClick={() => setMenuCol(null)}>
@@ -165,7 +165,7 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
       <div className="flex items-center gap-2 mb-3 flex-shrink-0 flex-wrap">
         <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="🔍 Поиск карточек..."
-          className="bg-[#0f1117] text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-[#2a3447] focus:outline-none focus:border-blue-500/50 w-52" />
+          className="bg-bx-bg text-bx-text text-xs px-3 py-1.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 w-52" />
         <select value={prioF} onChange={e => setPrioF(e.target.value)} className={selCls}>
           <option value="">Приоритет: все</option>
           <option value="high">🔴 Высокий</option>
@@ -179,14 +179,14 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
           </select>
         )}
         <button onClick={() => setOverdueOnly(v => !v)}
-          className={`text-[11px] px-2.5 py-1 rounded-lg transition-colors ${overdueOnly ? 'bg-red-500/20 text-red-400' : 'bg-[#0f1117] border border-[#2a3447] text-slate-500 hover:text-slate-300'}`}>
+          className={`text-[11px] px-2.5 py-1 rounded-lg transition-colors ${overdueOnly ? 'bg-red-500/20 text-red-400' : 'bg-bx-bg border border-bx-border-2 text-bx-muted hover:text-bx-text'}`}>
           ⚠ Просроченные
         </button>
         {filterActive && (
           <button onClick={() => { setSearch(''); setPrioF(''); setLabelF(''); setOverdueOnly(false); }}
-            className="text-[11px] text-slate-600 hover:text-slate-400">сбросить</button>
+            className="text-[11px] text-bx-muted hover:text-bx-muted">сбросить</button>
         )}
-        <button onClick={onOpenArchive} className="ml-auto text-[11px] text-slate-500 hover:text-slate-300 px-2 py-1">🗄️ Архив</button>
+        <button onClick={onOpenArchive} className="ml-auto text-[11px] text-bx-muted hover:text-bx-text px-2 py-1">🗄️ Архив</button>
       </div>
 
       {/* Columns */}
@@ -201,7 +201,7 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
 
           return (
             <div key={col.id}
-              className={`flex flex-col flex-shrink-0 w-[270px] rounded-xl border bg-[#141820]/50 transition-colors ${isColDropActive ? 'border-blue-500/60 bg-blue-500/5' : isColReorderTarget ? 'border-cyan-500/60' : cc.border} ${dragColId === col.id ? 'opacity-40' : ''}`}
+              className={`flex flex-col flex-shrink-0 w-[270px] rounded-xl border bg-bx-surface/50 transition-colors ${isColDropActive ? 'border-blue-500/60 bg-blue-500/5' : isColReorderTarget ? 'border-cyan-500/60' : cc.border} ${dragColId === col.id ? 'opacity-40' : ''}`}
               onDragOver={e => onColumnDragOver(e, col, index)}
               onDrop={e => onColumnDrop(e, col, index)}
             >
@@ -210,48 +210,48 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
                 draggable={editCol !== col.id}
                 onDragStart={e => onColHeaderDragStart(e, col.id)}
                 onDragEnd={onDragEnd}
-                className="flex items-center justify-between px-3 py-2.5 border-b border-[#1e2535] relative cursor-grab active:cursor-grabbing">
+                className="flex items-center justify-between px-3 py-2.5 border-b border-bx-border relative cursor-grab active:cursor-grabbing">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${cc.dot}`} />
                   {editCol === col.id ? (
                     <input autoFocus value={colName} onChange={e => setColName(e.target.value)}
                       onBlur={() => renameColumn(col.id)}
                       onKeyDown={e => { if (e.key === 'Enter') renameColumn(col.id); if (e.key === 'Escape') setEditCol(null); }}
-                      className="bg-[#0f1117] text-slate-200 text-xs px-1.5 py-0.5 rounded border border-blue-500/50 focus:outline-none flex-1 min-w-0" />
+                      className="bg-bx-bg text-bx-text text-xs px-1.5 py-0.5 rounded border border-blue-500/50 focus:outline-none flex-1 min-w-0" />
                   ) : (
                     <span onDoubleClick={() => { setEditCol(col.id); setColName(col.title); }}
                       className={`text-xs font-semibold truncate ${cc.text}`}>{col.title}</span>
                   )}
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${overLimit ? 'bg-red-500/20 text-red-400' : 'bg-[#1e2535] text-slate-500'}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${overLimit ? 'bg-red-500/20 text-red-400' : 'bg-bx-surface-2 text-bx-muted'}`}>
                     {filterActive ? `${colCards.length}/${totalInCol}` : totalInCol}{col.wip != null ? ` · ${col.wip}` : ''}
                   </span>
                 </div>
                 <button onClick={(e) => { e.stopPropagation(); setMenuCol(menuCol === col.id ? null : col.id); }}
-                  className="text-slate-600 hover:text-slate-300 px-1 leading-none flex-shrink-0">⋯</button>
+                  className="text-bx-muted hover:text-bx-text px-1 leading-none flex-shrink-0">⋯</button>
 
                 {menuCol === col.id && (
                   <div onClick={e => e.stopPropagation()}
-                    className="absolute right-2 top-9 z-20 bg-[#1a1f2b] border border-[#2a3447] rounded-lg shadow-xl py-1 w-44 text-xs">
-                    <button onClick={() => { setEditCol(col.id); setColName(col.title); setMenuCol(null); }} className="w-full text-left px-3 py-1.5 text-slate-300 hover:bg-[#252c3a]">✏️ Переименовать</button>
+                    className="absolute right-2 top-9 z-20 bg-bx-surface-2 border border-bx-border-2 rounded-lg shadow-xl py-1 w-44 text-xs">
+                    <button onClick={() => { setEditCol(col.id); setColName(col.title); setMenuCol(null); }} className="w-full text-left px-3 py-1.5 text-bx-text hover:bg-bx-surface-2">✏️ Переименовать</button>
                     <div className="px-3 py-1.5">
-                      <p className="text-[10px] text-slate-600 mb-1">Цвет</p>
+                      <p className="text-[10px] text-bx-muted mb-1">Цвет</p>
                       <div className="flex flex-wrap gap-1">
                         {COLUMN_COLORS.map(col2 => (
                           <button key={col2} onClick={() => setColumnColor(col.id, col2)}
-                            className={`w-4 h-4 rounded-full ${c(col2).dot} ${col.color === col2 ? 'ring-2 ring-offset-1 ring-offset-[#1a1f2b] ' + c(col2).ring : ''}`} />
+                            className={`w-4 h-4 rounded-full ${c(col2).dot} ${col.color === col2 ? 'ring-2 ring-offset-1 ring-offset-bx-surface-2 ' + c(col2).ring : ''}`} />
                         ))}
                       </div>
                     </div>
                     <div className="px-3 py-1.5 flex items-center gap-2">
-                      <span className="text-[10px] text-slate-600">WIP-лимит</span>
+                      <span className="text-[10px] text-bx-muted">WIP-лимит</span>
                       <input type="number" min={0} defaultValue={col.wip ?? ''} placeholder="нет"
                         onBlur={e => { const v = e.target.value ? parseInt(e.target.value) : null; onUpdateColumns(columns.map(x => x.id === col.id ? { ...x, wip: v } : x)); }}
-                        className="w-12 bg-[#0f1117] text-slate-200 text-[10px] px-1.5 py-0.5 rounded border border-[#2a3447] focus:outline-none" />
+                        className="w-12 bg-bx-bg text-bx-text text-[10px] px-1.5 py-0.5 rounded border border-bx-border-2 focus:outline-none" />
                     </div>
-                    <div className="border-t border-[#2a3447] my-1" />
-                    <button onClick={() => moveColumn(col.id, -1)} className="w-full text-left px-3 py-1.5 text-slate-400 hover:bg-[#252c3a]">← Влево</button>
-                    <button onClick={() => moveColumn(col.id, 1)} className="w-full text-left px-3 py-1.5 text-slate-400 hover:bg-[#252c3a]">Вправо →</button>
-                    <div className="border-t border-[#2a3447] my-1" />
+                    <div className="border-t border-bx-border-2 my-1" />
+                    <button onClick={() => moveColumn(col.id, -1)} className="w-full text-left px-3 py-1.5 text-bx-muted hover:bg-bx-surface-2">← Влево</button>
+                    <button onClick={() => moveColumn(col.id, 1)} className="w-full text-left px-3 py-1.5 text-bx-muted hover:bg-bx-surface-2">Вправо →</button>
+                    <div className="border-t border-bx-border-2 my-1" />
                     <button onClick={() => deleteColumn(col.id)} className="w-full text-left px-3 py-1.5 text-red-400 hover:bg-red-500/10">🗑️ Удалить колонку</button>
                   </div>
                 )}
@@ -273,9 +273,9 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
                         onDragEnd={onDragEnd}
                         onDragOver={e => onCardDragOver(e, col.id, card.id)}
                         onClick={() => onCardClick(card)}
-                        className={`bg-[#0f1117] rounded-lg border p-2.5 cursor-pointer hover:border-blue-500/40 transition-all select-none ${
+                        className={`bg-bx-bg rounded-lg border p-2.5 cursor-pointer hover:border-blue-500/40 transition-all select-none ${
                           dragId === card.id ? 'opacity-30' : ''
-                        } ${dateInfo?.overdue ? 'border-red-500/40' : 'border-[#1e2535]'}`}
+                        } ${dateInfo?.overdue ? 'border-red-500/40' : 'border-bx-border'}`}
                       >
                         {card.labels && card.labels.length > 0 && (
                           <div className="flex flex-wrap gap-1 mb-1.5">
@@ -284,18 +284,18 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
                             ))}
                           </div>
                         )}
-                        <p className="text-xs text-slate-200 leading-snug">{card.title}</p>
+                        <p className="text-xs text-bx-text leading-snug">{card.title}</p>
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
                           <div className={`w-2 h-2 rounded-full ${PRIORITY_DOT[card.priority]}`} title="приоритет" />
                           {dateInfo && (
-                            <span className={`text-[10px] ${dateInfo.overdue ? 'text-red-400' : 'text-slate-500'}`}>
+                            <span className={`text-[10px] ${dateInfo.overdue ? 'text-red-400' : 'text-bx-muted'}`}>
                               {dateInfo.overdue ? '⚠ ' : '📅 '}{dateInfo.text}
                             </span>
                           )}
                           {checkTotal > 0 && (
-                            <span className={`text-[10px] ${checkDone === checkTotal ? 'text-emerald-400' : 'text-slate-500'}`}>☑ {checkDone}/{checkTotal}</span>
+                            <span className={`text-[10px] ${checkDone === checkTotal ? 'text-emerald-400' : 'text-bx-muted'}`}>☑ {checkDone}/{checkTotal}</span>
                           )}
-                          {card.description && <span className="text-[10px] text-slate-600">📝</span>}
+                          {card.description && <span className="text-[10px] text-bx-muted">📝</span>}
                         </div>
                       </div>
                     </React.Fragment>
@@ -305,28 +305,28 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
                   <div className="h-0.5 bg-blue-500 rounded-full mx-1" />
                 )}
                 {colCards.length === 0 && !addingTo && (
-                  <div className="flex items-center justify-center h-12 text-slate-700 text-[11px]">
+                  <div className="flex items-center justify-center h-12 text-bx-muted text-[11px]">
                     {filterActive && totalInCol > 0 ? 'нет совпадений' : 'пусто'}
                   </div>
                 )}
               </div>
 
               {/* Add card */}
-              <div className="p-2 border-t border-[#1e2535]">
+              <div className="p-2 border-t border-bx-border">
                 {addingTo === col.id ? (
                   <div>
                     <textarea autoFocus value={newTitle} onChange={e => setNewTitle(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitNewCard(col.id); } if (e.key === 'Escape') { setAddingTo(null); setNewTitle(''); } }}
                       rows={2} placeholder="Название карточки..."
-                      className="w-full bg-[#0f1117] text-slate-200 text-xs px-2 py-1.5 rounded-lg border border-blue-500/50 focus:outline-none resize-none" />
+                      className="w-full bg-bx-bg text-bx-text text-xs px-2 py-1.5 rounded-lg border border-blue-500/50 focus:outline-none resize-none" />
                     <div className="flex gap-2 mt-1.5">
                       <button onClick={() => submitNewCard(col.id)} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg">Добавить</button>
-                      <button onClick={() => { setAddingTo(null); setNewTitle(''); }} className="px-2 py-1 text-slate-500 hover:text-slate-300 text-xs">✕</button>
+                      <button onClick={() => { setAddingTo(null); setNewTitle(''); }} className="px-2 py-1 text-bx-muted hover:text-bx-text text-xs">✕</button>
                     </div>
                   </div>
                 ) : (
                   <button onClick={() => { setAddingTo(col.id); setNewTitle(''); }}
-                    className="w-full text-left text-xs text-slate-600 hover:text-slate-300 px-2 py-1.5 rounded-lg hover:bg-[#1e2535] transition-colors">+ Добавить карточку</button>
+                    className="w-full text-left text-xs text-bx-muted hover:text-bx-text px-2 py-1.5 rounded-lg hover:bg-bx-surface-2 transition-colors">+ Добавить карточку</button>
                 )}
               </div>
             </div>
@@ -336,7 +336,7 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
         {/* Add column */}
         <div className="flex-shrink-0 w-[270px]">
           <button onClick={addColumn}
-            className="w-full text-sm text-slate-600 hover:text-slate-300 border border-dashed border-[#2a3447] hover:border-blue-500/40 rounded-xl py-3 transition-colors">
+            className="w-full text-sm text-bx-muted hover:text-bx-text border border-dashed border-bx-border-2 hover:border-blue-500/40 rounded-xl py-3 transition-colors">
             + Добавить колонку
           </button>
         </div>

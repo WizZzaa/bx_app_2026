@@ -90,7 +90,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
     <header className="flex items-center gap-4 px-6 h-12 bg-bx-bg border-b border-bx-border flex-shrink-0">
       <div className="flex-1 max-w-md relative" ref={boxRef}>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"><Icon name="search" className="w-4 h-4" /></span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bx-muted"><Icon name="search" className="w-4 h-4" /></span>
           <input
             type="text"
             placeholder="Поиск по приложению…"
@@ -101,14 +101,14 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
           />
           {onOpenSearch && (
             <button onClick={onOpenSearch} title="Командная палитра (Ctrl+K)"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 border border-bx-border-2 rounded px-1.5 py-0.5 hover:text-slate-300 hover:border-slate-600 transition-colors">⌘K</button>
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-bx-muted border border-bx-border-2 rounded px-1.5 py-0.5 hover:text-bx-text hover:border-bx-border-2 transition-colors">⌘K</button>
           )}
         </div>
 
         {open && (
           <div className="absolute top-full mt-1.5 w-full bg-bx-surface border border-bx-border-2 rounded-lg shadow-2xl max-h-96 overflow-y-auto z-50">
             {results.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-slate-500">Ничего не найдено</div>
+              <div className="px-4 py-3 text-sm text-bx-muted">Ничего не найдено</div>
             ) : (
               results.map((r, i) => (
                 <button
@@ -118,7 +118,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
                 >
                   <div className="flex-1 min-w-0">
                      <div className="text-sm text-bx-text truncate">{r.title}</div>
-                     <div className="text-[11px] text-slate-500 truncate">{r.subtitle}</div>
+                     <div className="text-[11px] text-bx-muted truncate">{r.subtitle}</div>
                   </div>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 flex-shrink-0">{r.category}</span>
                 </button>
@@ -146,7 +146,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
               ? isOnline ? 'bg-amber-500 animate-pulse' : 'bg-orange-500' 
               : isOnline ? 'bg-emerald-500' : 'bg-slate-600'
           }`} />
-          <span className="text-[11px] text-slate-400 font-medium">
+          <span className="text-[11px] text-bx-muted font-medium">
             {queueLength > 0
               ? isOnline 
                 ? syncing ? 'Синхронизация...' : `Ожидает отправки (${queueLength})`
@@ -166,7 +166,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
         <CompanySwitcher />
         <button
           onClick={() => navigate('/settings')}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-slate-400 transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted transition-colors"
           title="Настройки"
         >
           <Icon name="settings" className="w-4 h-4" />

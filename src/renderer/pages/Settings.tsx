@@ -177,7 +177,7 @@ export default function Settings() {
   function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
       <div>
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{title}</h2>
+        <h2 className="text-xs font-semibold text-bx-muted uppercase tracking-wider mb-2">{title}</h2>
         <div className="bg-bx-surface rounded-xl border border-bx-border overflow-hidden divide-y divide-bx-border">
           {children}
         </div>
@@ -189,8 +189,8 @@ export default function Settings() {
     return (
       <div className="flex items-center justify-between px-4 py-3 gap-4">
         <div>
-          <p className="text-sm text-slate-200">{label}</p>
-          {desc && <p className="text-xs text-slate-500 mt-0.5">{desc}</p>}
+          <p className="text-sm text-bx-text">{label}</p>
+          {desc && <p className="text-xs text-bx-muted mt-0.5">{desc}</p>}
         </div>
         <div className="flex-shrink-0">{children}</div>
       </div>
@@ -201,8 +201,8 @@ export default function Settings() {
     <div className="flex-1 overflow-y-auto p-6">
       <div className="max-w-lg mx-auto space-y-6">
         <div>
-          <h1 className="text-xl font-semibold text-white">Настройки</h1>
-          <p className="text-sm text-slate-500 mt-0.5">BX Помощник Бухгалтера v{APP_VERSION}</p>
+          <h1 className="text-xl font-semibold text-bx-text">Настройки</h1>
+          <p className="text-sm text-bx-muted mt-0.5">BX Помощник Бухгалтера v{APP_VERSION}</p>
         </div>
 
         {/* Тариф */}
@@ -212,20 +212,20 @@ export default function Settings() {
             : 'bg-gradient-to-br from-blue-600/15 to-transparent border-blue-500/30'}`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-white">
+                <p className="text-sm font-semibold text-bx-text">
                   Ваш план: {isPro ? 'Pro' : 'Free'}
                   <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-full ${isPro ? 'bg-emerald-500/15 text-emerald-400' : 'bg-blue-500/15 text-blue-400'}`}>
                     {isPro ? 'активен' : 'бесплатный'}
                   </span>
                 </p>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-bx-muted mt-0.5">
                   {isPro ? 'Спасибо, что поддерживаете BX!' : 'Pro открывает мультикомпанию, безлимитный AI и контроль оплат'}
                 </p>
               </div>
             </div>
           </div>
           <div className="rounded-xl border border-bx-border overflow-hidden text-xs">
-            <div className="grid grid-cols-3 bg-bx-surface px-4 py-2 font-semibold text-slate-300">
+            <div className="grid grid-cols-3 bg-bx-surface px-4 py-2 font-semibold text-bx-text">
               <span>Возможность</span><span className="text-center">Free</span><span className="text-center text-blue-400">Pro</span>
             </div>
             {[
@@ -236,8 +236,8 @@ export default function Settings() {
               ['Контроль оплат', '—', '✓'],
               ['Живой специалист', '—', '✓'],
             ].map(([f, a, b]) => (
-              <div key={f} className="grid grid-cols-3 px-4 py-2 border-t border-bx-border/60 text-slate-400">
-                <span>{f}</span><span className="text-center text-slate-500">{a}</span><span className="text-center text-slate-200">{b}</span>
+              <div key={f} className="grid grid-cols-3 px-4 py-2 border-t border-bx-border/60 text-bx-muted">
+                <span>{f}</span><span className="text-center text-bx-muted">{a}</span><span className="text-center text-bx-text">{b}</span>
               </div>
             ))}
           </div>
@@ -248,18 +248,18 @@ export default function Settings() {
               {/* Вкладки выбора метода */}
               <div className="flex gap-2 p-0.5 bg-bx-bg border border-bx-border rounded-lg">
                 <button onClick={() => setPayMethod('card')}
-                  className={`flex-1 py-1 text-[11px] font-semibold rounded-md transition-colors ${payMethod === 'card' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+                  className={`flex-1 py-1 text-[11px] font-semibold rounded-md transition-colors ${payMethod === 'card' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
                   Payme / Click
                 </button>
                 <button onClick={() => setPayMethod('invoice')}
-                  className={`flex-1 py-1 text-[11px] font-semibold rounded-md transition-colors ${payMethod === 'invoice' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+                  className={`flex-1 py-1 text-[11px] font-semibold rounded-md transition-colors ${payMethod === 'invoice' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
                   Счёт (юрлица)
                 </button>
               </div>
 
               {payMethod === 'card' ? (
                 <div className="space-y-3 text-center">
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                  <p className="text-[11px] text-bx-muted leading-relaxed">
                     Отсканируйте QR-код в приложении Payme или Click для мгновенной оплаты подписки.
                   </p>
                   <div className="flex justify-center gap-4 py-2">
@@ -286,21 +286,21 @@ export default function Settings() {
                       <span className="text-[10px] font-bold mt-2 text-sky-400">Click</span>
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-500 leading-relaxed">
+                  <p className="text-[10px] text-bx-muted leading-relaxed">
                     После оплаты тариф активируется автоматически. Если возникли вопросы, напишите в <span className="text-blue-400 cursor-pointer hover:underline" onClick={() => navigate('/support')}>поддержку</span>.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                  <p className="text-[11px] text-bx-muted leading-relaxed">
                     Для оплаты безналичным расчетом (перечислением) скачайте счет на оплату или используйте наши реквизиты.
                   </p>
-                  <div className="bg-bx-bg rounded-lg border border-bx-border p-3 text-[10px] space-y-1.5 font-mono text-slate-400">
-                    <p><strong className="text-slate-300">Получатель:</strong> ООО «BX SOFTWARE»</p>
-                    <p><strong className="text-slate-300">ИНН:</strong> 309876543</p>
-                    <p><strong className="text-slate-300">Р/с:</strong> 20208000900123456001</p>
-                    <p><strong className="text-slate-300">Банк:</strong> АКБ «Капиталбанк», г. Ташкент</p>
-                    <p><strong className="text-slate-300">МФО:</strong> 00440</p>
+                  <div className="bg-bx-bg rounded-lg border border-bx-border p-3 text-[10px] space-y-1.5 font-mono text-bx-muted">
+                    <p><strong className="text-bx-text">Получатель:</strong> ООО «BX SOFTWARE»</p>
+                    <p><strong className="text-bx-text">ИНН:</strong> 309876543</p>
+                    <p><strong className="text-bx-text">Р/с:</strong> 20208000900123456001</p>
+                    <p><strong className="text-bx-text">Банк:</strong> АКБ «Капиталбанк», г. Ташкент</p>
+                    <p><strong className="text-bx-text">МФО:</strong> 00440</p>
                   </div>
                   <button onClick={handleGenerateInvoice}
                     className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5">
@@ -315,12 +315,12 @@ export default function Settings() {
         {/* Аккаунт */}
         <Section title="Аккаунт">
           <SettingRow label="Email" desc="Supabase аккаунт">
-            <span className="text-sm text-slate-400">{userEmail || '—'}</span>
+            <span className="text-sm text-bx-muted">{userEmail || '—'}</span>
           </SettingRow>
           <SettingRow label="Защита PIN-кодом" desc="Спрашивать PIN при запуске и блокировке. Выключите, если мешает">
             <button
               onClick={() => togglePinEnabled(!pinEnabled)}
-              className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${pinEnabled ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-slate-400 hover:text-slate-200'}`}
+              className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${pinEnabled ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
             >
               {pinEnabled ? 'Включена' : 'Выключена'}
             </button>
@@ -329,7 +329,7 @@ export default function Settings() {
             <SettingRow label="Сбросить PIN-код" desc="Задать новый PIN при следующей блокировке">
               <button
                 onClick={resetPin}
-                className="text-xs px-3 py-1.5 bg-bx-surface-2 hover:bg-bx-border-2 text-slate-300 rounded-lg transition-colors"
+                className="text-xs px-3 py-1.5 bg-bx-surface-2 hover:bg-bx-border-2 text-bx-text rounded-lg transition-colors"
               >
                 Сбросить PIN
               </button>
@@ -342,7 +342,7 @@ export default function Settings() {
                 <button
                   key={v}
                   onClick={() => saveIdleLock(v)}
-                  className={`px-2.5 py-1 rounded text-xs transition-colors ${idleLock === v ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-slate-400 hover:text-slate-200'}`}
+                  className={`px-2.5 py-1 rounded text-xs transition-colors ${idleLock === v ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
                 >
                   {v === 'off' ? 'Выкл.' : v === '60' ? '1 час' : `${v} мин`}
                 </button>
@@ -369,7 +369,7 @@ export default function Settings() {
                 <button
                   key={t}
                   onClick={() => saveTheme(t)}
-                  className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${theme === t ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-slate-400 hover:text-slate-200'}`}
+                  className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${theme === t ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
                 >
                   {t === 'dark' ? 'Темная' : 'Светлая'}
                 </button>
@@ -379,7 +379,7 @@ export default function Settings() {
           <SettingRow label="Бухо-гороскоп" desc="Показывать шуточный гороскоп на рабочем столе">
             <button
               onClick={() => toggleHoroscope(!showHoroscope)}
-              className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${showHoroscope ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-slate-400 hover:text-slate-200'}`}
+              className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${showHoroscope ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
             >
               {showHoroscope ? 'Показывать' : 'Скрывать'}
             </button>
@@ -394,7 +394,7 @@ export default function Settings() {
                 <button
                   key={v}
                   onClick={() => saveNotify(v)}
-                  className={`px-2.5 py-1 rounded text-xs transition-colors ${notifyDays === v ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-slate-400 hover:text-slate-200'}`}
+                  className={`px-2.5 py-1 rounded text-xs transition-colors ${notifyDays === v ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
                 >
                   {v === 'off' ? 'Выкл.' : `${v} дн.`}
                 </button>
@@ -418,7 +418,7 @@ export default function Settings() {
                   className={`px-2.5 py-1 rounded text-xs transition-colors ${
                     (localStorage.getItem('bx_ai_provider') || 'gemini') === v 
                       ? 'bg-blue-600 text-white' 
-                      : 'bg-bx-surface-2 text-slate-400 hover:text-slate-200'
+                      : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'
                   }`}
                 >
                   {v === 'gemini' ? 'Облако (Gemini)' : 'Локально (Ollama)'}
@@ -434,7 +434,7 @@ export default function Settings() {
                   defaultValue={localStorage.getItem('bx_ollama_host') || 'http://localhost:11434'}
                   onBlur={e => localStorage.setItem('bx_ollama_host', e.target.value)}
                   placeholder="http://localhost:11434"
-                  className="bg-bx-bg text-slate-200 text-xs px-2 py-1 rounded border border-bx-border-2 focus:outline-none w-44"
+                  className="bg-bx-bg text-bx-text text-xs px-2 py-1 rounded border border-bx-border-2 focus:outline-none w-44"
                 />
               </SettingRow>
               <SettingRow label="Модель Ollama" desc="Название локально скачанной LLM">
@@ -443,7 +443,7 @@ export default function Settings() {
                   defaultValue={localStorage.getItem('bx_ollama_model') || 'deepseek-r1:1.5b'}
                   onBlur={e => localStorage.setItem('bx_ollama_model', e.target.value)}
                   placeholder="deepseek-r1:1.5b"
-                  className="bg-bx-bg text-slate-200 text-xs px-2 py-1 rounded border border-bx-border-2 focus:outline-none w-44"
+                  className="bg-bx-bg text-bx-text text-xs px-2 py-1 rounded border border-bx-border-2 focus:outline-none w-44"
                 />
               </SettingRow>
             </>
@@ -464,7 +464,7 @@ export default function Settings() {
                 db.employees.clear()
                 alert(`Очищен локальный кэш и база данных в браузере`)
               }}
-              className="text-xs px-3 py-1.5 bg-bx-surface-2 hover:bg-bx-border-2 text-slate-300 rounded-lg transition-colors"
+              className="text-xs px-3 py-1.5 bg-bx-surface-2 hover:bg-bx-border-2 text-bx-text rounded-lg transition-colors"
             >
               Очистить кэш
             </button>
@@ -477,13 +477,13 @@ export default function Settings() {
             <SettingRow label="Запускать при старте системы" desc="Автоматический запуск приложения при включении компьютера">
               <button
                 onClick={() => handleToggleAutostart(!autostartEnabled)}
-                className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${autostartEnabled ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-slate-400 hover:text-slate-200'}`}
+                className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${autostartEnabled ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
               >
                 {autostartEnabled ? 'Включено' : 'Выключено'}
               </button>
             </SettingRow>
             <SettingRow label="Сворачивать при закрытии" desc="При нажатии на крестик приложение сворачивается в трей и продолжает работать">
-              <span className="text-xs text-slate-500 font-medium bg-bx-surface-2 px-2.5 py-1 rounded">Активно</span>
+              <span className="text-xs text-bx-muted font-medium bg-bx-surface-2 px-2.5 py-1 rounded">Активно</span>
             </SettingRow>
           </Section>
         )}
@@ -491,10 +491,10 @@ export default function Settings() {
         {/* О программе */}
         <Section title="О программе">
           <SettingRow label="Версия" desc="BX — Помощник Бухгалтера">
-            <span className="text-sm text-slate-400">v{APP_VERSION}</span>
+            <span className="text-sm text-bx-muted">v{APP_VERSION}</span>
           </SettingRow>
           <SettingRow label="Разработка" desc="Для бухгалтеров Узбекистана">
-            <span className="text-sm text-slate-500">2026</span>
+            <span className="text-sm text-bx-muted">2026</span>
           </SettingRow>
           <div className="px-4 py-3">
             <button
