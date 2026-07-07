@@ -284,13 +284,40 @@ ${fullContext}
           body: { messages: payloadMessages, context: contextArticles },
         })
 
-        if (fErr) { setError('Ошибка вызова AI: ' + fErr.message); setSending(false); return; }
+        // supabase.functions.invoke может вернуть FunctionsHttpError при non-2xx
+        if (fErr) {
+          // Пытаемся извлечь JSON из контекста ошибки
+          let detail = ''
+          try {
+            const ctx = (fErr as any)?.context
+            if (ctx && typeof ctx.json === 'function') {
+              const body = await ctx.json()
+              detail = body?.message || body?.error || ''
+            }
+          } catch { /* ignore */ }
+          setError(detail || 'Ошибка вызова AI. Проверьте подключение к интернету и попробуйте снова.')
+          setSending(false)
+          return
+        }
+
+        // Edge function всегда возвращает 200 с JSON
         if (data?.error) {
-          const msg = data.error === 'NO_API_KEY'
-            ? 'AI-Консультант не настроен: администратору нужно добавить GEMINI_API_KEY в секреты Supabase.'
-            : data.error === 'LIMIT'
-              ? (data.message || 'Лимит бесплатного плана исчерпан — перейдите на Pro.')
-              : ('Ошибка AI: ' + (data.message || data.error))
+          const errCode = data.error
+          const errMsg = data.message || ''
+          const msg =
+            errCode === 'NO_API_KEY'
+              ? 'AI-Консультант не настроен: администратору нужно добавить GEMINI_API_KEY в секреты Supabase.'
+              : errCode === 'LIMIT'
+                ? (errMsg || 'Лимит бесплатного плана исчерпан — перейдите на Pro.')
+                : errCode === 'AUTH'
+                  ? (errMsg || 'Сессия истекла. Выйдите и войдите снова.')
+                  : errCode === 'PROFILE'
+                    ? (errMsg || 'Профиль не найден. Попробуйте выйти и войти заново.')
+                    : errCode === 'GEMINI_ERROR'
+                      ? (errMsg || 'Ошибка Gemini API. Попробуйте снова через минуту.')
+                      : errCode === 'BLOCKED'
+                        ? (errMsg || 'Запрос заблокирован фильтром безопасности.')
+                        : (errMsg || 'Ошибка AI: ' + errCode)
           setError(msg)
           setSending(false)
           return

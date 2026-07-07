@@ -27,7 +27,7 @@ import { loadEcpKeys } from './lib/ecpStorage';
 
 // Слушает запросы навигации из трей-виджета (main → 'tray:navigate') и
 // переходит на нужный раздел в главном окне.
-function TrayNavigateListener() {
+function TrayNavigateListener(): React.ReactElement | null {
   const navigate = useNavigate()
   useEffect(() => {
     const un = window.bx?.tray?.onNavigate?.((route) => { if (route) navigate(route) })
