@@ -36,31 +36,31 @@ function AiMessage({ content }: { content: string }) {
       if (!line) { out.push(<div key={key++} className="h-2" />); continue; }
       const inline = (t: string) => t.split(/(\*\*[^*]+\*\*)/g).map((p, i) =>
         p.startsWith('**') && p.endsWith('**')
-          ? <strong key={i} className="text-bx-text font-bold text-slate-100">{p.slice(2, -2)}</strong>
+          ? <strong key={i} className="text-bx-text font-bold">{p.slice(2, -2)}</strong>
           : p);
       if (/^#{1,3}\s/.test(line)) {
-        out.push(<p key={key++} className="text-sm font-bold text-white mt-3 mb-1.5">{line.replace(/^#{1,3}\s/, '')}</p>);
+        out.push(<p key={key++} className="text-sm font-bold text-bx-text mt-3 mb-1.5">{line.replace(/^#{1,3}\s/, '')}</p>);
       } else if (/^[-*•]\s/.test(line)) {
-        out.push(<div key={key++} className="flex gap-2 my-1"><span className="text-blue-400 flex-shrink-0">•</span><span className="text-xs text-slate-300 leading-relaxed">{inline(line.replace(/^[-*•]\s/, ''))}</span></div>);
+        out.push(<div key={key++} className="flex gap-2 my-1"><span className="text-blue-500 dark:text-blue-400 flex-shrink-0">•</span><span className="text-xs text-bx-text/90 leading-relaxed">{inline(line.replace(/^[-*•]\s/, ''))}</span></div>);
       } else if (/^\d+[.)]\s/.test(line)) {
-        out.push(<div key={key++} className="flex gap-2 my-1"><span className="text-blue-400 flex-shrink-0 font-bold">{line.match(/^\d+/)?.[0]}.</span><span className="text-xs text-slate-300 leading-relaxed">{inline(line.replace(/^\d+[.)]\s/, ''))}</span></div>);
+        out.push(<div key={key++} className="flex gap-2 my-1"><span className="text-blue-500 dark:text-blue-400 flex-shrink-0 font-bold">{line.match(/^\d+/)?.[0]}.</span><span className="text-xs text-bx-text/90 leading-relaxed">{inline(line.replace(/^\d+[.)]\s/, ''))}</span></div>);
       } else {
-        out.push(<p key={key++} className="text-xs text-slate-300 leading-relaxed">{inline(line)}</p>);
+        out.push(<p key={key++} className="text-xs text-bx-text/90 leading-relaxed">{inline(line)}</p>);
       }
     }
     return out;
   };
 
   return (
-    <div className="flex gap-3 group relative">
+    <div className="flex gap-3 group relative bx-animate-fade">
       <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm flex-shrink-0 shadow-md">
         🤖
       </div>
-      <div className="bg-[#161a29] border border-bx-border rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%] relative shadow-lg hover:border-slate-800/80 transition-all flex-1">
+      <div className="bg-bx-surface border border-bx-border/40 rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%] relative shadow-sm hover:border-bx-border/80 transition-all flex-1">
         {/* Кнопка копирования */}
         <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1.5">
           {copied && (
-            <span className="text-[10px] text-emerald-400 font-bold px-1.5 py-0.5 rounded bg-emerald-950/40 border border-emerald-500/20 animate-fade-in">
+            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 animate-fade-in">
               Скопировано!
             </span>
           )}
@@ -68,8 +68,8 @@ function AiMessage({ content }: { content: string }) {
             onClick={handleCopy}
             className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all ${
               copied 
-                ? 'bg-emerald-950/50 border-emerald-500/30 text-emerald-400' 
-                : 'bg-bx-bg border-bx-border hover:bg-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' 
+                : 'bg-bx-surface-2 border-bx-border hover:bg-bx-border-2 text-bx-muted hover:text-bx-text'
             }`}
             title="Скопировать ответ"
           >
@@ -141,12 +141,12 @@ export default function Ai() {
   }
 
   return (
-    <div className="flex-1 flex overflow-hidden bg-[#07090e]">
+    <div className="flex-1 flex overflow-hidden bg-bx-bg transition-colors duration-200">
       {/* Список диалогов */}
-      <aside className="w-64 flex-shrink-0 border-r border-bx-border/70 flex flex-col bg-[#0b0e17]/80">
+      <aside className="w-64 flex-shrink-0 border-r border-bx-border/40 flex flex-col bg-bx-surface/40 backdrop-blur-md">
         <div className="px-5 pt-6 pb-4">
-          <h1 className="text-base font-bold text-white tracking-wide">AI-Консультант</h1>
-          <p className="text-[10px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">По налогам и учёту РУз</p>
+          <h1 className="text-base font-bold text-bx-text tracking-wide">AI-Консультант</h1>
+          <p className="text-[10px] font-bold text-bx-muted mt-1 uppercase tracking-wider">По налогам и учёту РУз</p>
         </div>
         <div className="px-4 pb-3 space-y-2">
           <button onClick={newChat}
@@ -155,45 +155,45 @@ export default function Ai() {
           </button>
           <button onClick={callSpecialist}
             title="Написать в техподдержку по ПК и 1С (Pro)"
-            className="w-full py-2 bg-[#161b2b] hover:bg-slate-800/80 text-blue-400 text-xs font-bold rounded-xl transition-all border border-blue-500/10 flex items-center justify-center gap-1.5">
+            className="w-full py-2 bg-bx-surface border border-bx-border/50 hover:bg-bx-surface-2 text-bx-accent text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5">
             <span>🎧</span> Техподдержка (AnyDesk)
           </button>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 pb-6 space-y-1 custom-scrollbar">
           {chats.map(c => (
-            <div key={c.id} className={`group flex items-center rounded-xl transition-colors ${activeId === c.id ? 'bg-blue-600/15 border border-blue-500/15' : 'hover:bg-[#121624] border border-transparent'}`}>
+            <div key={c.id} className={`group flex items-center rounded-xl transition-colors ${activeId === c.id ? 'bg-blue-600/10 border border-blue-500/20' : 'hover:bg-bx-surface-2 border border-transparent'}`}>
               <button onClick={() => openChat(c.id)}
-                className={`flex-1 text-left px-3 py-2.5 text-xs font-medium truncate ${activeId === c.id ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                className={`flex-1 text-left px-3 py-2.5 text-xs font-medium truncate ${activeId === c.id ? 'text-blue-500 font-semibold' : 'text-bx-muted group-hover:text-bx-text'}`}>
                 {c.title}
               </button>
               <button onClick={() => deleteChat(c.id)}
-                className="px-2.5 py-2 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 text-xs flex-shrink-0 transition-opacity">✕</button>
+                className="px-2.5 py-2 text-bx-muted hover:text-red-400 opacity-0 group-hover:opacity-100 text-xs flex-shrink-0 transition-opacity">✕</button>
             </div>
           ))}
-          {chats.length === 0 && <p className="text-[10px] text-slate-500 text-center py-8 font-semibold uppercase tracking-wider">Диалогов пока нет</p>}
+          {chats.length === 0 && <p className="text-[10px] text-bx-muted text-center py-8 font-semibold uppercase tracking-wider">Диалогов пока нет</p>}
         </nav>
       </aside>
 
       {/* Чат */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        {/* Glow эффект на фоне чата */}
-        <div className="absolute top-10 right-10 w-96 h-96 bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-purple-600/5 rounded-full blur-[120px] pointer-events-none" />
+        {/* Glow эффекты на фоне чата */}
+        <div className="absolute top-10 right-10 w-96 h-96 bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px] pointer-events-none" />
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto z-10 custom-scrollbar">
           {messages.length === 0 && !sending ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-8 max-w-2xl mx-auto py-12">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl shadow-xl shadow-blue-500/10 mb-5 animate-bounce duration-1000">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl shadow-xl shadow-blue-500/15 mb-5 animate-bounce duration-1000">
                 🤖
               </div>
-              <h2 className="text-xl font-extrabold text-white mb-2 tracking-tight">Спросите про налоги, учёт, труд и ВЭД</h2>
-              <p className="text-xs text-slate-400 mb-8 max-w-md leading-relaxed">
-                Помощник отвечает с опорой на встроенную Базу знаний РУз. Ответы носят справочный характер — сверяйтесь с <span className="text-blue-400">lex.uz</span> и <span className="text-blue-400">soliq.uz</span>.
+              <h2 className="text-xl font-extrabold text-bx-text mb-2 tracking-tight">Спросите про налоги, учёт, труд и ВЭД</h2>
+              <p className="text-xs text-bx-muted mb-8 max-w-md leading-relaxed">
+                Помощник отвечает с опорой на встроенную Базу знаний РУз. Ответы носят справочный характер — сверяйтесь с <span className="text-blue-500 font-medium">lex.uz</span> и <span className="text-blue-500 font-medium">soliq.uz</span>.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 w-full max-w-lg">
                 {QUICK_QUESTIONS.map(q => (
                   <button key={q} onClick={() => send(q)}
-                    className="text-left text-xs text-slate-400 bg-[#0e1220]/60 border border-slate-800 hover:border-blue-500/40 hover:text-white rounded-xl px-4 py-3 transition-all hover:bg-[#12172a]/60 hover:shadow-lg">
+                    className="text-left text-xs text-bx-muted bg-bx-surface border border-bx-border/80 hover:border-blue-500/40 hover:text-bx-text rounded-xl px-4 py-3 transition-all hover:bg-bx-surface-2 hover:shadow-sm">
                     {q}
                   </button>
                 ))}
@@ -204,7 +204,7 @@ export default function Ai() {
               {messages.map(m => (
                 m.role === 'user' ? (
                   <div key={m.id} className="flex justify-end bx-animate-fade">
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-medium rounded-2xl rounded-br-md px-4 py-3 max-w-[80%] shadow-lg shadow-blue-500/5 leading-relaxed whitespace-pre-wrap">{m.content}</div>
+                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white text-xs font-medium rounded-2xl rounded-br-md px-4 py-3 max-w-[80%] shadow-md leading-relaxed whitespace-pre-wrap">{m.content}</div>
                   </div>
                 ) : (
                   <div key={m.id} className="bx-animate-fade">
@@ -215,7 +215,7 @@ export default function Ai() {
               {sending && (
                 <div className="flex gap-3 bx-animate-fade">
                   <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm flex-shrink-0 shadow-md">🤖</div>
-                  <div className="bg-[#161a29] border border-bx-border rounded-2xl rounded-tl-md px-5 py-4">
+                  <div className="bg-bx-surface border border-bx-border/40 rounded-2xl rounded-tl-md px-5 py-4">
                     <span className="flex gap-1.5 items-center">
                       <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                       <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -231,7 +231,7 @@ export default function Ai() {
         {/* Ошибка */}
         {error && (
           <div className="px-6 py-2 max-w-2xl mx-auto w-full z-10">
-            <div className="bg-red-950/30 border border-red-500/20 text-red-400 text-xs rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <div className="bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs rounded-xl px-4 py-2.5 flex items-center gap-2">
               <span>⚠</span>
               <span>{error}</span>
             </div>
@@ -239,22 +239,22 @@ export default function Ai() {
         )}
 
         {/* Ввод */}
-        <div className="border-t border-bx-border/70 px-6 py-4 bg-[#07090e] z-10">
-          <div className="max-w-2xl mx-auto flex items-end gap-2.5 bg-[#0c101c]/90 rounded-2xl p-2 border border-bx-border focus-within:border-blue-500/40 focus-within:shadow-[0_0_15px_rgba(59,130,246,0.06)] transition-all">
+        <div className="border-t border-bx-border/40 px-6 py-4 bg-bx-bg/80 backdrop-blur-md z-10">
+          <div className="max-w-2xl mx-auto flex items-end gap-2.5 bg-bx-surface/60 rounded-2xl p-2 border border-bx-border focus-within:border-blue-500/40 focus-within:shadow-[0_0_15px_rgba(59,130,246,0.04)] transition-all">
             <textarea
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }}
               rows={1}
               placeholder="Задайте вопрос по налогам, учёту, труду..."
-              className="flex-1 bg-transparent text-slate-100 px-3 py-2 text-xs focus:outline-none resize-none max-h-32 custom-scrollbar placeholder:text-slate-600"
+              className="flex-1 bg-transparent text-bx-text px-3 py-2 text-xs focus:outline-none resize-none max-h-32 custom-scrollbar placeholder:text-bx-muted"
             />
             <button onClick={submit} disabled={!input.trim() || sending}
               className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-blue-500/10 flex-shrink-0 hover:scale-[1.02] active:scale-[0.98]">
               {sending ? '…' : 'Отправить'}
             </button>
           </div>
-          <p className="max-w-2xl mx-auto text-[10px] text-slate-600 mt-2 text-center font-medium">
+          <p className="max-w-2xl mx-auto text-[10px] text-bx-muted mt-2 text-center font-medium">
             AI-Консультант может ошибаться. Рекомендуем проверять важные решения на официальных порталах lex.uz и soliq.uz.
           </p>
         </div>
