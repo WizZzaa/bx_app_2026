@@ -15,7 +15,7 @@ const QUICK_QUESTIONS = [
 ];
 
 // Компонент сообщения AI с кнопкой копирования и анимацией
-function AiMessage({ content }: { content: string }) {
+function AiMessage({ content, onQuote }: { content: string; onQuote: (text: string) => void }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -57,35 +57,47 @@ function AiMessage({ content }: { content: string }) {
         🤖
       </div>
       <div className="bg-bx-surface border border-bx-border/40 rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%] relative shadow-sm hover:border-bx-border/80 transition-all flex-1">
-        {/* Кнопка копирования */}
-        <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1.5">
-          {copied && (
-            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 animate-fade-in">
-              Скопировано!
-            </span>
-          )}
+        <div className="space-y-1.5 pr-1 pb-1">
+          {renderAnswer(content)}
+        </div>
+        
+        {/* Кнопки действий под ответом */}
+        <div className="border-t border-bx-border/40 mt-2.5 pt-2 flex items-center gap-2 text-xs">
           <button
             onClick={handleCopy}
-            className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all ${
               copied 
                 ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' 
-                : 'bg-bx-surface-2 border-bx-border hover:bg-bx-border-2 text-bx-muted hover:text-bx-text'
+                : 'bg-bx-surface-2 border-bx-border/60 hover:bg-bx-border-2 text-bx-muted hover:text-bx-text'
             }`}
-            title="Скопировать ответ"
           >
             {copied ? (
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+              <>
+                <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Скопировано!</span>
+              </>
             ) : (
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-              </svg>
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+                <span>Копировать</span>
+              </>
             )}
           </button>
-        </div>
-        <div className="space-y-1.5 pr-6">
-          {renderAnswer(content)}
+          
+          <button
+            onClick={() => onQuote(content)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border bg-bx-surface-2 border-bx-border/60 hover:bg-bx-border-2 text-bx-muted hover:text-bx-text transition-all"
+            title="Продолжить беседу на основе этого сообщения"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
+            <span>Продолжить беседу</span>
+          </button>
         </div>
       </div>
     </div>
@@ -98,6 +110,7 @@ export default function Ai() {
   const { isPro, limits } = usePlan();
   const [paywall, setPaywall] = useState(false);
   const navigate = useNavigate();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Эскалация к техподдержке: черновик тикета из текущего диалога
   function callSpecialist() {
@@ -139,6 +152,13 @@ export default function Ai() {
     send(input);
     setInput('');
   }
+
+  const handleQuote = (text: string) => {
+    const cleanText = text.trim();
+    const shortText = cleanText.length > 70 ? cleanText.slice(0, 70) + '...' : cleanText;
+    setInput(`В продолжение ответа: "${shortText}"\n`);
+    textareaRef.current?.focus();
+  };
 
   return (
     <div className="flex-1 flex overflow-hidden bg-bx-bg transition-colors duration-200">
@@ -208,7 +228,7 @@ export default function Ai() {
                   </div>
                 ) : (
                   <div key={m.id} className="bx-animate-fade">
-                    <AiMessage content={m.content} />
+                    <AiMessage content={m.content} onQuote={handleQuote} />
                   </div>
                 )
               ))}
@@ -242,6 +262,7 @@ export default function Ai() {
         <div className="border-t border-bx-border/40 px-6 py-4 bg-bx-bg/80 backdrop-blur-md z-10">
           <div className="max-w-2xl mx-auto flex items-end gap-2.5 bg-bx-surface/60 rounded-2xl p-2 border border-bx-border focus-within:border-blue-500/40 focus-within:shadow-[0_0_15px_rgba(59,130,246,0.04)] transition-all">
             <textarea
+              ref={textareaRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }}
