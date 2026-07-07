@@ -175,7 +175,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState<Profile[]>([])
   const [usersLoading, setUsersLoading] = useState(false)
   const [userSearch, setUserSearch] = useState('')
-  const [userFilter, setUserFilter] = useState<'all' | 'pro' | 'free' | 'admin'>('all')
+  const [userFilter, setUserFilter] = useState<'all' | 'paid' | 'free' | 'admin'>('all')
 
   // Справочники под-вкладки
   const [subRefTab, setSubRefTab] = useState<SubRefTab>('indicators')
@@ -241,8 +241,8 @@ const AdminDashboard = () => {
       const q = userSearch.toLowerCase()
       list = list.filter(u => u.email?.toLowerCase().includes(q))
     }
-    if (userFilter === 'pro') list = list.filter(u => u.plan === 'pro')
-    if (userFilter === 'free') list = list.filter(u => u.plan === 'free')
+    if (userFilter === 'paid') list = list.filter(u => u.plan === 'standard' || u.plan === 'premium' || u.plan === 'pro')
+    if (userFilter === 'free') list = list.filter(u => !u.plan || u.plan === 'free')
     if (userFilter === 'admin') list = list.filter(u => u.role === 'admin')
     return list.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
   }, [users, userSearch, userFilter])
@@ -541,18 +541,18 @@ const AdminDashboard = () => {
   // Действия
   const handleUpdateTariff = async (userId: string, newPlan: string) => {
     try {
-      const expiresAt = newPlan === 'pro'
-        ? new Date(Date.now() + 365 * 86400 * 1000).toISOString()
-        : null
-      const { error } = await supabase
-        .from('bx_profiles')
-        .update({ plan: newPlan, plan_expires_at: expiresAt })
-        .eq('user_id', userId)
+      const { data, error } = await supabase.functions.invoke('admin-update-plan', {
+        body: { targetUserId: userId, newPlan },
+      })
+
       if (error) throw error
-      toast.success(newPlan === 'pro' ? 'Pro выдан на 1 год' : 'Переведён на Free')
+      if (data?.error) throw new Error(data.message || data.error)
+
+      toast.success(data?.message || (newPlan !== 'free' ? `Тариф ${newPlan.toUpperCase()} выдан на 1 год` : 'Переведён на Free'))
       loadUsers()
-    } catch {
-      toast.error('Не удалось изменить тариф')
+    } catch (err: any) {
+      console.error('handleUpdateTariff error:', err)
+      toast.error(err.message || 'Не удалось изменить тариф')
     }
   }
 
@@ -934,10 +934,10 @@ const AdminDashboard = () => {
               />
               <div className="flex gap-1 bg-bx-bg/60 p-1 rounded-xl border border-bx-border">
                 {[
-                  ['all', 'Все'],
-                  ['pro', 'PRO'],
-                  ['free', 'FREE'],
-                  ['admin', 'Админы']
+                  ['all',   'Все'],
+                  ['paid',  '💳 Платные'],
+                  ['free',  'Бесплатные'],
+                  ['admin', '👑 Админы']
                 ].map(([f, label]) => (
                   <button
                     key={f}
@@ -973,21 +973,25 @@ const AdminDashboard = () => {
                     <span className="text-[9px] px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 font-bold flex-shrink-0">👑 админ</span>
                   )}
                   <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold flex-shrink-0 ${
-                    u.plan === 'pro' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-500/15 text-bx-muted'}`}>
-                    {u.plan === 'pro' ? 'PRO' : 'FREE'}
+                    u.plan === 'premium' || u.plan === 'pro'
+                      ? 'bg-purple-500/15 text-purple-400'
+                      : u.plan === 'standard'
+                        ? 'bg-emerald-500/15 text-emerald-400'
+                        : 'bg-slate-500/15 text-bx-muted'
+                  }`}>
+                    {u.plan ? u.plan.toUpperCase() : 'FREE'}
                   </span>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                    {u.plan === 'pro' ? (
-                      <button onClick={() => handleUpdateTariff(u.user_id, 'free')}
-                        className="text-[10px] px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 transition-colors">
-                        Снять Pro
-                      </button>
-                    ) : (
-                      <button onClick={() => handleUpdateTariff(u.user_id, 'pro')}
-                        className="text-[10px] px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-colors">
-                        Выдать Pro · 1 год
-                      </button>
-                    )}
+                  <div className="opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 flex items-center">
+                    <select
+                      value={u.plan || 'free'}
+                      onChange={(e) => handleUpdateTariff(u.user_id, e.target.value)}
+                      className="bg-bx-bg border border-bx-border-2 rounded-lg text-[10px] px-2 py-1 text-bx-text focus:outline-none focus:border-blue-500/50 cursor-pointer"
+                    >
+                      <option value="free">FREE</option>
+                      <option value="standard">STANDARD</option>
+                      <option value="premium">PREMIUM</option>
+                      <option value="pro">PRO (Архив)</option>
+                    </select>
                   </div>
                 </div>
               ))}
