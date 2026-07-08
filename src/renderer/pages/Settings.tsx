@@ -864,18 +864,31 @@ export default function Settings() {
               </div>
 
               {/* О программе */}
-              <div className="bg-bx-surface rounded-xl border border-bx-border p-4 space-y-2">
+              <div className="bg-bx-surface rounded-xl border border-bx-border p-5 space-y-3.5">
                 <h3 className="text-xs font-bold text-bx-text uppercase tracking-wider">О программе</h3>
                 <div className="text-xs text-bx-muted space-y-1">
                   <p>Продукт: <span className="text-bx-text font-semibold">BX — Помощник Бухгалтера Республики Узбекистан</span></p>
                   <p>Версия сборки: <span className="text-bx-text font-semibold">v{APP_VERSION}</span></p>
                   <p>Разработка: <span className="text-bx-text font-semibold">2026 г.</span></p>
+                  <p className="pt-1">Поддержка по телефону: <span className="text-bx-text font-mono font-bold">+998 90 916 04 44</span></p>
                 </div>
-                <div className="pt-2">
-                  <button onClick={() => window.open('https://soliq.uz', '_blank')}
-                    className="text-xs text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-2">
-                    Сообщить о технической проблеме ↗
+                <div className="pt-1">
+                  <button
+                    onClick={() => {
+                      const url = 'https://t.me/tech_support_bx';
+                      if ((window as any).bx?.openExternal) {
+                        (window as any).bx.openExternal(url);
+                      } else {
+                        window.open(url, '_blank');
+                      }
+                    }}
+                    className="text-xs text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-2"
+                  >
+                    Сообщить о технической проблеме в Telegram (@tech_support_bx) ↗
                   </button>
+                </div>
+                <div className="bg-bx-surface-2/40 border border-bx-border/40 rounded-xl p-3.5 text-[11px] text-bx-muted leading-relaxed">
+                  🚀 <strong className="text-bx-text">Манифест BX:</strong> Мы чертовски устали смотреть на то, как мучают бухгалтеров бесконечной рутиной и сложными порталами! Наша команда разработчиков решила взять всё в свои руки и создать инструмент, который выводит ежедневную поддержку бухов на абсолютно новый, нативный уровень. Чтобы вы работали без боли и мучений, а мы с кайфом развивали продукт и зарабатывали на этом! 😉
                 </div>
               </div>
             </div>
