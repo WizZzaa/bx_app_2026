@@ -3,12 +3,20 @@ import type { BxEvent } from './useEvents';
 import { toLocalISO } from '../../lib/dates';
 import { holidayName } from '../../data/uzHolidays';
 
-export interface CalCard { id: string; title: string; due_date: string }
+export interface CalCard {
+  id: string;
+  title: string;
+  due_date: string;
+  board_id: string;
+  column_id: string;
+  priority: string;
+}
 
 interface Props {
   events: BxEvent[];
   cards?: CalCard[];
   onDayClick: (date: string) => void;
+  onAddEvent: (date: string) => void;
   onEventClick: (e: BxEvent) => void;
   onCardClick?: (id: string) => void;
   onEventDrop?: (id: string, date: string) => void;
@@ -35,7 +43,7 @@ function mondayOf(d: Date): Date {
   return r;
 }
 
-export default function CalendarView({ events, cards = [], onDayClick, onEventClick, onCardClick, onEventDrop, onCardDrop }: Props) {
+export default function CalendarView({ events, cards = [], onDayClick, onAddEvent, onEventClick, onCardClick, onEventDrop, onCardDrop }: Props) {
   const now = new Date();
   const [mode, setMode] = useState<'month' | 'week'>('month');
   const [year,  setYear]  = useState(now.getFullYear());
@@ -178,17 +186,29 @@ export default function CalendarView({ events, cards = [], onDayClick, onEventCl
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => handleDrop(e, ds)}
                 title={holiday ?? undefined}
-                className={`flex flex-col rounded-lg border p-2 cursor-pointer transition-all overflow-hidden
+                className={`flex flex-col rounded-lg border p-2 cursor-pointer transition-all overflow-hidden group/cell
                   ${isToday ? 'border-blue-500/60 bg-blue-500/5' : holiday ? 'border-red-500/25' : 'border-bx-border hover:border-bx-border-2'}
                   ${holiday ? 'bg-red-500/[0.04]' : isWeekend ? 'bg-bx-bg' : 'bg-bx-bg'}
                 `}
               >
-                <div className="flex items-center gap-1.5 mb-1.5 flex-shrink-0">
-                  <span className={`text-[11px] font-semibold w-6 h-6 flex items-center justify-center rounded-full
-                    ${isToday ? 'bg-blue-600 text-white' : holiday ? 'text-red-400' : isWeekend ? 'text-bx-muted' : 'text-bx-text'}`}>
-                    {day.getDate()}
-                  </span>
-                  <span className={`text-[10px] uppercase ${isWeekend ? 'text-red-400/50' : 'text-bx-muted'}`}>{WEEKDAYS[ci]}</span>
+                <div className="flex items-center justify-between mb-1.5 flex-shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[11px] font-semibold w-6 h-6 flex items-center justify-center rounded-full
+                      ${isToday ? 'bg-blue-600 text-white' : holiday ? 'text-red-400' : isWeekend ? 'text-bx-muted' : 'text-bx-text'}`}>
+                      {day.getDate()}
+                    </span>
+                    <span className={`text-[10px] uppercase ${isWeekend ? 'text-red-400/50' : 'text-bx-muted'}`}>{WEEKDAYS[ci]}</span>
+                  </div>
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      onAddEvent(ds);
+                    }}
+                    title="Добавить задачу"
+                    className="w-5 h-5 flex items-center justify-center rounded-md bg-bx-surface-2 hover:bg-blue-600 hover:text-white text-bx-muted text-xs transition-all opacity-0 group-hover/cell:opacity-100"
+                  >
+                    +
+                  </button>
                 </div>
                 {holiday && <span className="text-[9px] text-red-400/70 mb-1 truncate flex-shrink-0">🎉 {holiday}</span>}
                 <div className="space-y-1 overflow-y-auto">
@@ -230,18 +250,30 @@ export default function CalendarView({ events, cards = [], onDayClick, onEventCl
                     onDragOver={e => e.preventDefault()}
                     onDrop={e => handleDrop(e, ds)}
                     title={holiday ?? undefined}
-                    className={`h-20 rounded-lg border p-1.5 cursor-pointer transition-all overflow-hidden
+                    className={`h-20 rounded-lg border p-1.5 cursor-pointer transition-all overflow-hidden group/cell
                       ${isToday ? 'border-blue-500/60 bg-blue-500/5' : holiday ? 'border-red-500/25 hover:border-red-500/40' : 'border-bx-border hover:border-bx-border-2'}
                       ${isPast && !isToday ? 'opacity-60' : ''}
                       ${holiday ? 'bg-red-500/[0.04]' : isWeekend ? 'bg-bx-bg' : 'bg-bx-bg'}
                     `}
                   >
-                    <div className="flex items-center gap-1 mb-1">
-                      <div className={`text-[11px] font-medium w-5 h-5 flex items-center justify-center rounded-full flex-shrink-0
-                        ${isToday ? 'bg-blue-600 text-white' : holiday ? 'text-red-400 font-semibold' : isWeekend ? 'text-bx-muted' : 'text-bx-muted'}`}>
-                        {day.getDate()}
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1">
+                        <div className={`text-[11px] font-medium w-5 h-5 flex items-center justify-center rounded-full flex-shrink-0
+                          ${isToday ? 'bg-blue-600 text-white' : holiday ? 'text-red-400 font-semibold' : isWeekend ? 'text-bx-muted' : 'text-bx-muted'}`}>
+                          {day.getDate()}
+                        </div>
+                        {holiday && <span className="text-[8px] text-red-400/70 truncate leading-tight">{holiday}</span>}
                       </div>
-                      {holiday && <span className="text-[8px] text-red-400/70 truncate leading-tight">{holiday}</span>}
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          onAddEvent(ds);
+                        }}
+                        title="Добавить задачу"
+                        className="w-4 h-4 rounded bg-bx-surface-2 hover:bg-blue-600 hover:text-white text-bx-muted text-[10px] flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-opacity"
+                      >
+                        +
+                      </button>
                     </div>
                     <div className="space-y-0.5">
                       {dayEvents.slice(0,3).map(ev => <EventChip key={ev.id} ev={ev} />)}

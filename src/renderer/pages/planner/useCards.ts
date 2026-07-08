@@ -222,12 +222,12 @@ export function useCards(boardId: string | null) {
 }
 
 // Отдельный хук: карточки со сроком по ВСЕМ доскам — для Календаря
-export interface DatedCard { id: string; title: string; due_date: string; board_id: string; priority: string; }
+export interface DatedCard { id: string; title: string; due_date: string; board_id: string; column_id: string; priority: string; }
 
 export async function fetchDatedCards(): Promise<DatedCard[]> {
   const { data, error } = await supabase
     .from('bx_cards')
-    .select('id,title,due_date,board_id,priority')
+    .select('id,title,due_date,board_id,column_id,priority')
     .not('due_date', 'is', null)
     .eq('archived', false);
   if (error) { console.error(error); return []; }

@@ -4,6 +4,7 @@ import { useBoards, type BxBoard, type BoardColumn } from './planner/useBoards';
 import { useCards, fetchDatedCards, fetchCardById, fetchAllCards, fetchBoardColumns, toggleCardDone, type BxCard, type DatedCard, type AllCard } from './planner/useCards';
 import { seedTaxDeadlines } from './planner/taxSeeder';
 import CalendarView from './planner/CalendarView';
+import DailyTasksModal from './planner/DailyTasksModal';
 import AllTasksView from './planner/AllTasksView';
 import DigestView from './planner/DigestView';
 import ListView from './planner/ListView';
@@ -72,6 +73,18 @@ export default function Planner() {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [datedCards,  setDatedCards]  = useState<DatedCard[]>([]);
   const [allCards,    setAllCards]    = useState<AllCard[]>([]);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+
+  async function handleDeleteEventDirect(id: string) {
+    await remove(id);
+    toast.info('Событие удалено');
+  }
+
+  async function handleDeleteCardDirect(id: string) {
+    await removeCard(id);
+    triggerRefresh();
+    toast.info('Карточка удалена');
+  }
 
   // Карточки со сроком по всем доскам — для Календаря
   useEffect(() => {
@@ -334,8 +347,16 @@ export default function Planner() {
           />
         )}
         {view === 'calendar' && (
-          <CalendarView events={filtered} cards={datedCards} onDayClick={openNewEvent} onEventClick={openEditEvent} onCardClick={openCardFromCalendar}
-            onEventDrop={handleEventDrop} onCardDrop={handleCardDrop} />
+          <CalendarView
+            events={filtered}
+            cards={datedCards}
+            onDayClick={(date) => setSelectedDay(date)}
+            onAddEvent={openNewEvent}
+            onEventClick={openEditEvent}
+            onCardClick={openCardFromCalendar}
+            onEventDrop={handleEventDrop}
+            onCardDrop={handleCardDrop}
+          />
         )}
         {view === 'list' && (
           <ListView
@@ -384,6 +405,22 @@ export default function Planner() {
           onRestore={async (id) => { await restoreCard(id); triggerRefresh(); }}
           onDelete={async (id) => { await removeCard(id); triggerRefresh(); }}
           onClose={() => setArchiveOpen(false)}
+        />
+      )}
+      {selectedDay && (
+        <DailyTasksModal
+          date={selectedDay}
+          events={events.filter(e => (e.due_date || e.date) === selectedDay)}
+          cards={datedCards.filter(c => c.due_date === selectedDay)}
+          boards={boards}
+          onEventClick={openEditEvent}
+          onCardClick={openCardFromCalendar}
+          onEventStatusChange={handleStatusChange}
+          onCardStatusChange={handleToggleCardDone}
+          onDeleteEvent={handleDeleteEventDirect}
+          onDeleteCard={handleDeleteCardDirect}
+          onAddClick={openNewEvent}
+          onClose={() => setSelectedDay(null)}
         />
       )}
     </div>
