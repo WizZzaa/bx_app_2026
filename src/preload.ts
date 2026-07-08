@@ -20,7 +20,7 @@ const api = {
   platform: process.platform,
   onec: {
     scanCache: (): Promise<CacheScanResult> => ipcRenderer.invoke(IPC.CACHE_SCAN),
-    cleanCache: (paths: string[]): Promise<CleanResult> => ipcRenderer.invoke(IPC.CACHE_CLEAN, paths),
+    cleanCache: (paths: string[], backup?: boolean): Promise<CleanResult> => ipcRenderer.invoke(IPC.CACHE_CLEAN, paths, backup),
     listProcesses: (): Promise<ProcessEntry[]> => ipcRenderer.invoke(IPC.PROC_LIST),
     killProcesses: (pids: number[]): Promise<KillResult> => ipcRenderer.invoke(IPC.PROC_KILL, pids),
     pickDatabaseFile: (): Promise<string | null> => ipcRenderer.invoke(IPC.BACKUP_PICK_DB),

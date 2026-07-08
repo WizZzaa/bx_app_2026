@@ -16,7 +16,7 @@ import { fetchNewsFeed } from './services/newsFeed'
 export function registerIpcHandlers() {
   // --- Cache ---
   ipcMain.handle(IPC.CACHE_SCAN, () => scanCache())
-  ipcMain.handle(IPC.CACHE_CLEAN, (_e, paths: string[]) => cleanCache(paths))
+  ipcMain.handle(IPC.CACHE_CLEAN, (_e, paths: string[], backup?: boolean) => cleanCache(paths, backup))
 
   // --- Processes ---
   ipcMain.handle(IPC.PROC_LIST, () => listProcesses())

@@ -157,15 +157,58 @@ export const scanCache = (): CacheScanResult => {
   return { entries, totalBytes, platformSupported: true }
 }
 
-export const cleanCache = (paths: string[]): CleanResult => {
+const copyFolderRecursive = (src: string, dest: string) => {
+  if (!fs.existsSync(src)) return
+  const stat = fs.statSync(src)
+  if (stat.isDirectory()) {
+    fs.mkdirSync(dest, { recursive: true })
+    const items = fs.readdirSync(src)
+    for (const item of items) {
+      copyFolderRecursive(path.join(src, item), path.join(dest, item))
+    }
+  } else {
+    fs.copyFileSync(src, dest)
+  }
+}
+
+export const cleanCache = (paths: string[], backup: boolean = false): CleanResult => {
   const deletedPaths: string[] = []
   const failedPaths: { path: string; error: string }[] = []
   let freedBytes = 0
 
-  const roots = getCacheRoots().map(r => r.root)
+  const roots = getCacheRoots()
+  const rootsPaths = roots.map(r => r.root)
+
+  if (backup && paths.length > 0) {
+    try {
+      const home = os.homedir()
+      const backupRoot = process.platform === 'win32'
+        ? path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'BX_Assistant', '1C_Backups')
+        : path.join(home, 'Library', 'Application Support', 'BX_Assistant', '1C_Backups')
+      
+      const runDir = path.join(backupRoot, `backup_${Date.now()}`)
+      fs.mkdirSync(runDir, { recursive: true })
+
+      // Резервная копия ibases.v8i
+      const v8i = getV8iPath()
+      if (v8i && fs.existsSync(v8i)) {
+        fs.copyFileSync(v8i, path.join(runDir, 'ibases.v8i'))
+      }
+
+      // Резервная копия очищаемых папок
+      for (const target of paths) {
+        const isSafe = rootsPaths.some(root => target.startsWith(root))
+        if (!isSafe) continue
+        const targetName = path.basename(target)
+        copyFolderRecursive(target, path.join(runDir, targetName))
+      }
+    } catch (err) {
+      console.error('Ошибка создания резервной копии:', err)
+    }
+  }
 
   for (const target of paths) {
-    const isSafe = roots.some(root => target.startsWith(root))
+    const isSafe = rootsPaths.some(root => target.startsWith(root))
     if (!isSafe) {
       failedPaths.push({ path: target, error: 'Путь вне разрешённой папки кэша 1С' })
       continue

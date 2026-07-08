@@ -4,7 +4,9 @@ import { supabase } from '../lib/db/supabase'
 import { clearPin, isPinEnabled, setPinEnabled } from '../lib/auth/pin'
 import { APP_VERSION } from '../../shared/version'
 import { db } from '../lib/db/localDb'
-import { usePlan, PLAN_LIMITS } from '../lib/plan'
+import { usePlan } from '../lib/plan'
+import { useCompany } from '../lib/CompanyContext'
+import { useToast } from '../lib/ui/ToastContext'
 
 const THEME_KEY = 'bx_theme'
 const NOTIFY_KEY = 'bx_notify_days'
@@ -12,10 +14,15 @@ const IDLE_LOCK_KEY = 'bx_idle_lock'
 
 type NotifyDays = '1' | '3' | '7' | 'off'
 type IdleLock = 'off' | '5' | '10' | '30' | '60'
+type TabType = 'billing' | 'security' | 'appearance' | 'ai' | 'team' | 'data'
 
 export default function Settings() {
-  const { plan, isPro, isPremium } = usePlan()
+  const { plan, isPro } = usePlan()
+  const { active: activeCompany } = useCompany()
+  const toast = useToast()
   const navigate = useNavigate()
+
+  const [activeTab, setActiveTab] = useState<TabType>('billing')
   const [userEmail, setUserEmail] = useState('')
   const [notifyDays, setNotifyDays] = useState<NotifyDays>('3')
   const [signingOut, setSigningOut] = useState(false)
@@ -25,6 +32,135 @@ export default function Settings() {
   const [autostartEnabled, setAutostartEnabled] = useState(false)
   const [idleLock, setIdleLock] = useState<IdleLock>('off')
   const [pinEnabled, setPinEnabledState] = useState(true)
+
+  // Состояния для вкладки Команда
+  const [teamMembers, setTeamMembers] = useState<any[]>([])
+  const [incomingInvites, setIncomingInvites] = useState<any[]>([])
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<'admin' | 'editor' | 'viewer'>('editor')
+  const [inviting, setInviting] = useState(false)
+  const [loadingTeam, setLoadingTeam] = useState(false)
+
+  // Загрузка участников команды и входящих приглашений
+  const loadTeamData = async () => {
+    if (!userEmail) return
+    setLoadingTeam(true)
+    try {
+      // 1. Входящие приглашения
+      const { data: inc, error: incErr } = await supabase
+        .from('bx_organization_members')
+        .select('id, invited_email, role, status, organization_id, bx_companies(name)')
+        .eq('invited_email', userEmail.trim().toLowerCase())
+        .eq('status', 'pending')
+      if (!incErr && inc) {
+        setIncomingInvites(inc)
+      }
+
+      // 2. Участники команды для активной компании
+      if (activeCompany?.id) {
+        const { data: mems, error: memsErr } = await supabase
+          .from('bx_organization_members')
+          .select('id, invited_email, role, status, user_id')
+          .eq('organization_id', activeCompany.id)
+        if (!memsErr && mems) {
+          setTeamMembers(mems)
+        }
+      }
+    } catch (e) {
+      console.error('Ошибка загрузки данных команды:', e)
+    } finally {
+      setLoadingTeam(false)
+    }
+  }
+
+  // Приглашение нового сотрудника
+  const handleSendInvite = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!activeCompany?.id) {
+      toast.error('Сначала создайте или выберите компанию')
+      return
+    }
+    const emailToInvite = inviteEmail.trim().toLowerCase()
+    if (!emailToInvite) return
+
+    setInviting(true)
+    try {
+      const { error } = await supabase.from('bx_organization_members').insert({
+        organization_id: activeCompany.id,
+        invited_email: emailToInvite,
+        role: inviteRole,
+        status: 'pending',
+      })
+
+      if (error) {
+        toast.error(`Ошибка приглашения: ${error.message}`)
+      } else {
+        toast.success('Приглашение успешно отправлено!')
+        setInviteEmail('')
+        loadTeamData()
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Ошибка сети')
+    } finally {
+      setInviting(false)
+    }
+  }
+
+  // Удаление участника или отмена приглашения
+  const handleDeleteMember = async (memberId: string) => {
+    try {
+      const { error } = await supabase.from('bx_organization_members').delete().eq('id', memberId)
+      if (error) {
+        toast.error(`Не удалось удалить: ${error.message}`)
+      } else {
+        toast.info('Участник удален из команды')
+        loadTeamData()
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Ошибка удаления')
+    }
+  }
+
+  // Принятие входящего приглашения
+  const handleAcceptInvite = async (inviteId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase
+        .from('bx_organization_members')
+        .update({
+          status: 'active',
+          user_id: user.id
+        })
+        .eq('id', inviteId)
+
+      if (error) {
+        toast.error(`Не удалось принять: ${error.message}`)
+      } else {
+        toast.success('Приглашение принято!')
+        // Перезапускаем страницу для обновления списка компаний
+        setTimeout(() => window.location.reload(), 1000)
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Ошибка выполнения запроса')
+    }
+  }
+
+  // Отклонение входящего приглашения
+  const handleRejectInvite = async (inviteId: string) => {
+    try {
+      const { error } = await supabase.from('bx_organization_members').delete().eq('id', inviteId)
+      if (error) {
+        toast.error(`Не удалось отклонить: ${error.message}`)
+      } else {
+        toast.info('Приглашение отклонено')
+        loadTeamData()
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Ошибка')
+    }
+  }
 
   const handleToggleAutostart = async (val: boolean) => {
     setAutostartEnabled(val)
@@ -103,7 +239,9 @@ export default function Settings() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.email) setUserEmail(data.user.email)
+      if (data.user?.email) {
+        setUserEmail(data.user.email)
+      }
     })
     const saved = localStorage.getItem(NOTIFY_KEY) as NotifyDays
     if (saved) setNotifyDays(saved)
@@ -127,6 +265,13 @@ export default function Settings() {
     } catch {}
   }, [])
 
+  // Перезагрузка команды при получении email и переключении вкладок
+  useEffect(() => {
+    if (activeTab === 'team' && userEmail) {
+      loadTeamData()
+    }
+  }, [activeTab, userEmail, activeCompany?.id])
+
   function saveNotify(v: NotifyDays) {
     setNotifyDays(v)
     localStorage.setItem(NOTIFY_KEY, v)
@@ -138,397 +283,606 @@ export default function Settings() {
   }
 
   function saveTheme(t: 'dark' | 'light') {
-    setTheme(t);
-    localStorage.setItem(THEME_KEY, t);
+    setTheme(t)
+    localStorage.setItem(THEME_KEY, t)
     if (t === 'light') {
-      document.documentElement.classList.add('light');
+      document.documentElement.classList.add('light')
     } else {
-      document.documentElement.classList.remove('light');
+      document.documentElement.classList.remove('light')
     }
   }
 
   function toggleHoroscope(visible: boolean) {
-    setShowHoroscope(visible);
+    setShowHoroscope(visible)
     try {
-      const stored = localStorage.getItem('bx_dashboard_widgets');
-      const parsed = stored ? JSON.parse(stored) : { weather: true, currency: true, notifications: true, horoscope: false };
-      parsed.horoscope = visible;
-      localStorage.setItem('bx_dashboard_widgets', JSON.stringify(parsed));
+      const stored = localStorage.getItem('bx_dashboard_widgets')
+      const parsed = stored ? JSON.parse(stored) : { weather: true, currency: true, notifications: true, horoscope: false }
+      parsed.horoscope = visible
+      localStorage.setItem('bx_dashboard_widgets', JSON.stringify(parsed))
     } catch {}
   }
 
   async function signOut() {
-    setSigningOut(true);
-    clearPin();
-    await supabase.auth.signOut();
-    window.location.reload();
+    setSigningOut(true)
+    clearPin()
+    await supabase.auth.signOut()
+    window.location.reload()
   }
 
   async function resetPin() {
-    clearPin();
-    window.location.reload();
+    clearPin()
+    window.location.reload()
   }
 
   function togglePinEnabled(on: boolean) {
-    setPinEnabledState(on);
-    setPinEnabled(on); // выключение стирает PIN; включение попросит задать при след. блокировке
-  }
-
-  function Section({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-      <div>
-        <h2 className="text-xs font-semibold text-bx-muted uppercase tracking-wider mb-2">{title}</h2>
-        <div className="bg-bx-surface rounded-xl border border-bx-border overflow-hidden divide-y divide-bx-border">
-          {children}
-        </div>
-      </div>
-    );
+    setPinEnabledState(on)
+    setPinEnabled(on)
   }
 
   function SettingRow({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) {
     return (
-      <div className="flex items-center justify-between px-4 py-3 gap-4">
+      <div className="flex items-center justify-between px-4 py-3 gap-4 border-b border-bx-border/60 last:border-0">
         <div>
           <p className="text-sm text-bx-text">{label}</p>
           {desc && <p className="text-xs text-bx-muted mt-0.5">{desc}</p>}
         </div>
         <div className="flex-shrink-0">{children}</div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="max-w-lg mx-auto space-y-6">
-        <div>
-          <h1 className="text-xl font-semibold text-bx-text">Настройки</h1>
-          <p className="text-sm text-bx-muted mt-0.5">BX Помощник Бухгалтера v{APP_VERSION}</p>
+    <div className="flex-1 flex overflow-hidden bg-bx-bg">
+      {/* Боковая панель вкладок */}
+      <aside className="w-60 border-r border-bx-border/40 bg-bx-surface/30 flex flex-col p-4 space-y-1.5 flex-shrink-0">
+        <div className="px-3.5 py-3 mb-2 flex-shrink-0">
+          <h1 className="text-sm font-bold text-bx-text">Настройки</h1>
+          <p className="text-[10px] text-bx-muted mt-0.5">BX Assistant v{APP_VERSION}</p>
         </div>
 
-        {/* Тариф */}
-        <Section title="Тариф и оплата">
-          <div className={`rounded-xl border px-4 py-3 mb-3 ${plan === 'premium'
-            ? 'bg-gradient-to-br from-purple-600/15 to-transparent border-purple-500/30'
-            : plan === 'standard'
-              ? 'bg-gradient-to-br from-emerald-600/15 to-transparent border-emerald-500/30'
-              : 'bg-gradient-to-br from-blue-600/15 to-transparent border-blue-500/30'}`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-bx-text">
-                  Ваш план: {plan === 'premium' ? 'Premium' : plan === 'standard' ? 'Standard' : 'Free'}
-                  <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-full ${
-                    plan === 'premium' ? 'bg-purple-500/15 text-purple-400' : plan === 'standard' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-blue-500/15 text-blue-400'
-                  }`}>
-                    {plan !== 'free' ? 'активен' : 'бесплатный'}
-                  </span>
-                </p>
-                <p className="text-xs text-bx-muted mt-0.5">
-                  {plan === 'premium' 
-                    ? 'Максимальные возможности и приоритетная поддержка 24/7' 
-                    : plan === 'standard' 
-                      ? 'Оптимальный пакет для индивидуальной работы' 
-                      : 'Free-версия имеет лимиты. Перейдите на Standard или Premium для комфортной работы'}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl border border-bx-border overflow-hidden text-[11px]">
-            <div className="grid grid-cols-4 bg-bx-surface px-3 py-2 font-semibold text-bx-text">
-              <span>Пакет</span>
-              <span className="text-center">Free</span>
-              <span className="text-center text-emerald-400">Standard</span>
-              <span className="text-center text-purple-400">Premium</span>
-            </div>
-            <div className="grid grid-cols-4 bg-bx-surface/50 px-3 py-1 text-[10px] text-bx-muted border-t border-bx-border/60">
-              <span>Стоимость</span>
-              <span className="text-center font-bold">0 сум</span>
-              <span className="text-center font-bold text-emerald-500">99k / мес</span>
-              <span className="text-center font-bold text-purple-500">199k / мес</span>
-            </div>
-            {[
-              ['Справочники, БЗ, калькуляторы', '✓', '✓', '✓'],
-              ['Компании', '1', 'до 3', 'безлимит'],
-              ['Доски Планировщика', '1', 'до 5', 'безлимит'],
-              ['AI-вопросов в месяц', '10', '150', 'безлимит'],
-              ['Очеловечивание текстов', '—', '50 / мес', 'безлимит'],
-              ['Контроль долгов и оплат', 'просмотр', 'до 20 зап.', 'безлимит'],
-              ['ЭЦП (подписание)', '—', 'до 5 / мес', 'безлимит'],
-              ['Бэкапы 1С', '—', 'ручной', 'автомат'],
-              ['Техподдержка (AnyDesk)', '—', 'чат', 'живой спец.'],
-            ].map(([f, a, b, c]) => (
-              <div key={f} className="grid grid-cols-4 px-3 py-2 border-t border-bx-border/60 text-bx-muted">
-                <span>{f}</span>
-                <span className="text-center text-bx-muted">{a}</span>
-                <span className="text-center text-emerald-500/90">{b}</span>
-                <span className="text-center text-purple-500/90 font-medium">{c}</span>
-              </div>
-            ))}
-          </div>
-          {!isPro && (
-            <div className="mt-4 p-4 bg-bx-surface border border-bx-border-2 rounded-xl space-y-4">
-              <h3 className="text-xs font-semibold text-bx-text">💳 Активация тарифа PRO</h3>
+        <button
+          onClick={() => setActiveTab('billing')}
+          className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'billing'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
+              : 'text-bx-muted hover:text-bx-text hover:bg-bx-surface-2'
+          }`}
+        >
+          <span>💳</span> Тариф и Оплата
+        </button>
+
+        <button
+          onClick={() => setActiveTab('security')}
+          className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'security'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
+              : 'text-bx-muted hover:text-bx-text hover:bg-bx-surface-2'
+          }`}
+        >
+          <span>👤</span> Безопасность и Вход
+        </button>
+
+        <button
+          onClick={() => setActiveTab('appearance')}
+          className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'appearance'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
+              : 'text-bx-muted hover:text-bx-text hover:bg-bx-surface-2'
+          }`}
+        >
+          <span>🎨</span> Оформление и Срок
+        </button>
+
+        <button
+          onClick={() => setActiveTab('ai')}
+          className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'ai'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
+              : 'text-bx-muted hover:text-bx-text hover:bg-bx-surface-2'
+          }`}
+        >
+          <span>🤖</span> Настройки ИИ
+        </button>
+
+        <button
+          onClick={() => setActiveTab('team')}
+          className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'team'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
+              : 'text-bx-muted hover:text-bx-text hover:bg-bx-surface-2'
+          }`}
+        >
+          <span>👥</span> Моя команда
+        </button>
+
+        <button
+          onClick={() => setActiveTab('data')}
+          className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'data'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
+              : 'text-bx-muted hover:text-bx-text hover:bg-bx-surface-2'
+          }`}
+        >
+          <span>⚙️</span> Система и Данные
+        </button>
+      </aside>
+
+      {/* Основная контентная область */}
+      <main className="flex-1 overflow-y-auto p-8 bg-bx-bg/40">
+        <div className="max-w-2xl mx-auto space-y-6">
+
+          {/* Вкладка: Тариф и Оплата */}
+          {activeTab === 'billing' && (
+            <div className="space-y-4">
+              <h2 className="text-base font-bold text-bx-text">Тариф и Оплата</h2>
               
-              {/* Вкладки выбора метода */}
-              <div className="flex gap-2 p-0.5 bg-bx-bg border border-bx-border rounded-lg">
-                <button onClick={() => setPayMethod('card')}
-                  className={`flex-1 py-1 text-[11px] font-semibold rounded-md transition-colors ${payMethod === 'card' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
-                  Payme / Click
-                </button>
-                <button onClick={() => setPayMethod('invoice')}
-                  className={`flex-1 py-1 text-[11px] font-semibold rounded-md transition-colors ${payMethod === 'invoice' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
-                  Счёт (юрлица)
-                </button>
+              <div className={`rounded-xl border p-4 ${
+                plan === 'premium'
+                  ? 'bg-gradient-to-br from-purple-600/15 to-transparent border-purple-500/30'
+                  : plan === 'standard'
+                    ? 'bg-gradient-to-br from-emerald-600/15 to-transparent border-emerald-500/30'
+                    : 'bg-gradient-to-br from-blue-600/15 to-transparent border-blue-500/30'
+              }`}>
+                <p className="text-sm font-semibold text-bx-text">
+                  Ваш текущий тариф: <span className="capitalize">{plan === 'premium' ? 'Premium' : plan === 'standard' ? 'Standard' : 'Free'}</span>
+                </p>
+                <p className="text-xs text-bx-muted mt-1 leading-relaxed">
+                  {plan === 'premium' 
+                    ? 'Максимальные возможности, корпоративный доступ без лимитов и поддержка 24/7' 
+                    : plan === 'standard' 
+                      ? 'Оптимальный пакет для полноценной бухгалтерской работы' 
+                      : 'Тариф Free имеет ограничения. Активируйте PRO-пакет для комфортной работы.'}
+                </p>
               </div>
 
-              {payMethod === 'card' ? (
-                <div className="space-y-3 text-center">
-                  <p className="text-[11px] text-bx-muted leading-relaxed">
-                    Отсканируйте QR-код в приложении Payme или Click для мгновенной оплаты подписки.
-                  </p>
-                  <div className="flex justify-center gap-4 py-2">
-                    <div className="bg-bx-surface-2 p-3 rounded-xl border border-bx-border flex flex-col items-center shadow-lg transition-all hover:border-bx-border-2">
-                      <div className="w-24 h-24 bg-bx-bg/50 flex flex-col items-center justify-center border border-dashed border-bx-border rounded-lg text-bx-muted text-xs gap-1">
-                        <svg className="w-8 h-8 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125v-2.25zM3.75 14.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125v-2.25zM14.625 3.75a1.125 1.125 0 0 0-1.125 1.125v2.25c0 .621.504 1.125 1.125 1.125h2.25c.621 0 1.125-.504 1.125-1.125v-2.25a1.125 1.125 0 0 0-1.125-1.125h-2.25z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.625 14.625h1.5a1.5 1.5 0 0 1 1.5 1.5v1.5a1.5 1.5 0 0 1-1.5 1.5h-1.5a1.5 1.5 0 0 1-1.5-1.5v-1.5a1.5 1.5 0 0 1 1.5-1.5z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75h.008v.008H9.75V9.75zM9.75 14.25h.008v.008H9.75V14.25zM14.25 9.75h.008v.008H14.25V9.75z" />
-                        </svg>
-                        <span className="text-[9px] opacity-75">QR-код</span>
-                      </div>
-                      <span className="text-[10px] font-bold mt-2 text-blue-400">Payme</span>
-                    </div>
-                    <div className="bg-bx-surface-2 p-3 rounded-xl border border-bx-border flex flex-col items-center shadow-lg transition-all hover:border-bx-border-2">
-                      <div className="w-24 h-24 bg-bx-bg/50 flex flex-col items-center justify-center border border-dashed border-bx-border rounded-lg text-bx-muted text-xs gap-1">
-                        <svg className="w-8 h-8 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125v-2.25zM3.75 14.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125v-2.25zM14.625 3.75a1.125 1.125 0 0 0-1.125 1.125v2.25c0 .621.504 1.125 1.125 1.125h2.25c.621 0 1.125-.504 1.125-1.125v-2.25a1.125 1.125 0 0 0-1.125-1.125h-2.25z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.625 14.625h1.5a1.5 1.5 0 0 1 1.5 1.5v1.5a1.5 1.5 0 0 1-1.5 1.5h-1.5a1.5 1.5 0 0 1-1.5-1.5v-1.5a1.5 1.5 0 0 1 1.5-1.5z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75h.008v.008H9.75V9.75zM9.75 14.25h.008v.008H9.75V14.25zM14.25 9.75h.008v.008H14.25V9.75z" />
-                        </svg>
-                        <span className="text-[9px] opacity-75">QR-код</span>
-                      </div>
-                      <span className="text-[10px] font-bold mt-2 text-sky-400">Click</span>
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-bx-muted leading-relaxed">
-                    После оплаты тариф активируется автоматически. Если возникли вопросы, напишите в <span className="text-blue-400 cursor-pointer hover:underline" onClick={() => navigate('/support')}>поддержку</span>.
-                  </p>
+              {/* Лимиты */}
+              <div className="bg-bx-surface rounded-xl border border-bx-border/60 overflow-hidden text-[11px]">
+                <div className="grid grid-cols-4 bg-bx-surface-2 px-4 py-2.5 font-bold text-bx-text border-b border-bx-border/40">
+                  <span>Функционал</span>
+                  <span className="text-center text-bx-muted">Free</span>
+                  <span className="text-center text-emerald-400">Standard</span>
+                  <span className="text-center text-purple-400">Premium</span>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-[11px] text-bx-muted leading-relaxed">
-                    Для оплаты безналичным расчетом (перечислением) скачайте счет на оплату или используйте наши реквизиты.
-                  </p>
-                  <div className="bg-bx-bg rounded-lg border border-bx-border p-3 text-[10px] space-y-1.5 font-mono text-bx-muted">
-                    <p><strong className="text-bx-text">Получатель:</strong> ООО «BX SOFTWARE»</p>
-                    <p><strong className="text-bx-text">ИНН:</strong> 309876543</p>
-                    <p><strong className="text-bx-text">Р/с:</strong> 20208000900123456001</p>
-                    <p><strong className="text-bx-text">Банк:</strong> АКБ «Капиталбанк», г. Ташкент</p>
-                    <p><strong className="text-bx-text">МФО:</strong> 00440</p>
+                {[
+                  ['Стоимость', '0 сум', '99k / мес', '199k / мес'],
+                  ['Компании / Доски', '1 / 1', 'до 3 / до 5', 'Безлимит'],
+                  ['AI-запросы (в мес)', '10', '150', 'Безлимит'],
+                  ['Очеловечивание (в мес)', '—', '50', 'Безлимит'],
+                  ['Управление долгами', 'просмотр', 'до 20 зап.', 'Безлимит'],
+                  ['Подпись ЭЦП (в мес)', '—', 'до 5', 'Безлимит'],
+                  ['Чистка & Бэкап 1С', '✓', 'ручной', 'автомат'],
+                  ['Техподдержка', '—', 'чат', 'AnyDesk'],
+                ].map(([f, a, b, c], i) => (
+                  <div key={f} className={`grid grid-cols-4 px-4 py-2 border-t border-bx-border/20 text-bx-muted ${i % 2 === 0 ? 'bg-bx-surface/20' : ''}`}>
+                    <span className="font-medium text-bx-text/80">{f}</span>
+                    <span className="text-center">{a}</span>
+                    <span className="text-center text-emerald-500/90">{b}</span>
+                    <span className="text-center text-purple-500/90 font-medium">{c}</span>
                   </div>
-                  <button onClick={handleGenerateInvoice}
-                    className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5">
-                    📄 Скачать счёт на оплату (PDF)
-                  </button>
+                ))}
+              </div>
+
+              {/* Способы оплаты */}
+              {!isPro && (
+                <div className="bg-bx-surface border border-bx-border rounded-2xl p-4 space-y-4">
+                  <h3 className="text-xs font-bold text-bx-text uppercase tracking-wider">💳 Способы оплаты подписки</h3>
+                  
+                  <div className="flex gap-2 p-0.5 bg-bx-bg border border-bx-border rounded-xl">
+                    <button onClick={() => setPayMethod('card')}
+                      className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${payMethod === 'card' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
+                      Карты (Payme / Click)
+                    </button>
+                    <button onClick={() => setPayMethod('invoice')}
+                      className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${payMethod === 'invoice' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
+                      Счёт (для юрлиц)
+                    </button>
+                  </div>
+
+                  {payMethod === 'card' ? (
+                    <div className="text-center space-y-3">
+                      <p className="text-xs text-bx-muted leading-relaxed">
+                        Отсканируйте QR-код в приложении Click или Payme для активации PRO-тарифа.
+                      </p>
+                      <div className="flex justify-center gap-6 py-2">
+                        <div className="bg-bx-bg/40 p-4 rounded-xl border border-bx-border flex flex-col items-center shadow-lg transition-all hover:border-bx-border-2">
+                          <div className="w-24 h-24 bg-bx-surface-2 flex flex-col items-center justify-center border border-dashed border-bx-border rounded-lg text-bx-muted text-xs gap-1">
+                            <span>QR Code</span>
+                          </div>
+                          <span className="text-xs font-bold mt-2 text-blue-400">Payme</span>
+                        </div>
+                        <div className="bg-bx-bg/40 p-4 rounded-xl border border-bx-border flex flex-col items-center shadow-lg transition-all hover:border-bx-border-2">
+                          <div className="w-24 h-24 bg-bx-surface-2 flex flex-col items-center justify-center border border-dashed border-bx-border rounded-lg text-bx-muted text-xs gap-1">
+                            <span>QR Code</span>
+                          </div>
+                          <span className="text-xs font-bold mt-2 text-sky-400">Click</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-xs text-bx-muted leading-relaxed">
+                        Для оплаты безналичным расчетом скачайте счет-договор на оплату Standard/Premium:
+                      </p>
+                      <button onClick={handleGenerateInvoice}
+                        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-md">
+                        📄 Скачать счёт на оплату (PDF)
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
-        </Section>
 
-        {/* Аккаунт */}
-        <Section title="Аккаунт">
-          <SettingRow label="Email" desc="Supabase аккаунт">
-            <span className="text-sm text-bx-muted">{userEmail || '—'}</span>
-          </SettingRow>
-          <SettingRow label="Защита PIN-кодом" desc="Спрашивать PIN при запуске и блокировке. Выключите, если мешает">
-            <button
-              onClick={() => togglePinEnabled(!pinEnabled)}
-              className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${pinEnabled ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
-            >
-              {pinEnabled ? 'Включена' : 'Выключена'}
-            </button>
-          </SettingRow>
-          {pinEnabled && (
-            <SettingRow label="Сбросить PIN-код" desc="Задать новый PIN при следующей блокировке">
-              <button
-                onClick={resetPin}
-                className="text-xs px-3 py-1.5 bg-bx-surface-2 hover:bg-bx-border-2 text-bx-text rounded-lg transition-colors"
-              >
-                Сбросить PIN
-              </button>
-            </SettingRow>
+          {/* Вкладка: Безопасность и Вход */}
+          {activeTab === 'security' && (
+            <div className="space-y-4">
+              <h2 className="text-base font-bold text-bx-text">Безопасность и Вход</h2>
+              
+              <div className="bg-bx-surface rounded-xl border border-bx-border overflow-hidden">
+                <SettingRow label="Email аккаунта" desc="Используется для синхронизации в облаке">
+                  <span className="text-sm font-medium text-bx-muted">{userEmail || '—'}</span>
+                </SettingRow>
+
+                <SettingRow label="Защита PIN-кодом" desc="Спрашивать PIN при запуске и выходе из спящего режима">
+                  <button
+                    onClick={() => togglePinEnabled(!pinEnabled)}
+                    className={`px-3 py-1.5 rounded-lg text-xs transition-colors font-semibold ${
+                      pinEnabled ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'
+                    }`}
+                  >
+                    {pinEnabled ? 'Включена' : 'Выключена'}
+                  </button>
+                </SettingRow>
+
+                {pinEnabled && (
+                  <>
+                    <SettingRow label="Сбросить PIN-код" desc="Сбросить текущий код. Попросит ввести новый при запуске">
+                      <button onClick={resetPin}
+                        className="text-xs px-3 py-1.5 bg-bx-surface-2 hover:bg-bx-border-2 text-bx-text rounded-lg transition-colors">
+                        Сбросить PIN
+                      </button>
+                    </SettingRow>
+
+                    <SettingRow label="Автоблокировка экрана" desc="Блокировать интерфейс при бездействии">
+                      <div className="flex gap-1">
+                        {(['off', '5', '10', '30', '60'] as IdleLock[]).map(v => (
+                          <button
+                            key={v}
+                            onClick={() => saveIdleLock(v)}
+                            className={`px-2.5 py-1 rounded text-xs transition-colors font-medium ${
+                              idleLock === v ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'
+                            }`}
+                          >
+                            {v === 'off' ? 'Выкл.' : v === '60' ? '1ч' : `${v}м`}
+                          </button>
+                        ))}
+                      </div>
+                    </SettingRow>
+                  </>
+                )}
+
+                <SettingRow label="Выход из системы" desc="Удалить сессию авторизации на этом ПК">
+                  <button
+                    onClick={signOut}
+                    disabled={signingOut}
+                    className="text-xs px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors font-semibold disabled:opacity-50"
+                  >
+                    {signingOut ? 'Выход...' : 'Выйти'}
+                  </button>
+                </SettingRow>
+              </div>
+            </div>
           )}
-          {pinEnabled && (
-          <SettingRow label="Автоблокировка экрана" desc="Блокировка PIN-кодом при бездействии (опционально)">
-            <div className="flex gap-1.5">
-              {(['off', '5', '10', '30', '60'] as IdleLock[]).map(v => (
-                <button
-                  key={v}
-                  onClick={() => saveIdleLock(v)}
-                  className={`px-2.5 py-1 rounded text-xs transition-colors ${idleLock === v ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
-                >
-                  {v === 'off' ? 'Выкл.' : v === '60' ? '1 час' : `${v} мин`}
-                </button>
-              ))}
+
+          {/* Вкладка: Оформление и Срок */}
+          {activeTab === 'appearance' && (
+            <div className="space-y-4">
+              <h2 className="text-base font-bold text-bx-text">Оформление и Срок</h2>
+              
+              <div className="bg-bx-surface rounded-xl border border-bx-border overflow-hidden">
+                <SettingRow label="Тема оформления" desc="Внешний вид рабочих окон приложения">
+                  <div className="flex gap-1.5">
+                    {(['dark', 'light'] as const).map(t => (
+                      <button
+                        key={t}
+                        onClick={() => saveTheme(t)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                          theme === t ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'
+                        }`}
+                      >
+                        {t === 'dark' ? 'Темная' : 'Светлая'}
+                      </button>
+                    ))}
+                  </div>
+                </SettingRow>
+
+                <SettingRow label="Бухо-гороскоп" desc="Шуточный прогноз на Bento Grid рабочего стола">
+                  <button
+                    onClick={() => toggleHoroscope(!showHoroscope)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      showHoroscope ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'
+                    }`}
+                  >
+                    {showHoroscope ? 'Показывать' : 'Скрывать'}
+                  </button>
+                </SettingRow>
+
+                <SettingRow label="Напоминания о дедлайнах" desc="За сколько дней напоминать об отчетах и налогах">
+                  <div className="flex gap-1">
+                    {(['off', '1', '3', '7'] as NotifyDays[]).map(v => (
+                      <button
+                        key={v}
+                        onClick={() => saveNotify(v)}
+                        className={`px-2.5 py-1 rounded text-xs transition-colors font-medium ${
+                          notifyDays === v ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'
+                        }`}
+                      >
+                        {v === 'off' ? 'Выкл.' : `${v} дн.`}
+                      </button>
+                    ))}
+                  </div>
+                </SettingRow>
+              </div>
             </div>
-          </SettingRow>
           )}
-          <SettingRow label="Выход из аккаунта" desc="Потребуется повторный вход по email">
-            <button
-              onClick={signOut}
-              disabled={signingOut}
-              className="text-xs px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {signingOut ? 'Выход...' : 'Выйти'}
-            </button>
-          </SettingRow>
-        </Section>
 
-        {/* Внешний вид */}
-        <Section title="Внешний вид и оформление">
-          <SettingRow label="Тема интерфейса" desc="Светлая или темная тема оформления">
-            <div className="flex gap-1.5">
-              {(['dark', 'light'] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => saveTheme(t)}
-                  className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${theme === t ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
-                >
-                  {t === 'dark' ? 'Темная' : 'Светлая'}
-                </button>
-              ))}
-            </div>
-          </SettingRow>
-          <SettingRow label="Бухо-гороскоп" desc="Показывать шуточный гороскоп на рабочем столе">
-            <button
-              onClick={() => toggleHoroscope(!showHoroscope)}
-              className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${showHoroscope ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
-            >
-              {showHoroscope ? 'Показывать' : 'Скрывать'}
-            </button>
-          </SettingRow>
-        </Section>
+          {/* Вкладка: Настройки ИИ */}
+          {activeTab === 'ai' && (
+            <div className="space-y-4">
+              <h2 className="text-base font-bold text-bx-text">Настройки ИИ-консультанта</h2>
+              
+              <div className="bg-bx-surface rounded-xl border border-bx-border overflow-hidden">
+                <SettingRow label="Режим ИИ" desc="Выбор между облачным API и локальным решением">
+                  <div className="flex gap-1.5">
+                    {(['gemini', 'ollama'] as const).map(v => (
+                      <button
+                        key={v}
+                        onClick={() => {
+                          localStorage.setItem('bx_ai_provider', v)
+                          window.dispatchEvent(new Event('storage'))
+                          window.location.reload()
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                          (localStorage.getItem('bx_ai_provider') || 'gemini') === v 
+                            ? 'bg-blue-600 text-white' 
+                            : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'
+                        }`}
+                      >
+                        {v === 'gemini' ? 'Облако (Gemini)' : 'Локально (Ollama)'}
+                      </button>
+                    ))}
+                  </div>
+                </SettingRow>
 
-        {/* Уведомления */}
-        <Section title="Уведомления о дедлайнах">
-          <SettingRow label="Напоминать заранее" desc="За сколько дней до срока показывать предупреждение">
-            <div className="flex gap-1.5">
-              {(['off', '1', '3', '7'] as NotifyDays[]).map(v => (
-                <button
-                  key={v}
-                  onClick={() => saveNotify(v)}
-                  className={`px-2.5 py-1 rounded text-xs transition-colors ${notifyDays === v ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
-                >
-                  {v === 'off' ? 'Выкл.' : `${v} дн.`}
-                </button>
-              ))}
-            </div>
-          </SettingRow>
-        </Section>
+                {(localStorage.getItem('bx_ai_provider') || 'gemini') === 'ollama' && (
+                  <>
+                    <div className="flex items-center justify-between px-4 py-3 gap-4 border-b border-bx-border/60">
+                      <div>
+                        <p className="text-sm text-bx-text">Адрес хоста Ollama</p>
+                        <p className="text-xs text-bx-muted mt-0.5">Локальный сетевой адрес API Ollama</p>
+                      </div>
+                      <input 
+                        type="text" 
+                        defaultValue={localStorage.getItem('bx_ollama_host') || 'http://localhost:11434'}
+                        onBlur={e => localStorage.setItem('bx_ollama_host', e.target.value)}
+                        placeholder="http://localhost:11434"
+                        className="bg-bx-bg text-bx-text text-xs px-2.5 py-1.5 rounded-lg border border-bx-border-2 focus:outline-none w-48 text-right font-mono"
+                      />
+                    </div>
 
-        {/* Настройки ИИ */}
-        <Section title="Настройки ИИ-консультанта">
-          <SettingRow label="Провайдер ИИ" desc="Использовать облачный Gemini или локальный Ollama">
-            <div className="flex gap-1.5">
-              {(['gemini', 'ollama'] as const).map(v => (
-                <button
-                  key={v}
-                  onClick={() => {
-                    localStorage.setItem('bx_ai_provider', v)
-                    window.dispatchEvent(new Event('storage')) // Триггерим обновление в других вкладках
-                    window.location.reload() // Перезагрузка для применения
-                  }}
-                  className={`px-2.5 py-1 rounded text-xs transition-colors ${
-                    (localStorage.getItem('bx_ai_provider') || 'gemini') === v 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'
-                  }`}
-                >
-                  {v === 'gemini' ? 'Облако (Gemini)' : 'Локально (Ollama)'}
-                </button>
-              ))}
+                    <div className="flex items-center justify-between px-4 py-3 gap-4 border-b border-bx-border/60">
+                      <div>
+                        <p className="text-sm text-bx-text">Локальная модель</p>
+                        <p className="text-xs text-bx-muted mt-0.5">Название скачанной модели Ollama</p>
+                      </div>
+                      <input 
+                        type="text" 
+                        defaultValue={localStorage.getItem('bx_ollama_model') || 'deepseek-r1:1.5b'}
+                        onBlur={e => localStorage.setItem('bx_ollama_model', e.target.value)}
+                        placeholder="deepseek-r1:1.5b"
+                        className="bg-bx-bg text-bx-text text-xs px-2.5 py-1.5 rounded-lg border border-bx-border-2 focus:outline-none w-48 text-right font-mono"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          </SettingRow>
-          {(localStorage.getItem('bx_ai_provider') || 'gemini') === 'ollama' && (
-            <>
-              <SettingRow label="Хост Ollama" desc="Адрес запущенного локального API Ollama">
-                <input 
-                  type="text" 
-                  defaultValue={localStorage.getItem('bx_ollama_host') || 'http://localhost:11434'}
-                  onBlur={e => localStorage.setItem('bx_ollama_host', e.target.value)}
-                  placeholder="http://localhost:11434"
-                  className="bg-bx-bg text-bx-text text-xs px-2 py-1 rounded border border-bx-border-2 focus:outline-none w-44"
-                />
-              </SettingRow>
-              <SettingRow label="Модель Ollama" desc="Название локально скачанной LLM">
-                <input 
-                  type="text" 
-                  defaultValue={localStorage.getItem('bx_ollama_model') || 'deepseek-r1:1.5b'}
-                  onBlur={e => localStorage.setItem('bx_ollama_model', e.target.value)}
-                  placeholder="deepseek-r1:1.5b"
-                  className="bg-bx-bg text-bx-text text-xs px-2 py-1 rounded border border-bx-border-2 focus:outline-none w-44"
-                />
-              </SettingRow>
-            </>
           )}
-        </Section>
 
-        {/* Данные */}
-        <Section title="Данные и конфиденциальность">
-          <SettingRow label="Облачное хранилище" desc="Задачи и компании хранятся в Supabase (EU)">
-            <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400">Активно</span>
-          </SettingRow>
-          <SettingRow label="Локальный кэш" desc="Справочники кешируются для офлайн-работы">
-            <button
-              onClick={() => {
-                const keys = Object.keys(localStorage).filter(k => k.startsWith('bx_cache_') || k.startsWith('bx_transactions_') || k.startsWith('bx_employees_'))
-                keys.forEach(k => localStorage.removeItem(k))
-                db.transactions.clear()
-                db.employees.clear()
-                alert(`Очищен локальный кэш и база данных в браузере`)
-              }}
-              className="text-xs px-3 py-1.5 bg-bx-surface-2 hover:bg-bx-border-2 text-bx-text rounded-lg transition-colors"
-            >
-              Очистить кэш
-            </button>
-          </SettingRow>
-        </Section>
+          {/* Вкладка: Моя команда */}
+          {activeTab === 'team' && (
+            <div className="space-y-5">
+              <h2 className="text-base font-bold text-bx-text">Моя команда и корпоративный доступ</h2>
 
-        {/* Системные настройки (только в Electron) */}
-        {!!(window as any).bx && (
-          <Section title="Системные настройки">
-            <SettingRow label="Запускать при старте системы" desc="Автоматический запуск приложения при включении компьютера">
-              <button
-                onClick={() => handleToggleAutostart(!autostartEnabled)}
-                className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${autostartEnabled ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
-              >
-                {autostartEnabled ? 'Включено' : 'Выключено'}
-              </button>
-            </SettingRow>
-            <SettingRow label="Сворачивать при закрытии" desc="При нажатии на крестик приложение сворачивается в трей и продолжает работать">
-              <span className="text-xs text-bx-muted font-medium bg-bx-surface-2 px-2.5 py-1 rounded">Активно</span>
-            </SettingRow>
-          </Section>
-        )}
+              {/* Входящие приглашения */}
+              {incomingInvites.length > 0 && (
+                <div className="bg-gradient-to-br from-blue-500/10 to-indigo-500/5 border border-blue-500/20 rounded-2xl p-4 space-y-3">
+                  <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>📨</span> Входящие приглашения
+                  </h3>
+                  <div className="space-y-2">
+                    {incomingInvites.map((invite) => {
+                      const compName = invite.bx_companies?.name ?? 'Неизвестная компания'
+                      const roleName = invite.role === 'admin' ? 'Администратор' : invite.role === 'editor' ? 'Помощник' : 'Наблюдатель'
+                      return (
+                        <div key={invite.id} className="flex items-center justify-between bg-bx-surface/60 border border-bx-border/30 rounded-xl p-3">
+                          <div>
+                            <p className="text-xs text-bx-text font-bold">{compName}</p>
+                            <p className="text-[10px] text-bx-muted mt-0.5">Ваша будущая роль: {roleName}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleAcceptInvite(invite.id)}
+                              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-colors"
+                            >
+                              Принять
+                            </button>
+                            <button
+                              onClick={() => handleRejectInvite(invite.id)}
+                              className="px-3 py-1 bg-bx-surface-2 hover:bg-bx-border-2 text-bx-text rounded-lg text-[10px] font-bold transition-colors"
+                            >
+                              Отклонить
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
-        {/* О программе */}
-        <Section title="О программе">
-          <SettingRow label="Версия" desc="BX — Помощник Бухгалтера">
-            <span className="text-sm text-bx-muted">v{APP_VERSION}</span>
-          </SettingRow>
-          <SettingRow label="Разработка" desc="Для бухгалтеров Узбекистана">
-            <span className="text-sm text-bx-muted">2026</span>
-          </SettingRow>
-          <div className="px-4 py-3">
-            <button
-              onClick={() => window.open('https://soliq.uz', '_blank')}
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              Сообщить о проблеме ↗
-            </button>
-          </div>
-        </Section>
-      </div>
+              {/* Состав команды выбранной организации */}
+              {!activeCompany ? (
+                <div className="bg-bx-surface border border-bx-border rounded-xl p-6 text-center text-bx-muted text-xs">
+                  Пожалуйста, выберите или создайте компанию в шапке приложения, чтобы управлять её командой.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Отправка приглашения */}
+                  <form onSubmit={handleSendInvite} className="bg-bx-surface border border-bx-border rounded-2xl p-4 space-y-3">
+                    <h3 className="text-xs font-bold text-bx-text uppercase tracking-wider">➕ Пригласить сотрудника</h3>
+                    <div className="flex flex-col sm:flex-row gap-2.5">
+                      <input
+                        type="email"
+                        required
+                        value={inviteEmail}
+                        onChange={e => setInviteEmail(e.target.value)}
+                        placeholder="Email нового участника"
+                        className="flex-1 bg-bx-bg text-bx-text text-xs px-3 py-2 rounded-xl border border-bx-border focus:outline-none placeholder:text-bx-muted focus:border-blue-500/50"
+                      />
+                      <select
+                        value={inviteRole}
+                        onChange={e => setInviteRole(e.target.value as any)}
+                        className="bg-bx-bg text-bx-text text-xs px-3 py-2 rounded-xl border border-bx-border focus:outline-none"
+                      >
+                        <option value="editor">Помощник (Editor)</option>
+                        <option value="admin">Администратор (Admin)</option>
+                        <option value="viewer">Директор (Viewer)</option>
+                      </select>
+                      <button
+                        type="submit"
+                        disabled={inviting || !inviteEmail.trim()}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-all"
+                      >
+                        {inviting ? 'Отправка...' : 'Пригласить'}
+                      </button>
+                    </div>
+                  </form>
+
+                  {/* Список текущих членов организации */}
+                  <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden">
+                    <div className="px-4 py-3 border-b border-bx-border flex justify-between items-center">
+                      <h3 className="text-xs font-bold text-bx-text uppercase tracking-wider">
+                        Сотрудники компании: <span className="text-blue-400 font-semibold">{activeCompany.name}</span>
+                      </h3>
+                      {loadingTeam && <span className="text-[10px] text-bx-muted">Загрузка...</span>}
+                    </div>
+
+                    <div className="divide-y divide-bx-border">
+                      {teamMembers.map((m) => (
+                        <div key={m.id} className="flex items-center justify-between px-4 py-3.5 hover:bg-bx-bg/20 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-bx-surface-2 flex items-center justify-center font-bold text-xs text-blue-400">
+                              {m.invited_email.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="text-xs text-bx-text font-bold">{m.invited_email}</p>
+                              <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                                m.status === 'active' ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'
+                              }`}>
+                                {m.status === 'active' ? 'активен' : 'ожидает принятия'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold px-2 py-1 rounded bg-bx-bg border border-bx-border text-bx-muted capitalize">
+                              {m.role === 'admin' ? 'Администратор' : m.role === 'editor' ? 'Помощник' : m.role === 'owner' ? 'Владелец' : 'Наблюдатель'}
+                            </span>
+                            
+                            {m.role !== 'owner' && (
+                              <button
+                                onClick={() => handleDeleteMember(m.id)}
+                                className="text-xs text-bx-muted hover:text-red-400 px-2 py-1 hover:bg-red-500/10 rounded-lg transition-all"
+                                title="Удалить из команды"
+                              >
+                                Удалить
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                      {teamMembers.length === 0 && !loadingTeam && (
+                        <p className="text-center py-8 text-bx-muted text-xs">В команде пока нет сотрудников</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Вкладка: Система и Данные */}
+          {activeTab === 'data' && (
+            <div className="space-y-4">
+              <h2 className="text-base font-bold text-bx-text">Система и Данные</h2>
+              
+              <div className="bg-bx-surface rounded-xl border border-bx-border overflow-hidden">
+                <SettingRow label="Локальный кэш приложения" desc="Очистить закэшированные транзакции и данные о сотрудниках">
+                  <button
+                    onClick={() => {
+                      const keys = Object.keys(localStorage).filter(k => k.startsWith('bx_cache_') || k.startsWith('bx_transactions_') || k.startsWith('bx_employees_'))
+                      keys.forEach(k => localStorage.removeItem(k))
+                      db.transactions.clear()
+                      db.employees.clear()
+                      toast.success('Локальный кэш IndexedDB успешно очищен!')
+                    }}
+                    className="text-xs px-3 py-1.5 bg-bx-surface-2 hover:bg-bx-border-2 text-bx-text rounded-lg transition-colors"
+                  >
+                    Очистить кэш
+                  </button>
+                </SettingRow>
+
+                {!!(window as any).bx && (
+                  <SettingRow label="Автозапуск BX" desc="Запускать приложение при включении компьютера">
+                    <button
+                      onClick={() => handleToggleAutostart(!autostartEnabled)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                        autostartEnabled ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'
+                      }`}
+                    >
+                      {autostartEnabled ? 'Включено' : 'Выключено'}
+                    </button>
+                  </SettingRow>
+                )}
+
+                <SettingRow label="Связь с облаком" desc="Статус синхронизации базы данных">
+                  <span className="text-xs px-2 py-0.5 rounded bg-green-500/10 text-green-400 font-bold">Подключено</span>
+                </SettingRow>
+              </div>
+
+              {/* О программе */}
+              <div className="bg-bx-surface rounded-xl border border-bx-border p-4 space-y-2">
+                <h3 className="text-xs font-bold text-bx-text uppercase tracking-wider">О программе</h3>
+                <div className="text-xs text-bx-muted space-y-1">
+                  <p>Продукт: <span className="text-bx-text font-semibold">BX — Помощник Бухгалтера Республики Узбекистан</span></p>
+                  <p>Версия сборки: <span className="text-bx-text font-semibold">v{APP_VERSION}</span></p>
+                  <p>Разработка: <span className="text-bx-text font-semibold">2026 г.</span></p>
+                </div>
+                <div className="pt-2">
+                  <button onClick={() => window.open('https://soliq.uz', '_blank')}
+                    className="text-xs text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-2">
+                    Сообщить о технической проблеме ↗
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </main>
     </div>
-  );
+  )
 }

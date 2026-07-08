@@ -28,10 +28,12 @@ export default function CacheCleaner() {
     });
   }
 
+  const [createBackup, setCreateBackup] = useState(true);
+
   async function doClean() {
     if (selected.size === 0) return;
     setCleaning(true);
-    const res = await onecApi.cleanCache([...selected]);
+    const res = await onecApi.cleanCache([...selected], createBackup);
     setResult(res);
     setCleaning(false);
     // refresh
@@ -98,14 +100,25 @@ export default function CacheCleaner() {
                 ))}
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-bx-border">
-                <span className="text-xs text-bx-muted">
-                  Выбрано {selected.size} · освободится{' '}
-                  <span className="text-blue-400 font-medium">{formatBytes(selectedBytes)}</span>
-                </span>
-                <Button variant="danger" onClick={doClean} loading={cleaning} disabled={selected.size === 0}>
-                  Очистить выбранное
-                </Button>
+              <div className="flex flex-col gap-3.5 pt-2 border-t border-bx-border">
+                <label className="flex items-center gap-2 cursor-pointer text-xs text-bx-muted select-none">
+                  <input
+                    type="checkbox"
+                    checked={createBackup}
+                    onChange={(e) => setCreateBackup(e.target.checked)}
+                    className="accent-blue-500 rounded"
+                  />
+                  <span>Создать резервную копию настроек и баз перед очисткой (рекомендуется)</span>
+                </label>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-bx-muted">
+                    Выбрано {selected.size} · освободится{' '}
+                    <span className="text-blue-400 font-medium">{formatBytes(selectedBytes)}</span>
+                  </span>
+                  <Button variant="danger" onClick={doClean} loading={cleaning} disabled={selected.size === 0}>
+                    Очистить выбранное
+                  </Button>
+                </div>
               </div>
             </>
           )}

@@ -10,7 +10,7 @@ interface BxBridge {
   platform: string;
   onec: {
     scanCache(): Promise<CacheScanResult>;
-    cleanCache(paths: string[]): Promise<CleanResult>;
+    cleanCache(paths: string[], backup?: boolean): Promise<CleanResult>;
     listProcesses(): Promise<ProcessEntry[]>;
     killProcesses(pids: number[]): Promise<KillResult>;
     pickDatabaseFile(): Promise<string | null>;
@@ -111,8 +111,8 @@ export const onecApi = {
     return mockCache;
   },
 
-  async cleanCache(paths: string[]): Promise<CleanResult> {
-    if (isElectron) return window.bx!.onec.cleanCache(paths);
+  async cleanCache(paths: string[], backup?: boolean): Promise<CleanResult> {
+    if (isElectron) return window.bx!.onec.cleanCache(paths, backup);
     await delay(800);
     const freed = mockCache.entries
       .filter(e => paths.includes(e.path))

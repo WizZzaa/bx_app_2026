@@ -34,10 +34,37 @@ function AiMessage({ content, onQuote }: { content: string; onQuote: (text: stri
     for (const raw of text.split('\n')) {
       const line = raw.trimEnd();
       if (!line) { out.push(<div key={key++} className="h-2" />); continue; }
-      const inline = (t: string) => t.split(/(\*\*[^*]+\*\*)/g).map((p, i) =>
-        p.startsWith('**') && p.endsWith('**')
-          ? <strong key={i} className="text-bx-text font-bold">{p.slice(2, -2)}</strong>
-          : p);
+      const inline = (t: string) => {
+        const regex = /(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g;
+        return t.split(regex).map((p, i) => {
+          if (p.startsWith('**') && p.endsWith('**')) {
+            return <strong key={i} className="text-bx-text font-bold">{p.slice(2, -2)}</strong>;
+          }
+          if (p.startsWith('[') && p.includes('](') && p.endsWith(')')) {
+            const closingBracket = p.indexOf('](');
+            const title = p.slice(1, closingBracket);
+            const url = p.slice(closingBracket + 2, -1);
+            return (
+              <a
+                key={i}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  if ((window as any).bx?.openExternal) {
+                    e.preventDefault();
+                    (window as any).bx.openExternal(url);
+                  }
+                }}
+                className="inline-flex items-center gap-0.5 text-blue-500 hover:text-blue-400 font-semibold underline underline-offset-2 mx-0.5"
+              >
+                {title} ↗
+              </a>
+            );
+          }
+          return p;
+        });
+      };
       if (/^#{1,3}\s/.test(line)) {
         out.push(<p key={key++} className="text-sm font-bold text-bx-text mt-3 mb-1.5">{line.replace(/^#{1,3}\s/, '')}</p>);
       } else if (/^[-*•]\s/.test(line)) {
