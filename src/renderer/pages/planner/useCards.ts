@@ -93,7 +93,7 @@ export function useCards(boardId: string | null) {
       description: input.description ?? null,
       priority: input.priority ?? 'normal',
       labels: input.labels ?? null,
-      checklist: [],
+      checklist: [] as ChecklistItem[],
       due_date: input.due_date ?? null,
       position: maxPos + 1,
     };
