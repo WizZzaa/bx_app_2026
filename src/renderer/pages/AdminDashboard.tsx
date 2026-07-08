@@ -545,7 +545,18 @@ const AdminDashboard = () => {
         body: { targetUserId: userId, newPlan },
       })
 
-      if (error) throw error
+      if (error) {
+        let msg = ''
+        try {
+          const body = await error.context.json()
+          msg = body.message || body.error
+        } catch {
+          try {
+            msg = await error.context.text()
+          } catch { /* ignore */ }
+        }
+        throw new Error(msg || error.message || 'Ошибка Edge Function')
+      }
       if (data?.error) throw new Error(data.message || data.error)
 
       toast.success(data?.message || (newPlan !== 'free' ? `Тариф ${newPlan.toUpperCase()} выдан на 1 год` : 'Переведён на Free'))

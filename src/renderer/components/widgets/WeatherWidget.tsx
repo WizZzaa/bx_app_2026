@@ -143,7 +143,7 @@ export function WeatherArt({ condition, isLight, accent, accentSoft }: { conditi
       return (
         <svg viewBox="0 0 200 200" style={{ ...common, opacity }} preserveAspectRatio="xMidYMid slice">
           <circle cx="165" cy="45" r="28" fill="none" stroke={accent} strokeWidth="1" opacity="0.4" />
-          <circle cx="165" cy="45" r="16" fill={accent} opacity="0.75" />
+          <circle cx="165" cy="45" r="16" fill={accent} stroke="none" opacity="0.75" />
           <circle cx="165" cy="45" r="42" fill="none" stroke={accentSoft} strokeWidth="0.8" strokeDasharray="3,5" opacity="0.5" />
           <circle cx="165" cy="45" r="56" fill="none" stroke={accentSoft} strokeWidth="0.6" strokeDasharray="1,6" opacity="0.3" />
         </svg>
@@ -152,25 +152,25 @@ export function WeatherArt({ condition, isLight, accent, accentSoft }: { conditi
       return (
         <svg viewBox="0 0 200 200" style={{ ...common, opacity }} preserveAspectRatio="xMidYMid slice">
           {/* Солнце на заднем плане */}
-          <circle cx="155" cy="45" r="16" fill={accent} opacity="0.55" />
+          <circle cx="155" cy="45" r="16" fill={accent} stroke="none" opacity="0.55" />
           <circle cx="155" cy="45" r="24" fill="none" stroke={accentSoft} strokeWidth="0.8" strokeDasharray="3,4" opacity="0.4" />
           {/* Облако на переднем плане */}
-          <path d="M125 70 a14 14 0 0 1 14 -14 a12 12 0 0 1 18 2 a10 10 0 0 1 14 10 a14 14 0 0 1 -10 14 h-36 a14 14 0 0 1 0 -26 Z" fill={accentSoft} opacity="0.85" />
+          <path d="M125 70 a14 14 0 0 1 14 -14 a12 12 0 0 1 18 2 a10 10 0 0 1 14 10 a14 14 0 0 1 -10 14 h-36 a14 14 0 0 1 0 -26 Z" fill={accentSoft} stroke="none" opacity="0.85" />
         </svg>
       )
     case 'cloudy':
       return (
         <svg viewBox="0 0 200 200" style={{ ...common, opacity }} preserveAspectRatio="xMidYMid slice">
           {/* Заднее облако */}
-          <path d="M130 55 a18 18 0 0 1 20 -15 a16 16 0 0 1 22 3 a14 14 0 0 1 14 15 a18 18 0 0 1 -14 17 h-42 a18 18 0 0 1 0 -35 Z" fill={accentSoft} opacity="0.4" />
+          <path d="M130 55 a18 18 0 0 1 20 -15 a16 16 0 0 1 22 3 a14 14 0 0 1 14 15 a18 18 0 0 1 -14 17 h-42 a18 18 0 0 1 0 -35 Z" fill={accentSoft} stroke="none" opacity="0.4" />
           {/* Переднее облако */}
-          <path d="M100 75 a14 14 0 0 1 14 -13 a12 12 0 0 1 18 2 a10 10 0 0 1 12 10 a14 14 0 0 1 -10 14 h-34 a14 14 0 0 1 0 -27 Z" fill={accent} opacity="0.75" />
+          <path d="M100 75 a14 14 0 0 1 14 -13 a12 12 0 0 1 18 2 a10 10 0 0 1 12 10 a14 14 0 0 1 -10 14 h-34 a14 14 0 0 1 0 -27 Z" fill={accent} stroke="none" opacity="0.75" />
         </svg>
       )
     case 'rainy':
       return (
         <svg viewBox="0 0 200 200" style={{ ...common, opacity }} preserveAspectRatio="xMidYMid slice">
-          <path d="M120 58 a16 16 0 0 1 16 -15 a14 14 0 0 1 18 2 a12 12 0 0 1 16 11 a16 16 0 0 1 -11 16 h-39 a16 16 0 0 1 0 -30 Z" fill={accentSoft} opacity="0.75" />
+          <path d="M120 58 a16 16 0 0 1 16 -15 a14 14 0 0 1 18 2 a12 12 0 0 1 16 11 a16 16 0 0 1 -11 16 h-39 a16 16 0 0 1 0 -30 Z" fill={accentSoft} stroke="none" opacity="0.75" />
           {/* Капли дождя косые */}
           {[[120, 85], [132, 92], [144, 87], [156, 95], [168, 89], [130, 105], [142, 108], [154, 103]].map(([x, y], i) => (
             <line key={i} x1={x} y1={y} x2={x - 4} y2={y + 10} stroke={accent} strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
@@ -180,21 +180,21 @@ export function WeatherArt({ condition, isLight, accent, accentSoft }: { conditi
     case 'storm':
       return (
         <svg viewBox="0 0 200 200" style={{ ...common, opacity }} preserveAspectRatio="xMidYMid slice">
-          <path d="M120 58 a16 16 0 0 1 16 -15 a14 14 0 0 1 18 2 a12 12 0 0 1 16 11 a16 16 0 0 1 -11 16 h-39 a16 16 0 0 1 0 -30 Z" fill={accentSoft} opacity="0.5" />
+          <path d="M120 58 a16 16 0 0 1 16 -15 a14 14 0 0 1 18 2 a12 12 0 0 1 16 11 a16 16 0 0 1 -11 16 h-39 a16 16 0 0 1 0 -30 Z" fill={accentSoft} stroke="none" opacity="0.5" />
           {/* Молния */}
-          <path d="M146 72 L132 102 H143 L130 126 L154 91 H143 L151 72 Z" fill={accent} opacity="0.9" style={{ filter: `drop-shadow(0 0 4px ${accent})` }} />
+          <path d="M146 72 L132 102 H143 L130 126 L154 91 H143 L151 72 Z" fill={accent} stroke="none" opacity="0.9" style={{ filter: `drop-shadow(0 0 4px ${accent})` }} />
         </svg>
       )
     case 'snow':
       return (
         <svg viewBox="0 0 200 200" style={{ ...common, opacity }} preserveAspectRatio="xMidYMid slice">
-          <path d="M120 58 a16 16 0 0 1 16 -15 a14 14 0 0 1 18 2 a12 12 0 0 1 16 11 a16 16 0 0 1 -11 16 h-39 a16 16 0 0 1 0 -30 Z" fill={accentSoft} opacity="0.65" />
+          <path d="M120 58 a16 16 0 0 1 16 -15 a14 14 0 0 1 18 2 a12 12 0 0 1 16 11 a16 16 0 0 1 -11 16 h-39 a16 16 0 0 1 0 -30 Z" fill={accentSoft} stroke="none" opacity="0.65" />
           {/* Снежинки */}
           {[[122, 85], [138, 88], [154, 84], [170, 89], [130, 102], [146, 106], [162, 101]].map(([x, y], i) => (
             <g key={i} opacity="0.8" transform={`translate(${x}, ${y})`}>
               <line x1="-2" y1="0" x2="2" y2="0" stroke={accent} strokeWidth="0.8" />
               <line x1="0" y1="-2" x2="0" y2="2" stroke={accent} strokeWidth="0.8" />
-              <circle cx="0" cy="0" r="0.6" fill={accentSoft} />
+              <circle cx="0" cy="0" r="0.6" fill={accentSoft} stroke="none" />
             </g>
           ))}
         </svg>
