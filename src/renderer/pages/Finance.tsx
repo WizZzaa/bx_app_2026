@@ -94,6 +94,9 @@ export default function Finance() {
       note: `Создано из Контроля оплат ${todayISO()}`,
     })
     if (error) { toast.error('Не удалось создать напоминание'); return }
+    const bc = new BroadcastChannel('bx-events-sync')
+    bc.postMessage('reload')
+    bc.close()
     toast.success('Напоминание на завтра создано в Планировщике')
   }
 

@@ -62,6 +62,16 @@ const Tools = () => {
   })
   const [search, setSearch] = useState('')
 
+  React.useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === LAST_TOOL_KEY && e.newValue && TOOLS.some(t => t.id === e.newValue)) {
+        setActiveRaw(e.newValue)
+      }
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
+
   const handleSetActive = (id: string) => {
     setActiveRaw(id)
     localStorage.setItem(LAST_TOOL_KEY, id)

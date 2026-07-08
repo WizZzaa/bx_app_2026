@@ -89,6 +89,11 @@ export default function TrayView() {
     } catch (err) { console.error('deadlines:', err) }
   }, [])
 
+  const handleOpenTool = (toolId: string) => {
+    localStorage.setItem('bx_tools_last', toolId)
+    openApp('/tools')
+  }
+
   const addTask = async () => {
     const title = newTask.trim()
     if (!title || addingTask) return
@@ -96,8 +101,9 @@ export default function TrayView() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setAddingTask(false); return }
+      const activeCompanyId = localStorage.getItem('bx_active_company') || null
       const { error } = await supabase.from('bx_events').insert({
-        user_id: user.id, company_id: null, type: 'task', title,
+        user_id: user.id, company_id: activeCompanyId, type: 'task', title,
         date: todayISO(), due_date: null, status: 'todo', priority: 'normal',
         tags: null, tax_type: null, kind: null, regime: null, note: null,
         source: 'manual', reminder_at: null,
@@ -105,8 +111,23 @@ export default function TrayView() {
       if (error) throw error
       setNewTask(''); setTaskAdded(true); setTimeout(() => setTaskAdded(false), 1600)
       await reloadDeadlines()
+      const bc = new BroadcastChannel('bx-events-sync')
+      bc.postMessage('reload')
+      bc.close()
     } catch (err) { console.error('addTask:', err) } finally { setAddingTask(false) }
   }
+
+  useEffect(() => {
+    const channel = new BroadcastChannel('bx-events-sync')
+    channel.onmessage = (event) => {
+      if (event.data === 'reload') {
+        reloadDeadlines()
+      }
+    }
+    return () => {
+      channel.close()
+    }
+  }, [reloadDeadlines])
 
   useEffect(() => {
     const loadRates = async () => {
@@ -434,30 +455,81 @@ export default function TrayView() {
         )}
 
         {activeTab === 'support' && (
-          <div className="rounded-2xl p-4 border border-white/10 bg-white/[0.03] space-y-3">
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">🚨 Экстренный вызов инженера</span>
-            {ticketCreated ? (
-              <div className="text-center py-6 space-y-2">
-                <p className="text-3xl">⚡</p>
-                <p className="text-xs font-bold text-emerald-300">Запрос отправлен!</p>
-                <p className="text-[10px] text-slate-400 leading-relaxed">Инженер уведомлён. Диалог — в разделе «Поддержка».</p>
-                <button onClick={() => openApp('/support')} className="text-[11px] text-blue-400 hover:underline">Открыть чат поддержки →</button>
-                <button onClick={() => setTicketCreated(false)} className="block mx-auto text-[10px] text-slate-500 hover:text-slate-300 mt-1">Создать ещё запрос</button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-[10px] text-slate-400 leading-relaxed">Опишите проблему (1С, E-Imzo, Windows, принтер, сеть) — создадим срочный тикет.</p>
-                <textarea value={supportText} onChange={e => setSupportText(e.target.value)} rows={5} placeholder="Например: не открывается база 1С…"
-                  className="w-full bg-white/5 text-white text-xs px-3 py-2 rounded-lg border border-white/10 focus:outline-none focus:border-blue-500/50 resize-none" />
-                <button onClick={handleCreateSupportTicket} disabled={!supportText.trim() || supportSending}
-                  className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all active:scale-95">
-                  {supportSending ? 'Отправка…' : 'Отправить запрос'}
+          <div className="space-y-3">
+            {/* Быстрые инструменты */}
+            <div className="rounded-2xl p-3 border border-white/10 bg-white/[0.03] space-y-2.5">
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">🛠 Быстрые инструменты</span>
+              <div className="grid grid-cols-1 gap-1.5">
+                <button 
+                  onClick={() => handleOpenTool('translator')}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 hover:border-purple-500/30 text-left transition-colors group"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-sm flex-shrink-0">📝</span>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold text-slate-100 group-hover:text-purple-300 transition-colors truncate">Переводчик документов</div>
+                      <div className="text-[8.5px] text-slate-500 truncate">Умный перевод с узбекского языка</div>
+                    </div>
+                  </div>
+                  <span className="text-slate-500 group-hover:text-purple-300 transition-colors ml-1 text-xs">→</span>
                 </button>
-                {supportError && (
-                  <p className="text-[10px] text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg px-2.5 py-1.5 leading-snug">{supportError}</p>
-                )}
+                
+                <button 
+                  onClick={() => handleOpenTool('pccleaner')}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 hover:border-cyan-500/30 text-left transition-colors group"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-sm flex-shrink-0">🧹</span>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold text-slate-100 group-hover:text-cyan-300 transition-colors truncate">Очистка ПК</div>
+                      <div className="text-[8.5px] text-slate-500 truncate">Очистить кэш системы и браузеров</div>
+                    </div>
+                  </div>
+                  <span className="text-slate-500 group-hover:text-cyan-300 transition-colors ml-1 text-xs">→</span>
+                </button>
+                
+                <button 
+                  onClick={() => handleOpenTool('cache')}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 hover:border-amber-500/30 text-left transition-colors group"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-sm flex-shrink-0">⚡</span>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold text-slate-100 group-hover:text-amber-300 transition-colors truncate">Сбросить кэш 1С</div>
+                      <div className="text-[8.5px] text-slate-500 truncate">Очистить временные файлы баз 1С</div>
+                    </div>
+                  </div>
+                  <span className="text-slate-500 group-hover:text-amber-300 transition-colors ml-1 text-xs">→</span>
+                </button>
               </div>
-            )}
+            </div>
+
+            {/* Экстренный вызов инженера */}
+            <div className="rounded-2xl p-3 border border-white/10 bg-white/[0.03] space-y-2.5">
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">🚨 Экстренный вызов инженера</span>
+              {ticketCreated ? (
+                <div className="text-center py-4 space-y-1.5">
+                  <p className="text-2xl leading-none">⚡</p>
+                  <p className="text-xs font-bold text-emerald-300">Запрос отправлен!</p>
+                  <p className="text-[9px] text-slate-400 leading-normal">Инженер уведомлён. Чат — в разделе «Поддержка».</p>
+                  <button onClick={() => openApp('/support')} className="text-[10px] text-blue-400 hover:underline">Открыть чат поддержки →</button>
+                  <button onClick={() => setTicketCreated(false)} className="block mx-auto text-[9px] text-slate-500 hover:text-slate-300 mt-1">Создать ещё запрос</button>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  <p className="text-[9.5px] text-slate-400 leading-normal">Опишите проблему (1С, E-Imzo, Windows, принтер, сеть) — создадим срочный тикет.</p>
+                  <textarea value={supportText} onChange={e => setSupportText(e.target.value)} rows={3} placeholder="Например: не открывается база 1С…"
+                    className="w-full bg-white/5 text-white text-xs px-2.5 py-1.5 rounded-xl border border-white/10 focus:outline-none focus:border-blue-500/50 resize-none" />
+                  <button onClick={handleCreateSupportTicket} disabled={!supportText.trim() || supportSending}
+                    className="w-full py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all active:scale-95">
+                    {supportSending ? 'Отправка…' : 'Отправить запрос'}
+                  </button>
+                  {supportError && (
+                    <p className="text-[9.5px] text-red-300 bg-red-500/10 border border-red-500/20 rounded-xl px-2.5 py-1.5 leading-snug">{supportError}</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

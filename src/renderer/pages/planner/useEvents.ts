@@ -62,6 +62,18 @@ export function useEvents(companyId?: string | null) {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    const channel = new BroadcastChannel('bx-events-sync');
+    channel.onmessage = (event) => {
+      if (event.data === 'reload') {
+        load();
+      }
+    };
+    return () => {
+      channel.close();
+    };
+  }, [load]);
+
   const add = useCallback(async (input: NewEvent): Promise<BxEvent | null> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
@@ -76,6 +88,11 @@ export function useEvents(companyId?: string | null) {
     }
     if (error) { console.error(error); return null; }
     await load();
+
+    const bc = new BroadcastChannel('bx-events-sync');
+    bc.postMessage('reload');
+    bc.close();
+
     return data as BxEvent;
   }, [load]);
 
@@ -87,18 +104,30 @@ export function useEvents(companyId?: string | null) {
       writeCache(next);
       return next;
     });
+
+    const bc = new BroadcastChannel('bx-events-sync');
+    bc.postMessage('reload');
+    bc.close();
   }, []);
 
   const remove = useCallback(async (id: string) => {
     const { error } = await supabase.from('bx_events').delete().eq('id', id);
     if (error) { console.error(error); return; }
     setEvents(prev => { const next = prev.filter(e => e.id !== id); writeCache(next); return next; });
+
+    const bc = new BroadcastChannel('bx-events-sync');
+    bc.postMessage('reload');
+    bc.close();
   }, []);
 
   const bulkRemove = useCallback(async (ids: string[]) => {
     const { error } = await supabase.from('bx_events').delete().in('id', ids);
     if (error) { console.error(error); return; }
     setEvents(prev => { const next = prev.filter(e => !ids.includes(e.id)); writeCache(next); return next; });
+
+    const bc = new BroadcastChannel('bx-events-sync');
+    bc.postMessage('reload');
+    bc.close();
   }, []);
 
   const cycleStatus = useCallback(async (id: string, current: EventStatus) => {
