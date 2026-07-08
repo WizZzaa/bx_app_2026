@@ -14,6 +14,14 @@ export interface ChangelogEntry {
 // Новые версии — сверху.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.61.6',
+    date: '2026-07-08',
+    title: 'Фолбэк для Supabase Anon Key в веб-версии',
+    changes: [
+      'Добавлен публичный Supabase anon key в качестве резервного значения (fallback) в инициализации клиента Supabase, чтобы веб-версия успешно собиралась и функционировала на Vercel без обязательной настройки переменных окружения.',
+    ],
+  },
+  {
     version: '1.61.5',
     date: '2026-07-08',
     title: 'Исправление обводки солнца и ошибок выдачи тарифов',
