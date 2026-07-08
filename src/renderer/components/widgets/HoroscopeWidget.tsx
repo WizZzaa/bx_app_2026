@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { getHoroscope, TOTAL_VARIATIONS, VARIANTS, type DailyHoroscope, type HoroscopeVariant } from '../../lib/horoscope'
+import { getHoroscope, TOTAL_VARIATIONS, VARIANTS, ACCOUNT_NAMES, type DailyHoroscope, type HoroscopeVariant } from '../../lib/horoscope'
 
 // «Бухо-гороскоп» — предсказание дня для бухгалтера.
 // Одна из 10 визуальных тем выбирается по дате; у каждой свой SVG-арт и палитра.
@@ -233,9 +233,18 @@ export default function HoroscopeWidget() {
 
         {/* Счёт и цвет дня */}
         <div className="flex items-center gap-2 mb-3">
-          <div className="flex-1 rounded-lg px-2 py-1.5 text-center border" style={{ background: `${themeAccent}14`, borderColor: `${themeAccent}26` }}>
+          <div 
+            className="flex-1 rounded-lg px-2 py-1.5 text-center border cursor-help relative group/account" 
+            style={{ background: `${themeAccent}14`, borderColor: `${themeAccent}26` }}
+          >
             <div className="text-[9px] uppercase tracking-wider mb-0.5" style={{ color: isLight ? themeAccent : `${themeAccent}aa` }}>Счёт дня</div>
             <div className="text-sm font-bold" style={{ color: themeAccentSoft }}>{h.luckyAccount}</div>
+            
+            {/* Тултип при наведении */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg bg-bx-surface border border-bx-border text-[10px] text-bx-text text-center shadow-lg opacity-0 pointer-events-none group-hover/account:opacity-100 transition-opacity duration-200 z-30">
+              <span className="font-bold text-blue-400">Счёт {h.luckyAccount}</span>: {ACCOUNT_NAMES[h.luckyAccount] || 'Бухгалтерский счет'}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-bx-surface" />
+            </div>
           </div>
           <div 
             className="flex-1 rounded-lg px-2 py-1.5 text-center border" 
