@@ -14,6 +14,7 @@ interface Props {
   onEventClick: (e: BxEvent) => void;
   onCardClick: (id: string) => void;
   onEventStatusChange: (id: string, status: EventStatus) => void;
+  onCardStatusChange: (id: string, boardId: string, done: boolean) => void;
 }
 
 type Item =
@@ -38,11 +39,17 @@ function fmtDue(d: string, today: string): { text: string; cls: string } {
   };
 }
 
-export default function AllTasksView({ events, cards, boards, onEventClick, onCardClick, onEventStatusChange }: Props) {
+export default function AllTasksView({ events, cards, boards, onEventClick, onCardClick, onEventStatusChange, onCardStatusChange }: Props) {
   const [hideDone, setHideDone] = useState(true);
   const [search, setSearch] = useState('');
   const today = todayISO();
   const weekEnd = daysFromNowISO(7);
+
+  const isCardDone = (c: AllCard) => {
+    const board = boards.find(b => b.id === c.board_id);
+    if (!board || !board.columns || board.columns.length === 0) return false;
+    return c.column_id === board.columns[board.columns.length - 1].id;
+  };
 
   const groups = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -52,13 +59,15 @@ export default function AllTasksView({ events, cards, boards, onEventClick, onCa
         .filter(e => !q || e.title.toLowerCase().includes(q))
         .map<Item>(e => ({ kind: 'event', date: e.due_date || e.date, ev: e })),
       ...cards
+        .filter(c => !hideDone || !isCardDone(c))
         .filter(c => !q || c.title.toLowerCase().includes(q))
         .map<Item>(c => ({ kind: 'card', date: c.due_date, card: c })),
     ];
 
     const bucket = (it: Item): string => {
-      if (!it.date) return 'Без срока';
       if (it.kind === 'event' && it.ev.status === 'done') return 'Выполнено';
+      if (it.kind === 'card' && isCardDone(it.card)) return 'Выполнено';
+      if (!it.date) return 'Без срока';
       if (it.date < today) return 'Просрочено';
       if (it.date === today) return 'Сегодня';
       if (it.date <= weekEnd) return 'Эта неделя';
@@ -76,7 +85,7 @@ export default function AllTasksView({ events, cards, boards, onEventClick, onCa
       list.sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999'));
     }
     return order.filter(g => map.has(g)).map(g => ({ name: g, items: map.get(g)! }));
-  }, [events, cards, hideDone, search, today, weekEnd]);
+  }, [events, cards, boards, hideDone, search, today, weekEnd]);
 
   const boardName = (id: string) => boards.find(b => b.id === id)?.name ?? 'Доска';
   const boardIcon = (id: string) => boards.find(b => b.id === id)?.icon ?? '📋';
@@ -141,16 +150,27 @@ export default function AllTasksView({ events, cards, boards, onEventClick, onCa
                   {it.date && <span className={`text-[11px] w-24 text-right flex-shrink-0 ${fmtDue(it.date, today).cls}`}>{fmtDue(it.date, today).text}</span>}
                 </div>
               ) : (
-                <button key={`c${it.card.id}`} onClick={() => onCardClick(it.card.id)}
-                  className="w-full flex items-center gap-3 px-3.5 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border hover:border-cyan-500/30 rounded-lg transition-colors group text-left">
+                <div key={`c${it.card.id}`}
+                  className="flex items-center gap-3 px-3.5 py-2 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border hover:border-cyan-500/30 rounded-lg transition-colors group">
+                  <input
+                    type="checkbox"
+                    checked={isCardDone(it.card)}
+                    onChange={() => onCardStatusChange(it.card.id, it.card.board_id, !isCardDone(it.card))}
+                    className="w-4 h-4 rounded accent-cyan-500 cursor-pointer flex-shrink-0"
+                    title={isCardDone(it.card) ? 'Вернуть в работу' : 'Отметить выполненной'}
+                  />
                   <span className="w-4 text-center flex-shrink-0 text-xs">{boardIcon(it.card.board_id)}</span>
-                  <span className="flex-1 min-w-0 text-sm text-bx-text group-hover:text-white truncate">{it.card.title}</span>
+                  <button onClick={() => onCardClick(it.card.id)} className="flex-1 min-w-0 text-left">
+                    <span className={`text-sm truncate block ${isCardDone(it.card) ? 'text-bx-muted line-through' : 'text-bx-text group-hover:text-white'}`}>
+                      {it.card.title}
+                    </span>
+                  </button>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 flex-shrink-0 max-w-[120px] truncate">
                     {boardName(it.card.board_id)}
                   </span>
                   {it.card.priority === 'high' && <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 flex-shrink-0">важно</span>}
                   {it.date && <span className={`text-[11px] w-24 text-right flex-shrink-0 ${fmtDue(it.date, today).cls}`}>{fmtDue(it.date, today).text}</span>}
-                </button>
+                </div>
               ))}
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/db/supabase';
+import type { BoardColumn } from './useBoards';
 
 export interface ChecklistItem {
   id: string;
@@ -253,4 +254,39 @@ export async function fetchAllCards(): Promise<AllCard[]> {
     .order('due_date', { ascending: true, nullsFirst: false });
   if (error) { console.error(error); return []; }
   return (data ?? []) as AllCard[];
+}
+
+export async function fetchBoardColumns(boardId: string): Promise<BoardColumn[]> {
+  const { data, error } = await supabase
+    .from('bx_boards')
+    .select('columns')
+    .eq('id', boardId)
+    .single();
+  if (error) {
+    console.error(error);
+    return [];
+  }
+  return (data?.columns ?? []) as BoardColumn[];
+}
+
+export async function toggleCardDone(cardId: string, boardId: string, makeDone: boolean): Promise<string | null> {
+  const { data: board, error: bError } = await supabase
+    .from('bx_boards')
+    .select('columns')
+    .eq('id', boardId)
+    .single();
+  if (bError || !board || !board.columns || board.columns.length === 0) return null;
+  const cols = board.columns as BoardColumn[];
+  const targetCol = makeDone ? cols[cols.length - 1] : cols[0];
+  if (!targetCol) return null;
+
+  const { error } = await supabase
+    .from('bx_cards')
+    .update({ column_id: targetCol.id, updated_at: new Date().toISOString() })
+    .eq('id', cardId);
+  if (error) {
+    console.error(error);
+    return null;
+  }
+  return targetCol.id;
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useEvents } from './planner/useEvents';
 import { useBoards, type BxBoard, type BoardColumn } from './planner/useBoards';
-import { useCards, fetchDatedCards, fetchCardById, fetchAllCards, type BxCard, type DatedCard, type AllCard } from './planner/useCards';
+import { useCards, fetchDatedCards, fetchCardById, fetchAllCards, fetchBoardColumns, toggleCardDone, type BxCard, type DatedCard, type AllCard } from './planner/useCards';
 import { seedTaxDeadlines } from './planner/taxSeeder';
 import CalendarView from './planner/CalendarView';
 import AllTasksView from './planner/AllTasksView';
@@ -65,6 +65,10 @@ export default function Planner() {
   const activeBoard = boards.find(b => b.id === activeBoardId) ?? null;
   const { cards, addCard, updateCard, removeCard, archiveCard, moveCard, loadArchived, restoreCard, duplicateCard, loadComments, addComment, removeComment } = useCards(activeBoard?.id ?? null);
 
+  const [activeCardColumns, setActiveCardColumns] = useState<BoardColumn[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const triggerRefresh = () => setRefreshTrigger(prev => prev + 1);
+
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [datedCards,  setDatedCards]  = useState<DatedCard[]>([]);
   const [allCards,    setAllCards]    = useState<AllCard[]>([]);
@@ -73,14 +77,45 @@ export default function Planner() {
   useEffect(() => {
     if (view === 'calendar') fetchDatedCards().then(setDatedCards);
     if (view === 'all' || view === 'digest') fetchAllCards().then(setAllCards);
-  }, [view, cards]);
+  }, [view, cards, refreshTrigger]);
 
   async function openCardFromCalendar(id: string) {
     const card = await fetchCardById(id);
     if (!card) return;
-    setActiveBoardId(card.board_id);
-    setView('board');
+    const cols = await fetchBoardColumns(card.board_id);
+    setActiveCardColumns(cols);
     setActiveCard(card);
+  }
+
+  async function handleUpdateCard(id: string, patch: any) {
+    await updateCard(id, patch);
+    triggerRefresh();
+  }
+
+  async function handleArchiveCard(id: string) {
+    await archiveCard(id);
+    triggerRefresh();
+  }
+
+  async function handleDeleteCard(id: string) {
+    await removeCard(id);
+    triggerRefresh();
+  }
+
+  async function handleDuplicateCard(card: BxCard) {
+    await duplicateCard(card);
+    triggerRefresh();
+  }
+
+  async function handleToggleCardDone(cardId: string, boardId: string, makeDone: boolean) {
+    const nextColId = await toggleCardDone(cardId, boardId, makeDone);
+    if (nextColId) {
+      toast.success(makeDone ? 'Карточка выполнена' : 'Карточка возвращена в работу');
+      triggerRefresh();
+      if (activeBoardId === boardId) {
+        updateCard(cardId, { column_id: nextColId });
+      }
+    }
   }
 
   // Уведомления
@@ -157,7 +192,7 @@ export default function Planner() {
   async function handleCardDrop(id: string, newDate: string) {
     const { error } = await supabase.from('bx_cards').update({ due_date: newDate }).eq('id', id);
     if (error) { toast.error('Не удалось перенести карточку'); return; }
-    setDatedCards(await fetchDatedCards());
+    triggerRefresh();
     toast.success(`Срок карточки: ${new Date(newDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`);
   }
 
@@ -250,7 +285,10 @@ export default function Planner() {
           <BoardKanban
             board={activeBoard}
             cards={cards}
-            onCardClick={setActiveCard}
+            onCardClick={(card) => {
+              setActiveCardColumns(activeBoard?.columns || []);
+              setActiveCard(card);
+            }}
             onAddCard={handleAddCard}
             onMoveCard={moveCard}
             onUpdateColumns={handleUpdateColumns}
@@ -282,6 +320,7 @@ export default function Planner() {
             onEventClick={openEditEvent}
             onCardClick={openCardFromCalendar}
             onEventStatusChange={handleStatusChange}
+            onCardStatusChange={handleToggleCardDone}
           />
         )}
         {view === 'digest' && (
@@ -299,7 +338,16 @@ export default function Planner() {
             onEventDrop={handleEventDrop} onCardDrop={handleCardDrop} />
         )}
         {view === 'list' && (
-          <ListView events={filtered} onEdit={openEditEvent} onStatusChange={handleStatusChange} onDelete={bulkRemove} />
+          <ListView
+            events={filtered}
+            cards={allCards}
+            boards={boards}
+            onEdit={openEditEvent}
+            onCardClick={openCardFromCalendar}
+            onStatusChange={handleStatusChange}
+            onCardStatusChange={handleToggleCardDone}
+            onDelete={bulkRemove}
+          />
         )}
       </div>
 
@@ -314,14 +362,14 @@ export default function Planner() {
           onDelete={editingBoard ? handleDeleteBoard : undefined}
           onClose={() => { setBoardModalOpen(false); setEditingBoard(null); }} />
       )}
-      {activeCard && activeBoard && (
+      {activeCard && (
         <CardModal
           card={activeCard}
-          columns={activeBoard.columns}
-          onUpdate={updateCard}
-          onArchive={(id) => { archiveCard(id); setActiveCard(null); toast.info('Карточка в архиве'); }}
-          onDelete={(id) => { removeCard(id); setActiveCard(null); toast.info('Карточка удалена'); }}
-          onDuplicate={(card) => duplicateCard(card)}
+          columns={activeCardColumns}
+          onUpdate={handleUpdateCard}
+          onArchive={(id) => { handleArchiveCard(id); setActiveCard(null); toast.info('Карточка в архиве'); }}
+          onDelete={(id) => { handleDeleteCard(id); setActiveCard(null); toast.info('Карточка удалена'); }}
+          onDuplicate={(card) => handleDuplicateCard(card)}
           onClose={() => setActiveCard(null)}
           loadComments={loadComments}
           addComment={addComment}
@@ -333,8 +381,8 @@ export default function Planner() {
         <ArchivePanel
           boardName={activeBoard.name}
           loadArchived={loadArchived}
-          onRestore={restoreCard}
-          onDelete={removeCard}
+          onRestore={async (id) => { await restoreCard(id); triggerRefresh(); }}
+          onDelete={async (id) => { await removeCard(id); triggerRefresh(); }}
           onClose={() => setArchiveOpen(false)}
         />
       )}

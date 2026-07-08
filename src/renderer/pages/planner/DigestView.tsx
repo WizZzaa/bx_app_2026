@@ -8,7 +8,7 @@ import { todayISO } from '../../lib/dates';
 import { loadEcpKeys } from '../../lib/ecpStorage';
 
 // «Сводка» — все задачи со всех разделов приложения по пунктам:
-// события Планировщика, карточки каждой доски, истекающие ЭЦП,
+// объединенный Планировщик (дела + карточки), истекающие ЭЦП,
 // неоплаченные операции Финансов. Каждый пункт ведёт в свой раздел.
 
 interface Props {
@@ -37,6 +37,20 @@ function dueChip(d: string | null, today: string): { text: string; cls: string }
   return { text: new Date(d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }), cls: 'text-bx-muted' };
 }
 
+interface UnifiedDigestItem {
+  id: string;
+  kind: 'event' | 'card';
+  title: string;
+  dueDate: string | null;
+  priority: string;
+  boardId?: string;
+  boardIcon?: string;
+  boardName?: string;
+  type?: string;
+  recurrence?: string | null;
+  eventRef?: BxEvent;
+}
+
 export default function DigestView({ events, cards, boards, onEventClick, onCardClick, onOpenBoard }: Props) {
   const navigate = useNavigate();
   const today = todayISO();
@@ -63,20 +77,49 @@ export default function DigestView({ events, cards, boards, onEventClick, onCard
       .catch(() => setUnpaid([]));
   }, [today]);
 
+  const isCardDone = (c: AllCard) => {
+    const board = boards.find(b => b.id === c.board_id);
+    if (!board || !board.columns || board.columns.length === 0) return false;
+    return c.column_id === board.columns[board.columns.length - 1].id;
+  };
+
   const activeEvents = events
     .filter(e => e.status !== 'done')
-    .sort((a, b) => (a.due_date || a.date).localeCompare(b.due_date || b.date));
+    .map<UnifiedDigestItem>(e => ({
+      id: e.id,
+      kind: 'event',
+      title: e.title,
+      dueDate: e.due_date || e.date,
+      priority: e.priority,
+      type: e.type,
+      recurrence: e.recurrence,
+      eventRef: e,
+    }));
 
-  const cardsByBoard = boards
-    .map(b => ({ board: b, items: cards.filter(c => c.board_id === b.id) }))
-    .filter(g => g.items.length > 0);
+  const activeCards = cards
+    .filter(c => !isCardDone(c))
+    .map<UnifiedDigestItem>(c => ({
+      id: c.id,
+      kind: 'card',
+      title: c.title,
+      dueDate: c.due_date,
+      priority: c.priority,
+      boardId: c.board_id,
+      boardIcon: boards.find(b => b.id === c.board_id)?.icon || '📋',
+      boardName: boards.find(b => b.id === c.board_id)?.name || 'Доска',
+    }));
+
+  const mergedTasks = [...activeEvents, ...activeCards].sort((a, b) => {
+    const da = a.dueDate || '9999-12-31';
+    const db = b.dueDate || '9999-12-31';
+    return da.localeCompare(db);
+  });
 
   const receivable = unpaid.filter(t => t.type === 'income');
   const payable = unpaid.filter(t => t.type === 'expense');
 
   const sections = [
-    activeEvents.length > 0,
-    cardsByBoard.length > 0,
+    mergedTasks.length > 0,
     ecpKeys.length > 0,
     unpaid.length > 0,
   ].filter(Boolean).length;
@@ -88,50 +131,39 @@ export default function DigestView({ events, cards, boards, onEventClick, onCard
           <p className="text-sm text-bx-muted text-center py-12">Ни задач, ни сроков, ни долгов — редкий день ✓</p>
         )}
 
-        {/* 1. События Планировщика */}
-        {activeEvents.length > 0 && (
+        {/* 1. Мои дела (События + Карточки) */}
+        {mergedTasks.length > 0 && (
           <Section
-            icon="📅" title="Планировщик" count={activeEvents.length}
-            action={{ label: 'Календарь →', onClick: () => { /* остаёмся в планировщике */ } }}
+            icon="📋" title="Мои дела" count={mergedTasks.length}
           >
-            {activeEvents.slice(0, MAX_PER_SECTION).map(e => {
-              const chip = dueChip(e.due_date || e.date, today);
+            {mergedTasks.slice(0, MAX_PER_SECTION).map(item => {
+              const chip = dueChip(item.dueDate, today);
               return (
-                <Row key={e.id} onClick={() => onEventClick(e)}
-                  left={<span className="text-xs">{e.type === 'tax_deadline' ? '📋' : e.type === 'reminder' ? '🔔' : e.type === 'event' ? '📌' : '✅'}</span>}
-                  title={`${e.recurrence ? '🔁 ' : ''}${e.title}`}
-                  badges={e.priority === 'high' ? [{ text: 'важно', cls: 'bg-red-500/15 text-red-400' }] : []}
+                <Row key={`${item.kind}-${item.id}`} onClick={() => {
+                  if (item.kind === 'event') onEventClick(item.eventRef!);
+                  else onCardClick(item.id);
+                }}
+                  left={
+                    item.kind === 'event' ? (
+                      <span className="text-xs">{item.type === 'tax_deadline' ? '📋' : item.type === 'reminder' ? '🔔' : item.type === 'event' ? '📌' : '✅'}</span>
+                    ) : (
+                      <span className="text-xs">{item.boardIcon}</span>
+                    )
+                  }
+                  title={`${item.kind === 'event' && item.recurrence ? '🔁 ' : ''}${item.title}`}
+                  badges={[
+                    ...(item.priority === 'high' ? [{ text: 'важно', cls: 'bg-red-500/15 text-red-400' }] : []),
+                    ...(item.kind === 'card' ? [{ text: item.boardName!, cls: 'bg-cyan-500/10 text-cyan-400' }] : []),
+                  ]}
                   right={chip && <span className={`text-[11px] ${chip.cls}`}>{chip.text}</span>}
                 />
               );
             })}
-            {activeEvents.length > MAX_PER_SECTION && <More n={activeEvents.length - MAX_PER_SECTION} />}
+            {mergedTasks.length > MAX_PER_SECTION && <More n={mergedTasks.length - MAX_PER_SECTION} />}
           </Section>
         )}
 
-        {/* 2. Карточки по каждой доске */}
-        {cardsByBoard.map(({ board, items }) => (
-          <Section
-            key={board.id}
-            icon={board.icon || '📋'} title={`Доска «${board.name}»`} count={items.length}
-            action={{ label: 'Открыть доску →', onClick: () => onOpenBoard(board.id) }}
-          >
-            {items.slice(0, MAX_PER_SECTION).map(c => {
-              const chip = dueChip(c.due_date, today);
-              return (
-                <Row key={c.id} onClick={() => onCardClick(c.id)}
-                  left={<span className="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block" />}
-                  title={c.title}
-                  badges={c.priority === 'high' ? [{ text: 'важно', cls: 'bg-red-500/15 text-red-400' }] : []}
-                  right={chip && <span className={`text-[11px] ${chip.cls}`}>{chip.text}</span>}
-                />
-              );
-            })}
-            {items.length > MAX_PER_SECTION && <More n={items.length - MAX_PER_SECTION} />}
-          </Section>
-        ))}
-
-        {/* 3. ЭЦП */}
+        {/* 2. ЭЦП */}
         {ecpKeys.length > 0 && (
           <Section icon="🔑" title="ЭЦП — истекают" count={ecpKeys.length}
             action={{ label: 'Открыть ЭЦП →', onClick: () => navigate('/ecp') }}>
@@ -149,7 +181,7 @@ export default function DigestView({ events, cards, boards, onEventClick, onCard
           </Section>
         )}
 
-        {/* 4. Финансы — неоплаченное */}
+        {/* 3. Финансы — неоплаченное */}
         {unpaid.length > 0 && (
           <Section icon="💰" title="Финансы — не оплачено" count={unpaid.length}
             action={{ label: 'Открыть Финансы →', onClick: () => navigate('/finance') }}>
