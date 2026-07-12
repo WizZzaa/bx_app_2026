@@ -3,6 +3,8 @@
 // в веб-версии, где моста нет, остаётся открытый localStorage-фолбэк.
 // При первом чтении в Electron открытые записи мигрируются в зашифрованные.
 
+import { logger } from './logger';
+
 const STORAGE_KEY = 'bx_ecp_keys';
 const ENC_STORAGE_KEY = 'bx_ecp_keys_enc';
 
@@ -43,10 +45,13 @@ export async function loadEcpKeys(): Promise<EcpKeyRecord[]> {
       }
       return [];
     }
-  } catch { /* фолбэк на открытое хранилище */ }
+  } catch (err) {
+    logger.warn('ecpStorage', 'Не удалось расшифровать ключи ЭЦП, читаю открытое хранилище', err);
+  }
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  } catch {
+  } catch (err) {
+    logger.warn('ecpStorage', 'Повреждённое хранилище ключей ЭЦП, возвращаю пустой список', err);
     return [];
   }
 }
@@ -60,6 +65,8 @@ export async function saveEcpKeys(keys: EcpKeyRecord[]): Promise<void> {
       localStorage.removeItem(STORAGE_KEY);
       return;
     }
-  } catch { /* фолбэк на открытое хранилище */ }
+  } catch (err) {
+    logger.warn('ecpStorage', 'Шифрование недоступно, ключи ЭЦП сохраняются в открытом виде', err);
+  }
   localStorage.setItem(STORAGE_KEY, json);
 }

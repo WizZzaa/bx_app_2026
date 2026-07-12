@@ -213,6 +213,9 @@ const createTrayWindow = () => {
     alwaysOnTop: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
     },
   })
 
@@ -330,6 +333,9 @@ const createWindow = () => {
     backgroundColor: '#0f1117',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
     },
   })
 
