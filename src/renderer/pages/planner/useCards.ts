@@ -142,16 +142,26 @@ export function useCards(boardId: string | null) {
   }, [boardId]);
 
   const removeCard = useCallback(async (id: string) => {
+    const card = cards.find(c => c.id === id);
+    if (card && card.event_id) {
+      await supabase.from('bx_events').delete().eq('id', card.event_id);
+    }
     setCards(prev => { const next = prev.filter(c => c.id !== id); if (boardId) writeCache(boardId, next); return next; });
     const { error } = await supabase.from('bx_cards').delete().eq('id', id);
     if (error) console.error(error);
-  }, [boardId]);
+    emitPlannerReload();
+  }, [cards, boardId]);
 
   const archiveCard = useCallback(async (id: string) => {
+    const card = cards.find(c => c.id === id);
+    if (card && card.event_id) {
+      await supabase.from('bx_events').delete().eq('id', card.event_id);
+    }
     setCards(prev => { const next = prev.filter(c => c.id !== id); if (boardId) writeCache(boardId, next); return next; });
-    const { error } = await supabase.from('bx_cards').update({ archived: true }).eq('id', id);
+    const { error } = await supabase.from('bx_cards').update({ archived: true, event_id: null }).eq('id', id);
     if (error) console.error(error);
-  }, [boardId]);
+    emitPlannerReload();
+  }, [cards, boardId]);
 
   // ─── Архив ────────────────────────────────────────────────────────────
   const loadArchived = useCallback(async (): Promise<BxCard[]> => {

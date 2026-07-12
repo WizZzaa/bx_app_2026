@@ -44,7 +44,7 @@ function writeCache(rows: BxEvent[]) {
 // (статус → колонка, а также срок и заголовок).
 async function syncLinkedCard(
   eventId: string,
-  patch: { status?: EventStatus; due_date?: string | null; title?: string }
+  patch: { status?: EventStatus; due_date?: string | null; date?: string; title?: string }
 ) {
   try {
     const { data: card } = await supabase
@@ -57,6 +57,7 @@ async function syncLinkedCard(
 
     const cardPatch: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (patch.due_date !== undefined) cardPatch.due_date = patch.due_date;
+    else if (patch.date !== undefined) cardPatch.due_date = patch.date;
     if (patch.title !== undefined) cardPatch.title = patch.title;
 
     if (patch.status !== undefined) {
@@ -128,7 +129,7 @@ export function useEvents(companyId?: string | null) {
     const { error } = await supabase.from('bx_events').update(patch).eq('id', id);
     if (error) { console.error(error); return; }
     
-    if (patch.status !== undefined || patch.due_date !== undefined || patch.title !== undefined) {
+    if (patch.status !== undefined || patch.due_date !== undefined || patch.date !== undefined || patch.title !== undefined) {
       await syncLinkedCard(id, patch);
     }
 
@@ -142,6 +143,9 @@ export function useEvents(companyId?: string | null) {
   }, []);
 
   const remove = useCallback(async (id: string) => {
+    // Сначала сбрасываем ссылку на удаляемое событие в карточках
+    await supabase.from('bx_cards').update({ event_id: null, updated_at: new Date().toISOString() }).eq('event_id', id);
+
     const { error } = await supabase.from('bx_events').delete().eq('id', id);
     if (error) { console.error(error); return; }
     setEvents(prev => { const next = prev.filter(e => e.id !== id); writeCache(next); return next; });
@@ -150,6 +154,9 @@ export function useEvents(companyId?: string | null) {
   }, []);
 
   const bulkRemove = useCallback(async (ids: string[]) => {
+    // Сначала сбрасываем ссылку на удаляемые события в карточках
+    await supabase.from('bx_cards').update({ event_id: null, updated_at: new Date().toISOString() }).in('event_id', ids);
+
     const { error } = await supabase.from('bx_events').delete().in('id', ids);
     if (error) { console.error(error); return; }
     setEvents(prev => { const next = prev.filter(e => !ids.includes(e.id)); writeCache(next); return next; });
