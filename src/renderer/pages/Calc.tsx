@@ -15,6 +15,7 @@ import CurrencyConverter from './tools/CurrencyConverter'
 import TaxCalculator from './tools/TaxCalculator'
 import DateCalc from './tools/DateCalc'
 import Icon from '../lib/ui/Icon'
+import { useToast } from '../lib/ui/ToastContext'
 
 interface Tab {
   id: string
@@ -67,6 +68,55 @@ const Calc = () => {
   const handleSetActive = (id: string) => {
     setActiveRaw(id)
     localStorage.setItem(LAST_CALC_KEY, id)
+  }
+
+  const toast = useToast()
+
+  const handleExportPDF = async () => {
+    if (!window.bx?.pdf?.generate) {
+      toast.error('Экспорт PDF доступен только в Electron')
+      return
+    }
+    const element = document.getElementById('calc-content-to-export')
+    if (!element) return
+
+    const clone = element.cloneNode(true) as HTMLElement
+    const originalInputs = element.querySelectorAll('input, select, textarea')
+    const clonedInputs = clone.querySelectorAll('input, select, textarea')
+    originalInputs.forEach((original, idx) => {
+      const cloned = clonedInputs[idx] as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      if (cloned) {
+        cloned.setAttribute('value', (original as HTMLInputElement).value || '')
+        if (original instanceof HTMLSelectElement) {
+          const selectedOption = cloned.querySelectorAll('option')[original.selectedIndex]
+          if (selectedOption) selectedOption.setAttribute('selected', 'selected')
+        }
+      }
+    })
+
+    const cleanTitle = `Калькулятор_${tab.label}`
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${tab.label}</title><style>
+      body{font-family:Arial,sans-serif;font-size:12px;line-height:1.6;margin:40px;color:#000;background:#fff}
+      h1{font-size:18px;margin-bottom:20px;border-bottom:1px solid #ddd;padding-bottom:10px}
+      .calc-result, .bg-bx-surface-2, .bg-slate-500\\/5 {background:#f8fafc !important;border:1px solid #e2e8f0 !important;border-radius:8px;padding:15px;margin-top:15px;color:#000 !important}
+      table{width:100%;border-collapse:collapse;margin-top:15px}
+      th,td{border:1px solid #e2e8f0;padding:8px;text-align:left;color:#000 !important}
+      th{background:#f1f5f9}
+      input, select, textarea { background: none; border: none; font-weight: bold; width: auto; font-family: inherit; font-size: inherit; color:#000 !important }
+      button { display: none !important }
+      .text-emerald-400, .text-green-400 { color: #15803d !important }
+      .text-red-400 { color: #b91c1c !important }
+      .text-bx-text { color: #000 !important }
+      .text-bx-muted { color: #475569 !important }
+      @media print{body{margin:18mm}}</style></head><body>
+      <h1>Расчет: ${tab.label}</h1>
+      <div>${clone.innerHTML}</div>
+      </body></html>`
+
+    const ok = await window.bx.pdf.generate(html, `${cleanTitle}.pdf`)
+    if (ok) {
+      toast.success('Расчёт успешно экспортирован в PDF')
+    }
   }
 
   const q = search.trim().toLowerCase()
@@ -133,19 +183,28 @@ const Calc = () => {
         <div className="max-w-2xl mx-auto px-6 py-6">
           {/* Hero-шапка с акцентом группы */}
           <div className={`rounded-2xl bg-gradient-to-br ${ACCENT[tab.group].grad} via-transparent to-transparent border border-bx-border px-5 py-4 mb-4`}>
-            <div className="flex items-center gap-3.5">
-              <span className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${ACCENT[tab.group].iconBg}`}>
-                <Icon name={tab.icon} className="w-6 h-6" />
-              </span>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-bx-text leading-tight">{tab.label}</h2>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-semibold`}>
-                    {tab.group}
-                  </span>
+            <div className="flex items-center justify-between gap-3.5">
+              <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                <span className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${ACCENT[tab.group].iconBg}`}>
+                  <Icon name={tab.icon} className="w-6 h-6" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-bx-text leading-tight">{tab.label}</h2>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-semibold`}>
+                      {tab.group}
+                    </span>
+                  </div>
+                  <p className="text-xs text-bx-muted mt-0.5">{tab.desc} · законодательство РУз</p>
                 </div>
-                <p className="text-xs text-bx-muted mt-0.5">{tab.desc} · законодательство РУз</p>
               </div>
+              <button
+                onClick={handleExportPDF}
+                className="px-3 py-1.5 bg-bx-surface border border-bx-border hover:bg-bx-surface-2 text-bx-text text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors shadow-sm"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                PDF
+              </button>
             </div>
             {/* Быстрое переключение внутри группы */}
             <div className="flex flex-wrap gap-1.5 mt-3.5">
@@ -166,7 +225,7 @@ const Calc = () => {
           </div>
 
           {/* Верстак калькулятора */}
-          <div className="rounded-2xl bg-bx-surface border border-bx-border p-5">
+          <div id="calc-content-to-export" className="rounded-2xl bg-bx-surface border border-bx-border p-5">
             {tab.component}
           </div>
 

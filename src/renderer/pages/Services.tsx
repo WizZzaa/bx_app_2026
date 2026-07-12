@@ -2,6 +2,20 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { getSectionsSync, refreshServices } from '../lib/db/servicesRepo';
 import type { ServiceItem, ServiceSection } from '../data/services';
 
+async function pingUrl(url: string): Promise<boolean> {
+  try {
+    await fetch(url, {
+      method: 'HEAD',
+      mode: 'no-cors',
+      cache: 'no-store',
+      signal: AbortSignal.timeout(3000),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function openLink(url: string) {
   if (typeof window !== 'undefined' && (window as any).bx?.shell?.openExternal) {
     (window as any).bx.shell.openExternal(url);
@@ -23,6 +37,16 @@ function tagClass(tag?: string): string {
 }
 
 function ServiceCard({ item }: { item: ServiceItem }) {
+  const [ok, setOk] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    pingUrl(item.url).then(res => {
+      if (active) setOk(res);
+    });
+    return () => { active = false; };
+  }, [item.url]);
+
   return (
     <button
       onClick={() => openLink(item.url)}
@@ -39,6 +63,18 @@ function ServiceCard({ item }: { item: ServiceItem }) {
           <span className="text-sm font-semibold text-bx-text group-hover:text-white transition-colors truncate">{item.title}</span>
           {item.hot && <span className="flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-bold">ЧАСТО</span>}
           {item.tag && <span className={`flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${tagClass(item.tag)}`}>{item.tag}</span>}
+          <span className={`flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1 ${
+            ok === null ? 'bg-slate-500/10 text-bx-muted'
+              : ok ? 'bg-emerald-500/10 text-emerald-400'
+              : 'bg-red-500/10 text-red-400'
+          }`}>
+            <span className={`w-1 h-1 rounded-full ${
+              ok === null ? 'bg-slate-500'
+                : ok ? 'bg-emerald-400'
+                : 'bg-red-400'
+            }`} />
+            {ok === null ? '...' : ok ? 'Живо' : 'Недоступно'}
+          </span>
         </div>
         <p className="text-xs text-bx-muted leading-relaxed line-clamp-2">{item.desc}</p>
       </div>

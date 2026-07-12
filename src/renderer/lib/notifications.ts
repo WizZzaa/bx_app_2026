@@ -47,7 +47,7 @@ let intervalId: ReturnType<typeof setInterval> | null = null;
 export function startReminderLoop(getEvents: () => BxEvent[]) {
   if (intervalId) clearInterval(intervalId);
   checkReminders(getEvents());
-  intervalId = setInterval(() => checkReminders(getEvents()), 5 * 60 * 1000);
+  intervalId = setInterval(() => checkReminders(getEvents()), 60 * 1000);
 }
 
 export function stopReminderLoop() {

@@ -1,7 +1,7 @@
 {
   "name": "app",
   "productName": "BX Помощник Бухгалтера",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "BX — помощник бухгалтера Республики Узбекистан: планировщик, калькуляторы, справочники, AI-консультант",
   "main": ".vite/build/main.js",
   "private": true,
@@ -61,6 +61,7 @@
     "@supabase/supabase-js": "^2.108.2",
     "dexie": "^4.4.4",
     "electron-squirrel-startup": "^1.0.1",
+    "mammoth": "^1.12.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.0",

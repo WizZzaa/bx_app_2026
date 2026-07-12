@@ -1,6 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { validateInn } from '../lib/validation'
 import { isElectron } from '../lib/onecApi'
+import { useCompany } from '../lib/CompanyContext'
+import { useToast } from '../lib/ui/ToastContext'
 
 interface CheckResult {
   inn: string;
@@ -59,8 +61,29 @@ export default function InnCheck() {
   const [inn, setInn] = useState('')
   const [state, setState] = useState<State>('idle')
   const [result, setResult] = useState<CheckResult | null>(null)
-  const [history, setHistory] = useState<CheckResult[]>([])
+  const [history, setHistory] = useState<CheckResult[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('bx_inn_check_history') || '[]')
+    } catch {
+      return []
+    }
+  })
   const [errorMsg, setErrorMsg] = useState('')
+
+  const { addCompany, companies } = useCompany()
+  const toast = useToast()
+
+  const addToHistory = (r: CheckResult) => {
+    setHistory(prev => {
+      const next = [r, ...prev.filter(x => x.inn !== r.inn)].slice(0, 10)
+      try {
+        localStorage.setItem('bx_inn_check_history', JSON.stringify(next))
+      } catch (e) {
+        console.error(e)
+      }
+      return next
+    })
+  }
 
   async function check() {
     const q = inn.trim().replace(/\D/g, '')
@@ -94,7 +117,7 @@ export default function InnCheck() {
           registeredAt: data.registrationDate ?? '—',
         }
         setResult(r)
-        setHistory(h => [r, ...h.filter(x => x.inn !== q)].slice(0, 10))
+        addToHistory(r)
         setState('result')
         return
       }
@@ -106,7 +129,7 @@ export default function InnCheck() {
     if (DEMO_RESULTS[q]) {
       const r = DEMO_RESULTS[q]
       setResult(r)
-      setHistory(h => [r, ...h.filter(x => x.inn !== q)].slice(0, 10))
+      addToHistory(r)
       setState('result')
     } else {
       setErrorMsg('Контрагент не найден. Проверьте ИНН и попробуйте снова.')
@@ -170,13 +193,36 @@ export default function InnCheck() {
               <Row label="Дата регистрации" value={result.registeredAt} />
               {result.riskClass && <Row label="Класс риска ГНК" value={result.riskClass} cls="text-emerald-400" />}
             </div>
-            <div className="px-4 py-2.5 border-t border-bx-border">
+            <div className="px-4 py-2.5 border-t border-bx-border flex items-center justify-between">
               <button
                 onClick={() => window.open(`https://my.soliq.uz`, '_blank')}
                 className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
               >
                 Открыть на my.soliq.uz ↗
               </button>
+              {companies.some(c => c.inn === result.inn) ? (
+                <span className="text-xs text-emerald-400 flex items-center gap-1 font-medium">
+                  ✓ В Организациях
+                </span>
+              ) : (
+                <button
+                  onClick={async () => {
+                    try {
+                      await addCompany({
+                        name: result.name,
+                        inn: result.inn,
+                        regime: result.regime,
+                      })
+                      toast.success('Организация добавлена в список компаний!')
+                    } catch (e: any) {
+                      toast.error(e.message || 'Ошибка добавления')
+                    }
+                  }}
+                  className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors"
+                >
+                  Добавить в Организации
+                </button>
+              )}
             </div>
           </div>
         )}

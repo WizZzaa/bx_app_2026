@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { TEMPLATES, TEMPLATE_CATEGORIES, type DocTemplate, type TemplateVar } from '../data/templates'
 import { useToast } from '../lib/ui/ToastContext'
+import mammoth from 'mammoth'
 import { useCompany } from '../lib/CompanyContext'
 import { useCounterparties } from '../lib/db/useCounterparties'
 import { db } from '../lib/db/localDb'
@@ -341,6 +342,30 @@ export default function Templates() {
     setActiveId(null)
   }
 
+  const handleDocxImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = async (evt) => {
+      const arrayBuffer = evt.target?.result as ArrayBuffer
+      if (!arrayBuffer) return
+      try {
+        const result = await mammoth.extractRawText({ arrayBuffer })
+        if (result.value) {
+          setNewBody(result.value)
+          toast.success('Текст из .docx успешно импортирован!')
+        } else {
+          toast.info('В файле .docx не найдено текста')
+        }
+      } catch (err) {
+        console.error(err)
+        toast.error('Не удалось разобрать .docx файл')
+      }
+    }
+    reader.readAsArrayBuffer(file)
+  }
+
   // ── Режим создания шаблона ──
   if (creatingTpl) {
     return (
@@ -389,11 +414,25 @@ export default function Templates() {
 
         {/* Редактор текста справа */}
         <div className="flex-1 flex flex-col p-6 space-y-4">
-          <div className="flex-shrink-0">
-            <h3 className="text-sm font-semibold text-bx-text">Текст шаблона документа</h3>
-            <p className="text-xs text-bx-muted mt-0.5">
-              Вставляйте переменные в двойных фигурных скобках. Например: <code className="text-blue-400 font-mono font-bold bg-blue-500/10 px-1 py-0.5 rounded">{"{{buyer_name}}"}</code>, <code className="text-blue-400 font-mono font-bold bg-blue-500/10 px-1 py-0.5 rounded">{"{{amount}}"}</code>, <code className="text-blue-400 font-mono font-bold bg-blue-500/10 px-1 py-0.5 rounded">{"{{contract_date}}"}</code>.
-            </p>
+          <div className="flex-shrink-0 flex items-start justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-bx-text">Текст шаблона документа</h3>
+              <p className="text-xs text-bx-muted mt-0.5">
+                Вставляйте переменные в двойных фигурных скобках. Например: <code className="text-blue-400 font-mono font-bold bg-blue-500/10 px-1 py-0.5 rounded">{"{{buyer_name}}"}</code>, <code className="text-blue-400 font-mono font-bold bg-blue-500/10 px-1 py-0.5 rounded">{"{{amount}}"}</code>, <code className="text-blue-400 font-mono font-bold bg-blue-500/10 px-1 py-0.5 rounded">{"{{contract_date}}"}</code>.
+              </p>
+            </div>
+            <div>
+              <label className="px-3 py-1.5 bg-blue-600/10 border border-blue-500/20 hover:bg-blue-600/20 text-blue-400 text-[11px] font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                Импорт .docx
+                <input
+                  type="file"
+                  accept=".docx"
+                  onChange={handleDocxImport}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </div>
           <div className="flex-1">
             <textarea

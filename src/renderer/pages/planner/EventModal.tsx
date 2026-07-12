@@ -53,7 +53,26 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
   const [priority, setPriority] = useState<EventPriority>(event?.priority ?? 'normal');
   const [note,     setNote]     = useState(event?.note     ?? '');
   const [tags,     setTags]     = useState<string[]>(event?.tags ?? []);
-  const [remind,   setRemind]   = useState(false);
+  const getInitialReminderStates = () => {
+    if (event?.reminder_at && event.due_date) {
+      const due = new Date(event.due_date + 'T00:00:00')
+      const rem = new Date(event.reminder_at)
+      const diffMs = due.getTime() - rem.getTime()
+      const diffDays = Math.round(diffMs / 86400000)
+      const hours = String(rem.getHours()).padStart(2, '0')
+      const minutes = String(rem.getMinutes()).padStart(2, '0')
+      const time = `${hours}:${minutes}`
+      if (diffDays >= 0 && diffDays <= 7) {
+        return { remind: true, days: diffDays, time }
+      }
+    }
+    return { remind: false, days: 0, time: '09:00' }
+  }
+
+  const initReminder = getInitialReminderStates()
+  const [remind,   setRemind]   = useState(initReminder.remind);
+  const [remindDays, setRemindDays] = useState(initReminder.days);
+  const [remindTime, setRemindTime] = useState(initReminder.time);
   const [recurrence, setRecurrence] = useState<EventRecurrence>(event?.recurrence ?? null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -83,7 +102,15 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
       regime: null,
       note: note.trim() || null,
       source: 'manual',
-      reminder_at: remind && dueDate ? new Date(dueDate + 'T09:00:00').toISOString() : null,
+      reminder_at: (() => {
+        if (!remind || !dueDate) return null;
+        const due = new Date(dueDate + 'T00:00:00');
+        due.setDate(due.getDate() - remindDays);
+        const yyyy = due.getFullYear();
+        const mm = String(due.getMonth() + 1).padStart(2, '0');
+        const dd = String(due.getDate()).padStart(2, '0');
+        return new Date(`${yyyy}-${mm}-${dd}T${remindTime}:00`).toISOString();
+      })(),
       recurrence,
     });
   }
@@ -195,11 +222,37 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
 
           {/* Напоминание */}
           {dueDate && (
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={remind} onChange={e => setRemind(e.target.checked)}
-                className="w-3.5 h-3.5 rounded accent-blue-500" />
-              <span className="text-xs text-bx-muted">Напомнить в 09:00 в день дедлайна</span>
-            </label>
+            <div className="space-y-2 border-t border-bx-border/40 pt-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={remind} onChange={e => setRemind(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded accent-blue-500" />
+                <span className="text-xs text-bx-text font-medium">Включить напоминание</span>
+              </label>
+              {remind && (
+                <div className="flex items-center gap-2 pl-5.5 text-xs text-bx-muted">
+                  <span>За</span>
+                  <select
+                    value={remindDays}
+                    onChange={e => setRemindDays(Number(e.target.value))}
+                    className="bg-bx-bg text-bx-text text-xs rounded border border-bx-border-2 px-1.5 py-1 focus:outline-none"
+                  >
+                    <option value={0}>день дедлайна (0 дн.)</option>
+                    <option value={1}>1 день</option>
+                    <option value={2}>2 дня</option>
+                    <option value={3}>3 дня</option>
+                    <option value={5}>5 дней</option>
+                    <option value={7}>7 дней</option>
+                  </select>
+                  <span>в</span>
+                  <input
+                    type="time"
+                    value={remindTime}
+                    onChange={e => setRemindTime(e.target.value)}
+                    className="bg-bx-bg text-bx-text text-xs rounded border border-bx-border-2 px-1.5 py-1 focus:outline-none w-18 text-center"
+                  />
+                </div>
+              )}
+            </div>
           )}
         </div>
 

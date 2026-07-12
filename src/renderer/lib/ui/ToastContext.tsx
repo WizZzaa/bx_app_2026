@@ -56,6 +56,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           return (
             <div key={t.id}
               onClick={() => remove(t.id)}
+              role="alert"
+              aria-live="assertive"
               className={`bx-animate-toast pointer-events-auto cursor-pointer flex items-center gap-2.5 bg-bx-surface border ${s.border} rounded-xl px-4 py-2.5 shadow-2xl max-w-sm`}>
               <span className={`text-sm font-bold flex-shrink-0 ${s.accent}`}>{s.icon}</span>
               <span className="text-xs text-bx-text leading-snug">{t.text}</span>

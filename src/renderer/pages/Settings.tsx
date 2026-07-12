@@ -7,6 +7,7 @@ import { db } from '../lib/db/localDb'
 import { usePlan } from '../lib/plan'
 import { useCompany } from '../lib/CompanyContext'
 import { useToast } from '../lib/ui/ToastContext'
+import { loadEcpKeys, saveEcpKeys } from '../lib/ecpStorage'
 
 const THEME_KEY = 'bx_theme'
 const NOTIFY_KEY = 'bx_notify_days'
@@ -300,6 +301,103 @@ export default function Settings() {
       parsed.horoscope = visible
       localStorage.setItem('bx_dashboard_widgets', JSON.stringify(parsed))
     } catch { /* localStorage недоступен — не критично */ }
+  }
+
+  const handleBackupExport = async () => {
+    try {
+      const ecpKeys = await loadEcpKeys()
+      const localRequisites = localStorage.getItem('bx_company_requisites') || '[]'
+      const theme = localStorage.getItem('bx_theme') || 'dark'
+      const notifyDays = localStorage.getItem('bx_notify_days') || '3'
+      const idleLock = localStorage.getItem('bx_idle_lock') || 'off'
+      const pinEnabled = localStorage.getItem('bx_pin_enabled') || 'false'
+      
+      const templates = await db.templates.toArray()
+      const counterparties = await db.counterparties.toArray()
+      
+      const backupData = {
+        version: APP_VERSION,
+        timestamp: new Date().toISOString(),
+        ecpKeys,
+        localRequisites: JSON.parse(localRequisites),
+        theme,
+        notifyDays,
+        idleLock,
+        pinEnabled: JSON.parse(pinEnabled),
+        templates,
+        counterparties,
+      }
+      
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `BX_Backup_${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      
+      toast.success('Резервная копия успешно создана!')
+    } catch (e: any) {
+      console.error(e)
+      toast.error('Ошибка экспорта данных: ' + e.message)
+    }
+  }
+
+  const handleBackupImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = async (evt) => {
+      const text = evt.target?.result as string
+      if (!text) return
+      try {
+        const data = JSON.parse(text)
+        if (!data || typeof data !== 'object') throw new Error('Некорректный формат файла бэкапа')
+
+        if (Array.isArray(data.ecpKeys)) {
+          await saveEcpKeys(data.ecpKeys)
+        }
+
+        if (data.localRequisites) {
+          localStorage.setItem('bx_company_requisites', JSON.stringify(data.localRequisites))
+        }
+        if (data.theme) {
+          localStorage.setItem('bx_theme', data.theme)
+          setTheme(data.theme)
+        }
+        if (data.notifyDays) {
+          localStorage.setItem('bx_notify_days', data.notifyDays)
+          setNotifyDays(data.notifyDays)
+        }
+        if (data.idleLock) {
+          localStorage.setItem('bx_idle_lock', data.idleLock)
+          setIdleLock(data.idleLock)
+        }
+        if (data.pinEnabled !== undefined) {
+          localStorage.setItem('bx_pin_enabled', JSON.stringify(data.pinEnabled))
+        }
+
+        if (Array.isArray(data.templates)) {
+          await db.templates.clear()
+          await db.templates.bulkPut(data.templates)
+        }
+
+        if (Array.isArray(data.counterparties)) {
+          await db.counterparties.clear()
+          await db.counterparties.bulkPut(data.counterparties)
+        }
+
+        toast.success('Данные успешно импортированы! Перезапуск...')
+        setTimeout(() => window.location.reload(), 1500)
+      } catch (err: any) {
+        console.error(err)
+        toast.error('Не удалось восстановить бэкап: ' + err.message)
+      }
+    }
+    reader.readAsText(file)
   }
 
   async function signOut() {
@@ -830,6 +928,26 @@ export default function Settings() {
               <h2 className="text-base font-bold text-bx-text">Система и Данные</h2>
               
               <div className="bg-bx-surface rounded-xl border border-bx-border overflow-hidden">
+                <SettingRow label="Резервное копирование и миграция" desc="Экспорт и импорт всех локальных данных (настройки, ЭЦП, организации, контрагенты, шаблоны)">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleBackupExport}
+                      className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors font-semibold"
+                    >
+                      Экспорт данных
+                    </button>
+                    <label className="text-xs px-3 py-1.5 bg-bx-surface-2 hover:bg-bx-border-2 text-bx-text rounded-lg transition-colors font-semibold cursor-pointer">
+                      Импорт данных
+                      <input
+                        type="file"
+                        accept=".json"
+                        onChange={handleBackupImport}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </SettingRow>
+
                 <SettingRow label="Локальный кэш приложения" desc="Очистить закэшированные транзакции и данные о сотрудниках">
                   <button
                     onClick={() => {

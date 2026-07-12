@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { KB_CATEGORY_META, type KbArticle } from '../../data/knowledge';
 import { Icon, catColor, readMinutes, slug, highlight } from './shared';
+import { useToast } from '../../lib/ui/ToastContext';
 
 // Просмотр одной статьи: markdown-подобное тело, оглавление,
 // блок «Инструменты по теме» (связки статья ↔ раздел приложения), похожие.
@@ -86,6 +87,36 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
   }
   const navigate = useNavigate();
   const cc = catColor(article.category);
+  const toast = useToast();
+
+  const handleExportPDF = async () => {
+    if (!window.bx?.pdf?.generate) {
+      toast.error('Экспорт PDF доступен только в Electron')
+      return
+    }
+    const element = document.getElementById('article-content-to-export')
+    if (!element) return
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${article.title}</title><style>
+      body{font-family:Arial,sans-serif;font-size:12px;line-height:1.6;margin:40px;color:#000;background:#fff}
+      h2{font-size:20px;margin-bottom:10px;color:#000;border-bottom:1px solid #ddd;padding-bottom:8px}
+      h3{font-size:14px;margin-top:20px;margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px;color:#000}
+      p{margin:10px 0;color:#000}
+      strong{font-weight:bold}
+      code{font-family:monospace;background:#f4f4f4;padding:2px 4px;border-radius:4px;color:#000}
+      pre code{display:block;white-space:pre-wrap;padding:10px;margin:10px 0;border:1px solid #ddd}
+      table, .grid {width:100%;border-collapse:collapse;margin:15px 0}
+      th,td,span{border:1px solid #ddd;padding:6px;text-align:left;color:#000}
+      .flex-shrink-0 { display: none !important }
+      @media print{body{margin:18mm}}</style></head><body>
+      ${element.innerHTML}
+      </body></html>`
+
+    const ok = await window.bx.pdf.generate(html, `Статья_${article.title.replace(/\s+/g, '_')}.pdf`)
+    if (ok) {
+      toast.success('Статья успешно экспортирована в PDF')
+    }
+  }
 
   return (
     <div className="flex max-w-5xl mx-auto">
@@ -96,17 +127,21 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
           <button onClick={() => onCategory(article.category)} className="hover:text-bx-muted">{article.category}</button>
         </div>
 
-        <h2 className="text-2xl font-bold text-bx-text leading-tight mb-3">{article.title}</h2>
-
         <div className="flex items-center gap-3 flex-wrap mb-5 text-[11px]">
           <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full ${cc.bg} ${cc.text}`}>
             <Icon name={KB_CATEGORY_META[article.category]?.icon ?? 'book'} className="w-3 h-3" />{article.category}
           </span>
           <span className="flex items-center gap-1 text-bx-muted"><Icon name="clock" className="w-3 h-3" />{readMinutes(article.body)} мин</span>
           <span className="text-bx-muted">Источник: <span className="text-bx-muted">{article.source}</span></span>
-          <button onClick={copyArticle} className={`ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors ${copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-bx-border text-bx-muted hover:text-bx-text'}`}>
-            <Icon name={copied ? 'check' : 'copy'} className="w-3 h-3" />{copied ? 'Скопировано' : 'Копировать'}
-          </button>
+          <div className="ml-auto flex gap-1.5">
+            <button onClick={handleExportPDF} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-bx-border text-bx-muted hover:text-bx-text transition-colors">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              PDF
+            </button>
+            <button onClick={copyArticle} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors ${copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-bx-border text-bx-muted hover:text-bx-text'}`}>
+              <Icon name={copied ? 'check' : 'copy'} className="w-3 h-3" />{copied ? 'Скопировано' : 'Копировать'}
+            </button>
+          </div>
         </div>
 
         <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl px-4 py-2.5 mb-5 flex gap-2">
@@ -114,7 +149,13 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
           <p className="text-[11px] text-amber-300/70 leading-relaxed">Справочный материал. Сверяйтесь с актуальными редакциями НК РУз на lex.uz и разъяснениями soliq.uz.</p>
         </div>
 
-        <div>{renderBody(article.body, search)}</div>
+        <div id="article-content-to-export">
+          <h2 className="text-2xl font-bold text-bx-text leading-tight mb-3">{article.title}</h2>
+          <div className="text-[11px] text-bx-muted mb-4">
+            Категория: {article.category} · Источник: {article.source}
+          </div>
+          <div>{renderBody(article.body, search)}</div>
+        </div>
 
         {article.tools && article.tools.length > 0 && (
           <div className="mt-8 bg-blue-600/5 border border-blue-500/20 rounded-xl px-4 py-3.5">

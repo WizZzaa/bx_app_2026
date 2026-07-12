@@ -277,68 +277,122 @@ ${fullContext}
         setSending(false)
       }
     } else {
-      // Облачный Gemini провайдер через Supabase edge function
+      // Облачный Gemini провайдер через Supabase edge function с поддержкой SSE-стриминга
       try {
         const payloadMessages = history.map(m => ({ role: m.role, content: m.content }))
-        const { data, error: fErr } = await supabase.functions.invoke('ai-consultant', {
-          body: { messages: payloadMessages, context: contextArticles },
+        const { data: { session } } = await supabase.auth.getSession()
+        const token = session?.access_token
+        const anonKey = (supabase as any).supabaseKey || ''
+        const supabaseUrl = (supabase as any).supabaseUrl || 'https://bqejnrsuvcscimyptxwl.supabase.co'
+
+        const response = await fetch(`${supabaseUrl}/functions/v1/ai-consultant`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token || anonKey}`,
+            'apikey': anonKey,
+          },
+          body: JSON.stringify({ messages: payloadMessages, context: contextArticles, stream: true }),
         })
 
-        // supabase.functions.invoke может вернуть FunctionsHttpError при non-2xx
-        if (fErr) {
-          // Пытаемся извлечь JSON из контекста ошибки
-          let detail = ''
-          try {
-            const ctx = (fErr as any)?.context
-            if (ctx && typeof ctx.json === 'function') {
-              const body = await ctx.json()
-              detail = body?.message || body?.error || ''
+        if (!response.ok) {
+          throw new Error(`Edge function returned status ${response.status}`)
+        }
+
+        if (!response.body) throw new Error('ReadableStream не поддерживается')
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let done = false
+        let accumulatedText = ''
+
+        const tempAiMsgId = 'tmp-a-' + Date.now()
+        // Вставляем пустое сообщение ассистента для стриминга
+        setMessages(prev => [...prev, { id: tempAiMsgId, chat_id: chatId!, role: 'assistant', content: '', created_at: new Date().toISOString() }])
+        setSending(false) // Разрешаем ввод, пока печатается
+
+        while (!done) {
+          const { value, done: doneReading } = await reader.read()
+          done = doneReading
+          const chunkValue = decoder.decode(value)
+          const lines = chunkValue.split('\n')
+          
+          for (const line of lines) {
+            const trimmedLine = line.trim()
+            if (!trimmedLine) continue
+            // В SSE от Gemini API данные приходят в формате `data: {...}`
+            if (trimmedLine.startsWith('data: ')) {
+              const jsonStr = trimmedLine.slice(6)
+              if (jsonStr === '[DONE]') continue
+              try {
+                const parsed = JSON.parse(jsonStr)
+                // Gemini API формат: candidates[0].content.parts[0].text
+                const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text
+                if (text) {
+                  accumulatedText += text
+                  setMessages(prev => prev.map(m => m.id === tempAiMsgId ? { ...m, content: accumulatedText } : m))
+                } else if (parsed.error) {
+                  // Выводим ошибку, если она вернулась в стриме
+                  setError(parsed.message || parsed.error)
+                }
+              } catch (e) {
+                // Игнорируем неполный/битый JSON
+              }
+            } else {
+              // На случай если это не SSE, а обычный JSON с ошибкой лимита или ключа
+              try {
+                const parsed = JSON.parse(trimmedLine)
+                if (parsed.error) {
+                  const errCode = parsed.error
+                  const errMsg = parsed.message || ''
+                  const msg =
+                    errCode === 'NO_API_KEY'
+                      ? 'AI-Консультант не настроен: администратору нужно добавить GEMINI_API_KEY в секреты Supabase.'
+                      : errCode === 'LIMIT'
+                        ? (errMsg || 'Лимит бесплатного плана исчерпан — перейдите на Pro.')
+                        : errCode === 'AUTH'
+                          ? (errMsg || 'Сессия истекла. Выйдите и войдите снова.')
+                          : errCode === 'PROFILE'
+                            ? (errMsg || 'Профиль не найден. Попробуйте выйти и войти заново.')
+                            : errCode === 'GEMINI_ERROR'
+                              ? (errMsg || 'Ошибка Gemini API. Попробуйте снова через минуту.')
+                              : errCode === 'BLOCKED'
+                                ? (errMsg || 'Запрос заблокирован фильтром безопасности.')
+                                : (errMsg || 'Ошибка AI: ' + errCode)
+                  setError(msg)
+                  // Удаляем пустое сообщение ассистента
+                  setMessages(prev => prev.filter(m => m.id !== tempAiMsgId))
+                  return
+                }
+              } catch (e) {
+                // Игнорируем
+              }
             }
-          } catch { /* ignore */ }
-          setError(detail || 'Ошибка вызова AI. Проверьте подключение к интернету и попробуйте снова.')
-          setSending(false)
-          return
+          }
         }
 
-        // Edge function всегда возвращает 200 с JSON
-        if (data?.error) {
-          const errCode = data.error
-          const errMsg = data.message || ''
-          const msg =
-            errCode === 'NO_API_KEY'
-              ? 'AI-Консультант не настроен: администратору нужно добавить GEMINI_API_KEY в секреты Supabase.'
-              : errCode === 'LIMIT'
-                ? (errMsg || 'Лимит бесплатного плана исчерпан — перейдите на Pro.')
-                : errCode === 'AUTH'
-                  ? (errMsg || 'Сессия истекла. Выйдите и войдите снова.')
-                  : errCode === 'PROFILE'
-                    ? (errMsg || 'Профиль не найден. Попробуйте выйти и войти заново.')
-                    : errCode === 'GEMINI_ERROR'
-                      ? (errMsg || 'Ошибка Gemini API. Попробуйте снова через минуту.')
-                      : errCode === 'BLOCKED'
-                        ? (errMsg || 'Запрос заблокирован фильтром безопасности.')
-                        : (errMsg || 'Ошибка AI: ' + errCode)
-          setError(msg)
-          setSending(false)
-          return
+        if (!accumulatedText) {
+          throw new Error('Пустой ответ от ИИ.')
         }
 
-        const answer = (data?.text || '').trim() || 'Пустой ответ.'
-        const aiMsg: AiMessage = { id: 'tmp-a-' + Date.now(), chat_id: chatId!, role: 'assistant', content: answer, created_at: new Date().toISOString() }
+        // Сохраняем итоговое сообщение локально
+        const finalAiMsg: AiMessage = { 
+          id: tempAiMsgId, 
+          chat_id: chatId!, 
+          role: 'assistant', 
+          content: accumulatedText, 
+          created_at: new Date().toISOString() 
+        }
         
-        setMessages(prev => [...prev, aiMsg])
-
-        // Сохраняем локально
         try {
           const existing = JSON.parse(localStorage.getItem(localMsgsKey) || '[]')
-          localStorage.setItem(localMsgsKey, JSON.stringify([...existing, aiMsg]))
+          localStorage.setItem(localMsgsKey, JSON.stringify([...existing, finalAiMsg]))
         } catch (e) {
           console.error(e)
         }
 
         // Сохраняем ответ и обновляем чат на сервере
         if (userId) {
-          await supabase.from('bx_ai_messages').insert({ chat_id: chatId, user_id: userId, role: 'assistant', content: answer })
+          await supabase.from('bx_ai_messages').insert({ chat_id: chatId, user_id: userId, role: 'assistant', content: accumulatedText })
           await supabase.from('bx_ai_chats').update({ updated_at: new Date().toISOString() }).eq('id', chatId)
           loadChats()
         }
