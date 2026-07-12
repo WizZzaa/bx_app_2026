@@ -42,6 +42,11 @@ export const IPC = {
   NOTIFY_SHOW: 'notify:show',
   // Autostart settings
   AUTOSTART_GET: 'settings:autostart:get',
-  AUTOSTART_SET: 'settings:autostart:set'
+  AUTOSTART_SET: 'settings:autostart:set',
+  // Window controls
+  WIN_MINIMIZE: 'win:minimize',
+  WIN_MAXIMIZE: 'win:maximize',
+  WIN_CLOSE: 'win:close',
+  WIN_IS_MAXIMIZED: 'win:isMaximized'
 } as const
 

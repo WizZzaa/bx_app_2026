@@ -6,6 +6,7 @@ import Icon from '../../lib/ui/Icon'
 import { getSyncQueue, syncOfflineData } from '../../lib/db/syncQueue'
 import { db } from '../../lib/db/localDb'
 import ConflictModal from '../ConflictModal'
+import { useNotifications } from '../../lib/useNotifications'
 
 export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
   const [query, setQuery] = useState('')
@@ -17,9 +18,12 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
   const [syncing, setSyncing] = useState(false)
   const [conflictsCount, setConflictsCount] = useState(0)
   const [conflictModalOpen, setConflictModalOpen] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications()
   
   const navigate = useNavigate()
   const boxRef = useRef<HTMLDivElement>(null)
+  const notifBoxRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { buildIndex().then(setItems); }, [])
 
@@ -67,6 +71,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
   useEffect(() => {
     function onClick(e: MouseEvent) {
       if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false)
+      if (notifBoxRef.current && !notifBoxRef.current.contains(e.target as Node)) setNotifOpen(false)
     }
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
@@ -164,6 +169,77 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
         </div>
 
         <CompanySwitcher />
+
+        {/* Центр Уведомлений */}
+        <div className="relative" ref={notifBoxRef}>
+          <button
+            onClick={() => {
+              setNotifOpen(!notifOpen)
+              setConflictModalOpen(false)
+            }}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted transition-colors relative cursor-pointer"
+            title="Уведомления"
+          >
+            <Icon name="bell" className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-rose-500 rounded-full flex items-center justify-center text-[8px] font-bold text-white leading-none scale-90">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
+          {notifOpen && (
+            <div className="absolute right-0 top-full mt-2 w-80 bg-bx-surface border border-bx-border-2 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-[360px] text-xs">
+              <div className="px-3 py-2.5 border-b border-bx-border bg-bx-surface/40 flex items-center justify-between">
+                <span className="font-bold text-bx-text">Уведомления</span>
+                {unreadCount > 0 && (
+                  <button onClick={markAllAsRead} className="text-[10px] text-blue-400 hover:text-blue-300 underline cursor-pointer">
+                    Прочитать все
+                  </button>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-0">
+                {notifications.length === 0 ? (
+                  <div className="text-center py-6 text-bx-muted text-[11px]">Нет новых уведомлений</div>
+                ) : (
+                  notifications.map(n => (
+                    <div key={n.id} className={`p-2.5 rounded-lg border transition-colors ${
+                      n.read ? 'bg-bx-bg/10 border-bx-border/60' : 'bg-blue-500/5 border-blue-500/15'
+                    } flex items-start gap-2 justify-between`}>
+                      <div className="space-y-0.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 ${n.read ? 'opacity-0' : ''}`} />
+                          <h4 className={`font-semibold text-bx-text truncate ${n.read ? '' : 'font-bold'}`}>{n.title}</h4>
+                        </div>
+                        <p className="text-[10.5px] text-bx-muted leading-relaxed whitespace-pre-wrap">{n.body}</p>
+                        <p className="text-[9px] text-bx-muted/65 font-mono pt-0.5">
+                          {new Date(n.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        {!n.read && (
+                          <button
+                            onClick={() => markAsRead(n.id)}
+                            className="text-[9px] text-blue-400 hover:text-blue-300 cursor-pointer"
+                          >
+                            Прочесть
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteNotification(n.id)}
+                          className="text-[9px] text-bx-muted hover:text-red-400 cursor-pointer"
+                        >
+                          Скрыть
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
         <button
           onClick={() => navigate('/settings')}
           className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted transition-colors"

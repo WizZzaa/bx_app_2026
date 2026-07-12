@@ -50,12 +50,48 @@ export async function seedTaxDeadlines(year: number, userId: string, companyId: 
 
   if (events.length === 0) return 0;
 
-  const { error } = await supabase.from('bx_events').insert(
-    events.map(e => ({ ...e, user_id: userId }))
-  );
+  const { data: insertedEvents, error } = await supabase
+    .from('bx_events')
+    .insert(events.map(e => ({ ...e, user_id: userId })))
+    .select();
 
-  if (!error) {
+  if (!error && insertedEvents) {
     markSeeded(year);
+
+    // Дополнительно создаем Kanban-карточки на доске "Отчётность и платежи" или дефолтной доске
+    try {
+      const { data: boards } = await supabase
+        .from('bx_boards')
+        .select('*')
+        .eq('company_id', companyId);
+
+      const targetBoard = boards?.find(b => b.name === 'Отчётность и платежи') 
+        || boards?.find(b => b.is_default) 
+        || boards?.[0];
+
+      if (targetBoard && targetBoard.columns && targetBoard.columns.length > 0) {
+        const firstColId = targetBoard.columns[0].id;
+        const cardsToInsert = insertedEvents.map((e: any, idx: number) => ({
+          user_id: userId,
+          board_id: targetBoard.id,
+          column_id: firstColId,
+          title: e.title,
+          description: e.note || null,
+          priority: e.priority || 'normal',
+          labels: e.tags || null,
+          checklist: [],
+          due_date: e.due_date || null,
+          event_id: e.id,
+          position: idx + 1
+        }));
+
+        const { error: cardError } = await supabase.from('bx_cards').insert(cardsToInsert);
+        if (cardError) console.error('Error seeding card deadlines:', cardError);
+      }
+    } catch (e) {
+      console.error('Failed to create synced Kanban cards for seeded deadlines:', e);
+    }
+
     return events.length;
   }
   console.error('Tax seed error:', error);

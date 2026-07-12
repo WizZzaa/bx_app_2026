@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { BxCard, BxComment, ChecklistItem } from './useCards';
 import type { BoardColumn } from './useBoards';
 import { uid } from '../../lib/uid';
+import { supabase } from '../../lib/db/supabase';
 
 interface Props {
   card: BxCard;
@@ -44,6 +45,37 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
   const [confirmDel,  setConfirmDel]  = useState(false);
   const titleRef = useRef<HTMLTextAreaElement>(null);
 
+  // Linked event settings
+  const [recurrence, setRecurrence] = useState<'weekly' | 'monthly' | 'quarterly' | 'yearly' | null>(null);
+  const [remind, setRemind] = useState(false);
+  const [remindDays, setRemindDays] = useState(0);
+  const [remindTime, setRemindTime] = useState('09:00');
+
+  // Load linked event details
+  useEffect(() => {
+    if (!card.event_id) return;
+    supabase
+      .from('bx_events')
+      .select('*')
+      .eq('id', card.event_id)
+      .single()
+      .then(({ data }) => {
+        if (!data) return;
+        setRecurrence(data.recurrence || null);
+        if (data.reminder_at && data.due_date) {
+          const due = new Date(data.due_date + 'T00:00:00');
+          const rem = new Date(data.reminder_at);
+          const diffMs = due.getTime() - rem.getTime();
+          const diffDays = Math.round(diffMs / 86400000);
+          const hours = String(rem.getHours()).padStart(2, '0');
+          const minutes = String(rem.getMinutes()).padStart(2, '0');
+          setRemind(true);
+          setRemindDays(diffDays >= 0 && diffDays <= 7 ? diffDays : 0);
+          setRemindTime(`${hours}:${minutes}`);
+        }
+      });
+  }, [card.event_id]);
+
   // load comments
   useEffect(() => { loadComments(card.id).then(setComments); }, [card.id, loadComments]);
 
@@ -54,7 +86,52 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  function save() {
+  async function save() {
+    let finalEventId = card.event_id;
+    const needEvent = recurrence !== null || remind;
+
+    if (needEvent) {
+      const reminderAt = (() => {
+        if (!remind || !dueDate) return null;
+        const due = new Date(dueDate + 'T00:00:00');
+        due.setDate(due.getDate() - remindDays);
+        const yyyy = due.getFullYear();
+        const mm = String(due.getMonth() + 1).padStart(2, '0');
+        const dd = String(due.getDate()).padStart(2, '0');
+        return new Date(`${yyyy}-${mm}-${dd}T${remindTime}:00`).toISOString();
+      })();
+
+      const eventPayload = {
+        title: title.trim() || card.title,
+        date: dueDate || new Date().toISOString().split('T')[0],
+        due_date: dueDate || null,
+        status: (columnId === columns[columns.length - 1]?.id) ? 'done' : 'todo',
+        priority: priority,
+        note: description.trim() || null,
+        recurrence,
+        reminder_at: reminderAt,
+        type: 'task',
+        source: 'manual',
+        company_id: card.board_id ? (await supabase.from('bx_boards').select('company_id').eq('id', card.board_id).single()).data?.company_id || null : null
+      };
+
+      if (finalEventId) {
+        await supabase.from('bx_events').update(eventPayload).eq('id', finalEventId);
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: newEv } = await supabase.from('bx_events').insert({
+            ...eventPayload,
+            user_id: user.id
+          }).select().single();
+          if (newEv) finalEventId = newEv.id;
+        }
+      }
+    } else if (finalEventId) {
+      await supabase.from('bx_events').delete().eq('id', finalEventId);
+      finalEventId = null;
+    }
+
     onUpdate(card.id, {
       title: title.trim() || card.title,
       description: description.trim() || null,
@@ -63,7 +140,13 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
       due_date: dueDate || null,
       column_id: columnId,
       checklist,
+      event_id: finalEventId,
     });
+
+    const bc = new BroadcastChannel('bx-events-sync');
+    bc.postMessage('reload');
+    bc.close();
+
     onClose();
   }
 
@@ -201,6 +284,57 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
               <label className="text-[10px] font-medium text-bx-muted block mb-1">Срок</label>
               <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className={`${inputCls} text-xs py-1.5`} />
             </div>
+
+            <div>
+              <label className="text-[10px] font-medium text-bx-muted block mb-1">Повторение</label>
+              <select value={recurrence ?? 'none'}
+                onChange={e => setRecurrence(e.target.value === 'none' ? null : e.target.value as any)}
+                className={`${inputCls} text-xs py-1.5`}>
+                <option value="none">Не повторять</option>
+                <option value="weekly">Еженедельно</option>
+                <option value="monthly">Ежемесячно</option>
+                <option value="quarterly">Ежеквартально</option>
+                <option value="yearly">Ежегодно</option>
+              </select>
+            </div>
+
+            {dueDate && (
+              <div className="space-y-1.5 pt-1">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={remind} onChange={e => setRemind(e.target.checked)}
+                    className="w-3 h-3 rounded accent-blue-500" />
+                  <span className="text-[10px] font-medium text-bx-muted">Напоминание</span>
+                </label>
+                {remind && (
+                  <div className="space-y-1 pl-4.5 text-[10px] text-bx-muted">
+                    <div className="flex items-center gap-1">
+                      <span>За</span>
+                      <select
+                        value={remindDays}
+                        onChange={e => setRemindDays(Number(e.target.value))}
+                        className="bg-bx-bg text-bx-text text-[10px] rounded border border-bx-border-2 px-1 py-0.5 focus:outline-none w-full cursor-pointer"
+                      >
+                        <option value={0}>0 дней</option>
+                        <option value={1}>1 день</option>
+                        <option value={2}>2 дня</option>
+                        <option value={3}>3 дня</option>
+                        <option value={5}>5 дней</option>
+                        <option value={7}>7 дней</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>в</span>
+                      <input
+                        type="time"
+                        value={remindTime}
+                        onChange={e => setRemindTime(e.target.value)}
+                        className="bg-bx-bg text-bx-text text-[10px] rounded border border-bx-border-2 px-1 py-0.5 focus:outline-none w-full text-center"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div>
               <label className="text-[10px] font-medium text-bx-muted block mb-1.5">Метки</label>

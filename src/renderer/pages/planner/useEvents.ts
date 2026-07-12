@@ -39,6 +39,37 @@ function writeCache(rows: BxEvent[]) {
   localStorage.setItem(CACHE_KEY, JSON.stringify(rows));
 }
 
+async function syncLinkedCard(eventId: string, status: EventStatus) {
+  try {
+    const { data: card } = await supabase
+      .from('bx_cards')
+      .select('id, board_id')
+      .eq('event_id', eventId)
+      .eq('archived', false)
+      .single();
+    if (!card) return;
+
+    const { data: board } = await supabase
+      .from('bx_boards')
+      .select('columns')
+      .eq('id', card.board_id)
+      .single();
+    if (!board || !board.columns || board.columns.length === 0) return;
+
+    const cols = board.columns as any[];
+    const isDone = status === 'done';
+    const targetCol = isDone ? cols[cols.length - 1] : cols[0];
+    if (!targetCol) return;
+
+    await supabase.from('bx_cards').update({
+      column_id: targetCol.id,
+      updated_at: new Date().toISOString()
+    }).eq('id', card.id);
+  } catch {
+    // игнорируем ошибку, если карточка не найдена
+  }
+}
+
 export function useEvents(companyId?: string | null) {
   const [events, setEvents] = useState<BxEvent[]>(readCache);
   const [loading, setLoading] = useState(true);
@@ -81,7 +112,6 @@ export function useEvents(companyId?: string | null) {
     if (payload.recurrence == null) delete payload.recurrence;
     let { data, error } = await supabase.from('bx_events').insert(payload).select().single();
     if (error && 'recurrence' in payload) {
-      // Колонка recurrence ещё не добавлена в БД — сохраняем без повторения
       console.warn('bx_events.recurrence недоступна, событие сохранено без повторения:', error.message);
       delete payload.recurrence;
       ({ data, error } = await supabase.from('bx_events').insert(payload).select().single());
@@ -99,6 +129,11 @@ export function useEvents(companyId?: string | null) {
   const update = useCallback(async (id: string, patch: Partial<Omit<BxEvent, 'id' | 'user_id' | 'created_at'>>) => {
     const { error } = await supabase.from('bx_events').update(patch).eq('id', id);
     if (error) { console.error(error); return; }
+    
+    if (patch.status) {
+      await syncLinkedCard(id, patch.status);
+    }
+
     setEvents(prev => {
       const next = prev.map(e => e.id === id ? { ...e, ...patch } : e);
       writeCache(next);

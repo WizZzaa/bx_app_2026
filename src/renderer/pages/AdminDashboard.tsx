@@ -113,7 +113,7 @@ interface NsbuRow {
   description: string | null
 }
 
-type Tab = 'users' | 'indicators' | 'cms' | 'services' | 'payments' | 'tickets'
+type Tab = 'users' | 'indicators' | 'cms' | 'services' | 'payments' | 'tickets' | 'notifications'
 type SubRefTab = 'indicators' | 'taxes' | 'accounts' | 'nsbu'
 
 const TABS: { id: Tab; label: string; icon: string; accent: string; activeCls: string }[] = [
@@ -123,6 +123,7 @@ const TABS: { id: Tab; label: string; icon: string; accent: string; activeCls: s
   { id: 'services',   label: 'Сервисы',        icon: '🔗', accent: 'text-cyan-400',    activeCls: 'bg-cyan-600/20 text-cyan-400 border-cyan-500/40' },
   { id: 'payments',   label: 'Оплаты',         icon: '💳', accent: 'text-rose-400',    activeCls: 'bg-rose-600/20 text-rose-400 border-rose-500/40' },
   { id: 'tickets',    label: 'Техподдержка',   icon: '🎧', accent: 'text-amber-400',   activeCls: 'bg-amber-500/20 text-amber-400 border-amber-500/40' },
+  { id: 'notifications', label: 'Уведомления', icon: '🔔', accent: 'text-sky-400',     activeCls: 'bg-sky-600/20 text-sky-400 border-sky-500/40' },
 ]
 
 const TICKET_STATUS: Record<Ticket['status'], { label: string; cls: string }> = {
@@ -233,6 +234,15 @@ const AdminDashboard = () => {
   const [paymentFilterState, setPaymentFilterState] = useState<'all' | 'paid' | 'waiting' | 'created' | 'cancelled'>('all')
   const [paymentFilterProvider, setPaymentFilterProvider] = useState<'all' | 'payme' | 'click'>('all')
   const [paymentSearch, setPaymentSearch] = useState('')
+
+  // Notifications
+  const [notifsList, setNotifsList] = useState<any[]>([])
+  const [notifTitle, setNotifTitle] = useState('')
+  const [notifBody, setNotifBody] = useState('')
+  const [notifTargetType, setNotifTargetType] = useState<'all' | 'pro' | 'tin'>('all')
+  const [notifTargetTins, setNotifTargetTins] = useState('')
+  const [notifExpiresDays, setNotifExpiresDays] = useState('7')
+  const [notifsLoading, setNotifsLoading] = useState(false)
 
   // Фильтрация
   const filteredUsers = useMemo(() => {
@@ -525,6 +535,72 @@ const AdminDashboard = () => {
 
   useEffect(() => { refreshPlan() }, [refreshPlan])
 
+  const loadAdminNotifications = async () => {
+    setNotifsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('bx_global_notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setNotifsList(data || [])
+    } catch (err) {
+      console.error('Failed to load notifications:', err)
+    } finally {
+      setNotifsLoading(false)
+    }
+  }
+
+  const handleSendNotification = async () => {
+    if (!notifTitle.trim() || !notifBody.trim()) {
+      toast.error('Заполните заголовок и текст уведомления')
+      return
+    }
+    
+    let tinsArray: string[] | null = null
+    if (notifTargetType === 'tin') {
+      tinsArray = notifTargetTins.split(',').map(t => t.trim()).filter(Boolean)
+      if (tinsArray.length === 0) {
+        toast.error('Введите хотя бы один ИНН')
+        return
+      }
+    }
+
+    const expiresAt = notifExpiresDays 
+      ? new Date(Date.now() + parseInt(notifExpiresDays, 10) * 24 * 60 * 60 * 1000).toISOString()
+      : null
+
+    try {
+      const { error } = await supabase.from('bx_global_notifications').insert({
+        title: notifTitle.trim(),
+        body: notifBody.trim(),
+        target_type: notifTargetType,
+        target_tins: tinsArray,
+        expires_at: expiresAt
+      })
+      if (error) throw error
+      toast.success('Уведомление успешно отправлено')
+      setNotifTitle('')
+      setNotifBody('')
+      setNotifTargetTins('')
+      loadAdminNotifications()
+    } catch (e: any) {
+      console.error(e)
+      toast.error('Не удалось отправить уведомление')
+    }
+  }
+
+  const handleDeleteAdminNotification = async (id: string) => {
+    try {
+      const { error } = await supabase.from('bx_global_notifications').delete().eq('id', id)
+      if (error) throw error
+      toast.success('Уведомление удалено')
+      loadAdminNotifications()
+    } catch {
+      toast.error('Не удалось удалить уведомление')
+    }
+  }
+
   useEffect(() => {
     if (!isAdmin) return
     loadUsers()
@@ -536,6 +612,7 @@ const AdminDashboard = () => {
     loadNsbu()
     loadServices()
     loadOrders()
+    loadAdminNotifications()
   }, [isAdmin])
 
   // Действия
@@ -1828,6 +1905,135 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Уведомления */}
+        {activeTab === 'notifications' && (
+          <div className="h-full grid grid-cols-1 md:grid-cols-[1fr_320px] gap-4 max-w-5xl mx-auto overflow-hidden text-xs">
+            {/* Левая часть: История уведомлений */}
+            <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden flex flex-col h-full">
+              <div className="px-4 py-3 border-b border-bx-border bg-bx-surface/40 flex items-center justify-between">
+                <h3 className="text-xs font-black text-bx-text">История отправленных уведомлений</h3>
+                <button onClick={loadAdminNotifications} className="text-xs text-bx-muted hover:text-bx-text">⟳ Обновить</button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {notifsLoading ? (
+                  <div className="text-center text-xs text-bx-muted py-6">Загрузка...</div>
+                ) : notifsList.length === 0 ? (
+                  <div className="text-center text-xs text-bx-muted py-6">История пуста</div>
+                ) : (
+                  notifsList.map(item => (
+                    <div key={item.id} className="p-3 bg-bx-bg/40 border border-bx-border rounded-xl flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                            item.target_type === 'all' 
+                              ? 'bg-blue-500/10 text-blue-400' 
+                              : item.target_type === 'pro' 
+                                ? 'bg-emerald-500/10 text-emerald-400' 
+                                : 'bg-purple-500/10 text-purple-400'
+                          }`}>
+                            {item.target_type === 'all' ? 'Всем' : item.target_type === 'pro' ? 'Pro' : `ИНН: ${item.target_tins?.join(', ')}`}
+                          </span>
+                          <span className="text-[9px] text-bx-muted">
+                            {new Date(item.created_at).toLocaleString('ru-RU')}
+                          </span>
+                          {item.expires_at && (
+                            <span className="text-[9px] text-red-400/80">
+                              До: {new Date(item.expires_at).toLocaleDateString('ru-RU')}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="text-xs font-bold text-bx-text">{item.title}</h4>
+                        <p className="text-[11px] text-bx-muted leading-relaxed whitespace-pre-wrap">{item.body}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteAdminNotification(item.id)}
+                        className="text-[10px] text-red-400 hover:text-red-300 transition-colors px-2 py-1 rounded bg-red-500/5 hover:bg-red-500/15 border border-red-500/10 cursor-pointer"
+                      >
+                        Удалить
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Правая часть: Форма создания */}
+            <div className="bg-bx-surface border border-bx-border rounded-2xl p-4 space-y-4 overflow-y-auto">
+              <h3 className="text-xs font-black text-bx-text">Отправить новое уведомление</h3>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-bx-muted uppercase tracking-wider">Заголовок</label>
+                <input
+                  value={notifTitle}
+                  onChange={e => setNotifTitle(e.target.value)}
+                  placeholder="Например: Важные изменения в НК"
+                  className="w-full bg-bx-bg border border-bx-border-2 rounded-xl px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-sky-500/50"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-bx-muted uppercase tracking-wider">Текст уведомления</label>
+                <textarea
+                  value={notifBody}
+                  onChange={e => setNotifBody(e.target.value)}
+                  placeholder="Введите text сообщения..."
+                  rows={4}
+                  className="w-full bg-bx-bg border border-bx-border-2 rounded-xl px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-sky-500/50 resize-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-bx-muted uppercase tracking-wider">Аудитория</label>
+                <select
+                  value={notifTargetType}
+                  onChange={e => setNotifTargetType(e.target.value as any)}
+                  className="w-full bg-bx-bg border border-bx-border-2 rounded-xl px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-sky-500/50 cursor-pointer"
+                >
+                  <option value="all">Всем пользователям</option>
+                  <option value="pro">Только Pro-пользователям</option>
+                  <option value="tin">Таргетинг по ИНН</option>
+                </select>
+              </div>
+
+              {notifTargetType === 'tin' && (
+                <div className="space-y-1 bx-animate-fade">
+                  <label className="text-[10px] font-bold text-bx-muted uppercase tracking-wider">ИНН получателей (через запятую)</label>
+                  <input
+                    value={notifTargetTins}
+                    onChange={e => setNotifTargetTins(e.target.value)}
+                    placeholder="Пример: 301234567, 201234567"
+                    className="w-full bg-bx-bg border border-bx-border-2 rounded-xl px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-sky-500/50"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-bx-muted uppercase tracking-wider">Срок действия (дней)</label>
+                <select
+                  value={notifExpiresDays}
+                  onChange={e => setNotifExpiresDays(e.target.value)}
+                  className="w-full bg-bx-bg border border-bx-border-2 rounded-xl px-3 py-2 text-xs text-bx-text focus:outline-none focus:border-sky-500/50 cursor-pointer"
+                >
+                  <option value="1">1 день</option>
+                  <option value="3">3 дня</option>
+                  <option value="7">7 дней</option>
+                  <option value="14">14 дней</option>
+                  <option value="30">30 дней</option>
+                  <option value="">Без ограничений</option>
+                </select>
+              </div>
+
+              <button
+                onClick={handleSendNotification}
+                className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-black transition-all active:scale-95 cursor-pointer shadow-md shadow-sky-600/20"
+              >
+                Отправить пуш-рассылку
+              </button>
             </div>
           </div>
         )}

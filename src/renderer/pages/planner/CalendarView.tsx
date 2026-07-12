@@ -15,6 +15,7 @@ export interface CalCard {
 interface Props {
   events: BxEvent[];
   cards?: CalCard[];
+  boards?: any[];
   onDayClick: (date: string) => void;
   onAddEvent: (date: string) => void;
   onEventClick: (e: BxEvent) => void;
@@ -43,7 +44,7 @@ function mondayOf(d: Date): Date {
   return r;
 }
 
-export default function CalendarView({ events, cards = [], onDayClick, onAddEvent, onEventClick, onCardClick, onEventDrop, onCardDrop }: Props) {
+export default function CalendarView({ events, cards = [], boards = [], onDayClick, onAddEvent, onEventClick, onCardClick, onEventDrop, onCardDrop }: Props) {
   const now = new Date();
   const [mode, setMode] = useState<'month' | 'week'>('month');
   const [year,  setYear]  = useState(now.getFullYear());
@@ -104,13 +105,24 @@ export default function CalendarView({ events, cards = [], onDayClick, onAddEven
   }
 
   function CardChip({ cd }: { cd: CalCard }) {
+    const isDone = () => {
+      const brd = boards.find(b => b.id === cd.board_id);
+      if (!brd || !brd.columns || brd.columns.length === 0) return false;
+      return brd.columns[brd.columns.length - 1].id === cd.column_id;
+    };
+    const done = isDone();
+
     return (
       <div
         draggable
         onDragStart={e => { e.dataTransfer.setData('bx/card', cd.id); e.dataTransfer.effectAllowed = 'move'; }}
         onClick={e => { e.stopPropagation(); onCardClick?.(cd.id); }}
         title={`${cd.title} (перетащите, чтобы перенести срок)`}
-        className="text-[9px] leading-tight px-1 py-0.5 rounded truncate cursor-grab active:cursor-grabbing hover:opacity-80 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+        className={`text-[9px] leading-tight px-1 py-0.5 rounded truncate cursor-grab active:cursor-grabbing hover:opacity-80 transition-opacity ${
+          done 
+            ? 'bg-emerald-500/10 text-emerald-400/70 border border-emerald-500/20 line-through opacity-50' 
+            : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+        }`}>
         📋 {cd.title}
       </div>
     );

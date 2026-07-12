@@ -75,6 +75,12 @@ interface BxBridge {
     openApp(route?: string): Promise<void>
     onNavigate(callback: (route: string) => void): () => void
   }
+  window?: {
+    minimize(): Promise<void>
+    maximize(): Promise<void>
+    close(): Promise<void>
+    isMaximized(): Promise<boolean>
+  }
 }
 
 declare global {

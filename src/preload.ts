@@ -96,6 +96,12 @@ const api = {
       ipcRenderer.on('tray:navigate', handler)
       return () => ipcRenderer.removeListener('tray:navigate', handler)
     }
+  },
+  window: {
+    minimize: (): Promise<void> => ipcRenderer.invoke('win:minimize'),
+    maximize: (): Promise<void> => ipcRenderer.invoke('win:maximize'),
+    close: (): Promise<void> => ipcRenderer.invoke('win:close'),
+    isMaximized: (): Promise<boolean> => ipcRenderer.invoke('win:isMaximized')
   }
 }
 

@@ -350,6 +350,7 @@ export default function Planner() {
           <CalendarView
             events={filtered}
             cards={datedCards}
+            boards={boards}
             onDayClick={(date) => setSelectedDay(date)}
             onAddEvent={openNewEvent}
             onEventClick={openEditEvent}

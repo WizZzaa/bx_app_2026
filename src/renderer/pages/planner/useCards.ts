@@ -55,6 +55,31 @@ function writeCache(boardId: string, rows: BxCard[]) {
   localStorage.setItem(cacheKey(boardId), JSON.stringify(rows));
 }
 
+async function syncLinkedEventStatus(cardId: string, columnId: string, boardId: string) {
+  try {
+    const { data: card } = await supabase.from('bx_cards').select('event_id').eq('id', cardId).single();
+    if (!card || !card.event_id) return;
+
+    const { data: board } = await supabase.from('bx_boards').select('columns').eq('id', boardId).single();
+    if (!board || !board.columns || board.columns.length === 0) return;
+
+    const cols = board.columns as any[];
+    const lastColId = cols[cols.length - 1].id;
+    const isDone = columnId === lastColId;
+
+    await supabase.from('bx_events').update({
+      status: isDone ? 'done' : 'todo',
+      updated_at: new Date().toISOString()
+    }).eq('id', card.event_id);
+    
+    const bc = new BroadcastChannel('bx-events-sync');
+    bc.postMessage('reload');
+    bc.close();
+  } catch (e) {
+    console.error('Failed to sync linked event status:', e);
+  }
+}
+
 export function useCards(boardId: string | null) {
   const [cards, setCards] = useState<BxCard[]>(() => boardId ? readCache(boardId) : []);
   const [loading, setLoading] = useState(true);
@@ -108,6 +133,9 @@ export function useCards(boardId: string | null) {
     setCards(prev => { const next = prev.map(c => c.id === id ? { ...c, ...withTs } : c); if (boardId) writeCache(boardId, next); return next; });
     const { error } = await supabase.from('bx_cards').update(withTs).eq('id', id);
     if (error) console.error(error);
+    if (patch.column_id && boardId) {
+      syncLinkedEventStatus(id, patch.column_id, boardId).catch(() => void 0);
+    }
   }, [boardId]);
 
   const removeCard = useCallback(async (id: string) => {
@@ -189,6 +217,9 @@ export function useCards(boardId: string | null) {
       // persist
       supabase.from('bx_cards').update({ column_id: toColumn, position: newPos, updated_at: new Date().toISOString() }).eq('id', cardId)
         .then(({ error }) => { if (error) console.error(error); });
+      if (boardId) {
+        syncLinkedEventStatus(cardId, toColumn, boardId).catch(() => void 0);
+      }
       return next;
     });
   }, [boardId]);
@@ -288,5 +319,6 @@ export async function toggleCardDone(cardId: string, boardId: string, makeDone: 
     console.error(error);
     return null;
   }
+  syncLinkedEventStatus(cardId, targetCol.id, boardId).catch(() => void 0);
   return targetCol.id;
 }

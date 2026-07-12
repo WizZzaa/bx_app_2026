@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
+import Titlebar from './components/layout/Titlebar';
 import Topbar from './components/layout/Topbar';
 import CommandPalette from './components/CommandPalette';
 import Dashboard from './pages/Dashboard';
@@ -112,35 +113,38 @@ export default function App() {
   return (
     <CompanyProvider>
       <PlanProvider>
-        <div className="flex h-screen w-screen overflow-hidden bg-bx-bg text-bx-text">
-          <TrayNavigateListener />
-          <Sidebar />
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <Topbar onOpenSearch={() => setPaletteOpen(true)} />
-            <main className="flex flex-1 overflow-hidden">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/tools" element={<Tools />} />
-                <Route path="/reference" element={<Library initialZone="reference" />} />
-                <Route path="/services" element={<Services />} />
-                <Route path="/news" element={<News />} />
-                <Route path="/knowledge" element={<Library />} />
-                <Route path="/templates" element={<Templates />} />
-                <Route path="/hr" element={<Hr />} />
-                <Route path="/finance" element={<Finance />} />
-                <Route path="/planner" element={<Planner />} />
-                <Route path="/calc" element={<Calc />} />
-                <Route path="/ecp" element={<EcpManager />} />
-                <Route path="/ai" element={<Ai />} />
-                <Route path="/support" element={<Support />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/counterparties" element={<Counterparties />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-              </Routes>
-            </main>
+        <div className="flex flex-col h-screen w-screen overflow-hidden bg-bx-bg text-bx-text">
+          <Titlebar />
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            <TrayNavigateListener />
+            <Sidebar />
+            <div className="flex flex-col flex-1 overflow-hidden">
+              <Topbar onOpenSearch={() => setPaletteOpen(true)} />
+              <main className="flex flex-1 overflow-hidden">
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/tools" element={<Tools />} />
+                  <Route path="/reference" element={<Library initialZone="reference" />} />
+                  <Route path="/services" element={<Services />} />
+                  <Route path="/news" element={<News />} />
+                  <Route path="/knowledge" element={<Library />} />
+                  <Route path="/templates" element={<Templates />} />
+                  <Route path="/hr" element={<Hr />} />
+                  <Route path="/finance" element={<Finance />} />
+                  <Route path="/planner" element={<Planner />} />
+                  <Route path="/calc" element={<Calc />} />
+                  <Route path="/ecp" element={<EcpManager />} />
+                  <Route path="/ai" element={<Ai />} />
+                  <Route path="/support" element={<Support />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/counterparties" element={<Counterparties />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                </Routes>
+              </main>
+            </div>
+            <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
           </div>
-          <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
         </div>
       </PlanProvider>
     </CompanyProvider>

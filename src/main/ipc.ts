@@ -107,5 +107,26 @@ export function registerIpcHandlers() {
   ipcMain.handle(IPC.AUTOSTART_SET, (_e, enabled: boolean) => {
     app.setLoginItemSettings({ openAtLogin: enabled })
   })
+
+  // --- Window controls ---
+  ipcMain.handle(IPC.WIN_MINIMIZE, (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.minimize()
+  })
+  ipcMain.handle(IPC.WIN_MAXIMIZE, (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (win) {
+      if (win.isMaximized()) win.unmaximize()
+      else win.maximize()
+    }
+  })
+  ipcMain.handle(IPC.WIN_CLOSE, (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.close()
+  })
+  ipcMain.handle(IPC.WIN_IS_MAXIMIZED, (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    return win?.isMaximized() ?? false
+  })
 }
 
