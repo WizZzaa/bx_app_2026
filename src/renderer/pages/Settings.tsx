@@ -15,7 +15,7 @@ const IDLE_LOCK_KEY = 'bx_idle_lock'
 
 type NotifyDays = '1' | '3' | '7' | 'off'
 type IdleLock = 'off' | '5' | '10' | '30' | '60'
-type TabType = 'billing' | 'security' | 'appearance' | 'ai' | 'team' | 'data'
+type TabType = 'billing' | 'security' | 'appearance' | 'ai' | 'team' | 'integrations' | 'data'
 
 export default function Settings() {
   const { plan, isPro } = usePlan()
@@ -25,6 +25,7 @@ export default function Settings() {
 
   const [activeTab, setActiveTab] = useState<TabType>('billing')
   const [userEmail, setUserEmail] = useState('')
+  const [userId, setUserId] = useState('')
   const [notifyDays, setNotifyDays] = useState<NotifyDays>('3')
   const [signingOut, setSigningOut] = useState(false)
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
@@ -242,6 +243,9 @@ export default function Settings() {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user?.email) {
         setUserEmail(data.user.email)
+      }
+      if (data.user?.id) {
+        setUserId(data.user.id)
       }
     })
     const saved = localStorage.getItem(NOTIFY_KEY) as NotifyDays
@@ -502,6 +506,17 @@ export default function Settings() {
           }`}
         >
           <span>⚙️</span> Система и Данные
+        </button>
+
+        <button
+          onClick={() => setActiveTab('integrations')}
+          className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'integrations'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
+              : 'text-bx-muted hover:text-bx-text hover:bg-bx-surface-2'
+          }`}
+        >
+          <span>🔗</span> Интеграции
         </button>
       </aside>
 
@@ -1007,6 +1022,88 @@ export default function Settings() {
                 </div>
                 <div className="bg-bx-surface-2/40 border border-bx-border/40 rounded-xl p-3.5 text-[11px] text-bx-muted leading-relaxed">
                   🚀 <strong className="text-bx-text">Манифест BX:</strong> Мы чертовски устали смотреть на то, как мучают бухгалтеров бесконечной рутиной и сложными порталами! Наша команда разработчиков решила взять всё в свои руки и создать инструмент, который выводит ежедневную поддержку бухов на абсолютно новый, нативный уровень. Чтобы вы работали без боли и мучений, а мы с кайфом развивали продукт и зарабатывали на этом! 😉
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Вкладка: Интеграции */}
+          {activeTab === 'integrations' && (
+            <div className="space-y-4">
+              <h2 className="text-base font-bold text-bx-text">Интеграции</h2>
+
+              {/* Telegram-бот */}
+              <div className="bg-bx-surface rounded-xl border border-bx-border overflow-hidden">
+                <div className="px-5 py-4 border-b border-bx-border/60">
+                  <div className="flex items-center gap-3">
+                    <span className="w-10 h-10 rounded-xl bg-sky-500/15 flex items-center justify-center text-xl">🤖</span>
+                    <div>
+                      <h3 className="text-sm font-bold text-bx-text">Telegram Помощник (BX_Helper_Bot)</h3>
+                      <p className="text-[11px] text-bx-muted mt-0.5">Получайте напоминания о дедлайнах и загружайте документы через фото</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-5 py-4 space-y-4">
+                  <div className="bg-bx-bg rounded-xl border border-bx-border-2 p-4 space-y-2.5">
+                    <p className="text-xs font-semibold text-bx-text">Как подключить:</p>
+                    <div className="space-y-2 text-[11px] text-bx-muted leading-relaxed">
+                      <div className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-lg bg-sky-500/15 text-sky-400 text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+                        <span>Откройте Telegram-бота: <button onClick={() => {
+                          const url = 'https://t.me/BX_Helper_Bot'
+                          if ((window as any).bx?.openExternal) { (window as any).bx.openExternal(url) } else { window.open(url, '_blank') }
+                        }} className="text-sky-400 hover:underline font-semibold">@BX_Helper_Bot</button></span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-lg bg-sky-500/15 text-sky-400 text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                        <span>Отправьте боту команду <code className="bg-bx-surface-2 text-bx-text px-1.5 py-0.5 rounded text-[10px] font-mono">/start {userId || '...'}</code> для мгновенной привязки аккаунта.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => {
+                      const url = `https://t.me/BX_Helper_Bot?start=${userId}`
+                      if ((window as any).bx?.openExternal) { (window as any).bx.openExternal(url) } else { window.open(url, '_blank') }
+                    }}
+                      disabled={!userId}
+                      className="px-5 py-2.5 bg-sky-600/15 hover:bg-sky-600/25 border border-sky-500/30 text-sky-400 text-xs font-bold rounded-xl transition-colors flex items-center gap-2 disabled:opacity-40"
+                    >
+                      🔗 Подключить Telegram-бота
+                    </button>
+                    {userId && (
+                      <button onClick={() => {
+                        navigator.clipboard.writeText(`/start ${userId}`)
+                        toast.success('Команда скопирована в буфер обмена')
+                      }}
+                        className="px-3 py-2.5 bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted hover:text-bx-text text-xs rounded-xl transition-colors"
+                      >
+                        📋 Скопировать команду
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Возможности бота */}
+              <div className="bg-bx-surface rounded-xl border border-bx-border p-5 space-y-3">
+                <h3 className="text-xs font-bold text-bx-text uppercase tracking-wider">Возможности бота</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { icon: '⏰', title: 'Напоминания', desc: 'Уведомления о дедлайнах по налогам и отчётности' },
+                    { icon: '📸', title: 'Загрузка фото', desc: 'Отправьте фото счёта — бот распознает и сохранит' },
+                    { icon: '📊', title: 'Быстрые отчёты', desc: 'Запросите сводку по задачам и дедлайнам' },
+                    { icon: '🔔', title: 'Push-уведомления', desc: 'Мгновенные оповещения о важных событиях' },
+                  ].map(item => (
+                    <div key={item.title} className="bg-bx-bg rounded-xl border border-bx-border-2 p-3.5 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">{item.icon}</span>
+                        <span className="text-xs font-bold text-bx-text">{item.title}</span>
+                      </div>
+                      <p className="text-[10px] text-bx-muted leading-relaxed">{item.desc}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
