@@ -1,17 +1,25 @@
-import React, { useState, useMemo } from 'react';
-import type { BxCard } from './useCards';
-import type { BxBoard, BoardColumn } from './useBoards';
-import { COLUMN_COLORS } from './useBoards';
-import { uid } from '../../lib/uid';
+import React, { useState, useMemo } from 'react'
+import type { BxCard } from './useCards'
+import type { BxBoard, BoardColumn } from './useBoards'
+import { COLUMN_COLORS } from './useBoards'
+import { uid } from '../../lib/uid'
+
+export interface AddCardPayload {
+  title: string
+  priority?: 'high' | 'normal' | 'low'
+  due_date?: string | null
+  labels?: string[] | null
+  description?: string | null
+}
 
 interface Props {
-  board: BxBoard;
-  cards: BxCard[];
-  onCardClick: (card: BxCard) => void;
-  onAddCard: (columnId: string, title: string) => void;
-  onMoveCard: (cardId: string, toColumn: string, beforeCardId: string | null) => void;
-  onUpdateColumns: (columns: BoardColumn[]) => void;
-  onOpenArchive: () => void;
+  board: BxBoard
+  cards: BxCard[]
+  onCardClick: (card: BxCard) => void
+  onAddCard: (columnId: string, payload: AddCardPayload) => void
+  onMoveCard: (cardId: string, toColumn: string, beforeCardId: string | null) => void
+  onUpdateColumns: (columns: BoardColumn[]) => void
+  onOpenArchive: () => void
 }
 
 const COLOR_MAP: Record<string, { border: string; dot: string; text: string; ring: string }> = {
@@ -46,15 +54,22 @@ function isOverdue(card: BxCard): boolean {
 }
 
 export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMoveCard, onUpdateColumns, onOpenArchive }: Props) {
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [dragColId, setDragColId] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<{ col: string; before: string | null } | null>(null);
-  const [colDropIdx, setColDropIdx] = useState<number | null>(null);
-  const [addingTo, setAddingTo] = useState<string | null>(null);
-  const [newTitle, setNewTitle] = useState('');
-  const [editCol, setEditCol] = useState<string | null>(null);
-  const [colName, setColName] = useState('');
-  const [menuCol, setMenuCol] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dragColId, setDragColId] = useState<string | null>(null)
+  const [dropTarget, setDropTarget] = useState<{ col: string; before: string | null } | null>(null)
+  const [colDropIdx, setColDropIdx] = useState<number | null>(null)
+  const [addingTo, setAddingTo] = useState<string | null>(null)
+  const [editCol, setEditCol] = useState<string | null>(null)
+  const [colName, setColName] = useState('')
+  const [menuCol, setMenuCol] = useState<string | null>(null)
+
+  // ─── New card form state ───
+  const [newTitle, setNewTitle] = useState('')
+  const [newPriority, setNewPriority] = useState<'high' | 'normal' | 'low'>('normal')
+  const [newDueDate, setNewDueDate] = useState('')
+  const [newDescription, setNewDescription] = useState('')
+  const [newLabels, setNewLabels] = useState<string[]>([])
+  const [showMoreFields, setShowMoreFields] = useState(false)
 
   // ─── filters ───
   const [search, setSearch] = useState('');
@@ -129,10 +144,33 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
   }
   function onDragEnd() { setDragId(null); setDragColId(null); setDropTarget(null); setColDropIdx(null); }
 
+  const ADD_LABELS = ['НДС','НДФЛ','Отчёт','Оплата','Срочно','Клиент','ВЭД','ЗП','Банк','Личное']
+
   // ─── add card ───
-  function submitNewCard(col: string) {
-    if (newTitle.trim()) onAddCard(col, newTitle.trim());
-    setNewTitle(''); setAddingTo(null);
+  const resetNewCardForm = () => {
+    setNewTitle('')
+    setNewPriority('normal')
+    setNewDueDate('')
+    setNewDescription('')
+    setNewLabels([])
+    setShowMoreFields(false)
+    setAddingTo(null)
+  }
+
+  const submitNewCard = (col: string) => {
+    if (!newTitle.trim()) return
+    onAddCard(col, {
+      title: newTitle.trim(),
+      priority: newPriority,
+      due_date: newDueDate || null,
+      labels: newLabels.length > 0 ? newLabels : null,
+      description: newDescription.trim() || null,
+    })
+    resetNewCardForm()
+  }
+
+  const toggleNewLabel = (l: string) => {
+    setNewLabels(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l])
   }
 
   // ─── column ops ───
@@ -325,19 +363,120 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
               {/* Add card */}
               <div className="p-2 border-t border-bx-border">
                 {addingTo === col.id ? (
-                  <div>
-                    <textarea autoFocus value={newTitle} onChange={e => setNewTitle(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitNewCard(col.id); } if (e.key === 'Escape') { setAddingTo(null); setNewTitle(''); } }}
-                      rows={2} placeholder="Название карточки..."
-                      className="w-full bg-bx-bg text-bx-text text-xs px-2 py-1.5 rounded-lg border border-blue-500/50 focus:outline-none resize-none" />
-                    <div className="flex gap-2 mt-1.5">
-                      <button onClick={() => submitNewCard(col.id)} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg">Добавить</button>
-                      <button onClick={() => { setAddingTo(null); setNewTitle(''); }} className="px-2 py-1 text-bx-muted hover:text-bx-text text-xs">✕</button>
+                  <div className="bg-bx-bg rounded-xl border border-blue-500/40 p-3 space-y-2.5 shadow-lg">
+                    {/* Название */}
+                    <div>
+                      <label className="text-[9px] font-bold text-bx-muted uppercase tracking-wider block mb-1">Название задачи</label>
+                      <textarea
+                        autoFocus
+                        value={newTitle}
+                        onChange={e => setNewTitle(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submitNewCard(col.id) }
+                          if (e.key === 'Escape') resetNewCardForm()
+                        }}
+                        rows={2}
+                        placeholder="Что нужно сделать..."
+                        className="w-full bg-bx-surface text-bx-text text-xs px-2.5 py-2 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 resize-none placeholder:text-bx-muted/50 leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Быстрые поля: приоритет + дата — всегда видны */}
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label className="text-[9px] font-bold text-bx-muted uppercase tracking-wider block mb-1">Приоритет</label>
+                        <select
+                          value={newPriority}
+                          onChange={e => setNewPriority(e.target.value as 'high' | 'normal' | 'low')}
+                          className="w-full bg-bx-surface text-bx-text text-[11px] px-2 py-1.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 cursor-pointer"
+                        >
+                          <option value="high">🔴 Высокий</option>
+                          <option value="normal">🟡 Средний</option>
+                          <option value="low">🟢 Низкий</option>
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-[9px] font-bold text-bx-muted uppercase tracking-wider block mb-1">Срок</label>
+                        <input
+                          type="date"
+                          value={newDueDate}
+                          onChange={e => setNewDueDate(e.target.value)}
+                          className="w-full bg-bx-surface text-bx-text text-[11px] px-2 py-1.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Раскрываемые поля */}
+                    {!showMoreFields ? (
+                      <button
+                        onClick={() => setShowMoreFields(true)}
+                        className="w-full text-[10px] text-blue-400 hover:text-blue-300 font-semibold py-1 transition-colors flex items-center justify-center gap-1"
+                      >
+                        <span className="text-xs">＋</span> Описание и метки
+                      </button>
+                    ) : (
+                      <div className="space-y-2.5 pt-0.5">
+                        {/* Описание */}
+                        <div>
+                          <label className="text-[9px] font-bold text-bx-muted uppercase tracking-wider block mb-1">Описание</label>
+                          <textarea
+                            value={newDescription}
+                            onChange={e => setNewDescription(e.target.value)}
+                            rows={2}
+                            placeholder="Детали задачи..."
+                            className="w-full bg-bx-surface text-bx-text text-xs px-2.5 py-2 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 resize-none placeholder:text-bx-muted/50"
+                          />
+                        </div>
+                        {/* Метки */}
+                        <div>
+                          <label className="text-[9px] font-bold text-bx-muted uppercase tracking-wider block mb-1">Метки</label>
+                          <div className="flex flex-wrap gap-1">
+                            {ADD_LABELS.map(l => (
+                              <button
+                                key={l}
+                                onClick={() => toggleNewLabel(l)}
+                                className={`px-1.5 py-0.5 text-[10px] rounded transition-colors ${
+                                  newLabels.includes(l)
+                                    ? 'bg-blue-600/30 text-blue-300 border border-blue-500/40'
+                                    : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text border border-transparent'
+                                }`}
+                              >
+                                {l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Кнопки действий */}
+                    <div className="flex items-center justify-between pt-1 border-t border-bx-border/40">
+                      <span className="text-[9px] text-bx-muted/60">Ctrl+Enter — создать</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={resetNewCardForm}
+                          className="px-2.5 py-1.5 text-bx-muted hover:text-bx-text text-[11px] rounded-lg hover:bg-bx-surface-2 transition-colors"
+                        >
+                          Отмена
+                        </button>
+                        <button
+                          onClick={() => submitNewCard(col.id)}
+                          disabled={!newTitle.trim()}
+                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-bold rounded-lg transition-colors shadow-sm"
+                        >
+                          ＋ Добавить
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => { setAddingTo(col.id); setNewTitle(''); }}
-                    className="w-full text-left text-xs text-bx-muted hover:text-bx-text px-2 py-1.5 rounded-lg hover:bg-bx-surface-2 transition-colors">+ Добавить карточку</button>
+                  <button
+                    onClick={() => { resetNewCardForm(); setAddingTo(col.id) }}
+                    className="w-full text-left text-xs text-bx-muted hover:text-blue-400 px-2.5 py-2 rounded-xl hover:bg-blue-500/5 border border-transparent hover:border-blue-500/20 transition-all flex items-center gap-1.5 group"
+                  >
+                    <span className="w-5 h-5 rounded-lg bg-bx-surface-2 group-hover:bg-blue-500/15 grid place-items-center text-[11px] transition-colors">＋</span>
+                    Добавить карточку
+                  </button>
                 )}
               </div>
             </div>

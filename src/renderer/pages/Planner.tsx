@@ -236,8 +236,16 @@ export default function Planner() {
   function handleUpdateColumns(columns: BoardColumn[]) {
     if (activeBoard) updateBoard(activeBoard.id, { columns });
   }
-  function handleAddCard(columnId: string, title: string) {
-    if (activeBoard) addCard({ board_id: activeBoard.id, column_id: columnId, title });
+  function handleAddCard(columnId: string, payload: import('./planner/BoardKanban').AddCardPayload) {
+    if (activeBoard) addCard({
+      board_id: activeBoard.id,
+      column_id: columnId,
+      title: payload.title,
+      priority: payload.priority,
+      due_date: payload.due_date,
+      labels: payload.labels,
+      description: payload.description,
+    })
   }
 
   return (
