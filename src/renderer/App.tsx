@@ -22,6 +22,7 @@ import Counterparties from './pages/Counterparties'
 import Placeholder from './pages/Placeholder'
 import TrayView from './pages/TrayView'
 import AdminDashboard from './pages/AdminDashboard'
+import Documents from './pages/Documents'
 import { CompanyProvider } from './lib/CompanyContext';
 import { PlanProvider } from './lib/plan';
 import { loadEcpKeys } from './lib/ecpStorage';
@@ -130,6 +131,7 @@ export default function App() {
                   <Route path="/news" element={<News />} />
                   <Route path="/knowledge" element={<Library />} />
                   <Route path="/templates" element={<Templates />} />
+                  <Route path="/documents" element={<Documents />} />
                   <Route path="/hr" element={<Hr />} />
                   <Route path="/finance" element={<Finance />} />
                   <Route path="/planner" element={<Planner />} />

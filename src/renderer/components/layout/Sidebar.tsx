@@ -14,6 +14,7 @@ const nav = [
   { to: '/services',   icon: 'services',  label: 'Сервисы' },
   { to: '/news',       icon: 'news',      label: 'Новости' },
   { to: '/templates',  icon: 'templates', label: 'Шаблоны' },
+  { to: '/documents',  icon: 'note',      label: 'Документы' },
   { to: '/hr',         icon: 'hr',        label: 'Сотрудники' },
   { to: '/finance',    icon: 'finance',   label: 'Контроль оплат' },
   { to: '/counterparties', icon: 'users', label: 'Организации' },
