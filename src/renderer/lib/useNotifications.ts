@@ -83,8 +83,14 @@ export function useNotifications() {
       const activeTins = companies.map(c => c.inn).filter(Boolean)
       const now = new Date().toISOString()
 
+      // Дата регистрации пользователя: уведомления, выпущенные до неё,
+      // новым пользователям не показываем (session — локальный, без сети).
+      const { data: { session } } = await supabase.auth.getSession()
+      const regTime = session?.user?.created_at
+
       const filtered: BxNotification[] = data
         .filter((item: any) => {
+          if (regTime && item.created_at < regTime) return false
           if (item.expires_at && item.expires_at < now) return false
           if (item.target_type === 'pro' && !isPro) return false
 
