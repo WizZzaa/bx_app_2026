@@ -171,7 +171,7 @@ const copyFolderRecursive = (src: string, dest: string) => {
   }
 }
 
-export const cleanCache = (paths: string[], backup: boolean = false): CleanResult => {
+export const cleanCache = (paths: string[], backup = false): CleanResult => {
   const deletedPaths: string[] = []
   const failedPaths: { path: string; error: string }[] = []
   let freedBytes = 0

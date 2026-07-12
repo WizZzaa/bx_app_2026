@@ -307,7 +307,7 @@ const createTray = () => {
     { 
       label: 'Выйти', 
       click: () => {
-        ;(app as any).isQuitting = true
+        (app as any).isQuitting = true
         app.quit()
       } 
     }
@@ -352,7 +352,7 @@ const createWindow = () => {
       mainWindow?.hide()
       // Однократно за запуск подсказываем, что приложение свёрнуто в трей
       if (!(app as any).trayNoticeShown) {
-        ;(app as any).trayNoticeShown = true
+        (app as any).trayNoticeShown = true
         try {
           new Notification({
             title: 'BX работает в фоне',

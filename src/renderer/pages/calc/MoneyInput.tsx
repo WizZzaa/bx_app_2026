@@ -5,10 +5,10 @@ import React from 'react';
 
 function format(raw: string): string {
   // цифры + один разделитель дробной части (запятая или точка)
-  let s = raw.replace(/[^\d.,]/g, '');
+  const s = raw.replace(/[^\d.,]/g, '');
   const sepIdx = s.search(/[.,]/);
   let int = sepIdx === -1 ? s : s.slice(0, sepIdx);
-  let frac = sepIdx === -1 ? '' : s.slice(sepIdx, sepIdx + 3).replace(/[.,](?=.*[.,])/g, '');
+  const frac = sepIdx === -1 ? '' : s.slice(sepIdx, sepIdx + 3).replace(/[.,](?=.*[.,])/g, '');
   int = int.replace(/^0+(?=\d)/, '');
   const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   return grouped + frac;

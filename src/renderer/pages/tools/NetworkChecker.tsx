@@ -80,7 +80,6 @@ export default function NetworkChecker() {
   const ranOnce = useRef(false);
   useEffect(() => {
     if (!ranOnce.current) { ranOnce.current = true; check(); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const online = results.filter(r => r.ok === true).length;

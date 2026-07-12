@@ -262,7 +262,7 @@ export default function Settings() {
       if (stored) {
         setShowHoroscope(!!JSON.parse(stored).horoscope)
       }
-    } catch {}
+    } catch { /* битый кэш виджетов — игнорируем */ }
   }, [])
 
   // Перезагрузка команды при получении email и переключении вкладок
@@ -299,7 +299,7 @@ export default function Settings() {
       const parsed = stored ? JSON.parse(stored) : { weather: true, currency: true, notifications: true, horoscope: false }
       parsed.horoscope = visible
       localStorage.setItem('bx_dashboard_widgets', JSON.stringify(parsed))
-    } catch {}
+    } catch { /* localStorage недоступен — не критично */ }
   }
 
   async function signOut() {

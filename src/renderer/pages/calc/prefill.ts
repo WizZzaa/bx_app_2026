@@ -30,5 +30,5 @@ export function takeCalcPrefill(calcId: string): CalcPrefill | null {
 
 /** Число → строка для MoneyInput: «61 200 000» */
 export function toMoneyString(n: number): string {
-  return Math.round(n).toLocaleString('ru-RU').replace(/ /g, ' ')
+  return Math.round(n).toLocaleString('ru-RU').replace(/[\u00a0\u202f]/g, ' ')
 }

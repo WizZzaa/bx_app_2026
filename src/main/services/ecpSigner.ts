@@ -108,7 +108,7 @@ export async function verifySig(filePath: string, sigPath: string): Promise<Veri
   const infoCmd = `openssl smime -pk7out -inform DER -in ${escSig} 2>/dev/null | openssl pkcs7 -text -noout -print_certs 2>/dev/null`
 
   return new Promise(resolve => {
-    exec(infoCmd, (err, infoOut) => {
+    exec(infoCmd, (_err, infoOut) => {
       const signerInfo = parseCertInfo(infoOut || '')
 
       // Проверяем подпись без цепочки CA (нет хранилища CA РУз)
@@ -142,6 +142,6 @@ function parseCertInfo(text: string): { cn?: string; notBefore?: string } {
 
 function cleanup(files: string[]) {
   for (const f of files) {
-    try { fs.unlinkSync(f) } catch {}
+    try { fs.unlinkSync(f) } catch { /* файл мог быть уже удалён */ }
   }
 }

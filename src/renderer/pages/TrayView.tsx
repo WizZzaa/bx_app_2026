@@ -138,7 +138,7 @@ export default function TrayView() {
       } catch (err) { console.error('rates:', err) } finally { setRatesLoading(false) }
     }
     loadRates(); reloadDeadlines()
-    loadEcpKeys().then(setEcpKeys).catch(() => {})
+    loadEcpKeys().then(setEcpKeys).catch(() => { /* нет ключей ЭЦП — пустой список */ })
   }, [reloadDeadlines])
 
   useEffect(() => {

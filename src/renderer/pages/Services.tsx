@@ -53,7 +53,7 @@ export default function Services() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
   // Подтянуть облачные сервисы (админ мог добавить), не блокируя первый рендер
-  useEffect(() => { refreshServices().then(setSections).catch(() => {}); }, []);
+  useEffect(() => { refreshServices().then(setSections).catch(() => { /* оффлайн — остаёмся на статике */ }); }, []);
 
   const q = search.toLowerCase().trim();
 

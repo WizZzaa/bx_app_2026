@@ -17,7 +17,7 @@ export const exportTransactionsToExcel = (transactions: any[], fileName = 'Тр�
   XLSX.writeFile(workbook, `${fileName}.xlsx`)
 }
 
-export const exportPayrollToExcel = (employees: any[], brv: number, mrot: number, fileName = 'Зарплатная_ведомость') => {
+export const exportPayrollToExcel = (employees: any[], _brv: number, _mrot: number, fileName = 'Зарплатная_ведомость') => {
   const formatted = employees.map(emp => {
     // Расчет согласно payroll.ts
     const salary = emp.salary

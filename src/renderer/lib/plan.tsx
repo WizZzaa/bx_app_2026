@@ -56,7 +56,7 @@ interface PlanCtx {
 
 const CACHE_KEY = 'bx_plan_cache'
 const Ctx = createContext<PlanCtx>({
-  plan: 'free', isPro: false, isPremium: false, role: 'user', isAdmin: false, loading: true, limits: PLAN_LIMITS.free, refresh: async () => {},
+  plan: 'free', isPro: false, isPremium: false, role: 'user', isAdmin: false, loading: true, limits: PLAN_LIMITS.free, refresh: async () => { /* переопределяется в PlanProvider */ },
 })
 
 export function PlanProvider({ children }: { children: React.ReactNode }) {

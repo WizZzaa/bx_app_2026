@@ -51,7 +51,7 @@ interface UnifiedDigestItem {
   eventRef?: BxEvent;
 }
 
-export default function DigestView({ events, cards, boards, onEventClick, onCardClick, onOpenBoard }: Props) {
+export default function DigestView({ events, cards, boards, onEventClick, onCardClick }: Props) {
   const navigate = useNavigate();
   const today = todayISO();
   const [ecpKeys, setEcpKeys] = useState<EcpKey[]>([]);

@@ -33,6 +33,7 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
         }
       }
     }
+    return undefined
   }, [])
 
   // Подписка на нативный autoUpdater из Electron
@@ -62,6 +63,7 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
 
       return () => unsubscribe()
     }
+    return undefined
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {

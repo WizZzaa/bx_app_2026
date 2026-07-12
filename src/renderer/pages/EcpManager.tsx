@@ -537,7 +537,7 @@ function RenewalGuide() {
 // ─── Компонент подписания документа ─────────────────────────────────────────
 interface SignerKey { id: string; name: string; owner: string; expiresAt: string }
 
-function EcpSigner({ keys }: { keys: SignerKey[] }) {
+function EcpSigner({ keys: _keys }: { keys: SignerKey[] }) {
   const [pfxPath, setPfxPath] = React.useState<string | null>(null)
   const [password, setPassword] = React.useState('123456')
   const [filePath, setFilePath] = React.useState<string | null>(null)

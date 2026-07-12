@@ -72,7 +72,7 @@ export const parseBankStatement = (fileContent: string, companyInn: string | nul
           if (idx !== -1) {
             counterparty = counterparty.substring(0, idx)
           }
-          counterparty = counterparty.replace(/\"/g, '').trim()
+          counterparty = counterparty.replace(/"/g, '').trim()
         }
 
         if (amount > 0) {
