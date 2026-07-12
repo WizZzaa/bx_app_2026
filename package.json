@@ -1,7 +1,7 @@
 {
   "name": "app",
   "productName": "BX Помощник Бухгалтера",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "BX — помощник бухгалтера Республики Узбекистан: планировщик, калькуляторы, справочники, AI-консультант",
   "main": ".vite/build/main.js",
   "private": true,
@@ -62,9 +62,12 @@
     "dexie": "^4.4.4",
     "electron-squirrel-startup": "^1.0.1",
     "mammoth": "^1.12.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.1.200",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.0",
+    "tesseract.js": "^7.0.0",
     "update-electron-app": "^3.3.0",
     "xlsx": "^0.18.5"
   }

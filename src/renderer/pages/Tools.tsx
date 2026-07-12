@@ -11,6 +11,9 @@ import Transliterate from './tools/Transliterate'
 import BankCheck from './tools/BankCheck'
 import InnCheckTool from './tools/InnCheckTool'
 import TranslatorTool from './tools/TranslatorTool'
+import PdfCompress from './tools/PdfCompress'
+import PdfConvert from './tools/PdfConvert'
+import OcrTool from './tools/OcrTool'
 import { isElectron } from '../lib/onecApi'
 import Icon from '../lib/ui/Icon'
 
@@ -40,13 +43,18 @@ const TOOLS: Tool[] = [
   { id: 'eimzo',     icon: 'ecp',      label: 'Диагностика E-Imzo', group: 'Система', desc: 'Плагин и локальный сервис ЭЦП', component: <EimzoDiag /> },
   // Заметки
   { id: 'notes', icon: 'note', label: 'Быстрые заметки', group: 'Заметки', desc: 'Буфер для текстов и реквизитов', component: <QuickNotes /> },
+  // Документы и PDF
+  { id: 'pdfcompress', icon: 'recycle', label: 'Сжатие PDF', group: 'Документы и PDF', desc: 'Оптимизация и уменьшение веса PDF файлов', component: <PdfCompress /> },
+  { id: 'pdfconvert',  icon: 'exchange', label: 'Конвертер PDF', group: 'Документы и PDF', desc: 'Конвертация PDF в таблицы Excel или тексты Word', component: <PdfConvert /> },
+  { id: 'ocr',         icon: 'ai',       label: 'Распознавание текста (OCR)', group: 'Документы и PDF', desc: 'Извлечение текста из сканов и фото (PDF/JPEG) в Word', component: <OcrTool /> },
 ]
 
-const GROUPS = ['1С', 'Текст и реквизиты', 'Система', 'Заметки']
+const GROUPS = ['1С', 'Текст и реквизиты', 'Документы и PDF', 'Система', 'Заметки']
 
 const ACCENT: Record<string, { text: string; chipBg: string; activeBg: string; iconBg: string; grad: string }> = {
   '1С':                { text: 'text-amber-400',   chipBg: 'bg-amber-500/15 border-amber-500/30',     activeBg: 'bg-amber-500/15',   iconBg: 'bg-amber-500/20 text-amber-400',     grad: 'from-amber-500/15' },
   'Текст и реквизиты': { text: 'text-purple-400',  chipBg: 'bg-purple-500/15 border-purple-500/30',   activeBg: 'bg-purple-500/15',  iconBg: 'bg-purple-500/20 text-purple-400',   grad: 'from-purple-500/15' },
+  'Документы и PDF':   { text: 'text-rose-400',    chipBg: 'bg-rose-500/15 border-rose-500/30',       activeBg: 'bg-rose-500/15',    iconBg: 'bg-rose-500/20 text-rose-400',       grad: 'from-rose-500/15' },
   'Система':           { text: 'text-cyan-400',    chipBg: 'bg-cyan-500/15 border-cyan-500/30',       activeBg: 'bg-cyan-500/15',    iconBg: 'bg-cyan-500/20 text-cyan-400',       grad: 'from-cyan-500/15' },
   'Заметки':           { text: 'text-emerald-400', chipBg: 'bg-emerald-500/15 border-emerald-500/30', activeBg: 'bg-emerald-500/15', iconBg: 'bg-emerald-500/20 text-emerald-400', grad: 'from-emerald-500/15' },
 }
