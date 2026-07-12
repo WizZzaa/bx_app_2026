@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/db/supabase';
 import type { BoardColumn } from './useBoards';
+import { emitPlannerReload, subscribePlannerReload } from './plannerBus';
 
 export interface ChecklistItem {
   id: string;
@@ -72,9 +73,7 @@ async function syncLinkedEventStatus(cardId: string, columnId: string, boardId: 
       updated_at: new Date().toISOString()
     }).eq('id', card.event_id);
     
-    const bc = new BroadcastChannel('bx-events-sync');
-    bc.postMessage('reload');
-    bc.close();
+    emitPlannerReload();
   } catch (e) {
     console.error('Failed to sync linked event status:', e);
   }
@@ -104,6 +103,10 @@ export function useCards(boardId: string | null) {
   }, [boardId]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Доска перечитывается по общей шине планировщика — чтобы правки событий,
+  // двигающие связанную карточку, сразу отражались на Kanban.
+  useEffect(() => subscribePlannerReload(load), [load]);
 
   const addCard = useCallback(async (input: NewCard): Promise<BxCard | null> => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -253,12 +256,12 @@ export function useCards(boardId: string | null) {
 }
 
 // Отдельный хук: карточки со сроком по ВСЕМ доскам — для Календаря
-export interface DatedCard { id: string; title: string; due_date: string; board_id: string; column_id: string; priority: string; }
+export interface DatedCard { id: string; title: string; due_date: string; board_id: string; column_id: string; priority: string; event_id: string | null; }
 
 export async function fetchDatedCards(): Promise<DatedCard[]> {
   const { data, error } = await supabase
     .from('bx_cards')
-    .select('id,title,due_date,board_id,column_id,priority')
+    .select('id,title,due_date,board_id,column_id,priority,event_id')
     .not('due_date', 'is', null)
     .eq('archived', false);
   if (error) { console.error(error); return []; }
@@ -274,13 +277,13 @@ export async function fetchCardById(id: string): Promise<BxCard | null> {
 /** Все неархивные карточки со всех досок — для вкладки «Все задачи». */
 export interface AllCard {
   id: string; title: string; due_date: string | null;
-  board_id: string; column_id: string; priority: string;
+  board_id: string; column_id: string; priority: string; event_id: string | null;
 }
 
 export async function fetchAllCards(): Promise<AllCard[]> {
   const { data, error } = await supabase
     .from('bx_cards')
-    .select('id,title,due_date,board_id,column_id,priority')
+    .select('id,title,due_date,board_id,column_id,priority,event_id')
     .eq('archived', false)
     .order('due_date', { ascending: true, nullsFirst: false });
   if (error) { console.error(error); return []; }

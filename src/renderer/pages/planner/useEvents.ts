@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/db/supabase';
+import { emitPlannerReload, subscribePlannerReload } from './plannerBus';
 
 export type EventType     = 'task' | 'tax_deadline' | 'reminder' | 'event';
 export type EventStatus   = 'todo' | 'in_progress' | 'review' | 'done';
@@ -39,34 +40,43 @@ function writeCache(rows: BxEvent[]) {
   localStorage.setItem(CACHE_KEY, JSON.stringify(rows));
 }
 
-async function syncLinkedCard(eventId: string, status: EventStatus) {
+// Синк событие→карточка: правка события переносится на связанную карточку
+// (статус → колонка, а также срок и заголовок).
+async function syncLinkedCard(
+  eventId: string,
+  patch: { status?: EventStatus; due_date?: string | null; title?: string }
+) {
   try {
     const { data: card } = await supabase
       .from('bx_cards')
       .select('id, board_id')
       .eq('event_id', eventId)
       .eq('archived', false)
-      .single();
+      .maybeSingle();
     if (!card) return;
 
-    const { data: board } = await supabase
-      .from('bx_boards')
-      .select('columns')
-      .eq('id', card.board_id)
-      .single();
-    if (!board || !board.columns || board.columns.length === 0) return;
+    const cardPatch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (patch.due_date !== undefined) cardPatch.due_date = patch.due_date;
+    if (patch.title !== undefined) cardPatch.title = patch.title;
 
-    const cols = board.columns as any[];
-    const isDone = status === 'done';
-    const targetCol = isDone ? cols[cols.length - 1] : cols[0];
-    if (!targetCol) return;
+    if (patch.status !== undefined) {
+      const { data: board } = await supabase
+        .from('bx_boards')
+        .select('columns')
+        .eq('id', card.board_id)
+        .maybeSingle();
+      const cols = (board?.columns as any[]) ?? [];
+      if (cols.length) {
+        const targetCol = patch.status === 'done' ? cols[cols.length - 1] : cols[0];
+        if (targetCol) cardPatch.column_id = targetCol.id;
+      }
+    }
 
-    await supabase.from('bx_cards').update({
-      column_id: targetCol.id,
-      updated_at: new Date().toISOString()
-    }).eq('id', card.id);
+    if (Object.keys(cardPatch).length > 1) {
+      await supabase.from('bx_cards').update(cardPatch).eq('id', card.id);
+    }
   } catch {
-    // игнорируем ошибку, если карточка не найдена
+    // карточка не найдена / нет связи — не критично
   }
 }
 
@@ -93,17 +103,7 @@ export function useEvents(companyId?: string | null) {
 
   useEffect(() => { load(); }, [load]);
 
-  useEffect(() => {
-    const channel = new BroadcastChannel('bx-events-sync');
-    channel.onmessage = (event) => {
-      if (event.data === 'reload') {
-        load();
-      }
-    };
-    return () => {
-      channel.close();
-    };
-  }, [load]);
+  useEffect(() => subscribePlannerReload(load), [load]);
 
   const add = useCallback(async (input: NewEvent): Promise<BxEvent | null> => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -119,9 +119,7 @@ export function useEvents(companyId?: string | null) {
     if (error) { console.error(error); return null; }
     await load();
 
-    const bc = new BroadcastChannel('bx-events-sync');
-    bc.postMessage('reload');
-    bc.close();
+    emitPlannerReload();
 
     return data as BxEvent;
   }, [load]);
@@ -130,8 +128,8 @@ export function useEvents(companyId?: string | null) {
     const { error } = await supabase.from('bx_events').update(patch).eq('id', id);
     if (error) { console.error(error); return; }
     
-    if (patch.status) {
-      await syncLinkedCard(id, patch.status);
+    if (patch.status !== undefined || patch.due_date !== undefined || patch.title !== undefined) {
+      await syncLinkedCard(id, patch);
     }
 
     setEvents(prev => {
@@ -140,9 +138,7 @@ export function useEvents(companyId?: string | null) {
       return next;
     });
 
-    const bc = new BroadcastChannel('bx-events-sync');
-    bc.postMessage('reload');
-    bc.close();
+    emitPlannerReload();
   }, []);
 
   const remove = useCallback(async (id: string) => {
@@ -150,9 +146,7 @@ export function useEvents(companyId?: string | null) {
     if (error) { console.error(error); return; }
     setEvents(prev => { const next = prev.filter(e => e.id !== id); writeCache(next); return next; });
 
-    const bc = new BroadcastChannel('bx-events-sync');
-    bc.postMessage('reload');
-    bc.close();
+    emitPlannerReload();
   }, []);
 
   const bulkRemove = useCallback(async (ids: string[]) => {
@@ -160,9 +154,7 @@ export function useEvents(companyId?: string | null) {
     if (error) { console.error(error); return; }
     setEvents(prev => { const next = prev.filter(e => !ids.includes(e.id)); writeCache(next); return next; });
 
-    const bc = new BroadcastChannel('bx-events-sync');
-    bc.postMessage('reload');
-    bc.close();
+    emitPlannerReload();
   }, []);
 
   const cycleStatus = useCallback(async (id: string, current: EventStatus) => {

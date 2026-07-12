@@ -3,6 +3,7 @@ import { useEvents } from './planner/useEvents';
 import { useBoards, type BxBoard, type BoardColumn } from './planner/useBoards';
 import { useCards, fetchDatedCards, fetchCardById, fetchAllCards, fetchBoardColumns, toggleCardDone, type BxCard, type DatedCard, type AllCard } from './planner/useCards';
 import { seedTaxDeadlines } from './planner/taxSeeder';
+import { subscribePlannerReload } from './planner/plannerBus';
 import CalendarView from './planner/CalendarView';
 import DailyTasksModal from './planner/DailyTasksModal';
 import AllTasksView from './planner/AllTasksView';
@@ -91,6 +92,14 @@ export default function Planner() {
     if (view === 'calendar') fetchDatedCards().then(setDatedCards);
     if (view === 'all' || view === 'digest') fetchAllCards().then(setAllCards);
   }, [view, cards, refreshTrigger]);
+
+  // Общая шина планировщика: любая мутация (событие/карточка) обновляет агрегаты
+  useEffect(() => subscribePlannerReload(triggerRefresh), []);
+
+  // Дедуп: карточки, связанные с событием (event_id), в агрегатах не дублируем —
+  // такое дело представлено своим событием (единый механизм).
+  const visibleAllCards = allCards.filter(c => !c.event_id);
+  const visibleDatedCards = datedCards.filter(c => !c.event_id);
 
   async function openCardFromCalendar(id: string) {
     const card = await fetchCardById(id);
@@ -328,7 +337,7 @@ export default function Planner() {
         {view === 'all' && (
           <AllTasksView
             events={filtered}
-            cards={allCards}
+            cards={visibleAllCards}
             boards={boards}
             onEventClick={openEditEvent}
             onCardClick={openCardFromCalendar}
@@ -339,7 +348,7 @@ export default function Planner() {
         {view === 'digest' && (
           <DigestView
             events={filtered}
-            cards={allCards}
+            cards={visibleAllCards}
             boards={boards}
             onEventClick={openEditEvent}
             onCardClick={openCardFromCalendar}
@@ -349,7 +358,7 @@ export default function Planner() {
         {view === 'calendar' && (
           <CalendarView
             events={filtered}
-            cards={datedCards}
+            cards={visibleDatedCards}
             boards={boards}
             onDayClick={(date) => setSelectedDay(date)}
             onAddEvent={openNewEvent}
@@ -362,7 +371,7 @@ export default function Planner() {
         {view === 'list' && (
           <ListView
             events={filtered}
-            cards={allCards}
+            cards={visibleAllCards}
             boards={boards}
             onEdit={openEditEvent}
             onCardClick={openCardFromCalendar}
@@ -412,7 +421,7 @@ export default function Planner() {
         <DailyTasksModal
           date={selectedDay}
           events={events.filter(e => (e.due_date || e.date) === selectedDay)}
-          cards={datedCards.filter(c => c.due_date === selectedDay)}
+          cards={visibleDatedCards.filter(c => c.due_date === selectedDay)}
           boards={boards}
           onEventClick={openEditEvent}
           onCardClick={openCardFromCalendar}
