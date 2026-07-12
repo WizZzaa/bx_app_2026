@@ -2,6 +2,8 @@
 // crypto.subtle работает только в secure context (HTTPS / localhost).
 // При доступе по HTTP в локальной сети используется fallback-хэш.
 
+import { logger } from '../logger'
+
 const PIN_KEY = 'bx_pin_hash'
 const PIN_ENABLED_KEY = 'bx_pin_enabled'
 const SALT = 'bx_pin_v1_2026'
@@ -55,7 +57,7 @@ const safeEncrypt = async (value: string): Promise<string> => {
     try {
       const available = await bx.safe.isAvailable()
       if (available) return await bx.safe.encrypt(value)
-    } catch { /* fallback */ }
+    } catch (err) { logger.debug('pin', 'safeStorage encrypt недоступен, использую открытое значение', err) }
   }
   return value
 }
@@ -66,7 +68,7 @@ const safeDecrypt = async (value: string): Promise<string> => {
     try {
       const available = await bx.safe.isAvailable()
       if (available) return await bx.safe.decrypt(value)
-    } catch { /* fallback */ }
+    } catch (err) { logger.debug('pin', 'safeStorage decrypt недоступен, использую открытое значение', err) }
   }
   return value
 }

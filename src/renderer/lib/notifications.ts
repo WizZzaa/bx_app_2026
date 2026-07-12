@@ -2,11 +2,13 @@
 // Запрашивает разрешение и проверяет reminder_at каждые 5 минут.
 
 import type { BxEvent } from '../pages/planner/useEvents';
+import { logger } from './logger';
 
 const NOTIFIED_KEY = 'bx_notified_events';
 
 function getNotified(): Set<string> {
-  try { return new Set(JSON.parse(localStorage.getItem(NOTIFIED_KEY) || '[]')); } catch { return new Set(); }
+  try { return new Set(JSON.parse(localStorage.getItem(NOTIFIED_KEY) || '[]')); }
+  catch (err) { logger.debug('notifications', 'Битый кэш отправленных уведомлений', err); return new Set(); }
 }
 function markNotified(id: string) {
   const s = getNotified(); s.add(id);
