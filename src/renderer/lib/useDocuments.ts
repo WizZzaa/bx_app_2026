@@ -110,7 +110,9 @@ export function useDocuments() {
   const downloadDocument = useCallback(async (fileUrl: string, fileName: string): Promise<void> => {
     const { data, error } = await supabase.storage
       .from('documents')
-      .createSignedUrl(fileUrl, 60);
+      .createSignedUrl(fileUrl, 60, {
+        download: fileName
+      });
 
     if (error) throw error;
     if (data?.signedUrl) {
