@@ -2,8 +2,11 @@ import React, { useState, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import * as XLSX from 'xlsx';
 
-// Set PDF.js worker URL from CDN to avoid build configuration problems in Electron/Vite
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// eslint-disable-next-line import/no-unresolved
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+// Set PDF.js worker URL from local build asset to avoid CDN failure
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 export default function PdfConvert() {
   const [file, setFile] = useState<File | null>(null);
