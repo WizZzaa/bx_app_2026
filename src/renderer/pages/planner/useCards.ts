@@ -137,7 +137,7 @@ export function useCards(boardId: string | null) {
     const { error } = await supabase.from('bx_cards').update(withTs).eq('id', id);
     if (error) console.error(error);
     if (patch.column_id && boardId) {
-      syncLinkedEventStatus(id, patch.column_id, boardId).catch(() => void 0);
+      syncLinkedEventStatus(id, patch.column_id, boardId).catch((err: any): void => console.warn(err));
     }
   }, [boardId]);
 
@@ -231,7 +231,7 @@ export function useCards(boardId: string | null) {
       supabase.from('bx_cards').update({ column_id: toColumn, position: newPos, updated_at: new Date().toISOString() }).eq('id', cardId)
         .then(({ error }) => { if (error) console.error(error); });
       if (boardId) {
-        syncLinkedEventStatus(cardId, toColumn, boardId).catch(() => void 0);
+        syncLinkedEventStatus(cardId, toColumn, boardId).catch((err: any): void => console.warn(err));
       }
       return next;
     });
@@ -332,6 +332,6 @@ export async function toggleCardDone(cardId: string, boardId: string, makeDone: 
     console.error(error);
     return null;
   }
-  syncLinkedEventStatus(cardId, targetCol.id, boardId).catch(() => void 0);
+  syncLinkedEventStatus(cardId, targetCol.id, boardId).catch((err: any): void => console.warn(err));
   return targetCol.id;
 }
