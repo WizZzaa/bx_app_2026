@@ -25,6 +25,43 @@ const PRIORITY_OPTS: { id: BxCard['priority']; label: string }[] = [
 
 const LABEL_PALETTE = ['НДС','НДФЛ','Отчёт','Оплата','Срочно','Клиент','ВЭД','ЗП','Банк','Личное'];
 
+const BUILT_IN_CHECKLIST_TEMPLATES: Record<string, { name: string; items: string[] }> = {
+  month_closing: {
+    name: 'Закрытие месяца',
+    items: [
+      'Выписка банка и разнос платежей',
+      'Сверка с контрагентами (акты сверки)',
+      'Начисление заработной платы и взносов',
+      'Проверка и закрытие счетов (20, 23, 25, 26, 44)',
+      'Расчет курсовых разниц',
+      'Закрытие финансовых результатов (99 счет)',
+      'Проверка Didox (входящие/исходящие ЭСФ)'
+    ]
+  },
+  employee_hiring: {
+    name: 'Прием сотрудника',
+    items: [
+      'Получить паспорт, ПИНФЛ, ИНН и трудовую книжку',
+      'Подписать трудовой договор',
+      'Оформить приказ о приеме на работу',
+      'Внести запись в ЕНСТ (my.mehnat.uz)',
+      'Оформить личную карточку Т-2',
+      'Добавить сотрудника в расчетную ведомость'
+    ]
+  },
+  vat_reporting: {
+    name: 'Отчетность по НДС',
+    items: [
+      'Собрать и проверить все входящие ЭСФ в Didox',
+      'Сформировать реестр покупок и продаж',
+      'Проверить соответствие книги покупок/продаж данным 1С',
+      'Рассчитать сумму НДС к уплате',
+      'Заполнить и отправить расчет НДС в ГНК (soliq.uz)',
+      'Сформировать платежное поручение на уплату НДС'
+    ]
+  }
+};
+
 function fmtDateTime(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -44,6 +81,62 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
   const [newComment,  setNewComment]  = useState('');
   const [confirmDel,  setConfirmDel]  = useState(false);
   const titleRef = useRef<HTMLTextAreaElement>(null);
+
+  const [customTemplates, setCustomTemplates] = useState<{ id: string; name: string; items: string[] }[]>([]);
+
+  // Load custom checklist templates
+  useEffect(() => {
+    try {
+      const data = localStorage.getItem('bx_checklist_templates');
+      if (data) setCustomTemplates(JSON.parse(data));
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  const handleApplyTemplate = (val: string) => {
+    let itemsToApply: string[] = [];
+    if (val in BUILT_IN_CHECKLIST_TEMPLATES) {
+      itemsToApply = BUILT_IN_CHECKLIST_TEMPLATES[val].items;
+    } else {
+      const found = customTemplates.find(t => t.id === val);
+      if (found) itemsToApply = found.items;
+    }
+
+    if (!itemsToApply.length) return;
+
+    const replace = checklist.length > 0 && window.confirm(
+      'Заменить существующие пункты чек-листа? (ОК — заменить, Отмена — добавить к текущим)'
+    );
+
+    const newItems = itemsToApply.map(text => ({
+      id: uid(),
+      text,
+      done: false
+    }));
+
+    if (replace) {
+      setChecklist(newItems);
+    } else {
+      setChecklist(prev => [...prev, ...newItems]);
+    }
+  };
+
+  const handleSaveAsTemplate = () => {
+    if (!checklist.length) return;
+    const name = window.prompt('Введите название для вашего шаблона:');
+    if (!name || !name.trim()) return;
+
+    const newTpl = {
+      id: uid(),
+      name: name.trim(),
+      items: checklist.map(item => item.text)
+    };
+
+    const updated = [...customTemplates, newTpl];
+    setCustomTemplates(updated);
+    localStorage.setItem('bx_checklist_templates', JSON.stringify(updated));
+  };
 
   // Linked event settings
   const [recurrence, setRecurrence] = useState<'weekly' | 'monthly' | 'quarterly' | 'yearly' | null>(null);
@@ -212,9 +305,41 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
 
             {/* Чек-лист */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-medium text-bx-muted">☑️ Чек-лист</label>
-                {checklist.length > 0 && <span className="text-[10px] text-bx-muted">{doneCount}/{checklist.length}</span>}
+              <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-bx-muted">☑️ Чек-лист</label>
+                  <select
+                    value=""
+                    onChange={e => handleApplyTemplate(e.target.value)}
+                    className="bg-bx-surface-2 text-bx-muted hover:text-bx-text text-[10px] rounded border border-bx-border-2 px-1.5 py-0.5 focus:outline-none cursor-pointer"
+                  >
+                    <option value="" disabled>✨ Шаблоны...</option>
+                    <optgroup label="Встроенные">
+                      <option value="month_closing">Закрытие месяца</option>
+                      <option value="employee_hiring">Прием сотрудника</option>
+                      <option value="vat_reporting">Отчетность по НДС</option>
+                    </optgroup>
+                    {customTemplates.length > 0 && (
+                      <optgroup label="Мои шаблоны">
+                        {customTemplates.map(t => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  {checklist.length > 0 && (
+                    <button
+                      onClick={handleSaveAsTemplate}
+                      className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
+                      title="Сохранить текущий чек-лист как шаблон"
+                    >
+                      💾 Сохранить как шаблон
+                    </button>
+                  )}
+                  {checklist.length > 0 && <span className="text-[10px] text-bx-muted">{doneCount}/{checklist.length}</span>}
+                </div>
               </div>
               {checklist.length > 0 && (
                 <div className="h-1.5 bg-bx-bg rounded-full mb-2 overflow-hidden">
