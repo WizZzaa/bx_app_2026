@@ -26,7 +26,7 @@ const COLOR_MAP: Record<string, { border: string; dot: string; text: string; rin
 };
 const c = (color: string) => COLOR_MAP[color] ?? COLOR_MAP.slate;
 
-const PRIORITY_DOT: Record<string, string> = { high: 'bg-red-500', normal: 'bg-yellow-500', low: 'bg-green-500' };
+const PRIORITY_BAR: Record<string, string> = { high: 'border-l-red-500', normal: 'border-l-amber-500', low: 'border-l-emerald-500' };
 
 function fmtDate(d: string | null): { text: string; overdue: boolean } | null {
   if (!d) return null;
@@ -273,10 +273,13 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
                         onDragEnd={onDragEnd}
                         onDragOver={e => onCardDragOver(e, col.id, card.id)}
                         onClick={() => onCardClick(card)}
-                        className={`bg-bx-bg rounded-lg border p-2.5 cursor-pointer hover:border-blue-500/40 transition-all select-none ${
+                        className={`group bg-bx-bg rounded-lg border border-l-[3px] p-2.5 cursor-pointer hover:border-blue-500/40 hover:shadow-md transition-all select-none ${
                           dragId === card.id ? 'opacity-30' : ''
-                        } ${dateInfo?.overdue ? 'border-red-500/40' : 'border-bx-border'}`}
+                        } ${dateInfo?.overdue ? 'border-red-500/40' : 'border-bx-border'} ${PRIORITY_BAR[card.priority]}`}
                       >
+                        {card.cover_color && (
+                          <div className="h-1.5 rounded-full mb-1.5" style={{ backgroundColor: card.cover_color }} />
+                        )}
                         {card.labels && card.labels.length > 0 && (
                           <div className="flex flex-wrap gap-1 mb-1.5">
                             {card.labels.map(l => (
@@ -284,18 +287,26 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
                             ))}
                           </div>
                         )}
-                        <p className="text-xs text-bx-text leading-snug">{card.title}</p>
+                        <div className="flex items-start gap-1.5">
+                          <p className="text-xs text-bx-text leading-snug flex-1">{card.title}</p>
+                          {card.event_id && <span title="связано с календарём" className="text-[10px] flex-shrink-0 opacity-60">🔗</span>}
+                        </div>
+                        {checkTotal > 0 && (
+                          <div className="mt-2 flex items-center gap-1.5">
+                            <div className="flex-1 h-1 rounded-full bg-bx-surface-2 overflow-hidden">
+                              <div className={`h-full rounded-full transition-all ${checkDone === checkTotal ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                                style={{ width: `${(checkDone / checkTotal) * 100}%` }} />
+                            </div>
+                            <span className={`text-[10px] ${checkDone === checkTotal ? 'text-emerald-400' : 'text-bx-muted'}`}>{checkDone}/{checkTotal}</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          <div className={`w-2 h-2 rounded-full ${PRIORITY_DOT[card.priority]}`} title="приоритет" />
                           {dateInfo && (
-                            <span className={`text-[10px] ${dateInfo.overdue ? 'text-red-400' : 'text-bx-muted'}`}>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${dateInfo.overdue ? 'bg-red-500/15 text-red-400' : 'bg-bx-surface-2 text-bx-muted'}`}>
                               {dateInfo.overdue ? '⚠ ' : '📅 '}{dateInfo.text}
                             </span>
                           )}
-                          {checkTotal > 0 && (
-                            <span className={`text-[10px] ${checkDone === checkTotal ? 'text-emerald-400' : 'text-bx-muted'}`}>☑ {checkDone}/{checkTotal}</span>
-                          )}
-                          {card.description && <span className="text-[10px] text-bx-muted">📝</span>}
+                          {card.description && <span className="text-[10px] text-bx-muted" title="есть описание">📝</span>}
                         </div>
                       </div>
                     </React.Fragment>
