@@ -232,7 +232,7 @@ export default function DateCalc() {
                 </p>
               ))}
             </div>
-            <p className="text-[11px] text-bx-muted mt-2">* Ураза-байрам и Курбан-байрам — переменные, не включены</p>
+            <p className="text-[11px] text-bx-muted mt-2">* Руза хайит (20 марта) и Курбан хайит (27 мая) включены на 2026 год</p>
           </div>
         </div>
       )}

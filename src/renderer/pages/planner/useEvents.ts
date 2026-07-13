@@ -5,7 +5,7 @@ import { emitPlannerReload, subscribePlannerReload } from './plannerBus';
 export type EventType     = 'task' | 'tax_deadline' | 'reminder' | 'event';
 export type EventStatus   = 'todo' | 'in_progress' | 'review' | 'done';
 export type EventPriority = 'high' | 'normal' | 'low';
-export type EventKind     = 'payment' | 'report' | null;
+export type EventKind     = 'payment' | 'report' | 'both' | null;
 export type EventRecurrence = 'weekly' | 'monthly' | 'quarterly' | 'yearly' | null;
 
 export interface BxEvent {
