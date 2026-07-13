@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react'
 import type { BxEvent } from './useEvents'
 import { toLocalISO } from '../../lib/dates'
-import { holidayName, getSpecialDay, dayTooltip, isPreHoliday, isNonWorkingSpecialDay, isTransferredWorkday, getMonthNorms } from '../../data/uzHolidays'
-import { deadlinesForMonth } from '../../data/taxCalendar'
+import { holidayName, getSpecialDay, dayTooltip, isPreHoliday, isNonWorkingSpecialDay, isTransferredWorkday, getMonthNorms, type SpecialDay } from '../../data/uzHolidays'
+import { deadlinesForMonth, type TaxDeadline } from '../../data/taxCalendar'
 
 export interface CalCard {
   id: string
@@ -45,33 +45,6 @@ const mondayOf = (d: Date): Date => {
   return r
 }
 
-/** Составить текст тултипа из всех элементов дня. */
-const buildTooltip = (day: Date, dayEvents: BxEvent[], dayCards: CalCard[], deadlineTexts: string[]): string => {
-  const parts: string[] = []
-
-  // Производственный календарь
-  const calTip = dayTooltip(day)
-  if (calTip) parts.push(calTip)
-
-  // Налоговые дедлайны
-  if (deadlineTexts.length > 0) {
-    parts.push('📋 Налоговые дедлайны:')
-    for (const t of deadlineTexts) parts.push(`  • ${t}`)
-  }
-
-  // События планировщика
-  if (dayEvents.length > 0) {
-    parts.push(`📌 Задач/событий: ${dayEvents.length}`)
-  }
-
-  // Карточки
-  if (dayCards.length > 0) {
-    parts.push(`📋 Карточек: ${dayCards.length}`)
-  }
-
-  return parts.join('\n')
-}
-
 export default function CalendarView({ events, cards = [], boards = [], onDayClick, onAddEvent, onEventClick, onCardClick, onEventDrop, onCardDrop }: Props) {
   const now = new Date()
   const [mode, setMode] = useState<'month' | 'week'>('month')
@@ -110,14 +83,24 @@ export default function CalendarView({ events, cards = [], boards = [], onDayCli
     cardsByDate[cd.due_date].push(cd)
   }
 
+  const [hoveredDay, setHoveredDay] = useState<{
+    day: Date
+    x: number
+    y: number
+    special: SpecialDay | null
+    deadlines: TaxDeadline[]
+    events: BxEvent[]
+    cards: CalCard[]
+  } | null>(null)
+
   // Налоговые дедлайны текущего месяца
   const deadlinesByDate = useMemo(() => {
-    const map = new Map<string, string[]>()
+    const map = new Map<string, TaxDeadline[]>()
     const m0 = mode === 'week' ? weekStart.getMonth() : month
     const y = mode === 'week' ? weekStart.getFullYear() : year
     for (const { date, deadline } of deadlinesForMonth(y, m0)) {
       const arr = map.get(date) ?? []
-      arr.push(deadline.title)
+      arr.push(deadline)
       map.set(date, arr)
     }
     return map
@@ -125,6 +108,24 @@ export default function CalendarView({ events, cards = [], boards = [], onDayCli
 
   // Нормы рабочего времени текущего месяца
   const norms = useMemo(() => getMonthNorms(month + 1), [month])
+
+  const handleMouseEnterDay = (e: React.MouseEvent, day: Date) => {
+    const ds = toISO(day)
+    const rect = e.currentTarget.getBoundingClientRect()
+    setHoveredDay({
+      day,
+      x: rect.left + rect.width / 2,
+      y: rect.top,
+      special: getSpecialDay(day),
+      deadlines: deadlinesByDate.get(ds) ?? [],
+      events: byDate[ds] ?? [],
+      cards: cardsByDate[ds] ?? []
+    })
+  }
+
+  const handleMouseLeaveDay = () => {
+    setHoveredDay(null)
+  }
 
   // ── Drag & drop ──
   const handleDrop = (e: React.DragEvent, date: string) => {
@@ -336,14 +337,13 @@ export default function CalendarView({ events, cards = [], boards = [], onDayCli
             const dayCards = cardsByDate[ds] ?? []
             const isWeekend = ci >= 5
             const { borderClass, bgClass, isToday, special, hasDeadlines } = getDayClasses(day, ds, isWeekend)
-            const tip = buildTooltip(day, dayEvents, dayCards, deadlinesByDate.get(ds) ?? [])
-
             return (
               <div key={ds}
                 onClick={() => onDayClick(ds)}
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => handleDrop(e, ds)}
-                title={tip || undefined}
+                onMouseEnter={e => handleMouseEnterDay(e, day)}
+                onMouseLeave={handleMouseLeaveDay}
                 className={`flex flex-col rounded-lg border p-2 cursor-pointer transition-all overflow-hidden group/cell ${borderClass} ${bgClass}`}
               >
                 <div className="flex items-center justify-between mb-1.5 flex-shrink-0">
@@ -398,14 +398,13 @@ export default function CalendarView({ events, cards = [], boards = [], onDayCli
                 const dayCards = cardsByDate[ds] ?? []
                 const isWeekend = ci >= 5
                 const { borderClass, bgClass, isToday, isPast, special, hasDeadlines } = getDayClasses(day, ds, isWeekend)
-                const tip = buildTooltip(day, dayEvents, dayCards, deadlinesByDate.get(ds) ?? [])
-
                 return (
                   <div key={ci}
                     onClick={() => onDayClick(ds)}
                     onDragOver={e => e.preventDefault()}
                     onDrop={e => handleDrop(e, ds)}
-                    title={tip || undefined}
+                    onMouseEnter={e => handleMouseEnterDay(e, day)}
+                    onMouseLeave={handleMouseLeaveDay}
                     className={`h-20 rounded-lg border p-1.5 cursor-pointer transition-all overflow-hidden group/cell
                       ${borderClass} ${bgClass}
                       ${isPast && !isToday ? 'opacity-60' : ''}
@@ -445,6 +444,92 @@ export default function CalendarView({ events, cards = [], boards = [], onDayCli
           ))}
         </div>
       </div>
+      )}
+
+      {/* Premium Floating Tooltip */}
+      {hoveredDay && (
+        <div
+          style={{
+            position: 'fixed',
+            left: `${hoveredDay.x}px`,
+            top: `${hoveredDay.y - 8}px`,
+            transform: 'translate(-50%, -100%)',
+          }}
+          className="z-50 w-72 bg-slate-950/95 border border-white/10 rounded-xl p-3.5 shadow-[0_10px_35px_rgba(0,0,0,0.9)] backdrop-blur-md text-slate-200 pointer-events-none transition-all duration-100 ease-out flex flex-col gap-2.5 animate-in fade-in zoom-in-95"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-white/5 pb-2 text-[10px] font-semibold text-slate-400">
+            <span>
+              {hoveredDay.day.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+          </div>
+
+          {/* Special Day Details */}
+          {hoveredDay.special && (
+            <div className={`p-2 rounded-lg border text-xs flex flex-col gap-1 ${
+              hoveredDay.special.type === 'holiday' 
+                ? 'bg-red-500/10 border-red-500/20 text-red-300'
+                : hoveredDay.special.type === 'additional_off' || hoveredDay.special.type === 'transferred_off'
+                  ? 'bg-red-500/5 border-red-500/10 text-red-300/90'
+                  : hoveredDay.special.type === 'pre_holiday'
+                    ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+            }`}>
+              <div className="font-bold flex items-center gap-1.5">
+                <span>
+                  {hoveredDay.special.type === 'holiday' ? '🎉' 
+                    : hoveredDay.special.type === 'pre_holiday' ? '⏰' 
+                    : hoveredDay.special.type === 'transferred_work' ? '🔧' : '🔴'}
+                </span>
+                <span>{hoveredDay.special.name}</span>
+              </div>
+              {hoveredDay.special.note && (
+                <p className="text-[10px] opacity-80 leading-relaxed">{hoveredDay.special.note}</p>
+              )}
+            </div>
+          )}
+
+          {/* Tax Deadlines List */}
+          {hoveredDay.deadlines.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400">📋 Налоговые дедлайны</span>
+              <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
+                {hoveredDay.deadlines.map((dl) => (
+                  <div key={dl.id} className="text-[11px] leading-snug p-1.5 rounded bg-white/[0.03] border border-white/5 flex flex-col gap-0.5">
+                    <div className="flex items-start gap-1 font-medium text-slate-200">
+                      <span className="text-blue-400 mt-0.5">•</span>
+                      <span>{dl.title}</span>
+                    </div>
+                    {dl.law && (
+                      <span className="text-[9px] text-blue-400/80 font-mono pl-2">{dl.law}</span>
+                    )}
+                    {dl.note && (
+                      <p className="text-[9px] text-slate-400 pl-2 leading-relaxed">{dl.note}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Events/Tasks Counter */}
+          {(hoveredDay.events.length > 0 || hoveredDay.cards.length > 0) && (
+            <div className="flex flex-col gap-1 pt-1.5 border-t border-white/5">
+              {hoveredDay.events.length > 0 && (
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                  <span>📌</span>
+                  <span>Задач в планировщике: <b>{hoveredDay.events.length}</b></span>
+                </div>
+              )}
+              {hoveredDay.cards.length > 0 && (
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                  <span>📋</span>
+                  <span>Карточек в Kanban: <b>{hoveredDay.cards.length}</b></span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
