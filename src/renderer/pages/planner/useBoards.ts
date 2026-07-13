@@ -64,7 +64,7 @@ function localBaseBoards(): BxBoard[] {
   return baseBoardDefs().map((d, i) => ({
     id: `local-${i}-${d.name}`,
     user_id: 'local',
-    company_id: null,
+    company_id: null as string | null,
     name: d.name, icon: d.icon, color: d.color,
     columns: d.columns, position: i, is_default: d.is_default,
     created_at: now,
@@ -96,7 +96,7 @@ export function useBoards(companyId?: string | null) {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           const seeds = baseBoardDefs().map((d, i) => ({
-            user_id: user.id, company_id: null,
+            user_id: user.id, company_id: null as string | null,
             name: d.name, icon: d.icon, color: d.color,
             columns: d.columns, position: i, is_default: d.is_default,
           }));

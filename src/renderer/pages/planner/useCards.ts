@@ -389,7 +389,7 @@ export async function createCardFromEvent(event: BxEvent, companyId: string | nu
     description: event.note || `Дедлайн: ${event.due_date || event.date}. Источник: Налоговый календарь Узбекистана.`,
     priority: event.priority || 'normal',
     labels: event.tags || [],
-    checklist: [],
+    checklist: [] as ChecklistItem[],
     due_date: event.due_date || event.date,
     position: maxPos + 1,
     event_id: event.id
