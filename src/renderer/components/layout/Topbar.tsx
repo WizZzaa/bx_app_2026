@@ -174,8 +174,12 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
         <div className="relative" ref={notifBoxRef}>
           <button
             onClick={() => {
-              setNotifOpen(!notifOpen)
+              const nextState = !notifOpen
+              setNotifOpen(nextState)
               setConflictModalOpen(false)
+              if (nextState) {
+                markAllAsRead()
+              }
             }}
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted transition-colors relative cursor-pointer"
             title="Уведомления"
