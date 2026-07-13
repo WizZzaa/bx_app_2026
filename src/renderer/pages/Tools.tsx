@@ -14,6 +14,8 @@ import TranslatorTool from './tools/TranslatorTool'
 import PdfCompress from './tools/PdfCompress'
 import PdfConvert from './tools/PdfConvert'
 import OcrTool from './tools/OcrTool'
+import EcpManager from './EcpManager'
+import ActiveXConfigurator from './tools/ActiveXConfigurator'
 import { isElectron } from '../lib/onecApi'
 import Icon from '../lib/ui/Icon'
 
@@ -38,6 +40,8 @@ const TOOLS: Tool[] = [
   { id: 'translit',  icon: 'languages', label: 'Транслитерация',        group: 'Текст и реквизиты', desc: 'Узбек кирилл ↔ латиница (2019)', component: <Transliterate /> },
   { id: 'bankcheck', icon: 'building',  label: 'Проверка счёта и МФО',  group: 'Текст и реквизиты', desc: 'Р/с 20 цифр + банк по МФО', component: <BankCheck /> },
   // Система
+  { id: 'ecp',       icon: 'key',      label: 'Менеджер ЭЦП',  group: 'Система', desc: 'Мониторинг ключей и статуса E-Imzo', component: <EcpManager /> },
+  { id: 'activex',   icon: 'settings', label: 'Настройка ActiveX', group: 'Система', desc: 'Авто-настройка IE для банк-клиентов РУз', component: <ActiveXConfigurator /> },
   { id: 'pccleaner', icon: 'monitor',  label: 'Очистка ПК',    group: 'Система', desc: 'TEMP Windows + кэши браузеров', component: <PcCleaner /> },
   { id: 'network',   icon: 'services', label: 'Проверка сети', group: 'Система', desc: 'Доступность госсайтов РУз', component: <NetworkChecker /> },
   { id: 'eimzo',     icon: 'ecp',      label: 'Диагностика E-Imzo', group: 'Система', desc: 'Плагин и локальный сервис ЭЦП', component: <EimzoDiag /> },
@@ -59,7 +63,7 @@ const ACCENT: Record<string, { text: string; chipBg: string; activeBg: string; i
   'Заметки':           { text: 'text-emerald-700 dark:text-emerald-400', chipBg: 'bg-emerald-500/10 border-emerald-500/20', activeBg: 'bg-emerald-500/10 border-emerald-500/20', iconBg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400', grad: 'from-emerald-500/5' },
 }
 
-const FULL_HEIGHT_TOOLS = new Set(['notes'])
+const FULL_HEIGHT_TOOLS = new Set(['notes', 'ecp', 'activex'])
 
 const LAST_TOOL_KEY = 'bx_tools_last'
 

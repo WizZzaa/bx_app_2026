@@ -42,7 +42,6 @@ export default function Sidebar() {
         { to: '/counterparties', icon: 'users', label: 'Организации' },
         { to: '/documents',  icon: 'note',      label: 'Документы' },
         { to: '/finance',    icon: 'finance',   label: 'Контроль оплат' },
-        { to: '/ecp',        icon: 'ecp',       label: 'ЭЦП' },
       ]
     },
     {
@@ -96,10 +95,10 @@ export default function Sidebar() {
           BX
         </div>
         <div>
-          <div className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight group-hover:text-indigo-600 dark:group-hover:text-blue-300 transition-colors">
+          <div className="text-[13px] font-bold text-slate-950 dark:text-white leading-tight group-hover:text-indigo-600 dark:group-hover:text-blue-300 transition-colors">
             BX
           </div>
-          <div className="text-[9px] text-slate-500 dark:text-slate-400 leading-tight group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">
+          <div className="text-[9px] text-slate-600 dark:text-slate-400 leading-tight group-hover:text-slate-800 dark:group-hover:text-slate-300 transition-colors">
             {logoHovered ? '↩ На главную' : 'Помощник Бухгалтера'}
           </div>
         </div>
@@ -126,7 +125,7 @@ export default function Sidebar() {
                         window.open('https://bx.uz/admin', '_blank', 'noopener,noreferrer')
                       }
                     }}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg text-slate-700 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5 font-semibold animate-none"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5 font-semibold animate-none"
                   >
                     <Icon name={icon} className="w-4 h-4 flex-shrink-0 opacity-80" />
                     <span className="truncate">{label}</span>
@@ -142,7 +141,7 @@ export default function Sidebar() {
                     `flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg font-semibold ${
                       isActive
                         ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-600/20'
-                        : 'text-slate-700 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5'
+                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5'
                     }`
                   }
                 >
@@ -163,7 +162,7 @@ export default function Sidebar() {
         <div className="flex items-center gap-2.5">
           <span className="text-xs group-hover:scale-110 transition-transform">ℹ️</span>
           <div className="flex-1">
-            <div className="text-[10px] text-slate-700 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-slate-200 transition-colors font-semibold">О программе</div>
+            <div className="text-[10px] text-slate-600 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-slate-200 transition-colors font-semibold">О программе</div>
             <div className="text-[9px] text-slate-500">Версия {APP_VERSION}</div>
           </div>
         </div>

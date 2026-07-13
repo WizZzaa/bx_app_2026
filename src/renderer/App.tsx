@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
 import Titlebar from './components/layout/Titlebar';
 import Topbar from './components/layout/Topbar';
@@ -18,98 +18,72 @@ import Hr from './pages/Hr';
 import Finance from './pages/Finance';
 import Services from './pages/Services';
 import News from './pages/News';
-import Settings from './pages/Settings'
-import EcpManager from './pages/EcpManager'
-import Counterparties from './pages/Counterparties'
-import Placeholder from './pages/Placeholder'
-import TrayView from './pages/TrayView'
-import Documents from './pages/Documents'
+import Settings from './pages/Settings';
+import Counterparties from './pages/Counterparties';
+import Placeholder from './pages/Placeholder';
+import TrayView from './pages/TrayView';
+import Documents from './pages/Documents';
 import { CompanyProvider } from './lib/CompanyContext';
 import { PlanProvider } from './lib/plan';
-import { loadEcpKeys } from './lib/ecpStorage';
 
-// Слушает запросы навигации из трей-виджета (main → 'tray:navigate') и
-// переходит на нужный раздел в главном окне.
-function TrayNavigateListener(): React.ReactElement | null {
-  const navigate = useNavigate()
+// Обработчик события из трея для Electron
+function TrayNavigateListener() {
   useEffect(() => {
-    const un = window.bx?.tray?.onNavigate?.((route) => { if (route) navigate(route) })
-    return () => un?.()
-  }, [navigate])
-  return null
+    if (typeof window === 'undefined') return;
+    const handleTrayNav = (_: any, path: string) => {
+      // Имитируем переход
+      window.location.hash = path;
+    };
+    (window as any).bx?.ipc?.on?.('tray-navigate', handleTrayNav);
+    return () => {
+      (window as any).bx?.ipc?.off?.('tray-navigate', handleTrayNav);
+    };
+  }, []);
+  return null;
+}
+
+// Редирект со старой ссылки ЭЦП
+function EcpRedirect() {
+  useEffect(() => {
+    localStorage.setItem('bx_tools_last', 'ecp');
+    // Оповестим другие вкладки/компоненты
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'bx_tools_last',
+      newValue: 'ecp'
+    }));
+  }, []);
+  return <Navigate to="/tools" replace />;
 }
 
 export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
 
+  // Инициализация темы при первом рендере
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
-        e.preventDefault();
-        setPaletteOpen(o => !o);
-      }
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  useEffect(() => {
-    const checkEcpExpiry = async () => {
-      try {
-        const keys = await loadEcpKeys()
-        const urgentKeys = keys.filter((k) => {
-          const now = new Date()
-          now.setHours(0, 0, 0, 0)
-          const target = new Date(k.expiresAt)
-          const diffDays = Math.round((target.getTime() - now.getTime()) / 86400000)
-          return diffDays >= 0 && diffDays <= 14
-        })
-
-        if (urgentKeys.length > 0) {
-          const lastNotify = localStorage.getItem('bx_last_ecp_notify_date')
-          const today = new Date().toDateString()
-          
-          if (lastNotify !== today && window.bx?.notification?.show) {
-            const names = urgentKeys.map((k) => k.name).join(', ')
-            await window.bx.notification.show(
-              'Истекает срок действия ЭЦП',
-              `Внимание! Ключи (${names}) истекают в течение 14 дней. Пожалуйста, обновите их.`
-            )
-            localStorage.setItem('bx_last_ecp_notify_date', today)
-          }
-        }
-      } catch (err) {
-        console.error('Ошибка проверки сроков ЭЦП:', err)
-      }
-    }
-
-    const timer = setTimeout(checkEcpExpiry, 3000)
-    return () => clearTimeout(timer)
-  }, [])
-
-  useEffect(() => {
-    const theme = localStorage.getItem('bx_theme') || 'dark';
-    if (theme === 'light') {
-      document.documentElement.classList.add('light');
+    const isDark = localStorage.getItem('theme') === 'dark';
+    if (isDark) {
+      document.documentElement.classList.add('dark');
     } else {
-      document.documentElement.classList.remove('light');
+      document.documentElement.classList.remove('dark');
     }
   }, []);
 
-  const isTray = window.location.hash.includes('tray') || window.location.pathname.includes('tray')
+  // Если это режим компактного окна (Трей-вид)
+  const isCompact = window.location.search.includes('compact=true') || window.location.hash.includes('/tray');
 
-  if (isTray) {
+  if (isCompact) {
     return (
       <CompanyProvider>
         <PlanProvider>
-          <div className="w-screen h-screen overflow-hidden bg-bx-bg text-bx-text">
+          <div className="flex flex-col h-screen w-screen bg-bx-bg text-bx-text overflow-hidden font-sans">
             <Routes>
-              <Route path="*" element={<TrayView />} />
+              <Route path="/tray" element={<TrayView />} />
+              <Route path="*" element={<Navigate to="/tray" replace />} />
             </Routes>
           </div>
         </PlanProvider>
       </CompanyProvider>
-    )
+    );
   }
 
   return (
@@ -143,18 +117,21 @@ export default function App() {
                   <Route path="/planner" element={<Planner />} />
                   <Route path="/calendar" element={<CalendarPage />} />
                   <Route path="/calc" element={<Calc />} />
-                  <Route path="/ecp" element={<EcpManager />} />
+                  <Route path="/ecp" element={<EcpRedirect />} />
                   <Route path="/ai" element={<Ai />} />
                   <Route path="/support" element={<Support />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/counterparties" element={<Counterparties />} />
+                  <Route path="/placeholder" element={<Placeholder icon="🚧" title="Страница в разработке" description="Этот раздел временно недоступен или находится на стадии проектирования." />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>
             </div>
-            <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
           </div>
+
+          <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
         </div>
       </PlanProvider>
     </CompanyProvider>
-  )
+  );
 }

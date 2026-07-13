@@ -7,8 +7,12 @@ import { useToast } from '../../lib/ui/ToastContext';
 function inline(text: string, q: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
   return parts.map((p, i) => {
-    if (p.startsWith('**') && p.endsWith('**')) return <strong key={i} className="text-white font-bold">{highlight(p.slice(2, -2), q)}</strong>;
-    if (p.startsWith('`') && p.endsWith('`')) return <code key={i} className="bg-bx-surface-2 text-emerald-400 font-mono px-1.5 py-0.5 rounded text-[11px] border border-bx-border-2">{p.slice(1, -1)}</code>;
+    if (p.startsWith('**') && p.endsWith('**')) {
+      return <strong key={i} className="text-slate-900 dark:text-white font-bold">{highlight(p.slice(2, -2), q)}</strong>;
+    }
+    if (p.startsWith('`') && p.endsWith('`')) {
+      return <code key={i} className="bg-bx-surface-2 text-emerald-600 dark:text-emerald-400 font-mono px-1.5 py-0.5 rounded text-[11px] border border-bx-border-2">{p.slice(1, -1)}</code>;
+    }
     return highlight(p, q);
   });
 }
@@ -33,7 +37,6 @@ function renderBody(body: string, q: string): React.ReactNode[] {
     // 2. Table grouping: consecutive lines starting with '|'
     if (line.startsWith('|')) {
       const rows: string[][] = [];
-      let isHeaderSeparatorRow = false;
       
       while (i < lines.length && lines[i].trim().startsWith('|')) {
         const curLine = lines[i].trim();
@@ -41,9 +44,7 @@ function renderBody(body: string, q: string): React.ReactNode[] {
         
         // Check if it's the header separator row e.g. |---|---|
         const isSeparator = cells.every(c => /^[-: ]+$/.test(c));
-        if (isSeparator) {
-          isHeaderSeparatorRow = true;
-        } else {
+        if (!isSeparator) {
           rows.push(cells);
         }
         i++;
@@ -55,7 +56,7 @@ function renderBody(body: string, q: string): React.ReactNode[] {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               {rows.length > 0 && (
-                <tr className="bg-bx-surface-2/50 text-white font-bold border-b border-bx-border">
+                <tr className="bg-bx-surface-2/50 text-slate-900 dark:text-white font-bold border-b border-bx-border">
                   {rows[0].map((cell, idx) => (
                     <th key={idx} className="py-2 px-4 font-semibold text-[10px] uppercase tracking-wider">{inline(cell, q)}</th>
                   ))}
@@ -108,7 +109,7 @@ function renderBody(body: string, q: string): React.ReactNode[] {
         <ol key={key++} className="list-none pl-1 my-3 space-y-1.5">
           {listItems.map((item, idx) => (
             <li key={idx} className="flex gap-2.5 text-xs text-bx-text leading-relaxed">
-              <span className="text-blue-400 font-bold flex-shrink-0 text-[10px] w-4 mt-0.5">{idx + 1}.</span>
+              <span className="text-blue-500 dark:text-blue-400 font-bold flex-shrink-0 text-[10px] w-4 mt-0.5">{idx + 1}.</span>
               <span>{inline(item, q)}</span>
             </li>
           ))}
@@ -120,7 +121,7 @@ function renderBody(body: string, q: string): React.ReactNode[] {
     // 5. Code block
     if (line.startsWith('`') && line.endsWith('`') && line.length > 2) {
       nodes.push(
-        <pre key={key++} className="block bg-bx-surface-2 border border-bx-border-2 rounded-xl p-3.5 text-[11px] text-emerald-400 font-mono my-3 overflow-x-auto leading-relaxed whitespace-pre shadow-sm">
+        <pre key={key++} className="block bg-bx-surface-2 border border-bx-border-2 rounded-xl p-3.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-mono my-3 overflow-x-auto leading-relaxed whitespace-pre shadow-sm">
           {line.slice(1, -1)}
         </pre>
       );
@@ -131,8 +132,8 @@ function renderBody(body: string, q: string): React.ReactNode[] {
     // 6. Blockquote
     if (line.startsWith('> ')) {
       nodes.push(
-        <div key={key++} className="border-l-3 border-amber-500/50 bg-amber-500/5 px-4 py-3 my-3.5 rounded-r-xl text-xs text-amber-200/90 leading-relaxed flex gap-2 shadow-sm">
-          <span className="text-amber-400 font-bold select-none text-base leading-none">“</span>
+        <div key={key++} className="border-l-3 border-amber-500/60 bg-amber-500/10 dark:bg-amber-500/5 px-4 py-3 my-3.5 rounded-r-xl text-xs text-amber-900 dark:text-amber-200/90 leading-relaxed flex gap-2 shadow-sm">
+          <span className="text-amber-600 dark:text-amber-400 font-bold select-none text-base leading-none">“</span>
           <span className="italic">{inline(line.slice(2), q)}</span>
         </div>
       );
@@ -144,7 +145,7 @@ function renderBody(body: string, q: string): React.ReactNode[] {
     if (line.startsWith('## ')) {
       const titleText = line.slice(3);
       nodes.push(
-        <h3 key={key++} id={'h-' + slug(titleText)} className="scroll-mt-6 text-xs font-bold text-white mt-6 mb-2.5 flex items-center gap-2 border-b border-bx-border/30 pb-1.5 uppercase tracking-wider">
+        <h3 key={key++} id={'h-' + slug(titleText)} className="scroll-mt-6 text-xs font-bold text-slate-900 dark:text-white mt-6 mb-2.5 flex items-center gap-2 border-b border-bx-border/30 pb-1.5 uppercase tracking-wider">
           <span className="w-1.5 h-3 bg-blue-500 rounded-full" />
           {titleText}
         </h3>
@@ -254,9 +255,9 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
       <article className="flex-1 min-w-0 px-8 py-6">
         {/* Navigation path */}
         <div className="flex items-center gap-1.5 text-[10px] text-bx-muted mb-4 font-semibold">
-          <button onClick={onBack} className="hover:text-white transition-colors">База знаний</button>
+          <button onClick={onBack} className="hover:text-bx-text transition-colors">База знаний</button>
           <Icon name="arrowR" className="w-2.5 h-2.5" />
-          <button onClick={() => onCategory(article.category)} className="hover:text-white transition-colors">{article.category}</button>
+          <button onClick={() => onCategory(article.category)} className="hover:text-bx-text transition-colors">{article.category}</button>
         </div>
 
         {/* Action Header */}
@@ -274,16 +275,16 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
           <div className="ml-auto flex gap-1.5">
             <button 
               onClick={handleExportPDF} 
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-bx-surface hover:bg-bx-surface-2 text-bx-text font-bold transition-all border border-bx-border"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-bx-surface hover:bg-bx-surface-2 text-bx-text font-bold transition-all border border-bx-border cursor-pointer"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-bx-muted"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
               PDF
             </button>
             <button 
               onClick={copyArticle} 
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all font-bold border ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all font-bold border cursor-pointer ${
                 copied 
-                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
+                  ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
                   : 'bg-bx-surface hover:bg-bx-surface-2 text-bx-text border-bx-border'
               }`}
             >
@@ -294,16 +295,16 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
         </div>
 
         {/* Warning Banner */}
-        <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl px-4 py-3 mb-6 flex gap-3 shadow-inner">
-          <Icon name="alert" className="w-4.5 h-4.5 text-amber-400 flex-shrink-0 mt-0.5" />
-          <p className="text-[10px] text-amber-300/80 leading-relaxed font-medium">
-            Справочный материал. Законы могут меняться. Сверяйтесь с актуальными редакциями НК РУз на <a href="https://lex.uz" target="_blank" rel="noreferrer" className="text-amber-400 hover:underline">lex.uz</a> и разъяснениями ГНК на <a href="https://soliq.uz" target="_blank" rel="noreferrer" className="text-amber-400 hover:underline">soliq.uz</a>.
+        <div className="bg-amber-500/10 dark:bg-amber-500/5 border border-amber-500/20 dark:border-amber-500/15 rounded-xl px-4 py-3 mb-6 flex gap-3 shadow-inner">
+          <Icon name="alert" className="w-4.5 h-4.5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+          <p className="text-[10px] text-amber-900 dark:text-amber-300/80 leading-relaxed font-medium">
+            Справочный материал. Законы могут меняться. Сверяйтесь с актуальными редакциями НК РУз на <a href="https://lex.uz" target="_blank" rel="noreferrer" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 underline font-bold">lex.uz</a> и разъяснениями ГНК на <a href="https://soliq.uz" target="_blank" rel="noreferrer" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 underline font-bold">soliq.uz</a>.
           </p>
         </div>
 
         {/* Content Box */}
         <div id="article-content-to-export">
-          <h2 className="text-xl font-bold text-white leading-tight mb-2">{article.title}</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight mb-2">{article.title}</h2>
           <div className="text-[10px] text-bx-muted mb-6 border-b border-bx-border/40 pb-3">
             Категория: <span className="text-bx-text font-semibold">{article.category}</span> · Сверено: {article.updated}
           </div>
@@ -312,8 +313,8 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
 
         {/* Tema Tools */}
         {article.tools && article.tools.length > 0 && (
-          <div className="mt-8 bg-blue-600/5 border border-blue-500/15 rounded-2xl p-5 shadow-inner">
-            <h4 className="text-xs font-bold text-blue-300 mb-3 flex items-center gap-2">
+          <div className="mt-8 bg-blue-500/5 dark:bg-blue-600/5 border border-blue-500/20 dark:border-blue-500/15 rounded-2xl p-5 shadow-inner">
+            <h4 className="text-xs font-bold text-blue-600 dark:text-blue-300 mb-3 flex items-center gap-2">
               <Icon name="wrench" className="w-4 h-4" />
               Инструменты по теме статьи
             </h4>
@@ -322,7 +323,7 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
                 <button 
                   key={t.route + t.label} 
                   onClick={() => navigate(t.route)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/15 hover:bg-blue-600/30 text-blue-300 text-xs font-bold rounded-xl transition-all border border-blue-500/20 active:scale-95"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 dark:bg-blue-600/15 hover:bg-blue-500/25 dark:hover:bg-blue-600/30 text-blue-600 dark:text-blue-300 text-xs font-bold rounded-xl transition-all border border-blue-500/20 active:scale-95 cursor-pointer"
                 >
                   {t.label}
                   <Icon name="arrowR" className="w-3 h-3" />
@@ -341,9 +342,9 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
                 <button 
                   key={r.id} 
                   onClick={() => onOpen(r)} 
-                  className="text-left bg-bx-surface border border-bx-border hover:border-blue-500/30 hover:bg-bx-surface-2 rounded-2xl p-4 transition-all group"
+                  className="text-left bg-bx-surface border border-bx-border hover:border-blue-500/30 hover:bg-bx-surface-2 rounded-2xl p-4 transition-all group cursor-pointer"
                 >
-                  <p className="text-xs font-bold text-bx-text group-hover:text-blue-400 transition-colors leading-tight">{r.title}</p>
+                  <p className="text-xs font-bold text-bx-text group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors leading-tight">{r.title}</p>
                   <p className="text-[10px] text-bx-muted mt-1.5 flex items-center gap-1">
                     <Icon name="clock" className="w-3.5 h-3.5" />
                     {readMinutes(r.body)} мин чтения
@@ -365,10 +366,10 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
                 <button 
                   key={t} 
                   onClick={() => scrollToHeading(t)} 
-                  className={`block w-full text-left text-[11px] leading-snug py-0.5 border-l-2 -ml-[18px] pl-[16px] transition-all truncate ${
+                  className={`block w-full text-left text-[11px] leading-snug py-0.5 border-l-2 -ml-[18px] pl-[16px] transition-all truncate cursor-pointer ${
                     activeHeading === t
-                      ? 'text-blue-400 font-extrabold border-blue-500'
-                      : 'text-bx-muted border-transparent hover:text-blue-400 hover:border-blue-500/40'
+                      ? 'text-blue-600 dark:text-blue-400 font-extrabold border-blue-500'
+                      : 'text-bx-muted border-transparent hover:text-blue-500 dark:hover:text-blue-400 hover:border-blue-500/40'
                   }`}
                   title={t}
                 >

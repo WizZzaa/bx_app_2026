@@ -570,48 +570,101 @@ export default function Templates() {
 
   // ── Галерея ──
   return (
-    <div className="flex-1 overflow-y-auto bg-bx-bg text-bx-text font-sans">
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        
-        {/* Заголовок и Поиск */}
-        <div className="bg-bx-surface border border-bx-border rounded-2xl p-6 shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative">
-          <div className="space-y-1">
-            <h1 className="text-base font-extrabold text-bx-text uppercase tracking-wider">Шаблоны документов</h1>
-            <p className="text-xs text-bx-muted leading-relaxed max-w-md">Конструктор документов для бухгалтера Республики Узбекистан. Выберите нужную форму, введите реквизиты, и BX сгенерирует готовый файл.</p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <button onClick={() => setCreatingTpl(true)} className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold shadow-md transition-all cursor-pointer">
-              ＋ Создать бланк
-            </button>
-          </div>
-        </div>
-
-        {/* Поиск и категории */}
-        <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 shadow-sm mb-6 space-y-4">
+    <div className="flex-1 flex overflow-hidden bg-bx-bg text-bx-text font-sans">
+      {/* Левая панель: категории и поиск */}
+      <aside className="w-68 flex-shrink-0 border-r border-bx-border flex flex-col bg-bx-surface/10 backdrop-blur-md">
+        {/* Поиск */}
+        <div className="px-4 pt-4 pb-2 flex-shrink-0">
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-bx-muted"><Icon name="search" className="w-5 h-5" /></span>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Быстрый поиск: договор субподряда, акт оказанных услуг, счет-фактура..."
-              className="w-full bg-bx-surface-2 text-bx-text pl-12 pr-4 py-3 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/50 text-xs font-semibold shadow-inner transition-all" />
-          </div>
-
-          <div className="flex flex-wrap gap-1.5">
-            {TEMPLATE_CATEGORIES.map(c => (
-              <button key={c} onClick={() => { setCategory(c); setSearch(''); }}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all border cursor-pointer ${category === c && !search ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-bx-surface-2 border-bx-border text-bx-muted hover:text-bx-text'}`}>{c}</button>
-            ))}
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bx-muted">🔍</span>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Поиск шаблонов..."
+              className="w-full bg-bx-surface-2 text-bx-text placeholder-bx-muted pl-9 pr-3 py-2 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/50 text-xs transition-colors"
+            />
           </div>
         </div>
 
-        {/* Сетка шаблонов */}
-        {search.trim() && <p className="text-xs text-bx-muted mb-3 font-bold">Результатов поиска: {filtered.length}</p>}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {/* Заголовок разделов */}
+        <div className="px-3 pb-2 flex-shrink-0 border-b border-bx-border/40 flex items-center justify-between">
+          <span className="text-[10px] font-bold text-bx-muted uppercase tracking-wider">Категории бланков</span>
+          {search.trim() && (
+            <button 
+              onClick={() => setSearch('')}
+              className="text-[10px] text-blue-500 hover:underline font-semibold"
+            >
+              Сбросить
+            </button>
+          )}
+        </div>
+
+        {/* Список папок (категорий) */}
+        <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1.5 custom-scrollbar">
+          {TEMPLATE_CATEGORIES.map(c => {
+            const count = allTemplates.filter(t => c === 'Все' || t.category === c).length
+            const isSel = category === c && !search.trim()
+            
+            return (
+              <button
+                key={c}
+                onClick={() => { setCategory(c); setSearch(''); }}
+                className={`w-full flex items-center justify-between px-2.5 py-2.5 rounded-xl text-left transition-all cursor-pointer border ${
+                  isSel 
+                    ? 'bg-blue-600/10 border-blue-500/10 text-blue-500 font-extrabold shadow-sm shadow-blue-500/5' 
+                    : 'hover:bg-bx-surface/20 border-transparent text-bx-text'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-sm flex-shrink-0">
+                    {c === 'Все' ? '📂' : '📁'}
+                  </span>
+                  <span className="text-xs truncate font-semibold">
+                    {c}
+                  </span>
+                </div>
+                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                  isSel ? 'bg-blue-500/20 text-blue-500' : 'bg-bx-surface-2 text-bx-muted'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </nav>
+      </aside>
+
+      {/* Правая часть: Сетка шаблонов */}
+      <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
+        {/* Заголовок и создание бланка */}
+        <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 shadow-sm mb-6 flex items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <h1 className="text-sm font-extrabold text-bx-text uppercase tracking-wider">Шаблоны документов</h1>
+            <p className="text-[11px] text-bx-muted">Автозаполнение реквизитов компаний и контрагентов в бланки Республики Узбекистан</p>
+          </div>
+          <button 
+            onClick={() => setCreatingTpl(true)} 
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold shadow-md transition-all cursor-pointer flex-shrink-0"
+          >
+            ＋ Создать бланк
+          </button>
+        </div>
+
+        {search.trim() && (
+          <p className="text-xs text-bx-muted mb-3 font-bold">Найдено бланков: {filtered.length}</p>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map(t => {
             const cc = catColor(t.category)
             const isCustom = t.id.startsWith('custom-')
             return (
-              <button key={t.id} onClick={() => handleSelectTemplate(t)}
-                className="text-left bg-bx-surface border border-bx-border hover:border-blue-500/40 rounded-2xl p-4.5 transition-all group flex flex-col justify-between min-h-[140px] hover:shadow-md cursor-pointer">
+              <button 
+                key={t.id} 
+                onClick={() => handleSelectTemplate(t)}
+                className="text-left bg-bx-surface border border-bx-border hover:border-blue-500/40 rounded-2xl p-4.5 transition-all group flex flex-col justify-between min-h-[140px] hover:shadow-md cursor-pointer"
+              >
                 <div className="space-y-2.5 w-full">
                   <div className="flex items-center justify-between gap-2">
                     <span className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${cc.bg} ${cc.text} border ${cc.border}`}>
@@ -635,7 +688,7 @@ export default function Templates() {
             <div className="col-span-full py-16 text-center text-bx-muted bg-bx-surface border border-bx-border border-dashed rounded-2xl">
               <span className="text-3xl">🔍</span>
               <p className="text-xs font-bold mt-2">Бланки не найдены</p>
-              <p className="text-[10px] mt-1">Попробуйте изменить поисковый запрос или категорию</p>
+              <p className="text-[10px] mt-1">Попробуйте изменить поисковый запрос или категорию в сайдбаре</p>
             </div>
           )}
         </div>

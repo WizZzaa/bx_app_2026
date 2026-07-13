@@ -238,7 +238,7 @@ export default function ArticlesView({ articles, activeId, onOpen }: Props) {
               <div className="space-y-4">
                 <div className="flex items-center justify-between border-b border-bx-border/40 pb-2">
                   <p className="text-xs text-bx-muted font-medium">
-                    Найдено публикаций: <span className="text-white font-bold">{filtered.length}</span>
+                    Найдено публикаций: <span className="text-bx-text font-bold">{filtered.length}</span>
                   </p>
                   <button 
                     onClick={() => { setSearch(''); setSelectedTag(null); }}
@@ -279,7 +279,7 @@ export default function ArticlesView({ articles, activeId, onOpen }: Props) {
             ) : (
               <>
                 <h3 className="text-xs font-semibold text-bx-muted uppercase tracking-wide mb-3">Категории</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5 mb-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-10">
                   {KB_CATEGORIES.slice(1).map(c => {
                     const meta = KB_CATEGORY_META[c]; 
                     const cc = catColor(c);
@@ -306,7 +306,7 @@ export default function ArticlesView({ articles, activeId, onOpen }: Props) {
                 </div>
 
                 <h3 className="text-xs font-semibold text-bx-muted uppercase tracking-wide mb-3">Популярное</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {popular.map((a, i) => {
                     const cc = catColor(a.category);
                     return (

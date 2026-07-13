@@ -13,6 +13,7 @@ function openLink(url: string) {
 export default function Services() {
   const [sections, setSections] = useState<ServiceSection[]>(() => getSectionsSync());
   const [search, setSearch] = useState('');
+  const [activeSecId, setActiveSecId] = useState<string>('all');
 
   // Подтягивание облачных сервисов
   useEffect(() => { 
@@ -21,6 +22,7 @@ export default function Services() {
 
   const q = search.toLowerCase().trim();
 
+  // Отфильтрованные секции и элементы
   const filteredSections = useMemo(() => {
     return sections
       .map(section => ({
@@ -32,50 +34,110 @@ export default function Services() {
           item.tag?.toLowerCase().includes(q)
         )
       }))
-      .filter(s => s.items.length > 0);
-  }, [sections, q]);
+      .filter(s => s.items.length > 0 && (activeSecId === 'all' || s.id === activeSecId));
+  }, [sections, q, activeSecId]);
 
   return (
-    <div className="flex-1 flex flex-col bg-bx-bg overflow-hidden z-10 font-sans text-bx-text">
+    <div className="flex-1 flex overflow-hidden bg-bx-bg text-bx-text font-sans">
       
-      {/* Шапка навигатора */}
-      <div className="flex-shrink-0 border-b border-bx-border px-6 py-4 flex items-center justify-between gap-4 flex-wrap bg-bx-surface shadow-sm">
-        <div className="space-y-0.5">
-          <h1 className="text-base font-extrabold text-bx-text tracking-wide uppercase flex items-center gap-2">
-            🌐 Полезные сервисы РУз
-          </h1>
-          <p className="text-[11px] text-bx-muted">
-            Быстрый интерактивный каталог официальных электронных ресурсов и госуслуг
-          </p>
+      {/* Левая панель: Категории сервисов и Поиск */}
+      <aside className="w-68 flex-shrink-0 border-r border-bx-border flex flex-col bg-bx-surface/10 backdrop-blur-md">
+        {/* Поиск */}
+        <div className="px-4 pt-4 pb-2 flex-shrink-0">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bx-muted">🔍</span>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Поиск по сервисам..."
+              className="w-full bg-bx-surface-2 text-bx-text placeholder-bx-muted pl-9 pr-3 py-2 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/50 text-xs transition-colors"
+            />
+          </div>
         </div>
 
-        {/* Ультра-минималистичный поиск */}
-        <div className="relative w-72">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-bx-muted text-xs">🔍</span>
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Поиск по названию или теме..."
-            className="w-full bg-bx-surface-2 text-bx-text placeholder-bx-muted text-xs pl-9 pr-8 py-2 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/40 transition-colors shadow-inner"
-          />
-          {search && (
+        {/* Заголовок разделов */}
+        <div className="px-3 pb-2 flex-shrink-0 border-b border-bx-border/40 flex items-center justify-between">
+          <span className="text-[10px] font-bold text-bx-muted uppercase tracking-wider">Категории услуг</span>
+          {search.trim() && (
             <button 
-              onClick={() => setSearch('')} 
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-bx-muted hover:text-bx-text text-sm font-bold"
+              onClick={() => setSearch('')}
+              className="text-[10px] text-blue-500 hover:underline font-semibold"
             >
-              ×
+              Сбросить
             </button>
           )}
         </div>
-      </div>
 
-      {/* Контентная область */}
+        {/* Список разделов */}
+        <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1.5 custom-scrollbar">
+          <button
+            onClick={() => { setActiveSecId('all'); }}
+            className={`w-full flex items-center justify-between px-2.5 py-2.5 rounded-xl text-left transition-all cursor-pointer border ${
+              activeSecId === 'all' 
+                ? 'bg-blue-600/10 border-blue-500/10 text-blue-500 font-extrabold shadow-sm shadow-blue-500/5' 
+                : 'hover:bg-bx-surface/20 border-transparent text-bx-text'
+            }`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="text-sm flex-shrink-0">🌐</span>
+              <span className="text-xs truncate font-semibold">Все разделы</span>
+            </div>
+            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+              activeSecId === 'all' ? 'bg-blue-500/20 text-blue-500' : 'bg-bx-surface-2 text-bx-muted'
+            }`}>
+              {sections.reduce((acc, s) => acc + s.items.length, 0)}
+            </span>
+          </button>
+
+          {sections.map(s => {
+            const count = s.items.length;
+            const isSel = activeSecId === s.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => { setActiveSecId(s.id); }}
+                className={`w-full flex items-center justify-between px-2.5 py-2.5 rounded-xl text-left transition-all cursor-pointer border ${
+                  isSel 
+                    ? 'bg-blue-600/10 border-blue-500/10 text-blue-500 font-extrabold shadow-sm shadow-blue-500/5' 
+                    : 'hover:bg-bx-surface/20 border-transparent text-bx-text'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-sm flex-shrink-0">📁</span>
+                  <span className="text-xs truncate font-semibold">{s.title}</span>
+                </div>
+                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                  isSel ? 'bg-blue-500/20 text-blue-500' : 'bg-bx-surface-2 text-bx-muted'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Правая панель: Сетка карточек сервисов */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8 custom-scrollbar">
+        {/* Шапка навигатора */}
+        <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 shadow-sm">
+          <h1 className="text-sm font-extrabold text-bx-text tracking-wide uppercase flex items-center gap-2">
+            🌐 Полезные сервисы РУз
+          </h1>
+          <p className="text-[11px] text-bx-muted mt-1 leading-relaxed">
+            Быстрый интерактивный каталог официальных электронных ресурсов и госуслуг Республики Узбекистан
+          </p>
+        </div>
+
         {filteredSections.map(section => (
           <section key={section.id} className="space-y-4">
-            <h2 className="text-xs font-black text-bx-text uppercase tracking-widest border-b border-bx-border pb-2">
+            <h2 className="text-xs font-black text-bx-text uppercase tracking-widest border-b border-bx-border pb-2 flex items-center gap-2">
+              <span className="w-1.5 h-3 bg-blue-500 rounded-full" />
               {section.title}
+              <span className="text-[10px] font-mono text-bx-muted bg-bx-surface-2 px-1.5 py-0.5 rounded-full">
+                {section.items.length}
+              </span>
             </h2>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -83,7 +145,7 @@ export default function Services() {
                 <button
                   key={idx}
                   onClick={() => openLink(item.url)}
-                  className="text-left bg-bx-surface hover:border-blue-500/30 border border-bx-border rounded-2xl p-4.5 flex flex-col justify-between min-h-[140px] transition-all hover:shadow-md group active:scale-[0.98] cursor-pointer"
+                  className="text-left bg-bx-surface hover:border-blue-500/40 border border-bx-border rounded-2xl p-4.5 flex flex-col justify-between min-h-[140px] transition-all hover:shadow-md group active:scale-[0.98] cursor-pointer"
                 >
                   <div className="space-y-3 w-full">
                     <div className="flex items-center justify-between gap-2">
@@ -119,12 +181,12 @@ export default function Services() {
           <div className="text-center py-20 bg-bx-surface border border-bx-border border-dashed rounded-2xl">
             <span className="text-3xl block mb-2">🔍</span>
             <p className="text-xs font-bold">Сервисов не найдено</p>
-            <p className="text-[10px] text-bx-muted mt-1">Попробуйте изменить поисковый запрос</p>
+            <p className="text-[10px] text-bx-muted mt-1">Попробуйте изменить поисковый запрос или выбрать другой раздел</p>
             <button 
-              onClick={() => setSearch('')}
+              onClick={() => { setSearch(''); setActiveSecId('all'); }}
               className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-bold mt-2 cursor-pointer"
             >
-              Сбросить поиск
+              Сбросить фильтры
             </button>
           </div>
         )}
