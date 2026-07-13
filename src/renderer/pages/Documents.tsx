@@ -34,7 +34,6 @@ export default function Documents() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize filters and target company from active context
   useEffect(() => {
     loadDocuments();
   }, [loadDocuments]);
@@ -101,7 +100,6 @@ export default function Documents() {
         .map(t => t.trim())
         .filter(t => t.length > 0);
 
-      // Rename file if custom name is provided
       let finalFile = selectedFile;
       if (customName.trim() && customName !== selectedFile.name) {
         finalFile = new File([selectedFile], customName.trim(), { type: selectedFile.type });
@@ -125,7 +123,7 @@ export default function Documents() {
   };
 
   const handleDelete = async (id: string, fileUrl: string) => {
-    if (!window.confirm('Вы уверены, что хотите удалить этот документ? Это действие необратимо.')) return;
+    if (!window.confirm('Вы уверены, что хотите удалить этот документ? Это действие нельзя отменить.')) return;
     try {
       await deleteDocument(id, fileUrl);
     } catch (err: any) {
@@ -137,17 +135,13 @@ export default function Documents() {
   const filteredDocs = useMemo(() => {
     const q = search.trim().toLowerCase();
     return documents.filter(doc => {
-      // 1. Text Search (title & tags)
       if (q) {
         const matchesName = doc.file_name.toLowerCase().includes(q);
         const matchesTags = (doc.tags ?? []).some(t => t.toLowerCase().includes(q));
         if (!matchesName && !matchesTags) return false;
       }
-      // 2. Company Filter
       if (filterCompany && doc.company_id !== filterCompany) return false;
-      // 3. Category Filter
       if (filterCategory && doc.category !== filterCategory) return false;
-
       return true;
     });
   }, [documents, search, filterCompany, filterCategory]);
@@ -158,40 +152,45 @@ export default function Documents() {
     return map;
   }, [companies]);
 
-  const inputCls = 'w-full bg-bx-surface-2 text-bx-text px-3 py-2 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-xs';
-  const labelCls = 'text-[10px] font-semibold text-bx-muted uppercase tracking-wider block mb-1';
+  const inputCls = 'w-full bg-bx-surface-2 text-bx-text px-3.5 py-2.5 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/50 text-xs font-semibold';
+  const labelCls = 'text-[10px] font-bold text-bx-muted uppercase tracking-wider block mb-1.5';
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 bg-bx-bg/50 p-6 overflow-y-auto">
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-white flex items-center gap-2">
-          📂 Документы клиента
-        </h1>
-        <p className="text-xs text-bx-muted mt-1">
-          Хранилище справок, актов, уставов и договоров с привязкой к организациям и тегами.
-        </p>
+    <div className="flex flex-col flex-1 min-h-0 bg-bx-bg p-6 overflow-y-auto font-sans text-bx-text">
+      
+      {/* Шапка */}
+      <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative">
+        <div className="space-y-0.5">
+          <h1 className="text-base font-extrabold text-bx-text uppercase tracking-wider flex items-center gap-2">
+            📂 Документы клиентов
+          </h1>
+          <p className="text-xs text-bx-muted">
+            Надежное облачное хранилище уставов, договоров, справок и актов с привязкой к фирмам
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 items-start">
-        {/* Left Column: Upload Form */}
-        <div className="bg-bx-surface/40 border border-bx-border-2 rounded-xl p-5 space-y-4 backdrop-blur-md">
-          <h2 className="text-xs font-bold text-white uppercase tracking-wider mb-2">📥 Загрузка документа</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 items-start">
+        
+        {/* Левая колонка: Форма загрузки */}
+        <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 space-y-4 shadow-sm">
+          <h2 className="text-xs font-black text-bx-text uppercase tracking-wider border-b border-bx-border pb-2">📥 Загрузить файл</h2>
 
-          <form onSubmit={handleUpload} className="space-y-3.5">
-            {/* Drag and Drop Zone */}
+          <form onSubmit={handleUpload} className="space-y-4">
+            
+            {/* Драг-н-дроп зона */}
             <div
               onDragEnter={handleDrag}
               onDragOver={handleDrag}
               onDragLeave={handleDrag}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+              className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all ${
                 isDragActive
                   ? 'border-blue-500 bg-blue-500/5'
                   : selectedFile
                   ? 'border-emerald-500/50 bg-emerald-500/5'
-                  : 'border-bx-border-2 hover:border-bx-muted hover:bg-bx-surface-2/20'
+                  : 'border-bx-border bg-bx-surface-2/40 hover:border-blue-500/35 hover:bg-bx-surface-2/60'
               }`}
             >
               <input
@@ -201,20 +200,20 @@ export default function Documents() {
                 className="hidden"
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
               />
-              <div className="text-2xl mb-1">{selectedFile ? '📄' : '📤'}</div>
-              <p className="text-[11px] text-bx-text font-medium truncate">
-                {selectedFile ? selectedFile.name : 'Перетащите файл или нажмите'}
+              <div className="text-3xl mb-2">{selectedFile ? '📄' : '📤'}</div>
+              <p className="text-xs text-bx-text font-bold truncate">
+                {selectedFile ? selectedFile.name : 'Выберите файл'}
               </p>
-              <p className="text-[9px] text-bx-muted mt-0.5">
-                {selectedFile ? `Размер: ${(selectedFile.size / 1024 / 1024).toFixed(2)} МБ` : 'PDF, Word, JPG, PNG до 10 МБ'}
+              <p className="text-[9px] text-bx-muted mt-1 leading-relaxed">
+                {selectedFile ? `Размер: ${(selectedFile.size / 1024 / 1024).toFixed(2)} МБ` : 'Перетащите сюда PDF, Word или изображение до 10 МБ'}
               </p>
             </div>
 
             {selectedFile && (
-              <>
+              <div className="space-y-3.5 pt-1">
                 {/* Custom Name */}
                 <div>
-                  <label className={labelCls}>Имя файла для сохранения</label>
+                  <label className={labelCls}>Название для сохранения *</label>
                   <input
                     type="text"
                     value={customName}
@@ -226,7 +225,7 @@ export default function Documents() {
 
                 {/* Company Select */}
                 <div>
-                  <label className={labelCls}>Организация</label>
+                  <label className={labelCls}>Привязать к организации *</label>
                   <select
                     value={targetCompany}
                     onChange={e => setTargetCompany(e.target.value)}
@@ -242,7 +241,7 @@ export default function Documents() {
 
                 {/* Category Select */}
                 <div>
-                  <label className={labelCls}>Категория документа</label>
+                  <label className={labelCls}>Категория бланка *</label>
                   <select
                     value={category}
                     onChange={e => setCategory(e.target.value)}
@@ -262,54 +261,57 @@ export default function Documents() {
                     type="text"
                     value={tagsInput}
                     onChange={e => setTagsInput(e.target.value)}
-                    placeholder="soliq, отчет, 2026"
+                    placeholder="договор, soliq, 2026"
                     className={inputCls}
                   />
                 </div>
 
-                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={uploading}
-                  className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white rounded-lg text-xs font-semibold transition-colors mt-2"
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-extrabold transition-all shadow-md cursor-pointer active:scale-95 mt-2"
                 >
-                  {uploading ? '⏳ Загрузка в облако...' : 'Загрузить'}
+                  {uploading ? '⏳ Сохранение в облако...' : 'Загрузить в хранилище'}
                 </button>
-              </>
+              </div>
             )}
           </form>
 
-          {/* Feedback messages */}
+          {/* Сообщения обратной связи */}
           {uploadError && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-[10px] text-red-400 leading-snug">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3.5 text-[10.5px] text-red-600 dark:text-red-400 font-semibold leading-relaxed">
               ⚠️ {uploadError}
             </div>
           )}
           {uploadSuccess && (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 text-[10px] text-emerald-400 leading-snug">
-              ✅ Документ успешно сохранен в облачном хранилище!
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5 text-[10.5px] text-emerald-700 dark:text-emerald-400 font-semibold leading-relaxed">
+              ✅ Файл успешно загружен и прикреплен к карточке организации!
             </div>
           )}
         </div>
 
-        {/* Right Column: Search, Filters & List */}
+        {/* Правая колонка: Поиск, Фильтры и Таблица */}
         <div className="flex flex-col space-y-4">
-          {/* Filter Toolbar */}
-          <div className="bg-bx-surface/30 border border-bx-border-2 rounded-xl p-4 flex flex-wrap gap-3 items-center backdrop-blur-md">
-            {/* Search Input */}
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="🔍 Поиск по имени или тегам..."
-              className="bg-bx-surface-2 text-bx-text text-xs px-3 py-1.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 flex-1 min-w-[200px]"
-            />
+          
+          {/* Фильтры */}
+          <div className="bg-bx-surface border border-bx-border rounded-2xl p-4 flex flex-wrap gap-3 items-center shadow-sm">
+            {/* Поиск */}
+            <div className="relative flex-1 min-w-[200px]">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-bx-muted text-xs">🔍</span>
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Поиск по названию или тегам..."
+                className="w-full bg-bx-surface-2 text-bx-text text-xs pl-9 pr-4 py-2 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/50"
+              />
+            </div>
 
-            {/* Company Filter */}
+            {/* Фильтр Организаций */}
             <select
               value={filterCompany}
               onChange={e => setFilterCompany(e.target.value)}
-              className="bg-bx-surface-2 text-bx-text text-xs px-2 py-1.5 rounded-lg border border-bx-border-2 focus:outline-none min-w-[150px]"
+              className="bg-bx-surface-2 text-bx-text text-xs px-3 py-2 rounded-xl border border-bx-border focus:outline-none min-w-[160px] font-semibold"
             >
               <option value="">🏢 Все организации</option>
               {companies.map(c => (
@@ -317,11 +319,11 @@ export default function Documents() {
               ))}
             </select>
 
-            {/* Category Filter */}
+            {/* Фильтр Категорий */}
             <select
               value={filterCategory}
               onChange={e => setFilterCategory(e.target.value)}
-              className="bg-bx-surface-2 text-bx-text text-xs px-2 py-1.5 rounded-lg border border-bx-border-2 focus:outline-none min-w-[130px]"
+              className="bg-bx-surface-2 text-bx-text text-xs px-3 py-2 rounded-xl border border-bx-border focus:outline-none min-w-[140px] font-semibold"
             >
               <option value="">📂 Все категории</option>
               {CATEGORIES.map(cat => (
@@ -330,76 +332,80 @@ export default function Documents() {
             </select>
           </div>
 
-          {/* Documents Grid / Table */}
-          <div className="bg-bx-surface/30 border border-bx-border-2 rounded-xl p-4 flex-1 backdrop-blur-md">
+          {/* Список документов */}
+          <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 shadow-sm">
             {loading ? (
-              <div className="text-center py-10 text-bx-muted text-xs">Загрузка списка документов...</div>
+              <div className="text-center py-14 text-bx-muted text-xs font-semibold">
+                <span className="animate-spin text-sm block mb-2">⏳</span>
+                Загрузка списка документов...
+              </div>
             ) : filteredDocs.length === 0 ? (
-              <div className="text-center py-12 text-bx-muted text-xs space-y-2">
-                <div>📭 Документы не найдены</div>
-                <p className="text-[10px] opacity-75">Попробуйте сбросить фильтры или загрузить новый документ.</p>
+              <div className="text-center py-16 text-bx-muted text-xs space-y-2">
+                <div className="text-3xl">📭</div>
+                <p className="font-bold text-bx-text">Документов не найдено</p>
+                <p className="text-[10px] opacity-75 max-w-xs mx-auto leading-relaxed">Выберите файл слева для привязки к активной организации или сбросьте параметры фильтрации.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-bx-border text-bx-muted uppercase text-[9px] tracking-wider font-bold">
-                      <th className="py-2.5 px-3">Имя документа</th>
-                      <th className="py-2.5 px-3">Организация</th>
-                      <th className="py-2.5 px-3">Категория</th>
-                      <th className="py-2.5 px-3">Теги</th>
-                      <th className="py-2.5 px-3">Добавлен</th>
-                      <th className="py-2.5 px-3 text-right">Действия</th>
+                    <tr className="border-b border-bx-border text-bx-muted uppercase text-[9px] tracking-wider font-black bg-bx-surface-2/40 rounded-xl">
+                      <th className="py-3 px-3.5 rounded-l-xl">Имя файла</th>
+                      <th className="py-3 px-3.5">Организация</th>
+                      <th className="py-3 px-3.5">Категория</th>
+                      <th className="py-3 px-3.5">Теги</th>
+                      <th className="py-3 px-3.5">Дата загрузки</th>
+                      <th className="py-3 px-3.5 text-right rounded-r-xl">Действия</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-bx-border-2">
+                  <tbody className="divide-y divide-bx-border/60">
                     {filteredDocs.map((doc: BxUserDocument) => (
-                      <tr key={doc.id} className="hover:bg-bx-surface-2/20 transition-colors group">
-                        {/* File Name */}
-                        <td className="py-3 px-3 font-medium text-white truncate max-w-[220px]">
-                          <span className="mr-1.5" title={doc.category}>📄</span>
+                      <tr key={doc.id} className="hover:bg-bx-surface-2/40 transition-colors group">
+                        {/* Имя */}
+                        <td className="py-4 px-3.5 font-bold text-bx-text truncate max-w-[200px]" title={doc.file_name}>
+                          <span className="mr-2">📄</span>
                           {doc.file_name}
                         </td>
-                        {/* Company */}
-                        <td className="py-3 px-3 text-bx-text truncate max-w-[150px]">
+                        {/* Компания */}
+                        <td className="py-4 px-3.5 text-bx-muted truncate max-w-[150px] font-semibold">
                           {companyMap.get(doc.company_id || '') || '—'}
                         </td>
-                        {/* Category */}
-                        <td className="py-3 px-3">
-                          <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-semibold text-[10px]">
+                        {/* Категория */}
+                        <td className="py-4 px-3.5">
+                          <span className="px-2.5 py-0.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 font-extrabold text-[10px] border border-blue-500/10">
                             {doc.category}
                           </span>
                         </td>
-                        {/* Tags */}
-                        <td className="py-3 px-3">
-                          <div className="flex flex-wrap gap-1 max-w-[200px]">
+                        {/* Теги */}
+                        <td className="py-4 px-3.5">
+                          <div className="flex flex-wrap gap-1 max-w-[160px]">
                             {doc.tags && doc.tags.length > 0 ? (
                               doc.tags.map(t => (
-                                <span key={t} className="px-1.5 py-0.5 rounded bg-bx-surface-2 text-bx-muted text-[9px]">
+                                <span key={t} className="px-1.5 py-0.5 rounded-md bg-bx-surface-2 border border-bx-border text-bx-muted text-[9px] font-bold">
                                   {t}
                                 </span>
                               ))
                             ) : (
-                              <span className="text-[10px] text-bx-muted/50">—</span>
+                              <span className="text-[10px] text-bx-muted/50 font-semibold">—</span>
                             )}
                           </div>
                         </td>
-                        {/* Created At */}
-                        <td className="py-3 px-3 text-bx-muted text-[10px]">
+                        {/* Дата */}
+                        <td className="py-4 px-3.5 text-bx-muted font-semibold text-[10px]">
                           {new Date(doc.created_at).toLocaleDateString('ru-RU')}
                         </td>
-                        {/* Actions */}
-                        <td className="py-3 px-3 text-right space-x-1.5 whitespace-nowrap">
+                        {/* Действия */}
+                        <td className="py-4 px-3.5 text-right whitespace-nowrap space-x-1.5">
                           <button
                             onClick={() => downloadDocument(doc.file_url, doc.file_name)}
-                            className="px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-all font-semibold text-[10px]"
+                            className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] transition-all cursor-pointer shadow-sm"
                             title="Скачать документ"
                           >
                             📥 Скачать
                           </button>
                           <button
                             onClick={() => handleDelete(doc.id, doc.file_url)}
-                            className="px-2 py-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all font-semibold text-[10px]"
+                            className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-600 hover:text-white transition-all font-bold text-[10px] border border-red-500/10 hover:border-red-500 cursor-pointer shadow-sm inline-flex items-center justify-center"
                             title="Удалить документ"
                           >
                             🗑️

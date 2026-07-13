@@ -126,28 +126,30 @@ const Calc = () => {
 
   return (
     <div className="flex-1 flex overflow-hidden z-10 font-sans bg-bx-bg text-bx-text">
-      {/* Левая панель — список калькуляторов (Лавандовый сайдбар) */}
-      <aside className="w-64 flex-shrink-0 border-r border-[#c5cbfa] dark:border-bx-border bg-[#e2e6fb] dark:bg-bx-surface flex flex-col overflow-y-auto">
+      {/* Левая панель — список калькуляторов */}
+      <aside className="w-64 flex-shrink-0 border-r border-bx-border bg-bx-surface-2/65 dark:bg-bx-surface flex flex-col z-10 overflow-hidden">
         <div className="px-5 pt-5 pb-3">
           <h1 className="text-xs font-black text-bx-text uppercase tracking-wider">Калькуляторы</h1>
           <p className="text-[10px] text-bx-muted mt-0.5">{TABS.length} готовых бухотчетов</p>
         </div>
+        
         <div className="px-4 pb-3 flex-shrink-0">
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bx-muted">
               <Icon name="search" className="w-3.5 h-3.5" />
             </span>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Быстрый поиск..."
-              className="w-full bg-bx-surface dark:bg-slate-950/50 text-bx-text placeholder-slate-500 dark:placeholder-slate-600 text-xs pl-9 pr-3 py-2 rounded-xl border border-[#c5cbfa] dark:border-white/10 focus:outline-none focus:border-blue-500/50 transition-colors"
+              placeholder="Поиск калькулятора..."
+              className="w-full bg-bx-surface text-bx-text placeholder-bx-muted text-xs pl-9 pr-3 py-2 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/50 shadow-inner transition-all font-semibold"
             />
           </div>
         </div>
-        <nav className="flex-1 px-3 pb-4 space-y-3">
+
+        <nav className="flex-1 px-2.5 pb-4 space-y-3.5 overflow-y-auto custom-scrollbar">
           {visibleTabs.length === 0 && (
-            <p className="text-xs text-bx-muted text-center py-4 italic">Ничего не найдено</p>
+            <p className="text-xs text-bx-muted text-center py-4 italic font-medium">Ничего не найдено</p>
           )}
           {GROUPS.map(g => {
             const items = visibleTabs.filter(t => t.group === g)
@@ -155,7 +157,7 @@ const Calc = () => {
             const a = ACCENT[g]
             return (
               <div key={g} className="flex flex-col gap-0.5">
-                <p className={`px-3 mb-1 text-[9px] uppercase tracking-[0.15em] font-extrabold ${a.text}`}>{g}</p>
+                <p className={`px-3 mb-1 text-[9px] uppercase tracking-[0.12em] font-extrabold ${a.text}`}>{g}</p>
                 <div className="space-y-0.5">
                   {items.map(t => {
                     const isTabActive = active === t.id;
@@ -165,16 +167,16 @@ const Calc = () => {
                         onClick={() => handleSetActive(t.id)}
                         className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-left transition-all border cursor-pointer ${
                           isTabActive
-                            ? 'bg-blue-600 text-white font-extrabold border-transparent shadow-sm'
-                            : 'text-slate-700 dark:text-slate-400 border-transparent hover:bg-white/40 dark:hover:bg-white/[0.02] hover:text-slate-900 dark:hover:text-slate-200 hover:translate-x-0.5'
+                            ? 'bg-blue-600 text-white font-extrabold border-transparent shadow-md'
+                            : 'text-bx-text border-transparent hover:bg-bx-surface/80 hover:text-slate-900 dark:hover:text-white hover:translate-x-0.5'
                         }`}
                       >
-                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isTabActive ? 'bg-white/20 text-white' : 'bg-bx-surface-2 dark:bg-slate-950/40 border border-[#c5cbfa] dark:border-white/5 text-slate-500 dark:text-slate-400'}`}>
+                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${isTabActive ? 'bg-white/20 text-white' : `${a.iconBg} border border-bx-border/50`}`}>
                           <Icon name={t.icon} className="w-4 h-4" />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className={`block text-xs font-bold leading-tight ${isTabActive ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{t.label}</span>
-                          <span className={`block text-[9.5px] mt-0.5 leading-snug truncate ${isTabActive ? 'text-white/85' : 'text-slate-600 dark:text-slate-500'}`}>{t.desc}</span>
+                          <span className={`block text-xs font-bold leading-tight ${isTabActive ? 'text-white' : 'text-bx-text'}`}>{t.label}</span>
+                          <span className={`block text-[9px] mt-0.5 leading-snug truncate ${isTabActive ? 'text-white/85' : 'text-bx-muted'}`}>{t.desc}</span>
                         </span>
                       </button>
                     );

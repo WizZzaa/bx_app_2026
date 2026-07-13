@@ -184,7 +184,7 @@ export default function Library() {
             onCategory={c => { setSelectedCategory(c); setActiveId(null); }}
           />
         ) : (
-          <div className="max-w-4xl mx-auto w-full px-6 py-6 space-y-6">
+          <div className="max-w-[1600px] w-full px-6 py-6 space-y-6">
             
             {/* Поисковый режим или отфильтрованные карточки */}
             {search.trim() ? (
@@ -201,7 +201,7 @@ export default function Library() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                   {filteredArticles.map(a => (
                     <button
                       key={a.id}
@@ -213,9 +213,9 @@ export default function Library() {
                           <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase bg-blue-500/10 text-blue-400 border border-blue-500/15">
                             {a.category}
                           </span>
-                          <span className="text-[10px] text-bx-muted font-mono">{readMinutes(a.body)} мин чтения</span>
+                          <span className="text-[10px] text-bx-muted font-mono">{readMinutes(a.body)} мин</span>
                         </div>
-                        <h4 className="text-xs sm:text-sm font-extrabold text-bx-text leading-snug group-hover:text-blue-400 transition-colors">
+                        <h4 className="text-xs font-extrabold text-bx-text leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                           {highlight(a.title, search)}
                         </h4>
                         <p className="text-xs text-bx-muted leading-relaxed line-clamp-2">
@@ -229,7 +229,7 @@ export default function Library() {
                     </button>
                   ))}
                   {filteredArticles.length === 0 && (
-                    <div className="col-span-2 text-center py-12">
+                    <div className="col-span-full text-center py-12">
                       <span className="text-3xl block mb-2">🔍</span>
                       <p className="text-xs text-bx-muted">Ничего не найдено. Попробуйте другой запрос.</p>
                     </div>
@@ -247,7 +247,7 @@ export default function Library() {
                     <span className="text-[10px] text-bx-muted font-mono">{filteredArticles.length} статей</span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredArticles.map(a => (
                       <button
                         key={a.id}
@@ -259,9 +259,9 @@ export default function Library() {
                             <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase bg-blue-500/10 text-blue-400 border border-blue-500/15">
                               {a.category}
                             </span>
-                            <span className="text-[10px] text-bx-muted font-mono">{readMinutes(a.body)} мин чтения</span>
+                            <span className="text-[10px] text-bx-muted font-mono">{readMinutes(a.body)} мин</span>
                           </div>
-                          <h4 className="text-xs sm:text-sm font-extrabold text-bx-text leading-snug group-hover:text-blue-400 transition-colors">
+                          <h4 className="text-xs font-extrabold text-bx-text leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                             {a.title}
                           </h4>
                           <p className="text-xs text-bx-muted leading-relaxed line-clamp-2">
@@ -281,7 +281,7 @@ export default function Library() {
                 {selectedCategory === 'Все' && popularArticles.length > 0 && (
                   <div>
                     <h3 className="text-xs font-extrabold text-bx-text uppercase tracking-wider mb-3">Популярное</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                       {popularArticles.map((a, i) => (
                         <button 
                           key={a.id} 

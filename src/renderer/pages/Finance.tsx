@@ -165,46 +165,57 @@ export default function Finance() {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-bx-bg">
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".txt" className="hidden" />
 
       {/* Шапка */}
-      <div className="flex-shrink-0 border-b border-bx-border px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex-shrink-0 border-b border-bx-border px-6 py-4 flex items-center justify-between gap-4 flex-wrap bg-bx-surface shadow-sm">
         <div className="flex items-center gap-3">
-          <h1 className="text-base font-semibold text-bx-text">Контроль оплат</h1>
-          <span className="text-[11px] text-bx-muted">who should pay us · who we should pay</span>
+          <h1 className="text-base font-extrabold text-bx-text uppercase tracking-wider">Контроль оплат</h1>
+          <span className="text-[11px] text-bx-muted bg-bx-surface-2 px-2.5 py-1 rounded-lg border border-bx-border font-semibold">Учет расчетов с контрагентами</span>
           {syncStatus && (
-            <span className="text-[10px] text-bx-muted bg-bx-surface-2 px-2 py-0.5 rounded-full">{syncStatus}</span>
+            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg font-bold border border-emerald-500/20">{syncStatus}</span>
           )}
         </div>
         <div className="flex gap-2">
-          <button onClick={handleImportClick} className="px-3 py-1.5 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-semibold rounded-lg bg-bx-surface hover:bg-bx-surface-2 transition-colors cursor-pointer shadow-sm">
-            Импорт выписки
+          <button onClick={handleImportClick} className="px-3.5 py-2 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-bold rounded-xl bg-bx-surface hover:bg-bx-surface-2 transition-all cursor-pointer shadow-sm">
+            📥 Импорт выписки
           </button>
-          <button onClick={handleExport} className="px-3 py-1.5 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-semibold rounded-lg bg-bx-surface hover:bg-bx-surface-2 transition-colors cursor-pointer shadow-sm">
-            Экспорт в Excel
+          <button onClick={handleExport} className="px-3.5 py-2 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-bold rounded-xl bg-bx-surface hover:bg-bx-surface-2 transition-all cursor-pointer shadow-sm">
+            📊 Экспорт в Excel
           </button>
-          <button onClick={() => openNew('income')} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg cursor-pointer shadow-sm">+ Нам должны</button>
-          <button onClick={() => openNew('expense')} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg cursor-pointer shadow-sm">+ Мы должны</button>
+          <button onClick={() => openNew('income')} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-xl cursor-pointer shadow-md transition-transform active:scale-[0.98]">+ Нам должны</button>
+          <button onClick={() => openNew('expense')} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold rounded-xl cursor-pointer shadow-md transition-transform active:scale-[0.98]">+ Мы должны</button>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-4xl mx-auto space-y-5">
+        <div className="max-w-4xl mx-auto space-y-6">
           {/* Итоги */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-emerald-500/10 dark:from-emerald-600/15 via-bx-surface/50 to-bx-bg border border-bx-border rounded-2xl px-5 py-4 shadow-sm">
-              <p className="text-[11px] text-emerald-700 dark:text-emerald-300/70 uppercase tracking-wider font-semibold">Нам должны · {receivable.length}</p>
-              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">{fmt(sums.receivable)} <span className="text-xs font-normal text-bx-muted">сум</span></p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="bg-bx-surface border border-bx-border border-l-[6px] border-l-emerald-500 rounded-2xl px-6 py-5 shadow-md flex flex-col justify-between min-h-[100px]">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400">Нам должны (Дебиторка)</p>
+                <p className="text-3xl font-black text-slate-900 dark:text-white mt-1 tabular-nums">
+                  {fmt(sums.receivable)} <span className="text-sm font-bold text-bx-muted uppercase">сум</span>
+                </p>
+              </div>
+              <p className="text-[10px] text-bx-muted font-bold mt-2">Активных долгов клиентов: {receivable.length}</p>
             </div>
-            <div className="bg-gradient-to-br from-red-500/10 dark:from-red-600/15 via-bx-surface/50 to-bx-bg border border-bx-border rounded-2xl px-5 py-4 shadow-sm">
-              <p className="text-[11px] text-red-700 dark:text-red-300/70 uppercase tracking-wider font-semibold">Мы должны · {payable.length}</p>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1 tabular-nums">{fmt(sums.payable)} <span className="text-xs font-normal text-bx-muted">сум</span></p>
+
+            <div className="bg-bx-surface border border-bx-border border-l-[6px] border-l-red-500 rounded-2xl px-6 py-5 shadow-md flex flex-col justify-between min-h-[100px]">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-red-700 dark:text-red-400">Мы должны (Кредиторка)</p>
+                <p className="text-3xl font-black text-slate-900 dark:text-white mt-1 tabular-nums">
+                  {fmt(sums.payable)} <span className="text-sm font-bold text-bx-muted uppercase">сум</span>
+                </p>
+              </div>
+              <p className="text-[10px] text-bx-muted font-bold mt-2">Наших неоплаченных счетов: {payable.length}</p>
             </div>
           </div>
 
           {/* Два списка */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <DebtList
               title="Нам должны" accent="emerald" items={receivable}
               onEdit={openEdit} onPaid={markPaid} onRemind={remind}
@@ -218,28 +229,30 @@ export default function Finance() {
           </div>
 
           {/* История оплат */}
-          <div className="bg-bx-surface border border-bx-border rounded-xl overflow-hidden">
+          <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden shadow-sm">
             <button onClick={() => setShowHistory(v => !v)}
-              className="w-full flex items-center justify-between px-5 py-3 hover:bg-bx-surface-2 transition-colors">
-              <h3 className="text-sm font-semibold text-bx-text">История оплат <span className="text-bx-muted font-normal">· последние {paid.length}</span></h3>
-              <span className="text-xs text-bx-muted">{showHistory ? 'свернуть ▴' : 'развернуть ▾'}</span>
+              className="w-full flex items-center justify-between px-6 py-4 hover:bg-bx-surface-2 transition-colors cursor-pointer text-left select-none">
+              <h3 className="text-xs font-black text-bx-text uppercase tracking-wider">📜 История последних оплат <span className="text-bx-muted font-bold ml-1.5">({paid.length})</span></h3>
+              <span className="text-xs text-bx-muted font-bold">{showHistory ? 'свернуть ▴' : 'развернуть ▾'}</span>
             </button>
             {showHistory && (
               paid.length === 0 ? (
-                <p className="text-xs text-bx-muted text-center py-8 border-t border-bx-border">Оплаченных операций пока нет.</p>
+                <div className="text-center py-10 border-t border-bx-border text-bx-muted text-xs italic">
+                  Оплаченных операций пока нет.
+                </div>
               ) : (
                 <div className="divide-y divide-bx-border/60 border-t border-bx-border">
                   {paid.map(t => (
-                    <button key={t.id} onClick={() => openEdit(t)} className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-bx-surface-2/40 transition-colors text-left cursor-pointer">
-                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${t.type === 'income' ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 dark:bg-red-500/15 text-red-600 dark:text-red-400'}`}>
+                    <button key={t.id} onClick={() => openEdit(t)} className="w-full flex items-center gap-4 px-6 py-3.5 hover:bg-bx-surface-2/40 transition-colors text-left cursor-pointer">
+                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs flex-shrink-0 font-bold ${t.type === 'income' ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 dark:bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/20'}`}>
                         {t.type === 'income' ? '↑' : '↓'}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-bx-text truncate">{t.counterparty || t.category || (t.type === 'income' ? 'Поступление' : 'Оплата')}</p>
-                        <p className="text-[10px] text-bx-muted">{new Date(t.date).toLocaleDateString('ru-RU')}{t.description ? ` · ${t.description}` : ''}</p>
+                        <p className="text-xs text-bx-text font-bold truncate">{t.counterparty || t.category || (t.type === 'income' ? 'Поступление' : 'Оплата')}</p>
+                        <p className="text-[10px] text-bx-muted font-medium mt-0.5">{new Date(t.date).toLocaleDateString('ru-RU')}{t.description ? ` · ${t.description}` : ''}</p>
                       </div>
-                      <span className={`text-sm font-semibold flex-shrink-0 tabular-nums ${t.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {t.type === 'income' ? '+' : '−'}{fmt(toUzs(t))}<span className="text-[10px] font-normal text-bx-muted"> сум</span>
+                      <span className={`text-sm font-black flex-shrink-0 tabular-nums ${t.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {t.type === 'income' ? '+' : '−'}{fmt(toUzs(t))}<span className="text-[10px] font-bold text-bx-muted"> сум</span>
                       </span>
                     </button>
                   ))}
@@ -248,8 +261,8 @@ export default function Finance() {
             )}
           </div>
 
-          <p className="text-[11px] text-bx-muted">
-            Контроль оплат — не бухгалтерский учёт: полный учёт ведите в 1С. Напоминания попадают в Планировщик.
+          <p className="text-[10.5px] text-bx-muted text-center py-4 leading-relaxed bg-bx-surface/50 border border-bx-border border-dashed rounded-xl px-4">
+            💡 <b>Контроль оплат</b> ориентирован исключительно на оперативную дебиторку и кредиторку. Полный бухгалтерский учет ведите в 1С. Любое напоминание можно в один клик продублировать в задачи Планировщика.
           </p>
         </div>
       </div>
@@ -289,30 +302,34 @@ function DebtList({ title, accent, items, onEdit, onPaid, onRemind, empty }: {
 }) {
   const today = todayISO()
   return (
-    <div className="bg-bx-surface border border-bx-border rounded-xl overflow-hidden">
-      <div className="px-5 py-3 border-b border-bx-border">
-        <h3 className="text-sm font-semibold text-bx-text">{title} <span className="text-bx-muted font-normal">· {items.length}</span></h3>
+    <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden shadow-sm">
+      <div className="px-6 py-4 border-b border-bx-border bg-bx-surface-2/40 flex justify-between items-center">
+        <h3 className="text-xs font-black text-bx-text uppercase tracking-wider">{title}</h3>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${accent === 'emerald' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>{items.length}</span>
       </div>
       {items.length === 0 ? (
-        <p className="text-xs text-bx-muted text-center py-8">{empty}</p>
+        <div className="text-center py-12 px-6 flex flex-col items-center justify-center">
+          <span className="text-2xl mb-2">🎉</span>
+          <p className="text-xs text-bx-muted font-bold italic">{empty}</p>
+        </div>
       ) : (
         <div className="divide-y divide-bx-border/60">
           {items.map(t => {
             const days = Math.round((new Date(today).getTime() - new Date(t.date).getTime()) / 86400000)
             return (
-              <div key={t.id} className="px-4 py-2.5 hover:bg-bx-surface-2/30 transition-colors group">
-                <div className="flex items-center gap-2.5">
+              <div key={t.id} className="px-6 py-3.5 hover:bg-bx-surface-2/30 transition-colors group">
+                <div className="flex items-center gap-3">
                   <button onClick={() => onEdit(t)} className="w-full text-left flex items-center justify-between cursor-pointer">
-                    <div>
-                      <p className="text-xs text-bx-text truncate">{t.counterparty || t.category || 'Без контрагента'}</p>
-                      <p className="text-[10px] text-bx-muted">
+                    <div className="min-w-0 flex-1 pr-2">
+                      <p className="text-xs text-bx-text font-bold truncate leading-snug">{t.counterparty || t.category || 'Без контрагента'}</p>
+                      <p className="text-[10px] text-bx-muted font-medium mt-0.5">
                         {new Date(t.date).toLocaleDateString('ru-RU')}
-                        {days > 0 && <span className={days > 30 ? ' text-red-600 dark:text-red-400 font-semibold' : ' text-amber-600 dark:text-amber-400 font-semibold'}> · висит {days} дн.</span>}
+                        {days > 0 && <span className={days > 30 ? ' text-red-600 dark:text-red-400 font-extrabold' : ' text-amber-600 dark:text-amber-500 font-bold'}> · висит {days} дн.</span>}
                       </p>
                     </div>
                   </button>
-                  <span className={`text-sm font-bold flex-shrink-0 tabular-nums ${accent === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {fmt(t.amount * ((t as BxTransaction).exchange_rate || 1))}<span className="text-[10px] font-normal text-bx-muted"> сум</span>
+                  <span className={`text-xs font-black flex-shrink-0 tabular-nums ${accent === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {fmt(t.amount * ((t as BxTransaction).exchange_rate || 1))}<span className="text-[9px] font-bold text-bx-muted"> сум</span>
                   </span>
                 </div>
                 <div className="flex gap-1.5 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
