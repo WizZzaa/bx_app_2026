@@ -239,7 +239,7 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
 
           return (
             <div key={col.id}
-              className={`flex flex-col flex-shrink-0 w-[270px] rounded-xl border bg-bx-surface/50 transition-colors ${isColDropActive ? 'border-blue-500/60 bg-blue-500/5' : isColReorderTarget ? 'border-cyan-500/60' : cc.border} ${dragColId === col.id ? 'opacity-40' : ''}`}
+              className={`flex flex-col flex-shrink-0 w-[270px] rounded-xl border bg-bx-surface-2/60 dark:bg-bx-surface/50 transition-colors ${isColDropActive ? 'border-blue-500/60 bg-blue-500/5' : isColReorderTarget ? 'border-cyan-500/60' : cc.border} ${dragColId === col.id ? 'opacity-40' : ''}`}
               onDragOver={e => onColumnDragOver(e, col, index)}
               onDrop={e => onColumnDrop(e, col, index)}
             >
@@ -311,7 +311,7 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
                         onDragEnd={onDragEnd}
                         onDragOver={e => onCardDragOver(e, col.id, card.id)}
                         onClick={() => onCardClick(card)}
-                        className={`group bg-bx-bg rounded-lg border border-l-[3px] p-2.5 cursor-pointer hover:border-blue-500/40 hover:shadow-md transition-all select-none ${
+                        className={`group bg-bx-surface rounded-lg border border-l-[3px] p-2.5 cursor-pointer hover:border-blue-500/40 hover:shadow-md transition-all select-none ${
                           dragId === card.id ? 'opacity-30' : ''
                         } ${dateInfo?.overdue ? 'border-red-500/40' : 'border-bx-border'} ${PRIORITY_BAR[card.priority]}`}
                       >
@@ -321,7 +321,7 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
                         {card.labels && card.labels.length > 0 && (
                           <div className="flex flex-wrap gap-1 mb-1.5">
                             {card.labels.map(l => (
-                              <span key={l} className="text-[9px] bg-blue-500/15 text-blue-300 px-1.5 py-0.5 rounded">{l}</span>
+                              <span key={l} className="text-[9px] bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded">{l}</span>
                             ))}
                           </div>
                         )}
@@ -340,7 +340,7 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
                         )}
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
                           {dateInfo && (
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${dateInfo.overdue ? 'bg-red-500/15 text-red-400' : 'bg-bx-surface-2 text-bx-muted'}`}>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${dateInfo.overdue ? 'bg-red-500/15 text-red-500 dark:text-red-400' : 'bg-bx-surface-2 text-bx-muted'}`}>
                               {dateInfo.overdue ? '⚠ ' : '📅 '}{dateInfo.text}
                             </span>
                           )}
@@ -437,7 +437,7 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
                                 onClick={() => toggleNewLabel(l)}
                                 className={`px-1.5 py-0.5 text-[10px] rounded transition-colors ${
                                   newLabels.includes(l)
-                                    ? 'bg-blue-600/30 text-blue-300 border border-blue-500/40'
+                                    ? 'bg-blue-500/15 dark:bg-blue-600/30 text-blue-600 dark:text-blue-300 border border-blue-500/40'
                                     : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text border border-transparent'
                                 }`}
                               >
