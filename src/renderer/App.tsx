@@ -7,6 +7,7 @@ import CommandPalette from './components/CommandPalette';
 import Dashboard from './pages/Dashboard';
 import Tools from './pages/Tools';
 import Library from './pages/library/Library';
+import ReferenceView from './pages/library/ReferenceView';
 import Calc from './pages/Calc';
 import Planner from './pages/Planner';
 import Templates from './pages/Templates';
@@ -113,9 +114,14 @@ export default function App() {
   return (
     <CompanyProvider>
       <PlanProvider>
-        <div className="flex flex-col h-screen w-screen overflow-hidden bg-bx-bg text-bx-text">
+        <div className="flex flex-col h-screen w-screen overflow-hidden bg-bx-bg text-bx-text relative">
+          
+          {/* Background Glow Spheres for Depth */}
+          <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none z-0" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-purple-500/5 blur-[150px] pointer-events-none z-0" />
+
           <Titlebar />
-          <div className="flex flex-1 min-h-0 overflow-hidden">
+          <div className="flex flex-1 min-h-0 overflow-hidden relative z-10">
             <TrayNavigateListener />
             <Sidebar />
             <div className="flex flex-col flex-1 overflow-hidden">
@@ -125,7 +131,7 @@ export default function App() {
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/tools" element={<Tools />} />
-                  <Route path="/reference" element={<Library initialZone="reference" />} />
+                  <Route path="/reference" element={<ReferenceView />} />
                   <Route path="/services" element={<Services />} />
                   <Route path="/news" element={<News />} />
                   <Route path="/knowledge" element={<Library />} />

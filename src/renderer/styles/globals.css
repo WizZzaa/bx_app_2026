@@ -14,9 +14,9 @@
   --bx-surface-2: #1a1f2b;   /* всплывающие меню */
   --bx-border: #1e2535;      /* основные границы */
   --bx-border-2: #2a3447;    /* инпуты/акцентные границы */
-  --bx-text: #e2e8f0;        /* основной текст */
-  --bx-muted: #94a3b8;       /* приглушённый текст (WCAG AA на тёмном фоне) */
-  --bx-accent: #2563eb;      /* акцент (blue-600) */
+  --bx-text: #f8fafc;        /* основной текст (светлее) */
+  --bx-muted: #cbd5e1;       /* приглушённый текст (сделали заметно светлее для читаемости) */
+  --bx-accent: #3b82f6;      /* акцент (blue-500) */
   --bx-radius: 0.75rem;
 
   --bx-bg-rgb: 15 17 23;
@@ -24,29 +24,29 @@
   --bx-surface-2-rgb: 26 31 43;
   --bx-border-rgb: 30 37 53;
   --bx-border-2-rgb: 42 52 71;
-  --bx-text-rgb: 226 232 240;
-  --bx-muted-rgb: 148 163 184;
-  --bx-accent-rgb: 37 99 235;
+  --bx-text-rgb: 248 250 252;
+  --bx-muted-rgb: 203 213 225;
+  --bx-accent-rgb: 59 130 246;
 }
 
 .light {
   color-scheme: light;
-  --bx-bg: #f1f5f9;          /* фон приложения (мягкий серо-голубой) */
-  --bx-surface: #ffffff;     /* карточки/панели */
-  --bx-surface-2: #eef2f7;   /* всплывающие меню/инпуты/hover */
-  --bx-border: #e2e8f0;      /* основные границы */
-  --bx-border-2: #cbd5e1;    /* инпуты/акцентные границы */
-  --bx-text: #0f172a;        /* основной текст */
-  --bx-muted: #5b6675;       /* приглушённый текст (чуть темнее для контраста) */
-  --bx-accent: #2563eb;      /* акцент (blue-600) */
+  --bx-bg: #f8fafc;          /* благородный Slate-50 */
+  --bx-surface: #ffffff;     /* белые карточки */
+  --bx-surface-2: #f1f5f9;   /* Slate-100 для инпутов и ховеров */
+  --bx-border: #e2e8f0;      /* Slate-200 */
+  --bx-border-2: #cbd5e1;    /* Slate-300 */
+  --bx-text: #0f172a;        /* глубокий угольный Slate-900 */
+  --bx-muted: #475569;       /* Slate-600 — отличный контраст для светлой темы */
+  --bx-accent: #2563eb;      /* глубокий синий акцент */
 
-  --bx-bg-rgb: 241 245 249;
+  --bx-bg-rgb: 248 250 252;
   --bx-surface-rgb: 255 255 255;
-  --bx-surface-2-rgb: 238 242 247;
+  --bx-surface-2-rgb: 241 245 249;
   --bx-border-rgb: 226 232 240;
   --bx-border-2-rgb: 203 213 225;
   --bx-text-rgb: 15 23 42;
-  --bx-muted-rgb: 91 102 117;
+  --bx-muted-rgb: 71 85 105;
   --bx-accent-rgb: 37 99 235;
 }
 

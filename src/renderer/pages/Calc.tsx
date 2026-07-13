@@ -30,7 +30,7 @@ const TABS: Tab[] = [
   // Налоги
   { id: 'vat',      icon: 'percent',  label: 'НДС',                group: 'Налоги', desc: 'Начислить или выделить 12%', component: <VatCalc /> },
   { id: 'ndfl',     icon: 'user',     label: 'НДФЛ',               group: 'Налоги', desc: 'Подоходный 12%, льгота БРВ', component: <NdflCalc /> },
-  { id: 'regime',   icon: 'trending', label: 'Оборот vs ОСН',      group: 'Налоги', desc: 'Какой режим выгоднее', component: <RegimeCompareCalc /> },
+  { id: 'regime',   icon: 'trending', label: 'Оборот vs ОСН',      group: 'Налоги', desc: 'Какой regime выгоднее', component: <RegimeCompareCalc /> },
   { id: 'penalty',  icon: 'clock',    label: 'Пени',               group: 'Налоги', desc: '0.033%/день или ставка ЦБ', component: <PenaltyCalc /> },
   { id: 'dividend', icon: 'finance',  label: 'Дивиденды',          group: 'Налоги', desc: 'Резидент 5% / нерезидент', component: <DividendCalc /> },
   { id: 'taxcalc',  icon: 'reference',label: 'Налоги по данным',   group: 'Налоги', desc: 'Оборот, НДС, НДФЛ из Финансов', component: <TaxCalculator /> },
@@ -48,9 +48,9 @@ const TABS: Tab[] = [
 const GROUPS = ['Налоги', 'Зарплата и кадры', 'Прочее']
 
 const ACCENT: Record<string, { text: string; chipBg: string; activeBg: string; iconBg: string; grad: string }> = {
-  'Налоги':           { text: 'text-blue-400',  chipBg: 'bg-blue-600/15 border-blue-500/30',  activeBg: 'bg-blue-600/20',  iconBg: 'bg-blue-600/20 text-blue-400',   grad: 'from-blue-600/15' },
-  'Зарплата и кадры': { text: 'text-amber-400', chipBg: 'bg-amber-500/15 border-amber-500/30', activeBg: 'bg-amber-500/15', iconBg: 'bg-amber-500/20 text-amber-400', grad: 'from-amber-500/15' },
-  'Прочее':           { text: 'text-cyan-400',  chipBg: 'bg-cyan-500/15 border-cyan-500/30',  activeBg: 'bg-cyan-500/15',  iconBg: 'bg-cyan-500/20 text-cyan-400',   grad: 'from-cyan-500/15' },
+  'Налоги':           { text: 'text-blue-400',  chipBg: 'bg-blue-600/10 border-blue-500/20',  activeBg: 'bg-blue-600/10 border-blue-500/20',  iconBg: 'bg-blue-500/10 text-blue-400',   grad: 'from-blue-600/5' },
+  'Зарплата и кадры': { text: 'text-amber-400', chipBg: 'bg-amber-500/10 border-amber-500/20', activeBg: 'bg-amber-500/10 border-amber-500/20', iconBg: 'bg-amber-500/10 text-amber-400', grad: 'from-amber-500/5' },
+  'Прочее':           { text: 'text-cyan-400',  chipBg: 'bg-cyan-500/10 border-cyan-500/20',  activeBg: 'bg-cyan-500/10 border-cyan-500/20',  iconBg: 'bg-cyan-500/10 text-cyan-400',   grad: 'from-cyan-500/5' },
 }
 
 const LAST_CALC_KEY = 'bx_calc_last'
@@ -125,52 +125,60 @@ const Calc = () => {
     : TABS
 
   return (
-    <div className="flex-1 flex overflow-hidden">
-      {/* Левая панель — список калькуляторов */}
-      <aside className="w-60 flex-shrink-0 border-r border-bx-border flex flex-col overflow-y-auto">
-        <div className="px-4 pt-5 pb-3">
-          <h1 className="text-base font-semibold text-bx-text">Калькуляторы</h1>
-          <p className="text-xs text-bx-muted mt-0.5">{TABS.length} расчётов для бухгалтера</p>
+    <div className="flex-1 flex overflow-hidden z-10 font-sans">
+      {/* Левая панель — список калькуляторов (Glassmorphism) */}
+      <aside className="w-64 flex-shrink-0 border-r border-white/5 bg-slate-950/20 backdrop-blur-xl flex flex-col overflow-y-auto">
+        <div className="px-5 pt-5 pb-3">
+          <h1 className="text-xs font-black text-white uppercase tracking-wider">Калькуляторы</h1>
+          <p className="text-[10px] text-slate-500 mt-0.5">{TABS.length} готовых бухотчетов</p>
         </div>
-        <div className="px-3 pb-2">
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Найти калькулятор..."
-            className="w-full bg-bx-bg text-bx-text placeholder-slate-600 text-xs px-3 py-2 rounded-lg border border-bx-border focus:outline-none focus:border-blue-500/50"
-          />
+        <div className="px-4 pb-3 flex-shrink-0">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+              <Icon name="search" className="w-3.5 h-3.5" />
+            </span>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Быстрый поиск..."
+              className="w-full bg-slate-950/50 text-white placeholder-slate-600 text-xs pl-9 pr-3 py-2 rounded-xl border border-white/10 focus:outline-none focus:border-blue-500/50 transition-colors"
+            />
+          </div>
         </div>
-        <nav className="flex-1 px-2 pb-4">
+        <nav className="flex-1 px-3 pb-4 space-y-3">
           {visibleTabs.length === 0 && (
-            <p className="text-xs text-bx-muted text-center py-4">Ничего не найдено</p>
+            <p className="text-xs text-slate-500 text-center py-4 italic">Ничего не найдено</p>
           )}
           {GROUPS.map(g => {
             const items = visibleTabs.filter(t => t.group === g)
             if (items.length === 0) return null
             const a = ACCENT[g]
             return (
-              <div key={g} className="mb-2">
-                <p className={`px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest font-semibold ${a.text} opacity-70`}>{g}</p>
+              <div key={g} className="flex flex-col gap-0.5">
+                <p className={`px-3 mb-1 text-[9px] uppercase tracking-[0.15em] font-extrabold ${a.text}`}>{g}</p>
                 <div className="space-y-0.5">
-                  {items.map(t => (
-                    <button
-                      key={t.id}
-                      onClick={() => handleSetActive(t.id)}
-                      className={`w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
-                        active === t.id
-                          ? `${a.activeBg} ${a.text}`
-                          : 'text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text'
-                      }`}
-                    >
-                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${active === t.id ? a.iconBg : 'bg-bx-surface-2 text-bx-muted'}`}>
-                        <Icon name={t.icon} className="w-4 h-4" />
-                      </span>
-                      <span className="min-w-0">
-                        <span className={`block text-sm leading-tight ${active === t.id ? 'font-medium' : ''}`}>{t.label}</span>
-                        <span className={`block text-[10px] mt-0.5 leading-tight ${active === t.id ? 'opacity-70' : 'text-bx-muted'}`}>{t.desc}</span>
-                      </span>
-                    </button>
-                  ))}
+                  {items.map(t => {
+                    const isTabActive = active === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => handleSetActive(t.id)}
+                        className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-left transition-all border ${
+                          isTabActive
+                            ? `${a.activeBg} ${a.text}`
+                            : 'text-slate-400 border-transparent hover:bg-white/[0.02] hover:text-slate-200 hover:translate-x-0.5'
+                        }`}
+                      >
+                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isTabActive ? a.iconBg : 'bg-slate-950/40 border border-white/5 text-slate-500'}`}>
+                          <Icon name={t.icon} className="w-4 h-4" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className={`block text-xs font-bold leading-tight ${isTabActive ? 'text-white' : ''}`}>{t.label}</span>
+                          <span className={`block text-[9.5px] mt-0.5 leading-snug truncate ${isTabActive ? 'opacity-85' : 'text-slate-500'}`}>{t.desc}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )
@@ -179,43 +187,43 @@ const Calc = () => {
       </aside>
 
       {/* Правая панель — активный калькулятор */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-slate-950/20 backdrop-blur-3xl">
         <div className="max-w-2xl mx-auto px-6 py-6">
           {/* Hero-шапка с акцентом группы */}
-          <div className={`rounded-2xl bg-gradient-to-br ${ACCENT[tab.group].grad} via-transparent to-transparent border border-bx-border px-5 py-4 mb-4`}>
-            <div className="flex items-center justify-between gap-3.5">
+          <div className={`rounded-3xl bg-gradient-to-br ${ACCENT[tab.group].grad} via-transparent to-transparent border border-white/5 px-5 py-4.5 mb-5`}>
+            <div className="flex items-center justify-between gap-3.5 flex-wrap">
               <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                <span className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${ACCENT[tab.group].iconBg}`}>
-                  <Icon name={tab.icon} className="w-6 h-6" />
+                <span className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${ACCENT[tab.group].iconBg} shadow-inner`}>
+                  <Icon name={tab.icon} className="w-5 h-5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold text-bx-text leading-tight">{tab.label}</h2>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-semibold`}>
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h2 className="text-base font-extrabold text-white leading-tight">{tab.label}</h2>
+                    <span className={`text-[9px] px-2 py-0.5 rounded-full border ${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-bold uppercase`}>
                       {tab.group}
                     </span>
                   </div>
-                  <p className="text-xs text-bx-muted mt-0.5">{tab.desc} · законодательство РУз</p>
+                  <p className="text-[11px] text-slate-400 mt-1">{tab.desc} · Законодательство РУз</p>
                 </div>
               </div>
               <button
                 onClick={handleExportPDF}
-                className="px-3 py-1.5 bg-bx-surface border border-bx-border hover:bg-bx-surface-2 text-bx-text text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors shadow-sm"
+                className="px-3.5 py-2 bg-white/[0.02] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all shadow-sm"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-slate-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                 PDF
               </button>
             </div>
             {/* Быстрое переключение внутри группы */}
-            <div className="flex flex-wrap gap-1.5 mt-3.5">
+            <div className="flex flex-wrap gap-1.5 mt-4">
               {TABS.filter(t => t.group === tab.group).map(t => (
                 <button
                   key={t.id}
                   onClick={() => handleSetActive(t.id)}
-                  className={`px-2.5 py-1 text-[11px] rounded-lg border transition-colors ${
+                  className={`px-2.5 py-1 text-[11px] rounded-lg border transition-all ${
                     t.id === tab.id
-                      ? `${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-medium`
-                      : 'border-transparent text-bx-muted hover:text-bx-text hover:bg-bx-surface-2'
+                      ? `${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-bold`
+                      : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/[0.02]'
                   }`}
                 >
                   {t.label}
@@ -225,7 +233,7 @@ const Calc = () => {
           </div>
 
           {/* Верстак калькулятора */}
-          <div id="calc-content-to-export" className="rounded-2xl bg-bx-surface border border-bx-border p-5">
+          <div id="calc-content-to-export" className="rounded-3xl bg-slate-900/10 backdrop-blur-md border border-white/5 p-5">
             {tab.component}
           </div>
 
@@ -264,37 +272,37 @@ const CalcHistoryPanel = () => {
 
   return (
     <div className="mt-8 pb-6">
-      <div className="flex items-center justify-between mb-2.5">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="w-6 h-6 rounded-lg bg-bx-surface-2 text-bx-muted flex items-center justify-center">
+          <span className="w-7 h-7 rounded-xl bg-slate-900/40 border border-white/5 text-slate-500 flex items-center justify-center shadow-inner">
             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3"/>
               <path d="M8 5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
             </svg>
           </span>
-          <p className="text-sm font-semibold text-bx-text">Недавние расчёты</p>
+          <p className="text-xs font-bold text-white uppercase tracking-wider">Недавние расчёты</p>
         </div>
-        <button onClick={handleClearHistory} className="text-[11px] text-bx-muted hover:text-red-400 transition-colors">Очистить</button>
+        <button onClick={handleClearHistory} className="text-[11px] text-slate-500 hover:text-red-400 transition-colors">Очистить</button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {items.slice(0, 8).map(e => (
           <button
             key={e.ts}
             onClick={() => handleCopyEntry(e)}
             title={`${e.text}\n\nКлик — скопировать снова`}
-            className="group px-3.5 py-2.5 bg-bx-surface hover:bg-bx-surface-2 border border-bx-border hover:border-blue-500/40 rounded-xl text-left transition-all"
+            className="group px-3.5 py-3 bg-slate-900/10 hover:bg-slate-900/40 border border-white/5 hover:border-blue-500/20 rounded-2xl text-left transition-all duration-300 active:scale-[0.98] shadow-sm"
           >
-            <div className="flex items-center justify-between gap-2 mb-0.5">
-              <span className="text-[11px] text-bx-muted truncate">{e.title}</span>
-              <span className="text-[10px] text-bx-muted flex-shrink-0">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">{e.title}</span>
+              <span className="text-[10px] text-slate-500 font-mono flex-shrink-0">
                 {new Date(e.ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className={`text-sm font-semibold tabular-nums truncate ${copiedTs === e.ts ? 'text-emerald-400' : 'text-bx-text'}`}>
+            <div className="flex items-center justify-between gap-2 mt-0.5">
+              <span className={`text-xs font-bold tabular-nums truncate ${copiedTs === e.ts ? 'text-emerald-400' : 'text-white'}`}>
                 {copiedTs === e.ts ? 'Скопировано ✓' : e.main}
               </span>
-              <svg className="w-3.5 h-3.5 text-bx-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" viewBox="0 0 16 16" fill="none">
+              <svg className="w-3.5 h-3.5 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" viewBox="0 0 16 16" fill="none">
                 <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
                 <path d="M11 5V4a1.5 1.5 0 0 0-1.5-1.5h-5A1.5 1.5 0 0 0 3 4v5A1.5 1.5 0 0 0 4.5 10.5H5" stroke="currentColor" strokeWidth="1.3"/>
               </svg>
