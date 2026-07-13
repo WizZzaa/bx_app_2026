@@ -21,9 +21,38 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
   const [notifOpen, setNotifOpen] = useState(false)
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications()
   
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem('bx_theme') as 'dark' | 'light') || 'dark')
+  
   const navigate = useNavigate()
   const boxRef = useRef<HTMLDivElement>(null)
   const notifBoxRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const t = (localStorage.getItem('bx_theme') as 'dark' | 'light') || 'dark'
+      setTheme(t)
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
+  const handleToggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(nextTheme)
+    localStorage.setItem('bx_theme', nextTheme)
+    if (nextTheme === 'light') {
+      document.documentElement.classList.add('light')
+    } else {
+      document.documentElement.classList.remove('light')
+    }
+    window.dispatchEvent(new Event('storage'))
+  }
+
+  const handleOpenNotes = () => {
+    localStorage.setItem('bx_tools_last', 'notes')
+    window.dispatchEvent(new Event('storage'))
+    navigate('/tools')
+  }
 
   useEffect(() => { buildIndex().then(setItems); }, [])
 
@@ -169,6 +198,28 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
         </div>
 
         <CompanySwitcher />
+
+        {/* Быстрые заметки */}
+        <button
+          onClick={handleOpenNotes}
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted transition-colors cursor-pointer"
+          title="Быстрые заметки"
+        >
+          <Icon name="note" className="w-4 h-4" />
+        </button>
+
+        {/* Переключатель темы */}
+        <button
+          onClick={handleToggleTheme}
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted transition-colors cursor-pointer"
+          title={theme === 'dark' ? 'Светлая тема' : 'Темная тема'}
+        >
+          {theme === 'dark' ? (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          ) : (
+            <Icon name="sun" className="w-4 h-4" />
+          )}
+        </button>
 
         {/* Центр Уведомлений */}
         <div className="relative" ref={notifBoxRef}>
