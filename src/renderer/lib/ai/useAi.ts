@@ -179,7 +179,7 @@ export function useAi() {
     const kbContext = retrieveArticles(trimmed, 3)
     const localDataContext = await buildLocalDataContext(trimmed)
     const today = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
-    const dateNote = `Сегодняшняя дата: ${today}. Отвечай исходя из неё (текущий год, действующие сроки и дедлайны).`
+    const dateNote = `Сегодняшняя дата: ${today}. В Узбекистане в 2026 году действуют следующие базовые показатели: МРОТ = 1 271 000 сум (до 31 августа) и 1 360 000 сум (с 1 сентября); БРВ = 412 000 сум (до 31 августа) и 440 000 сум (с 1 сентября). Налог для самозанятых составляет 1% с оборота с первого сума. Отвечай строго исходя из законов и ставок на 2026 год.`
     const fullContext = `${dateNote}\n\n--- Справочные статьи ---\n${kbContext}\n\n--- Данные из локальной БД предприятия ---\n${localDataContext || 'Нет связанных данных в БД'}`
     // Edge-функция ai-consultant принимает context массивом статей {title, body}
     const contextArticles = [
@@ -193,11 +193,11 @@ export function useAi() {
       const host = localStorage.getItem('bx_ollama_host') || 'http://localhost:11434'
       const model = localStorage.getItem('bx_ollama_model') || 'deepseek-r1:1.5b'
 
-      const systemPrompt = `Ты профессиональный бухгалтерский AI-консультант "Business BX" по налогам, учету и кадрам в Республике Узбекистан.
+      const systemPrompt = `Ты профессиональный бухгалтерский AI-консультант "Business BX" по налогам, учету и кадрам в Республике Узбекистан на 2026 год.
 Отвечай строго на русском языке. Будь точен и профессионален.
 Используй следующую справочную информацию для ответа:
 ${fullContext}
-Сверяйся с Налоговым Кодексом РУз и Трудовым Кодексом РУз.`
+ВАЖНО: В Узбекистане в 2026 году МРОТ равен 1 271 000 сум (до 31 августа) и 1 360 000 сум (с 1 сентября). БРВ равен 412 000 сум (до 31 августа) and 440 000 сум (с 1 сентября). Сверяйся с действующим Налоговым Кодексом РУз на 2026 год (включая налог 1% с оборота для самозанятых с первого сума) и Трудовым Кодексом РУз.`
 
       try {
         const payloadMessages = [

@@ -12,6 +12,9 @@ import Icon from '../lib/ui/Icon';
 import SmartCalendar from '../components/dashboard/SmartCalendar';
 import { todayISO } from '../lib/dates';
 import { loadEcpKeys } from '../lib/ecpStorage';
+import { useToast } from '../lib/ui/ToastContext';
+import { createCardFromEvent } from './planner/useCards';
+import { supabase } from '../lib/db/supabase';
 
 async function getExpiringEcpCount(): Promise<number> {
   try {
@@ -31,6 +34,7 @@ function greeting(): string {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const toast = useToast();
   const today = new Date().toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const todayStr = todayISO();
   const { active, companies } = useCompany();
@@ -38,6 +42,40 @@ export default function Dashboard() {
   const { transactions } = useTransactions(active?.id ?? null);
   const [ecpExpiring, setEcpExpiring] = useState(0);
   useEffect(() => { getExpiringEcpCount().then(setEcpExpiring); }, []);
+
+  const [addedEventIds, setAddedEventIds] = useState<Set<string>>(new Set());
+
+  const loadAddedEventIds = async () => {
+    try {
+      const { data } = await supabase
+        .from('bx_cards')
+        .select('event_id')
+        .not('event_id', 'is', null);
+      if (data) {
+        setAddedEventIds(new Set(data.map((c: any) => c.event_id).filter(Boolean)));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    loadAddedEventIds();
+  }, [events]);
+
+  const handleAddToPlanner = async (event: any) => {
+    const card = await createCardFromEvent(event, active?.id ?? null);
+    if (card) {
+      toast.success(`Задача «${event.title}» добавлена в планировщик!`);
+      setAddedEventIds(prev => {
+        const next = new Set(prev);
+        next.add(event.id);
+        return next;
+      });
+    } else {
+      toast.error('Не удалось создать задачу. Убедитесь, что у вас создана хотя бы одна Kanban-доска.');
+    }
+  };
 
   const [showWidgetConfig, setShowWidgetConfig] = useState(false)
   const [widgetVisibility, setWidgetVisibility] = useState({
@@ -281,10 +319,24 @@ export default function Dashboard() {
                     <p className="text-xs text-bx-text truncate">{e.title}</p>
                     <p className="text-[10px] text-bx-muted">{daysLeft === 0 ? 'сегодня' : `через ${daysLeft} д.`}</p>
                   </div>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0
-                    ${e.kind === 'payment' ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/15 text-blue-400'}`}>
-                    {e.kind === 'payment' ? 'оплата' : 'отчёт'}
-                  </span>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full
+                      ${e.kind === 'payment' ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/15 text-blue-400'}`}>
+                      {e.kind === 'payment' ? 'оплата' : 'отчёт'}
+                    </span>
+                    {addedEventIds.has(e.id) ? (
+                      <span className="text-[9px] text-emerald-400 font-semibold flex items-center gap-0.5 select-none">
+                        ✓ в задачах
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleAddToPlanner(e)}
+                        className="text-[9px] text-blue-400 hover:text-blue-300 font-semibold cursor-pointer px-1 py-0.5 rounded bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+                      >
+                        + в задачи
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}

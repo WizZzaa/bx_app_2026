@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/db/supabase';
 import type { BoardColumn } from './useBoards';
 import { emitPlannerReload, subscribePlannerReload } from './plannerBus';
+import type { BxEvent } from './useEvents';
 
 export interface ChecklistItem {
   id: string;
@@ -334,4 +335,83 @@ export async function toggleCardDone(cardId: string, boardId: string, makeDone: 
   }
   syncLinkedEventStatus(cardId, targetCol.id, boardId).catch((err: any): void => console.warn(err));
   return targetCol.id;
+}
+
+export async function createCardFromEvent(event: BxEvent, companyId: string | null): Promise<BxCard | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  let board: any = null;
+
+  if (companyId) {
+    const { data: companyBoards } = await supabase
+      .from('bx_boards')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('position', { ascending: true });
+    if (companyBoards && companyBoards.length > 0) {
+      board = companyBoards.find(b => b.is_default) || companyBoards[0];
+    }
+  }
+
+  if (!board) {
+    const { data: globalBoards } = await supabase
+      .from('bx_boards')
+      .select('*')
+      .is('company_id', null)
+      .order('position', { ascending: true });
+    if (globalBoards && globalBoards.length > 0) {
+      board = globalBoards.find(b => b.is_default) || globalBoards[0];
+    }
+  }
+
+  if (!board) {
+    return null;
+  }
+
+  const columns = board.columns as any[];
+  if (!columns || columns.length === 0) return null;
+  const firstColId = columns[0].id;
+
+  const { data: existingCards } = await supabase
+    .from('bx_cards')
+    .select('position')
+    .eq('board_id', board.id)
+    .eq('column_id', firstColId);
+
+  const maxPos = (existingCards ?? []).reduce((m, c) => Math.max(m, c.position), 0);
+
+  const row = {
+    user_id: user.id,
+    board_id: board.id,
+    column_id: firstColId,
+    title: event.title,
+    description: event.note || `Дедлайн: ${event.due_date || event.date}. Источник: Налоговый календарь Узбекистана.`,
+    priority: event.priority || 'normal',
+    labels: event.tags || [],
+    checklist: [],
+    due_date: event.due_date || event.date,
+    position: maxPos + 1,
+    event_id: event.id
+  };
+
+  const { data: newCard, error } = await supabase
+    .from('bx_cards')
+    .insert(row)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Failed to create card from event:', error);
+    return null;
+  }
+
+  // Обновим статус события на todo, так как к нему привязана активная карточка
+  await supabase
+    .from('bx_events')
+    .update({ status: 'todo' })
+    .eq('id', event.id);
+
+  emitPlannerReload();
+  return newCard as BxCard;
 }

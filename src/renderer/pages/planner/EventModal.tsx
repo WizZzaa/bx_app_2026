@@ -8,6 +8,7 @@ interface Props {
   defaultType?: EventType;
   onSave: (e: NewEvent) => void;
   onDelete?: () => void;
+  onConvertToCard?: () => void;
   onClose: () => void;
 }
 
@@ -43,7 +44,7 @@ const RECURRENCE_LABELS: Record<Exclude<EventRecurrence, null> | 'none', string>
 
 const today = todayISO();
 
-export default function EventModal({ event, defaultDate, defaultType, onSave, onDelete, onClose }: Props) {
+export default function EventModal({ event, defaultDate, defaultType, onSave, onDelete, onConvertToCard, onClose }: Props) {
   const isEdit = Boolean(event);
   const [type,     setType]     = useState<EventType>(event?.type     ?? defaultType ?? 'task');
   const [title,    setTitle]    = useState(event?.title    ?? '');
@@ -258,7 +259,7 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
 
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-bx-border">
-          <div>
+          <div className="flex items-center gap-3">
             {isEdit && onDelete && (
               confirmDelete
                 ? <div className="flex items-center gap-2">
@@ -267,6 +268,17 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
                     <button onClick={() => setConfirmDelete(false)} className="text-xs text-bx-muted hover:text-bx-text">Отмена</button>
                   </div>
                 : <button onClick={() => setConfirmDelete(true)} className="text-xs text-bx-muted hover:text-red-400 transition-colors">Удалить</button>
+            )}
+            {isEdit && onConvertToCard && (
+              <button
+                onClick={() => {
+                  onConvertToCard();
+                  onClose();
+                }}
+                className="text-xs text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
+              >
+                + в Kanban
+              </button>
             )}
           </div>
           <div className="flex gap-2">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useEvents } from './planner/useEvents';
 import { useBoards, type BxBoard, type BoardColumn } from './planner/useBoards';
-import { useCards, fetchDatedCards, fetchCardById, fetchAllCards, fetchBoardColumns, toggleCardDone, type BxCard, type DatedCard, type AllCard } from './planner/useCards';
+import { useCards, fetchDatedCards, fetchCardById, fetchAllCards, fetchBoardColumns, toggleCardDone, createCardFromEvent, type BxCard, type DatedCard, type AllCard } from './planner/useCards';
 import { seedTaxDeadlines } from './planner/taxSeeder';
 import { subscribePlannerReload } from './planner/plannerBus';
 import CalendarView from './planner/CalendarView';
@@ -98,8 +98,9 @@ export default function Planner() {
 
   // Дедуп: карточки, связанные с событием (event_id), в агрегатах не дублируем —
   // такое дело представлено своим событием (единый механизм).
-  const visibleAllCards = allCards.filter(c => !c.event_id);
-  const visibleDatedCards = datedCards.filter(c => !c.event_id);
+  const allowedBoardIds = new Set(boards.map(b => b.id));
+  const visibleAllCards = allCards.filter(c => !c.event_id && allowedBoardIds.has(c.board_id));
+  const visibleDatedCards = datedCards.filter(c => !c.event_id && allowedBoardIds.has(c.board_id));
 
   async function openCardFromCalendar(id: string) {
     const card = await fetchCardById(id);
@@ -191,6 +192,16 @@ export default function Planner() {
     setModalOpen(false); setEditing(null);
   }
   async function handleDeleteEvent() { if (editing) await remove(editing.id); toast.info('Событие удалено'); setModalOpen(false); setEditing(null); }
+
+  async function handleConvertToCard(event: BxEvent) {
+    const card = await createCardFromEvent(event, active?.id ?? null);
+    if (card) {
+      toast.success(`Событие «${event.title}» добавлено в Kanban!`);
+      triggerRefresh();
+    } else {
+      toast.error('Не удалось добавить событие. Убедитесь, что создана хотя бы одна Kanban-доска.');
+    }
+  }
 
   async function handleStatusChange(id: string, status: EventStatus) {
     const ev = events.find(e => e.id === id);
@@ -394,6 +405,7 @@ export default function Planner() {
       {modalOpen && (
         <EventModal event={editing} defaultDate={defDate} defaultType="task"
           onSave={handleSaveEvent} onDelete={editing ? handleDeleteEvent : undefined}
+          onConvertToCard={editing ? () => handleConvertToCard(editing) : undefined}
           onClose={() => { setModalOpen(false); setEditing(null); }} />
       )}
       {boardModalOpen && (

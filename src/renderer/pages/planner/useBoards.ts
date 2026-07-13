@@ -110,13 +110,22 @@ export function useBoards(companyId?: string | null) {
       }
 
       writeCache(rows);
-      setBoards(rows);
+      if (companyId) {
+        setBoards(rows.filter(b => b.company_id === companyId || b.company_id === null));
+      } else {
+        setBoards(rows);
+      }
     } catch (e: any) {
       console.error('[useBoards] load failed:', e?.message ?? e);
       setError(e?.message ?? 'Не удалось загрузить доски');
       // Никогда не зависаем: кэш → локальные базовые
       const cached = readCache();
-      setBoards(cached.length ? cached : localBaseBoards());
+      const finalRows = cached.length ? cached : localBaseBoards();
+      if (companyId) {
+        setBoards(finalRows.filter(b => b.company_id === companyId || b.company_id === null));
+      } else {
+        setBoards(finalRows);
+      }
     } finally {
       setLoading(false);
     }
