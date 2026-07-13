@@ -47,7 +47,7 @@ interface PlanCtx {
   plan: Plan
   isPro: boolean // true для standard и premium (обратная совместимость)
   isPremium: boolean
-  role: 'user' | 'admin'
+  role: string
   isAdmin: boolean
   loading: boolean
   limits: (typeof PLAN_LIMITS)['free' | 'standard' | 'premium']
@@ -64,7 +64,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     const cached = localStorage.getItem(CACHE_KEY) as Plan
     return ['free', 'standard', 'premium'].includes(cached) ? cached : 'free'
   })
-  const [role, setRole] = useState<'user' | 'admin'>('user')
+  const [role, setRole] = useState<string>('user')
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
@@ -88,7 +88,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
           else if (data.plan === 'standard') p = 'standard'
         }
         setPlan(p)
-        setRole((data.role as 'user' | 'admin') || 'user')
+        setRole(data.role || 'user')
         localStorage.setItem(CACHE_KEY, p)
       }
     } catch {
@@ -106,7 +106,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       isPro: plan === 'standard' || plan === 'premium', 
       isPremium: plan === 'premium',
       role, 
-      isAdmin: role === 'admin', 
+      isAdmin: role === 'admin' || role.startsWith('admin_'), 
       loading, 
       limits: PLAN_LIMITS[plan], 
       refresh 

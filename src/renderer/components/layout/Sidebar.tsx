@@ -30,7 +30,7 @@ export default function Sidebar() {
   const { isAdmin } = usePlan()
 
   const menuItems = isAdmin
-    ? [...nav, { to: '/admin', icon: 'settings', label: 'Админка' }]
+    ? [...nav, { to: '/admin', icon: 'settings', label: 'Админка', external: true }]
     : nav
 
   return (
@@ -67,22 +67,48 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2">
-        {menuItems.map(({ to, icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors cursor-pointer rounded-lg mx-2 my-0.5 ${
-                isActive
-                  ? 'bg-blue-600/20 text-blue-400 font-medium'
-                  : 'text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text'
-              }`
-            }
-          >
-            <Icon name={icon} className="w-[18px] h-[18px] flex-shrink-0" />
-            <span>{label}</span>
-          </NavLink>
-        ))}
+        {menuItems.map((item) => {
+          const { to, icon, label } = item
+          const isExternal = 'external' in item && item.external
+
+          if (isExternal) {
+            return (
+              <a
+                key={to}
+                href="https://bx.uz/admin"
+                onClick={(e) => {
+                  e.preventDefault()
+                  if (window.bx?.shell?.openExternal) {
+                    window.bx.shell.openExternal('https://bx.uz/admin')
+                  } else {
+                    window.open('https://bx.uz/admin', '_blank', 'noopener,noreferrer')
+                  }
+                }}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors cursor-pointer rounded-lg mx-2 my-0.5 text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text"
+              >
+                <Icon name={icon} className="w-[18px] h-[18px] flex-shrink-0" />
+                <span>{label}</span>
+              </a>
+            )
+          }
+
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors cursor-pointer rounded-lg mx-2 my-0.5 ${
+                  isActive
+                    ? 'bg-blue-600/20 text-blue-400 font-medium'
+                    : 'text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text'
+                }`
+              }
+            >
+              <Icon name={icon} className="w-[18px] h-[18px] flex-shrink-0" />
+              <span>{label}</span>
+            </NavLink>
+          )
+        })}
       </nav>
 
       {/* Footer — О программе */}

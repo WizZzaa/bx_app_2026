@@ -21,7 +21,6 @@ import EcpManager from './pages/EcpManager'
 import Counterparties from './pages/Counterparties'
 import Placeholder from './pages/Placeholder'
 import TrayView from './pages/TrayView'
-import AdminDashboard from './pages/AdminDashboard'
 import Documents from './pages/Documents'
 import { CompanyProvider } from './lib/CompanyContext';
 import { PlanProvider } from './lib/plan';
@@ -141,7 +140,6 @@ export default function App() {
                   <Route path="/support" element={<Support />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/counterparties" element={<Counterparties />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
                 </Routes>
               </main>
             </div>
