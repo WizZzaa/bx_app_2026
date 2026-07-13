@@ -10,6 +10,7 @@ import Library from './pages/library/Library';
 import ReferenceView from './pages/library/ReferenceView';
 import Calc from './pages/Calc';
 import Planner from './pages/Planner';
+import CalendarPage from './pages/CalendarPage';
 import Templates from './pages/Templates';
 import Ai from './pages/Ai';
 import Support from './pages/Support';
@@ -117,8 +118,8 @@ export default function App() {
         <div className="flex flex-col h-screen w-screen overflow-hidden bg-bx-bg text-bx-text relative">
           
           {/* Background Glow Spheres for Depth */}
-          <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none z-0" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-purple-500/5 blur-[150px] pointer-events-none z-0" />
+          <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none z-0 hidden dark:block" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-purple-500/5 blur-[150px] pointer-events-none z-0 hidden dark:block" />
 
           <Titlebar />
           <div className="flex flex-1 min-h-0 overflow-hidden relative z-10">
@@ -140,6 +141,7 @@ export default function App() {
                   <Route path="/hr" element={<Hr />} />
                   <Route path="/finance" element={<Finance />} />
                   <Route path="/planner" element={<Planner />} />
+                  <Route path="/calendar" element={<CalendarPage />} />
                   <Route path="/calc" element={<Calc />} />
                   <Route path="/ecp" element={<EcpManager />} />
                   <Route path="/ai" element={<Ai />} />

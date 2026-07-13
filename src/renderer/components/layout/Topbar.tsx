@@ -121,7 +121,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
   }
 
   return (
-    <header className="flex items-center gap-4 px-6 h-12 bg-bx-bg border-b border-bx-border flex-shrink-0">
+    <header className="flex items-center gap-4 px-6 h-12 bg-bx-surface border-b border-bx-border flex-shrink-0">
       <div className="flex-1 max-w-md relative" ref={boxRef}>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bx-muted"><Icon name="search" className="w-4 h-4" /></span>

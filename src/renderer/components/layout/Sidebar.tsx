@@ -32,7 +32,8 @@ export default function Sidebar() {
       label: 'Главное',
       items: [
         { to: '/dashboard', icon: 'dashboard', label: 'Дашборд' },
-        { to: '/planner',    icon: 'planner',   label: 'Планировщик' },
+        { to: '/calendar',  icon: 'planner',   label: 'Календарь' },
+        { to: '/planner',    icon: 'planner',   label: 'Канбан-доска' },
         { to: '/ai',         icon: 'ai',        label: 'AI-Консультант' },
         { to: '/news',       icon: 'news',      label: 'Новости' },
       ]
@@ -76,13 +77,13 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex flex-col bg-slate-950/10 dark:bg-slate-950/20 backdrop-blur-xl border-r border-slate-900/5 dark:border-white/5 select-none z-10" style={{ width: 'var(--sidebar-width)', minWidth: 'var(--sidebar-width)' }}>
+    <aside className="flex flex-col bg-bx-surface border-r border-bx-border dark:bg-slate-950/20 dark:backdrop-blur-xl select-none z-10" style={{ width: 'var(--sidebar-width)', minWidth: 'var(--sidebar-width)' }}>
       {/* Logo — кликабельный, ведет на главную страницу */}
       <button
         onClick={() => navigate('/')}
         onMouseEnter={() => setLogoHovered(true)}
         onMouseLeave={() => setLogoHovered(false)}
-        className="flex items-center gap-2.5 px-4 py-4.5 border-b border-slate-900/5 dark:border-white/5 w-full text-left transition-colors hover:bg-white/[0.02] group"
+        className="flex items-center gap-2.5 px-4 py-4.5 border-b border-bx-border w-full text-left transition-colors hover:bg-white/[0.02] group"
         title="На главную"
       >
         <div
@@ -163,7 +164,7 @@ export default function Sidebar() {
       {/* Footer — О программе */}
       <button
         onClick={() => setAboutOpen(true)}
-        className="px-4 py-3 border-t border-slate-900/5 dark:border-white/5 text-left hover:bg-slate-900/5 dark:hover:bg-white/[0.02] transition-colors group flex-shrink-0"
+        className="px-4 py-3 border-t border-bx-border text-left hover:bg-slate-900/5 dark:hover:bg-white/[0.02] transition-colors group flex-shrink-0"
       >
         <div className="flex items-center gap-2.5">
           <span className="text-xs group-hover:scale-110 transition-transform">ℹ️</span>
@@ -257,7 +258,7 @@ function SidebarCalendar() {
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month
 
   return (
-    <div className="mt-4 px-3.5 py-3 bg-slate-900/5 dark:bg-white/5 border border-slate-900/5 dark:border-white/5 rounded-2xl flex flex-col gap-2.5 font-sans max-w-full text-[11px] shadow-sm">
+    <div className="mt-4 px-3.5 py-3 bg-bx-surface-2/40 border border-bx-border rounded-2xl flex flex-col gap-2.5 font-sans max-w-full text-[11px] shadow-sm">
       {/* Шапка календаря */}
       <div className="flex items-center justify-between">
         <span className="font-extrabold text-slate-800 dark:text-white capitalize leading-tight tracking-wide">{monthName}</span>
@@ -319,7 +320,7 @@ function SidebarCalendar() {
       </div>
 
       {/* Чекбоксы настроек под календарем */}
-      <div className="border-t border-slate-900/5 dark:border-white/5 pt-2 mt-1 space-y-1.5 text-[9.5px]">
+      <div className="border-t border-bx-border pt-2 mt-1 space-y-1.5 text-[9.5px]">
         <label className="flex items-center gap-2 cursor-pointer text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors select-none">
           <input
             type="checkbox"
