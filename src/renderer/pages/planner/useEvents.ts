@@ -118,11 +118,67 @@ export function useEvents(companyId?: string | null) {
       ({ data, error } = await supabase.from('bx_events').insert(payload).select().single());
     }
     if (error) { console.error(error); return null; }
+    
+    const createdEvent = data as BxEvent;
+
+    // 3. Автоматически создаем карточку на доске Kanban для синхронизации
+    try {
+      let board: any = null;
+      if (createdEvent.company_id) {
+        const { data: companyBoards } = await supabase
+          .from('bx_boards')
+          .select('*')
+          .eq('company_id', createdEvent.company_id)
+          .order('position', { ascending: true });
+        if (companyBoards && companyBoards.length > 0) {
+          board = companyBoards.find(b => b.is_default) || companyBoards[0];
+        }
+      }
+
+      if (!board) {
+        const { data: globalBoards } = await supabase
+          .from('bx_boards')
+          .select('*')
+          .is('company_id', null)
+          .order('position', { ascending: true });
+        if (globalBoards && globalBoards.length > 0) {
+          board = globalBoards.find(b => b.is_default) || globalBoards[0];
+        }
+      }
+
+      if (board && board.columns && board.columns.length > 0) {
+        const firstColId = board.columns[0].id;
+        const { data: existingCards } = await supabase
+          .from('bx_cards')
+          .select('position')
+          .eq('board_id', board.id)
+          .eq('column_id', firstColId);
+
+        const maxPos = (existingCards ?? []).reduce((m, c) => Math.max(m, c.position), 0);
+
+        const cardRow = {
+          user_id: user.id,
+          board_id: board.id,
+          column_id: firstColId,
+          title: createdEvent.title,
+          description: createdEvent.note || null,
+          priority: createdEvent.priority || 'normal',
+          labels: createdEvent.tags || [],
+          checklist: [],
+          due_date: createdEvent.due_date || createdEvent.date || null,
+          position: maxPos + 1,
+          event_id: createdEvent.id
+        };
+
+        await supabase.from('bx_cards').insert(cardRow);
+      }
+    } catch (e) {
+      console.warn('Failed to auto-create Kanban card for event:', e);
+    }
+
     await load();
-
     emitPlannerReload();
-
-    return data as BxEvent;
+    return createdEvent;
   }, [load]);
 
   const update = useCallback(async (id: string, patch: Partial<Omit<BxEvent, 'id' | 'user_id' | 'created_at'>>) => {

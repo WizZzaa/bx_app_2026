@@ -112,6 +112,52 @@ export function useCards(boardId: string | null) {
   const addCard = useCallback(async (input: NewCard): Promise<BxCard | null> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
+
+    // 1. Получаем company_id доски для связи с событием
+    let companyId: string | null = null;
+    try {
+      const { data: board } = await supabase
+        .from('bx_boards')
+        .select('company_id')
+        .eq('id', input.board_id)
+        .single();
+      if (board) companyId = board.company_id;
+    } catch (e) {
+      console.warn('Failed to fetch board company_id:', e);
+    }
+
+    // 2. Создаем связанное событие в bx_events
+    let eventId: string | null = null;
+    try {
+      const eventPayload = {
+        user_id: user.id,
+        company_id: companyId,
+        type: 'task',
+        title: input.title,
+        date: input.due_date || new Date().toISOString().split('T')[0],
+        due_date: input.due_date || null,
+        status: 'todo',
+        priority: input.priority || 'normal',
+        tags: input.labels || [],
+        note: input.description || null,
+        source: 'manual',
+        reminder_at: null,
+      };
+      const { data: eventData, error: eventErr } = await supabase
+        .from('bx_events')
+        .insert(eventPayload)
+        .select()
+        .single();
+      
+      if (!eventErr && eventData) {
+        eventId = eventData.id;
+      } else {
+        console.error('Failed to create synced event for card:', eventErr);
+      }
+    } catch (e) {
+      console.error('Failed to create synced event for card:', e);
+    }
+
     const colCards = cards.filter(c => c.column_id === input.column_id);
     const maxPos = colCards.reduce((m, c) => Math.max(m, c.position), 0);
     const row = {
@@ -125,10 +171,12 @@ export function useCards(boardId: string | null) {
       checklist: [] as ChecklistItem[],
       due_date: input.due_date ?? null,
       position: maxPos + 1,
+      event_id: eventId,
     };
     const { data, error } = await supabase.from('bx_cards').insert(row).select().single();
     if (error) { console.error(error); return null; }
     setCards(prev => { const next = [...prev, data as BxCard]; if (boardId) writeCache(boardId, next); return next; });
+    emitPlannerReload();
     return data as BxCard;
   }, [cards, boardId]);
 
@@ -137,10 +185,33 @@ export function useCards(boardId: string | null) {
     setCards(prev => { const next = prev.map(c => c.id === id ? { ...c, ...withTs } : c); if (boardId) writeCache(boardId, next); return next; });
     const { error } = await supabase.from('bx_cards').update(withTs).eq('id', id);
     if (error) console.error(error);
+    
+    // Синхронизация с событием
+    try {
+      const card = cards.find(c => c.id === id);
+      if (card && card.event_id) {
+        const eventPatch: Record<string, any> = {};
+        if (patch.title !== undefined) eventPatch.title = patch.title;
+        if (patch.due_date !== undefined) {
+          eventPatch.due_date = patch.due_date;
+          eventPatch.date = patch.due_date || new Date().toISOString().split('T')[0];
+        }
+        if (patch.description !== undefined) eventPatch.note = patch.description;
+        if (patch.priority !== undefined) eventPatch.priority = patch.priority;
+        if (patch.labels !== undefined) eventPatch.tags = patch.labels;
+
+        if (Object.keys(eventPatch).length > 0) {
+          await supabase.from('bx_events').update(eventPatch).eq('id', card.event_id);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to sync card update to event:', e);
+    }
+
     if (patch.column_id && boardId) {
       syncLinkedEventStatus(id, patch.column_id, boardId).catch((err: any): void => console.warn(err));
     }
-  }, [boardId]);
+  }, [cards, boardId]);
 
   const removeCard = useCallback(async (id: string) => {
     const card = cards.find(c => c.id === id);

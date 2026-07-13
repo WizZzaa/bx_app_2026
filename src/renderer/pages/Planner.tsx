@@ -96,11 +96,9 @@ export default function Planner() {
   // Общая шина планировщика: любая мутация (событие/карточка) обновляет агрегаты
   useEffect(() => subscribePlannerReload(triggerRefresh), []);
 
-  // Дедуп: карточки, связанные с событием (event_id), в агрегатах не дублируем —
-  // такое дело представлено своим событием (единый механизм).
-  const allowedBoardIds = new Set(boards.map(b => b.id));
-  const visibleAllCards = allCards.filter(c => !c.event_id && allowedBoardIds.has(c.board_id));
-  const visibleDatedCards = datedCards.filter(c => !c.event_id && allowedBoardIds.has(c.board_id));
+  // События и карточки синхронизированы 1-к-1. В календарь и списки попадают только events.
+  const visibleAllCards: any[] = [];
+  const visibleDatedCards: any[] = [];
 
   async function openCardFromCalendar(id: string) {
     const card = await fetchCardById(id);
