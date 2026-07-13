@@ -31,23 +31,23 @@
 
 .light {
   color-scheme: light;
-  --bx-bg: #f8fafc;          /* благородный Slate-50 */
-  --bx-surface: #ffffff;     /* белые карточки */
-  --bx-surface-2: #f1f5f9;   /* Slate-100 для инпутов и ховеров */
-  --bx-border: #e2e8f0;      /* Slate-200 */
-  --bx-border-2: #cbd5e1;    /* Slate-300 */
-  --bx-text: #0f172a;        /* глубокий угольный Slate-900 */
-  --bx-muted: #475569;       /* Slate-600 — отличный контраст для светлой темы */
-  --bx-accent: #2563eb;      /* глубокий синий акцент */
+  --bx-bg: #dce1f9;          /* нежный пастельный лавандовый */
+  --bx-surface: #ffffff;     /* чистый белый */
+  --bx-surface-2: #eef2ff;   /* лавандово-серый для инпутов/акцентов */
+  --bx-border: #c7d2fe;      /* Indigo-200 */
+  --bx-border-2: #a5b4fc;    /* Indigo-300 */
+  --bx-text: #1e1b4b;        /* глубокий темно-индиговый */
+  --bx-muted: #575c87;       /* мягкий фиолетово-серый */
+  --bx-accent: #4f46e5;      /* насыщенный индиго-акцент */
 
-  --bx-bg-rgb: 248 250 252;
+  --bx-bg-rgb: 220 225 249;
   --bx-surface-rgb: 255 255 255;
-  --bx-surface-2-rgb: 241 245 249;
-  --bx-border-rgb: 226 232 240;
-  --bx-border-2-rgb: 203 213 225;
-  --bx-text-rgb: 15 23 42;
-  --bx-muted-rgb: 71 85 105;
-  --bx-accent-rgb: 37 99 235;
+  --bx-surface-2-rgb: 238 242 255;
+  --bx-border-rgb: 199 210 254;
+  --bx-border-2-rgb: 165 180 252;
+  --bx-text-rgb: 30 27 75;
+  --bx-muted-rgb: 87 92 135;
+  --bx-accent-rgb: 79 70 229;
 }
 
 /* Анимации */
