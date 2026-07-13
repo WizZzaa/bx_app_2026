@@ -28,4 +28,15 @@ export const companiesRepo = {
     const { error } = await supabase.from('bx_companies').delete().eq('id', id);
     if (error) throw error;
   },
+
+  async update(id: string, updates: { name?: string; inn?: string | null; regime?: string | null; color?: string | null }): Promise<Company> {
+    const { data, error } = await supabase
+      .from('bx_companies')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
 };

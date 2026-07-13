@@ -1,33 +1,17 @@
-import React, { useState, useMemo, useEffect } from 'react'
-import { TEMPLATES, TEMPLATE_CATEGORIES, type DocTemplate, type TemplateVar } from '../data/templates'
-import { useToast } from '../lib/ui/ToastContext'
-import mammoth from 'mammoth'
+import React, { useState, useEffect, useMemo } from 'react'
+import { db } from '../lib/db/localDb'
 import { useCompany } from '../lib/CompanyContext'
 import { useCounterparties } from '../lib/db/useCounterparties'
-import { db } from '../lib/db/localDb'
+import { useToast } from '../lib/ui/ToastContext'
+import Icon from '../lib/ui/Icon'
+import { TEMPLATES, TEMPLATE_CATEGORIES, type DocTemplate, type TemplateVar } from '../data/templates'
 import { toWordsRu } from '../lib/numToWords'
+import mammoth from 'mammoth'
 
-const RU_MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря']
-
-// ── SVG-иконки ──────────────────────────────────────────────────────────────
-const PATHS: Record<string, React.ReactNode> = {
-  contract: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" /></>,
-  receipt: <><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" /><path d="M8 7h8M8 11h8M8 15h5" /></>,
-  users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
-  stamp: <><path d="M5 22h14M6 18h12v-2a4 4 0 0 0-1.4-3l-1.6-1.3a3 3 0 0 1-1-2.3V5a2 2 0 0 0-2-2h0a2 2 0 0 0-2 2v4.4a3 3 0 0 1-1 2.3L7.4 13A4 4 0 0 0 6 16Z" /></>,
-  globe: <><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></>,
-  file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></>,
-  search: <><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></>,
-  printer: <><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M6 14h12v8H6z" /></>,
-  word: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M8 13l1.5 5 1.5-4 1.5 4 1.5-5" /></>,
-  copy: <><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></>,
-  check: <><path d="M20 6 9 17l-5-5" /></>,
-  arrowL: <><path d="M19 12H5M12 19l-7-7 7-7" /></>,
-  trash: <><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" /></>
-}
-function Icon({ name, className = 'w-4 h-4' }: { name: string; className?: string }) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{PATHS[name] ?? null}</svg>
-}
+const RU_MONTHS = [
+  'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+]
 
 const CAT_META: Record<string, { icon: string; color: string; desc: string }> = {
   'Договоры':         { icon: 'contract', color: 'blue',    desc: 'Купля-продажа, услуги, аренда, займ' },
@@ -36,6 +20,7 @@ const CAT_META: Record<string, { icon: string; color: string; desc: string }> = 
   'Доверенности':     { icon: 'stamp',    color: 'purple',  desc: 'Доверенность на представление' },
   'ВЭД':              { icon: 'globe',    color: 'cyan',    desc: 'Инвойс для внешней торговли' },
 }
+
 const COLOR: Record<string, { text: string; bg: string; border: string }> = {
   blue:    { text: 'text-blue-600 dark:text-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/30' },
   emerald: { text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
@@ -43,6 +28,7 @@ const COLOR: Record<string, { text: string; bg: string; border: string }> = {
   purple:  { text: 'text-purple-600 dark:text-purple-400',  bg: 'bg-purple-500/10',  border: 'border-purple-500/30' },
   cyan:    { text: 'text-cyan-600 dark:text-cyan-400',    bg: 'bg-cyan-500/10',    border: 'border-cyan-500/30' },
 }
+
 const catMeta = (c: string) => CAT_META[c] ?? { icon: 'file', color: 'blue', desc: '' }
 const catColor = (c: string) => COLOR[catMeta(c).color] ?? COLOR.blue
 
@@ -65,13 +51,31 @@ function substituteVars(body: string, vals: Record<string, string>, vars: Templa
   const rate = parseFloat(vals['rate'] || '0')
   out = out.replaceAll('{{rate_type}}', rate === 0 ? 'беспроцентным' : `процентным (${rate}% годовых)`)
   const dd = parseInt(vals['delivery_days'] || '0', 10)
-  const ddWords: Record<number, string> = { 1:'одного',2:'двух',3:'трёх',4:'четырёх',5:'пяти',7:'семи',10:'десяти',14:'четырнадцати',21:'двадцати одного',30:'тридцати' }
+  const ddWords: Record<number, string> = { 1:'одного',2:'двух',3:'трех',4:'четырех',5:'пяти',7:'семи',10:'десяти',14:'четырнадцати',21:'двадцати одного',30:'тридцати' }
   out = out.replaceAll('{{delivery_days_w}}', ddWords[dd] || `${dd}`)
   for (const v of vars) {
     const val = vals[v.key] ?? ''
     out = out.replaceAll(`{{${v.key}}}`, val || `[${v.label}]`)
   }
   return out
+}
+
+const ruLabels: Record<string, string> = {
+  contract_num: 'Номер договора',
+  contract_date: 'Дата договора',
+  city: 'Город',
+  seller_name: 'Продавец',
+  seller_tin: 'ИНН продавца',
+  seller_rep: 'ФИО представителя продавца',
+  buyer_name: 'Покупатель',
+  buyer_tin: 'ИНН покупателя',
+  buyer_rep: 'ФИО представителя покупателя',
+  amount: 'Сумма договора',
+  amount_words: 'Сумма прописью',
+  goods: 'Наименование товара/услуги',
+  company_name: 'Наше название',
+  company_tin: 'Наш ИНН',
+  director_name: 'ФИО директора'
 }
 
 function InputField({ v, value, onChange }: { v: TemplateVar; value: string; onChange: (val: string) => void }) {
@@ -94,23 +98,6 @@ const extractVars = (body: string): TemplateVar[] => {
   return Array.from(matches).map(key => {
     let label = key.replace(/_/g, ' ')
     label = label.replace(/\b\w/g, c => c.toUpperCase())
-    const ruLabels: Record<string, string> = {
-      contract_num: 'Номер договора',
-      contract_date: 'Дата договора',
-      city: 'Город',
-      seller_name: 'Продавец',
-      seller_tin: 'ИНН продавца',
-      seller_rep: 'ФИО представителя продавца',
-      buyer_name: 'Покупатель',
-      buyer_tin: 'ИНН покупателя',
-      buyer_rep: 'ФИО представителя покупателя',
-      amount: 'Сумма договора',
-      amount_words: 'Сумма прописью',
-      goods: 'Наименование товара/услуги',
-      company_name: 'Наше название',
-      company_tin: 'Наш ИНН',
-      director_name: 'ФИО директора'
-    }
     return {
       key,
       label: ruLabels[key] || label,
@@ -121,12 +108,33 @@ const extractVars = (body: string): TemplateVar[] => {
 }
 
 export default function Templates() {
-  const { active } = useCompany()
+  const { active, companies } = useCompany()
   const { counterparties } = useCounterparties(active?.id ?? null)
-  // «Мои компании» из раздела Организации (localStorage)
-  const [myCompanies] = useState<Array<{ id: string; name: string; inn: string; director: string; bank: string; account: string; mfo: string; address: string; phone: string }>>(() => {
-    try { return JSON.parse(localStorage.getItem('bx_company_requisites') || '[]') } catch { return [] }
-  })
+  
+  // Динамически загружаем полные реквизиты для всех компаний пользователя из настроек
+  const myCompanies = useMemo(() => {
+    return companies.map(c => {
+      let details: any = {}
+      try {
+        const stored = localStorage.getItem(`bx_company_details_${c.id}`)
+        if (stored) details = JSON.parse(stored)
+      } catch (err) {
+        console.warn('Ignore details parse error', err)
+      }
+      return {
+        id: c.id,
+        name: c.name || '',
+        inn: c.inn || '',
+        director: details.director || '',
+        bank: details.bank || '',
+        account: details.account || '',
+        mfo: details.mfo || '',
+        address: details.address || '',
+        phone: details.phone || '',
+      }
+    })
+  }, [companies])
+
   const [category, setCategory] = useState('Все')
   const [search,   setSearch]   = useState('')
   const [activeId, setActiveId] = useState<string | null>(null)

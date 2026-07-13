@@ -8,6 +8,8 @@ interface Ctx {
   setActive: (c: Company | null) => void;
   reload: () => Promise<void>;
   addCompany: (input: { name: string; inn?: string; regime?: string }) => Promise<void>;
+  updateCompany: (id: string, updates: { name?: string; inn?: string | null; regime?: string | null; color?: string | null }) => Promise<void>;
+  removeCompany: (id: string) => Promise<void>;
 }
 
 const CompanyCtx = createContext<Ctx | null>(null);
@@ -43,8 +45,21 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     await reload();
   }, [reload]);
 
+  const updateCompany = useCallback(async (id: string, updates: { name?: string; inn?: string | null; regime?: string | null; color?: string | null }) => {
+    await companiesRepo.update(id, updates);
+    await reload();
+  }, [reload]);
+
+  const removeCompany = useCallback(async (id: string) => {
+    await companiesRepo.remove(id);
+    if (active?.id === id) {
+      setActive(null);
+    }
+    await reload();
+  }, [active, reload, setActive]);
+
   return (
-    <CompanyCtx.Provider value={{ companies, active, setActive, reload, addCompany }}>
+    <CompanyCtx.Provider value={{ companies, active, setActive, reload, addCompany, updateCompany, removeCompany }}>
       {children}
     </CompanyCtx.Provider>
   );

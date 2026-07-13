@@ -286,24 +286,24 @@ export default function Ai() {
         )}
 
         {/* Ввод */}
-        <div className="border-t border-bx-border/40 px-6 py-4 bg-bx-bg/80 backdrop-blur-md z-10">
-          <div className="max-w-2xl mx-auto flex items-end gap-2.5 bg-bx-surface/60 rounded-2xl p-2 border border-bx-border focus-within:border-blue-500/40 focus-within:shadow-[0_0_15px_rgba(59,130,246,0.04)] transition-all">
+        <div className="border-t border-bx-border px-6 py-5 bg-bx-surface shadow-[0_-5px_20px_rgba(0,0,0,0.03)] z-10">
+          <div className="max-w-2xl mx-auto flex items-center gap-3 bg-bx-bg rounded-3xl p-3 border-2 border-bx-border focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:shadow-xl transition-all">
             <textarea
               ref={textareaRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }}
               rows={1}
-              placeholder="Задайте вопрос по налогам, учёту, труду..."
-              className="flex-1 bg-transparent text-bx-text px-3 py-2 text-xs focus:outline-none resize-none max-h-32 custom-scrollbar placeholder:text-bx-muted"
+              placeholder="Спросите меня о законодательстве РУз... (Пример: Какой размер БРВ и МРОТ в Узбекистане с 2026 года?)"
+              className="flex-1 bg-transparent text-xs sm:text-sm font-bold text-bx-text px-4 py-2.5 focus:outline-none resize-none max-h-36 custom-scrollbar placeholder:text-bx-muted/80 leading-normal"
             />
             <button onClick={submit} disabled={!input.trim() || sending}
-              className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-blue-500/10 flex-shrink-0 hover:scale-[1.02] active:scale-[0.98]">
-              {sending ? '…' : 'Отправить'}
+              className="px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-40 text-white text-xs sm:text-sm font-extrabold rounded-2xl transition-all shadow-md shadow-blue-500/10 flex-shrink-0 hover:scale-[1.02] active:scale-[0.98] cursor-pointer">
+              {sending ? '⏳' : 'Задать вопрос'}
             </button>
           </div>
-          <p className="max-w-2xl mx-auto text-[10px] text-bx-muted mt-2 text-center font-medium">
-            AI-Консультант может ошибаться. Рекомендуем проверять важные решения на официальных порталах lex.uz и soliq.uz.
+          <p className="max-w-2xl mx-auto text-[10.5px] text-bx-muted mt-3.5 text-center font-bold">
+            💡 Нажмите <kbd className="bg-bx-surface-2 px-1.5 py-0.5 rounded border border-bx-border font-mono text-[9px]">Enter</kbd> для отправки запроса. Помощник опирается на НК РУз, Постановления Президента и официальные базы Lex.uz.
           </p>
         </div>
       </div>

@@ -126,7 +126,7 @@ export default function Sidebar() {
                         window.open('https://bx.uz/admin', '_blank', 'noopener,noreferrer')
                       }
                     }}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg text-slate-700 dark:text-slate-400 hover:bg-white/40 dark:hover:bg-white/[0.03] hover:text-indigo-900 dark:hover:text-slate-200 hover:translate-x-0.5"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg text-slate-700 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5 font-semibold animate-none"
                   >
                     <Icon name={icon} className="w-4 h-4 flex-shrink-0 opacity-80" />
                     <span className="truncate">{label}</span>
@@ -139,10 +139,10 @@ export default function Sidebar() {
                   key={to}
                   to={to}
                   className={({ isActive }) =>
-                    `flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg ${
+                    `flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg font-semibold ${
                       isActive
                         ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-600/20'
-                        : 'text-slate-700 dark:text-slate-400 border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:text-slate-900 dark:hover:text-slate-200 hover:translate-x-0.5'
+                        : 'text-slate-700 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5'
                     }`
                   }
                 >
@@ -158,7 +158,7 @@ export default function Sidebar() {
       {/* Footer — О программе */}
       <button
         onClick={() => setAboutOpen(true)}
-        className="px-4 py-3 border-t border-[#c5cbfa] dark:border-bx-border text-left hover:bg-white/20 dark:hover:bg-white/[0.02] transition-colors group flex-shrink-0"
+        className="px-4 py-3 border-t border-[#c5cbfa] dark:border-bx-border text-left hover:bg-white/20 dark:hover:bg-white/[0.02] transition-colors group flex-shrink-0 w-full"
       >
         <div className="flex items-center gap-2.5">
           <span className="text-xs group-hover:scale-110 transition-transform">ℹ️</span>
@@ -169,6 +169,7 @@ export default function Sidebar() {
         </div>
       </button>
 
+      {/* Модалка о программе */}
       <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
     </aside>
   )
