@@ -147,6 +147,27 @@ export default function Planner() {
     return () => stopReminderLoop();
   }, [events]);
 
+  const [syncing, setSyncing] = useState(false);
+
+  async function handleForceSync() {
+    setSyncing(true);
+    toast.info('Синхронизация дедлайнов...');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const year = new Date().getFullYear();
+      const count = await seedTaxDeadlines(year, user.id, active?.id ?? null, true);
+      await reload();
+      triggerRefresh();
+      toast.success(`Успешно синхронизировано ${count} дедлайнов на ${year} год!`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Ошибка синхронизации');
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   // Seed tax deadlines
   useEffect(() => {
     async function doSeed() {
@@ -154,7 +175,12 @@ export default function Planner() {
       if (!user) return;
       const year = new Date().getFullYear();
       const count = await seedTaxDeadlines(year, user.id, active?.id ?? null);
-      if (count > 0) { reload(); setSeedMsg(`Загружено ${count} налоговых дедлайнов ${year}`); setTimeout(() => setSeedMsg(''), 4000); }
+      if (count > 0) {
+        await reload();
+        triggerRefresh();
+        setSeedMsg(`Загружено ${count} налоговых дедлайнов ${year}`);
+        setTimeout(() => setSeedMsg(''), 4000);
+      }
     }
     doSeed();
   }, [active?.id]);
@@ -274,6 +300,14 @@ export default function Planner() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleForceSync}
+              disabled={syncing}
+              className="px-3 py-1.5 bg-bx-surface-2 hover:bg-blue-600/20 text-bx-muted hover:text-blue-400 text-xs font-medium rounded-lg transition-colors border border-bx-border flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <span>{syncing ? '⌛' : '🔄'}</span> Синхронизировать дедлайны 2026
+            </button>
+
             <div className="flex bg-bx-bg border border-bx-border rounded-lg p-0.5">
               {([['board','Доски'],['all','Все задачи'],['digest','Сводка'],['calendar','Календарь'],['list','Список']] as const).map(([v,l]) => (
                 <button key={v} onClick={() => setView(v as View)}

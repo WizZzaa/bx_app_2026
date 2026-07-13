@@ -3,20 +3,68 @@ import { taxDeadlines } from '../../data/taxCalendar';
 import type { NewEvent } from './useEvents';
 import { todayISO } from '../../lib/dates';
 
-const SEEDED_KEY = 'bx_tax_seeded_years';
-
-function getSeededYears(): number[] {
-  try { return JSON.parse(localStorage.getItem(SEEDED_KEY) || '[]'); } catch { return []; }
+function getSeedingKey(companyId: string | null, year: number): string {
+  return `bx_tax_seeded_${companyId || 'null'}_${year}`;
 }
-function markSeeded(year: number) {
-  const years = getSeededYears();
-  if (!years.includes(year)) {
-    localStorage.setItem(SEEDED_KEY, JSON.stringify([...years, year]));
+
+export function isYearSeeded(companyId: string | null, year: number): boolean {
+  return localStorage.getItem(getSeedingKey(companyId, year)) === 'true';
+}
+
+function markYearSeeded(companyId: string | null, year: number) {
+  localStorage.setItem(getSeedingKey(companyId, year), 'true');
+}
+
+export function clearSeedingCache(companyId: string | null, year: number) {
+  localStorage.removeItem(getSeedingKey(companyId, year));
+}
+
+/** 
+ * Засеять налоговые дедлайны для указанного года, пользователя и компании.
+ * Если force = true, то сначала удаляются старые засеянные дедлайны за этот год.
+ */
+export async function seedTaxDeadlines(
+  year: number, 
+  userId: string, 
+  companyId: string | null, 
+  force = false
+): Promise<number> {
+  const isSeeded = isYearSeeded(companyId, year);
+  
+  if (isSeeded && !force) {
+    return 0;
   }
-}
 
-export async function seedTaxDeadlines(year: number, userId: string, companyId: string | null): Promise<number> {
-  if (getSeededYears().includes(year)) return 0;
+  // Если принудительный пересид — сначала удаляем старые засеянные дедлайны
+  if (force) {
+    try {
+      // 1. Сначала удаляем карточки, привязанные к засеянным событиям
+      const { data: oldEvents } = await supabase
+        .from('bx_events')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('source', 'seeded')
+        .or(companyId ? `company_id.eq.${companyId}` : 'company_id.is.null');
+
+      if (oldEvents && oldEvents.length > 0) {
+        const oldEventIds = oldEvents.map(e => e.id);
+        
+        // Удаляем привязанные карточки
+        await supabase
+          .from('bx_cards')
+          .delete()
+          .in('event_id', oldEventIds);
+          
+        // Удаляем сами события
+        await supabase
+          .from('bx_events')
+          .delete()
+          .in('id', oldEventIds);
+      }
+    } catch (err) {
+      console.error('Error clearing old seeded deadlines:', err);
+    }
+  }
 
   const events: NewEvent[] = [];
   const todayStr = todayISO();
@@ -27,8 +75,10 @@ export async function seedTaxDeadlines(year: number, userId: string, companyId: 
       const day = String(dl.day).padStart(2,'0');
       const mon = String(m).padStart(2,'0');
       const dateStr = `${year}-${mon}-${day}`;
-      // Прошедшие дедлайны сразу помечаем done — они не должны считаться "просроченными"
+      
+      // Прошедшие дедлайны помечаем done
       const isPast = dateStr < todayStr;
+      
       events.push({
         company_id: companyId,
         type: 'tax_deadline',
@@ -50,20 +100,21 @@ export async function seedTaxDeadlines(year: number, userId: string, companyId: 
 
   if (events.length === 0) return 0;
 
+  // Вставляем дедлайны
   const { data: insertedEvents, error } = await supabase
     .from('bx_events')
     .insert(events.map(e => ({ ...e, user_id: userId })))
     .select();
 
   if (!error && insertedEvents) {
-    markSeeded(year);
+    markYearSeeded(companyId, year);
 
-    // Дополнительно создаем Kanban-карточки на доске "Отчётность и платежи" или дефолтной доске
+    // Создаем Kanban-карточки на доске "Отчётность и платежи" или дефолтной доске
     try {
       const { data: boards } = await supabase
         .from('bx_boards')
         .select('*')
-        .eq('company_id', companyId);
+        .or(companyId ? `company_id.eq.${companyId}` : 'company_id.is.null');
 
       const targetBoard = boards?.find(b => b.name === 'Отчётность и платежи') 
         || boards?.find(b => b.is_default) 
@@ -94,6 +145,7 @@ export async function seedTaxDeadlines(year: number, userId: string, companyId: 
 
     return events.length;
   }
+  
   console.error('Tax seed error:', error);
   return 0;
 }
