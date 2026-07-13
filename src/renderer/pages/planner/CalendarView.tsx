@@ -455,10 +455,10 @@ export default function CalendarView({ events, cards = [], boards = [], onDayCli
             top: `${hoveredDay.y - 8}px`,
             transform: 'translate(-50%, -100%)',
           }}
-          className="z-50 w-72 bg-slate-950/95 border border-white/10 rounded-xl p-3.5 shadow-[0_10px_35px_rgba(0,0,0,0.9)] backdrop-blur-md text-slate-200 pointer-events-none transition-all duration-100 ease-out flex flex-col gap-2.5 animate-in fade-in zoom-in-95"
+          className="z-50 w-72 bg-bx-surface border border-bx-border rounded-xl p-3.5 shadow-lg text-bx-text pointer-events-none transition-all duration-100 ease-out flex flex-col gap-2.5 animate-in fade-in zoom-in-95"
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/5 pb-2 text-[10px] font-semibold text-slate-400">
+          <div className="flex items-center justify-between border-b border-bx-border/50 pb-2 text-[10px] font-bold text-bx-muted">
             <span>
               {hoveredDay.day.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
@@ -468,12 +468,12 @@ export default function CalendarView({ events, cards = [], boards = [], onDayCli
           {hoveredDay.special && (
             <div className={`p-2 rounded-lg border text-xs flex flex-col gap-1 ${
               hoveredDay.special.type === 'holiday' 
-                ? 'bg-red-500/10 border-red-500/20 text-red-300'
+                ? 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-300'
                 : hoveredDay.special.type === 'additional_off' || hoveredDay.special.type === 'transferred_off'
-                  ? 'bg-red-500/5 border-red-500/10 text-red-300/90'
+                  ? 'bg-red-500/5 border-red-500/10 text-red-600 dark:text-red-300/90'
                   : hoveredDay.special.type === 'pre_holiday'
-                    ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
-                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+                    ? 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300'
+                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300'
             }`}>
               <div className="font-bold flex items-center gap-1.5">
                 <span>
@@ -492,19 +492,19 @@ export default function CalendarView({ events, cards = [], boards = [], onDayCli
           {/* Tax Deadlines List */}
           {hoveredDay.deadlines.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400">📋 Налоговые дедлайны</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">📋 Налоговые дедлайны</span>
               <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
                 {hoveredDay.deadlines.map((dl) => (
-                  <div key={dl.id} className="text-[11px] leading-snug p-1.5 rounded bg-white/[0.03] border border-white/5 flex flex-col gap-0.5">
-                    <div className="flex items-start gap-1 font-medium text-slate-200">
-                      <span className="text-blue-400 mt-0.5">•</span>
+                  <div key={dl.id} className="text-[11px] leading-snug p-1.5 rounded-lg bg-bx-surface-2 border border-bx-border flex flex-col gap-0.5 shadow-inner">
+                    <div className="flex items-start gap-1 font-semibold text-bx-text">
+                      <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
                       <span>{dl.title}</span>
                     </div>
                     {dl.law && (
-                      <span className="text-[9px] text-blue-400/80 font-mono pl-2">{dl.law}</span>
+                      <span className="text-[9px] text-blue-600 dark:text-blue-400/80 font-mono pl-2">{dl.law}</span>
                     )}
                     {dl.note && (
-                      <p className="text-[9px] text-slate-400 pl-2 leading-relaxed">{dl.note}</p>
+                      <p className="text-[9px] text-bx-muted pl-2 leading-relaxed">{dl.note}</p>
                     )}
                   </div>
                 ))}
@@ -514,15 +514,15 @@ export default function CalendarView({ events, cards = [], boards = [], onDayCli
 
           {/* Events/Tasks Counter */}
           {(hoveredDay.events.length > 0 || hoveredDay.cards.length > 0) && (
-            <div className="flex flex-col gap-1 pt-1.5 border-t border-white/5">
+            <div className="flex flex-col gap-1 pt-1.5 border-t border-bx-border/50">
               {hoveredDay.events.length > 0 && (
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                <div className="flex items-center gap-1.5 text-[11px] text-bx-muted">
                   <span>📌</span>
                   <span>Задач в планировщике: <b>{hoveredDay.events.length}</b></span>
                 </div>
               )}
               {hoveredDay.cards.length > 0 && (
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                <div className="flex items-center gap-1.5 text-[11px] text-bx-muted">
                   <span>📋</span>
                   <span>Карточек в Kanban: <b>{hoveredDay.cards.length}</b></span>
                 </div>
