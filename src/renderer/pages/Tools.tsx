@@ -52,11 +52,11 @@ const TOOLS: Tool[] = [
 const GROUPS = ['1С', 'Текст и реквизиты', 'Документы и PDF', 'Система', 'Заметки']
 
 const ACCENT: Record<string, { text: string; chipBg: string; activeBg: string; iconBg: string; grad: string }> = {
-  '1С':                { text: 'text-amber-400',   chipBg: 'bg-amber-500/10 border-amber-500/20',     activeBg: 'bg-amber-500/10 border-amber-500/20',   iconBg: 'bg-amber-500/10 text-amber-400',     grad: 'from-amber-500/5' },
-  'Текст и реквизиты': { text: 'text-purple-400',  chipBg: 'bg-purple-500/10 border-purple-500/20',   activeBg: 'bg-purple-500/10 border-purple-500/20',  iconBg: 'bg-purple-500/10 text-purple-400',   grad: 'from-purple-500/5' },
-  'Документы и PDF':   { text: 'text-rose-400',    chipBg: 'bg-rose-500/10 border-rose-500/20',       activeBg: 'bg-rose-500/10 border-rose-500/20',    iconBg: 'bg-rose-500/10 text-rose-400',       grad: 'from-rose-500/5' },
-  'Система':           { text: 'text-cyan-400',    chipBg: 'bg-cyan-500/10 border-cyan-500/20',       activeBg: 'bg-cyan-500/10 border-cyan-500/20',    iconBg: 'bg-cyan-500/10 text-cyan-400',       grad: 'from-cyan-500/5' },
-  'Заметки':           { text: 'text-emerald-400', chipBg: 'bg-emerald-500/10 border-emerald-500/20', activeBg: 'bg-emerald-500/10 border-emerald-500/20', iconBg: 'bg-emerald-500/10 text-emerald-400', grad: 'from-emerald-500/5' },
+  '1С':                { text: 'text-amber-700 dark:text-amber-400',   chipBg: 'bg-amber-500/10 border-amber-500/20',     activeBg: 'bg-amber-500/10 border-amber-500/20',   iconBg: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',     grad: 'from-amber-500/5' },
+  'Текст и реквизиты': { text: 'text-purple-700 dark:text-purple-400',  chipBg: 'bg-purple-500/10 border-purple-500/20',   activeBg: 'bg-purple-500/10 border-purple-500/20',  iconBg: 'bg-purple-500/10 text-purple-700 dark:text-purple-400',   grad: 'from-purple-500/5' },
+  'Документы и PDF':   { text: 'text-rose-700 dark:text-rose-400',    chipBg: 'bg-rose-500/10 border-rose-500/20',       activeBg: 'bg-rose-500/10 border-rose-500/20',    iconBg: 'bg-rose-500/10 text-rose-700 dark:text-rose-400',       grad: 'from-rose-500/5' },
+  'Система':           { text: 'text-cyan-700 dark:text-cyan-400',    chipBg: 'bg-cyan-500/10 border-cyan-500/20',       activeBg: 'bg-cyan-500/10 border-cyan-500/20',    iconBg: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-400',       grad: 'from-cyan-500/5' },
+  'Заметки':           { text: 'text-emerald-700 dark:text-emerald-400', chipBg: 'bg-emerald-500/10 border-emerald-500/20', activeBg: 'bg-emerald-500/10 border-emerald-500/20', iconBg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400', grad: 'from-emerald-500/5' },
 }
 
 const FULL_HEIGHT_TOOLS = new Set(['notes'])
@@ -93,12 +93,12 @@ const Tools = () => {
   const isFullHeight = FULL_HEIGHT_TOOLS.has(tool.id)
 
   return (
-    <div className="flex-1 flex overflow-hidden z-10 font-sans">
-      {/* Левая панель (Glassmorphism) */}
-      <aside className="w-64 flex-shrink-0 border-r border-white/5 bg-slate-950/20 backdrop-blur-xl flex flex-col overflow-hidden">
+    <div className="flex-1 flex overflow-hidden z-10 font-sans bg-bx-bg text-bx-text">
+      {/* Левая панель (Лавандовый сайдбар) */}
+      <aside className="w-64 flex-shrink-0 border-r border-[#c5cbfa] dark:border-bx-border bg-[#e2e6fb] dark:bg-bx-surface flex flex-col overflow-hidden">
         <div className="px-5 pt-5 pb-3 flex-shrink-0">
-          <h1 className="text-xs font-black text-white uppercase tracking-wider">Утилиты</h1>
-          <p className="text-[10px] text-slate-500 mt-0.5">{TOOLS.length} системных утилит</p>
+          <h1 className="text-xs font-black text-bx-text uppercase tracking-wider">Утилиты</h1>
+          <p className="text-[10px] text-bx-muted mt-0.5">{TOOLS.length} системных утилит</p>
         </div>
 
         <div className="px-4 pb-3 flex-shrink-0">
@@ -110,14 +110,14 @@ const Tools = () => {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Быстрый поиск..."
-              className="w-full bg-slate-950/50 text-white placeholder-slate-600 text-xs pl-9 pr-3 py-2 rounded-xl border border-white/10 focus:outline-none focus:border-blue-500/50 transition-colors"
+              className="w-full bg-bx-surface dark:bg-slate-950/50 text-bx-text placeholder-slate-500 dark:placeholder-slate-600 text-xs pl-9 pr-3 py-2 rounded-xl border border-[#c5cbfa] dark:border-white/10 focus:outline-none focus:border-blue-500/50 transition-colors"
             />
           </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 pb-4 space-y-3">
           {visible.length === 0 && (
-            <p className="text-xs text-slate-500 text-center py-4 italic">Ничего не найдено</p>
+            <p className="text-xs text-bx-muted text-center py-4 italic">Ничего не найдено</p>
           )}
           {GROUPS.map(g => {
             const items = visible.filter(t => t.group === g)
@@ -133,18 +133,18 @@ const Tools = () => {
                       <button 
                         key={t.id} 
                         onClick={() => handleSetActive(t.id)}
-                        className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-left transition-all border ${
+                        className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-left transition-all border cursor-pointer ${
                           isToolActive 
-                            ? `${ga.activeBg} ${ga.text}` 
-                            : 'text-slate-400 border-transparent hover:bg-white/[0.02] hover:text-slate-200 hover:translate-x-0.5'
+                            ? 'bg-blue-600 text-white font-extrabold border-transparent shadow-sm' 
+                            : 'text-slate-700 dark:text-slate-400 border-transparent hover:bg-white/40 dark:hover:bg-white/[0.02] hover:text-slate-900 dark:hover:text-slate-200 hover:translate-x-0.5'
                         }`}
                       >
-                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isToolActive ? ga.iconBg : 'bg-slate-950/40 border border-white/5 text-slate-500'}`}>
+                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isToolActive ? 'bg-white/20 text-white' : 'bg-bx-surface-2 dark:bg-slate-950/40 border border-[#c5cbfa] dark:border-white/5 text-slate-500 dark:text-slate-400'}`}>
                           <Icon name={t.icon} className="w-4 h-4" />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className={`block text-xs font-bold leading-tight ${isToolActive ? 'text-white' : ''}`}>{t.label}</span>
-                          <span className={`block text-[9.5px] mt-0.5 leading-snug truncate ${isToolActive ? 'opacity-85' : 'text-slate-500'}`}>{t.desc}</span>
+                          <span className={`block text-xs font-bold leading-tight ${isToolActive ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{t.label}</span>
+                          <span className={`block text-[9.5px] mt-0.5 leading-snug truncate ${isToolActive ? 'text-white/85' : 'text-slate-600 dark:text-slate-500'}`}>{t.desc}</span>
                         </span>
                       </button>
                     );
@@ -157,20 +157,20 @@ const Tools = () => {
       </aside>
 
       {/* Правая панель */}
-      <div className={`flex-1 ${isFullHeight ? 'flex flex-col overflow-hidden bg-slate-950/20 backdrop-blur-3xl' : 'overflow-y-auto bg-slate-950/20 backdrop-blur-3xl'}`}>
+      <div className={`flex-1 ${isFullHeight ? 'flex flex-col overflow-hidden bg-bx-bg' : 'overflow-y-auto bg-bx-bg'}`}>
         <div className={isFullHeight ? 'px-6 pt-6 flex-shrink-0' : 'max-w-2xl mx-auto px-6 pt-6'}>
           {/* Hero-шапка с акцентом группы */}
-          <div className={`rounded-3xl bg-gradient-to-br ${a.grad} via-transparent to-transparent border border-white/5 px-5 py-4.5 mb-5`}>
+          <div className={`rounded-3xl bg-gradient-to-br ${a.grad} via-transparent to-transparent border border-bx-border px-5 py-4.5 mb-5 bg-bx-surface shadow-sm`}>
             <div className="flex items-center gap-3.5">
               <span className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${a.iconBg} shadow-inner`}>
                 <Icon name={tool.icon} className="w-5 h-5" />
               </span>
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <h2 className="text-base font-extrabold text-white leading-tight">{tool.label}</h2>
+                  <h2 className="text-base font-extrabold text-bx-text leading-tight">{tool.label}</h2>
                   <span className={`text-[9px] px-2 py-0.5 rounded-full border ${a.chipBg} ${a.text} font-bold uppercase`}>{tool.group}</span>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">{tool.desc}</p>
+                <p className="text-[11px] text-bx-muted mt-1">{tool.desc}</p>
               </div>
             </div>
             {/* Быстрое переключение внутри группы */}
@@ -179,10 +179,10 @@ const Tools = () => {
                 <button 
                   key={t.id} 
                   onClick={() => handleSetActive(t.id)}
-                  className={`px-2.5 py-1 text-[11px] rounded-lg border transition-all ${
+                  className={`px-2.5 py-1 text-[11px] rounded-lg border transition-all cursor-pointer ${
                     t.id === tool.id
                       ? `${a.chipBg} ${a.text} font-bold`
-                      : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/[0.02]'
+                      : 'border-transparent text-bx-muted hover:text-bx-text hover:bg-bx-surface-2/40'
                   }`}
                 >
                   {t.label}
@@ -192,7 +192,7 @@ const Tools = () => {
           </div>
 
           {!isElectron && tool.group === '1С' && (
-            <div className="mb-4 text-xs text-amber-400 bg-amber-500/5 border border-amber-500/10 rounded-xl px-4 py-2.5">
+            <div className="mb-4 text-xs text-amber-700 dark:text-amber-400 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10 dark:border-amber-500/20 rounded-xl px-4 py-2.5">
               ⚠ Системные операции работают только в десктоп-версии Electron
             </div>
           )}
@@ -201,13 +201,13 @@ const Tools = () => {
         {/* Верстак инструмента */}
         {!isFullHeight ? (
           <div className="max-w-2xl mx-auto px-6 pb-6">
-            <div className="rounded-3xl bg-slate-900/10 backdrop-blur-md border border-white/5 p-5">
+            <div className="rounded-3xl bg-bx-surface border border-bx-border p-5 shadow-sm">
               {tool.component}
             </div>
           </div>
         ) : (
           <div className="flex-1 overflow-hidden px-6 pb-6">
-            <div className="rounded-3xl bg-slate-900/10 backdrop-blur-md border border-white/5 p-4 h-full overflow-hidden">
+            <div className="rounded-3xl bg-bx-surface border border-bx-border p-4 h-full overflow-hidden shadow-sm">
               {tool.component}
             </div>
           </div>

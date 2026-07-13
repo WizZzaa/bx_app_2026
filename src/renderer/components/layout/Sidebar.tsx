@@ -141,8 +141,8 @@ export default function Sidebar() {
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg ${
                       isActive
-                        ? 'bg-white dark:bg-blue-600/10 border border-transparent dark:border-blue-500/20 text-indigo-600 dark:text-blue-400 font-extrabold shadow-[0_4px_12px_rgba(99,102,241,0.12)]'
-                        : 'text-slate-700 dark:text-slate-400 border-transparent hover:bg-white/40 dark:hover:bg-white/[0.03] hover:text-indigo-900 dark:hover:text-slate-200 hover:translate-x-0.5'
+                        ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-600/20'
+                        : 'text-slate-700 dark:text-slate-400 border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:text-slate-900 dark:hover:text-slate-200 hover:translate-x-0.5'
                     }`
                   }
                 >

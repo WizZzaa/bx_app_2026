@@ -178,28 +178,28 @@ export default function Finance() {
           )}
         </div>
         <div className="flex gap-2">
-          <button onClick={handleImportClick} className="px-3 py-1.5 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-medium rounded-lg bg-bx-surface hover:bg-bx-surface-2 transition-colors">
+          <button onClick={handleImportClick} className="px-3 py-1.5 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-semibold rounded-lg bg-bx-surface hover:bg-bx-surface-2 transition-colors cursor-pointer shadow-sm">
             Импорт выписки
           </button>
-          <button onClick={handleExport} className="px-3 py-1.5 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-medium rounded-lg bg-bx-surface hover:bg-bx-surface-2 transition-colors">
+          <button onClick={handleExport} className="px-3 py-1.5 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-semibold rounded-lg bg-bx-surface hover:bg-bx-surface-2 transition-colors cursor-pointer shadow-sm">
             Экспорт в Excel
           </button>
-          <button onClick={() => openNew('income')} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg">+ Нам должны</button>
-          <button onClick={() => openNew('expense')} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg">+ Мы должны</button>
+          <button onClick={() => openNew('income')} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg cursor-pointer shadow-sm">+ Нам должны</button>
+          <button onClick={() => openNew('expense')} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg cursor-pointer shadow-sm">+ Мы должны</button>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto space-y-5">
           {/* Итоги */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="bg-gradient-to-br from-emerald-600/15 via-bx-surface/50 to-bx-bg border border-bx-border rounded-2xl px-5 py-4">
-              <p className="text-[11px] text-emerald-300/70 uppercase tracking-wider font-semibold">Нам должны · {receivable.length}</p>
-              <p className="text-2xl font-bold text-emerald-400 mt-1 tabular-nums">{fmt(sums.receivable)} <span className="text-xs font-normal text-bx-muted">сум</span></p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-gradient-to-br from-emerald-500/10 dark:from-emerald-600/15 via-bx-surface/50 to-bx-bg border border-bx-border rounded-2xl px-5 py-4 shadow-sm">
+              <p className="text-[11px] text-emerald-700 dark:text-emerald-300/70 uppercase tracking-wider font-semibold">Нам должны · {receivable.length}</p>
+              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">{fmt(sums.receivable)} <span className="text-xs font-normal text-bx-muted">сум</span></p>
             </div>
-            <div className="bg-gradient-to-br from-red-600/15 via-bx-surface/50 to-bx-bg border border-bx-border rounded-2xl px-5 py-4">
-              <p className="text-[11px] text-red-300/70 uppercase tracking-wider font-semibold">Мы должны · {payable.length}</p>
-              <p className="text-2xl font-bold text-red-400 mt-1 tabular-nums">{fmt(sums.payable)} <span className="text-xs font-normal text-bx-muted">сум</span></p>
+            <div className="bg-gradient-to-br from-red-500/10 dark:from-red-600/15 via-bx-surface/50 to-bx-bg border border-bx-border rounded-2xl px-5 py-4 shadow-sm">
+              <p className="text-[11px] text-red-700 dark:text-red-300/70 uppercase tracking-wider font-semibold">Мы должны · {payable.length}</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1 tabular-nums">{fmt(sums.payable)} <span className="text-xs font-normal text-bx-muted">сум</span></p>
             </div>
           </div>
 
@@ -230,15 +230,15 @@ export default function Finance() {
               ) : (
                 <div className="divide-y divide-bx-border/60 border-t border-bx-border">
                   {paid.map(t => (
-                    <button key={t.id} onClick={() => openEdit(t)} className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-bx-surface-2/40 transition-colors text-left">
-                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${t.type === 'income' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
+                    <button key={t.id} onClick={() => openEdit(t)} className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-bx-surface-2/40 transition-colors text-left cursor-pointer">
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${t.type === 'income' ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 dark:bg-red-500/15 text-red-600 dark:text-red-400'}`}>
                         {t.type === 'income' ? '↑' : '↓'}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-bx-text truncate">{t.counterparty || t.category || (t.type === 'income' ? 'Поступление' : 'Оплата')}</p>
                         <p className="text-[10px] text-bx-muted">{new Date(t.date).toLocaleDateString('ru-RU')}{t.description ? ` · ${t.description}` : ''}</p>
                       </div>
-                      <span className={`text-sm font-medium flex-shrink-0 tabular-nums ${t.type === 'income' ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <span className={`text-sm font-semibold flex-shrink-0 tabular-nums ${t.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                         {t.type === 'income' ? '+' : '−'}{fmt(toUzs(t))}<span className="text-[10px] font-normal text-bx-muted"> сум</span>
                       </span>
                     </button>
@@ -302,26 +302,26 @@ function DebtList({ title, accent, items, onEdit, onPaid, onRemind, empty }: {
             return (
               <div key={t.id} className="px-4 py-2.5 hover:bg-bx-surface-2/30 transition-colors group">
                 <div className="flex items-center gap-2.5">
-                  <button onClick={() => onEdit(t)} className="w-full text-left flex items-center justify-between">
+                  <button onClick={() => onEdit(t)} className="w-full text-left flex items-center justify-between cursor-pointer">
                     <div>
                       <p className="text-xs text-bx-text truncate">{t.counterparty || t.category || 'Без контрагента'}</p>
                       <p className="text-[10px] text-bx-muted">
                         {new Date(t.date).toLocaleDateString('ru-RU')}
-                        {days > 0 && <span className={days > 30 ? ' text-red-400' : ' text-amber-400/70'}> · висит {days} дн.</span>}
+                        {days > 0 && <span className={days > 30 ? ' text-red-600 dark:text-red-400 font-semibold' : ' text-amber-600 dark:text-amber-400 font-semibold'}> · висит {days} дн.</span>}
                       </p>
                     </div>
                   </button>
-                  <span className={`text-sm font-semibold flex-shrink-0 tabular-nums ${accent === 'emerald' ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <span className={`text-sm font-bold flex-shrink-0 tabular-nums ${accent === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                     {fmt(t.amount * ((t as BxTransaction).exchange_rate || 1))}<span className="text-[10px] font-normal text-bx-muted"> сум</span>
                   </span>
                 </div>
                 <div className="flex gap-1.5 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => onPaid(t)}
-                    className="text-[10px] px-2 py-1 rounded-md bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-colors">
+                    className="text-[10px] px-2.5 py-1 rounded-md bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors font-semibold cursor-pointer shadow-sm">
                     ✓ Оплачено
                   </button>
                   <button onClick={() => onRemind(t)}
-                    className="text-[10px] px-2 py-1 rounded-md bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 transition-colors">
+                    className="text-[10px] px-2.5 py-1 rounded-md bg-blue-500/10 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors font-semibold cursor-pointer shadow-sm">
                     🔔 Напомнить завтра
                   </button>
                 </div>

@@ -284,38 +284,38 @@ export default function Planner() {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden relative">
+    <div className="flex-1 flex flex-col overflow-hidden relative bg-bx-bg">
       {/* Top bar */}
-      <div className="flex-shrink-0 border-b border-white/5 px-6 py-4 bg-slate-950/20 backdrop-blur-md">
+      <div className="flex-shrink-0 border-b border-bx-border px-6 py-4 bg-bx-surface shadow-sm">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <h1 className="text-sm font-extrabold text-white uppercase tracking-wider">Планировщик</h1>
+            <h1 className="text-sm font-extrabold text-bx-text uppercase tracking-wider">Планировщик</h1>
             <div className="flex items-center gap-1.5 flex-wrap">
-              {todayCount > 0 && <span className="text-[10px] bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold px-2.5 py-0.5 rounded-full">Сегодня: {todayCount}</span>}
-              {overdueCount > 0 && <span className="text-[10px] bg-red-500/10 border border-red-500/20 text-red-400 font-bold px-2.5 py-0.5 rounded-full">Просрочено: {overdueCount}</span>}
+              {todayCount > 0 && <span className="text-[10px] bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-bold px-2.5 py-0.5 rounded-full">Сегодня: {todayCount}</span>}
+              {overdueCount > 0 && <span className="text-[10px] bg-red-500/10 border border-red-500/20 text-red-500 dark:text-red-400 font-bold px-2.5 py-0.5 rounded-full">Просрочено: {overdueCount}</span>}
             </div>
-            {seedMsg && <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-bold">{seedMsg}</span>}
+            {seedMsg && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-bold">{seedMsg}</span>}
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleForceSync}
               disabled={syncing}
-              className="px-3.5 py-2 bg-white/[0.02] hover:bg-blue-600/10 text-slate-400 hover:text-blue-400 text-xs font-bold rounded-xl transition-all border border-white/5 hover:border-blue-500/20 flex items-center gap-1.5 disabled:opacity-50"
+              className="px-3.5 py-2 bg-bx-surface hover:bg-bx-surface-2 text-bx-text hover:text-blue-500 text-xs font-bold rounded-xl transition-all border border-bx-border hover:border-blue-500/20 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm"
             >
               <span>{syncing ? '⌛' : '🔄'}</span> Синхронизировать дедлайны 2026
             </button>
 
             {/* Segmented Control */}
-            <div className="flex bg-slate-950/40 border border-white/5 rounded-xl p-0.5">
+            <div className="flex bg-bx-surface-2 border border-bx-border rounded-xl p-0.5">
               {([['board','Доски'],['all','Все задачи'],['digest','Сводка'],['calendar','Календарь'],['list','Список']] as const).map(([v,l]) => (
                 <button 
                   key={v} 
                   onClick={() => setView(v as View)}
-                  className={`px-3 py-1.5 text-xs rounded-lg transition-all font-semibold ${
+                  className={`px-3 py-1.5 text-xs rounded-lg transition-all font-semibold cursor-pointer ${
                     view === v 
-                      ? 'bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.3)]' 
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-blue-600 text-white shadow-sm' 
+                      : 'text-bx-muted hover:text-bx-text'
                   }`}
                 >
                   {l}
@@ -328,10 +328,10 @@ export default function Planner() {
                 if (!isPro && boards.length >= limits.boards) { setPaywall('Несколько досок Планировщика'); return; }
                 setEditingBoard(null); setBoardModalOpen(true);
               }}
-                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.2)]">+ Доска</button>
+                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer">+ Доска</button>
             ) : (
               <button onClick={() => openNewEvent()}
-                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.2)]">+ Добавить</button>
+                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer">+ Добавить</button>
             )}
           </div>
         </div>
@@ -344,20 +344,20 @@ export default function Planner() {
                 key={b.id} 
                 onClick={() => setActiveBoardId(b.id)}
                 onDoubleClick={() => { setEditingBoard(b); setBoardModalOpen(true); }}
-                className={`group px-3 py-1.5 text-xs rounded-xl transition-all flex items-center gap-2 border ${
+                className={`group px-3 py-1.5 text-xs rounded-xl transition-all flex items-center gap-2 border cursor-pointer ${
                   activeBoardId === b.id 
-                    ? 'bg-white/[0.04] text-white font-bold border-white/10' 
-                    : 'text-slate-400 border-transparent hover:bg-white/[0.02] hover:text-slate-200'
+                    ? 'bg-bx-surface-2 text-bx-text font-bold border-bx-border shadow-sm' 
+                    : 'text-bx-muted border-transparent hover:bg-bx-surface-2/40 hover:text-bx-text'
                 }`}
               >
                 <span>{b.icon}</span>{b.name}
                 {activeBoardId === b.id && (
                   <span onClick={(e) => { e.stopPropagation(); setEditingBoard(b); setBoardModalOpen(true); }}
-                    className="text-slate-500 hover:text-white ml-0.5 transition-colors">⚙</span>
+                    className="text-bx-muted hover:text-bx-text ml-0.5 transition-colors">⚙</span>
                 )}
               </button>
             ))}
-            {boards.length === 0 && <span className="text-[11px] text-slate-500">Создаётся доска по умолчанию...</span>}
+            {boards.length === 0 && <span className="text-[11px] text-bx-muted">Создаётся доска по умолчанию...</span>}
           </div>
         ) : (
           <div className="flex items-center gap-1.5 mt-3 flex-wrap">
