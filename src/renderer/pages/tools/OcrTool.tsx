@@ -2,11 +2,17 @@ import React, { useState, useRef } from 'react';
 import { createWorker } from 'tesseract.js';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// eslint-disable-next-line import/no-unresolved
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+/* eslint-disable @typescript-eslint/ban-ts-comment, import/no-unresolved */
+// @ts-ignore
+import PDFWorker from 'pdfjs-dist/build/pdf.worker.mjs?worker&inline';
+/* eslint-enable @typescript-eslint/ban-ts-comment, import/no-unresolved */
 
-// Set PDF.js worker URL from local build asset to avoid CDN failure
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+// Set PDF.js worker port using inline worker to avoid CDN/CORS issues
+try {
+  pdfjsLib.GlobalWorkerOptions.workerPort = new PDFWorker();
+} catch (e) {
+  console.error('Failed to set PDF.js workerPort:', e);
+}
 
 const LANGUAGES = [
   { code: 'rus', label: 'Русский' },
