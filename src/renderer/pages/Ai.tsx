@@ -93,7 +93,7 @@ function AiMessage({ content, onQuote }: { content: string; onQuote: (text: stri
       <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm flex-shrink-0 shadow-md">
         🤖
       </div>
-      <div className="bg-blue-500/5 dark:bg-slate-900/40 border border-blue-500/10 dark:border-blue-500/10 hover:border-blue-500/20 rounded-2xl rounded-tl-md px-5 py-4 max-w-[85%] relative shadow-sm transition-all flex-1">
+      <div className="bg-bx-surface dark:bg-slate-900/40 border border-bx-border dark:border-blue-500/10 hover:border-blue-500/25 rounded-2xl rounded-tl-md px-5 py-4 max-w-[85%] relative shadow-sm transition-all flex-1">
         
         {/* Заголовок ответа бота */}
         <div className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-2 border-b border-blue-500/10 pb-1 select-none">
@@ -147,9 +147,41 @@ function AiMessage({ content, onQuote }: { content: string; onQuote: (text: stri
   );
 }
 
+// Примеры вопросов, «печатающиеся» в поле ввода (машинописный эффект)
+const TYPING_EXAMPLES = [
+  'Сроки сдачи отчёта по налогу с оборота в 2026 году?',
+  'Как рассчитать НДФЛ с зарплаты 5 млн сум?',
+  'Какие налоги платит ИП на упрощёнке?',
+  'Как оформить отпуск сотруднику по ТК РУз?',
+  'НДС при импорте услуг — кто платит?',
+];
+
 export default function Ai() {
   const { chats, activeId, messages, sending, error, openChat, newChat, deleteChat, send } = useAi();
   const [input, setInput] = useState('');
+  const [typed, setTyped] = useState('');
+
+  // Машинопись в плейсхолдере: печатает пример, держит паузу, стирает, следующий
+  useEffect(() => {
+    let ex = 0, pos = 0, deleting = false;
+    let t: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      const full = TYPING_EXAMPLES[ex];
+      if (!deleting) {
+        pos++;
+        setTyped(full.slice(0, pos));
+        if (pos === full.length) { deleting = true; t = setTimeout(tick, 2200); return; }
+        t = setTimeout(tick, 38);
+      } else {
+        pos--;
+        setTyped(full.slice(0, pos));
+        if (pos === 0) { deleting = false; ex = (ex + 1) % TYPING_EXAMPLES.length; t = setTimeout(tick, 450); return; }
+        t = setTimeout(tick, 14);
+      }
+    };
+    t = setTimeout(tick, 600);
+    return () => clearTimeout(t);
+  }, []);
   const { isPro } = usePlan();
   const [paywall, setPaywall] = useState(false);
   const navigate = useNavigate();
@@ -269,7 +301,7 @@ export default function Ai() {
               {sending && (
                 <div className="flex gap-3 bx-animate-fade">
                   <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm flex-shrink-0 shadow-md">🤖</div>
-                  <div className="bg-blue-500/5 dark:bg-slate-900/40 border border-blue-500/10 dark:border-blue-500/10 rounded-2xl rounded-tl-md px-5 py-4">
+                  <div className="bg-bx-surface dark:bg-slate-900/40 border border-bx-border dark:border-blue-500/10 rounded-2xl rounded-tl-md px-5 py-4">
                     <span className="flex gap-1.5 items-center">
                       <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                       <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -300,13 +332,13 @@ export default function Ai() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }}
-              rows={3}
-              placeholder="Введите ваш вопрос к AI-Ассистенту... (Например: Сроки сдачи отчета по налогу с оборота в 2026 году, или Как рассчитать подоходный налог физических лиц?)\n\nНажмите Enter для отправки, Shift+Enter для новой строки."
-              className="w-full bg-transparent text-xs sm:text-sm font-bold text-bx-text px-4 py-2 focus:outline-none resize-none min-h-[70px] custom-scrollbar placeholder:text-bx-muted/80 leading-normal"
+              rows={2}
+              placeholder={`${typed}▌`}
+              className="w-full bg-transparent text-xs sm:text-sm font-semibold text-bx-text px-4 py-2 focus:outline-none resize-none min-h-[56px] custom-scrollbar placeholder:text-bx-muted/70 placeholder:font-normal leading-normal"
             />
             <div className="flex items-center justify-between border-t border-bx-border/30 pt-2 px-1">
-              <span className="text-[10px] text-bx-muted font-bold">
-                Нажмите <kbd className="bg-bx-surface px-1.5 py-0.5 rounded border border-bx-border font-mono text-[9px]">Enter</kbd> для отправки
+              <span className="text-[10px] text-bx-muted">
+                <kbd className="bg-bx-surface px-1.5 py-0.5 rounded border border-bx-border font-mono text-[9px]">Enter</kbd> — отправить · <kbd className="bg-bx-surface px-1.5 py-0.5 rounded border border-bx-border font-mono text-[9px]">Shift+Enter</kbd> — новая строка
               </span>
               <button onClick={submit} disabled={!input.trim() || sending}
                 className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-40 text-white text-xs sm:text-sm font-extrabold rounded-xl transition-all shadow-md shadow-blue-500/10 flex-shrink-0 hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center gap-1.5">

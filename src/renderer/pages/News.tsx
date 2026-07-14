@@ -246,12 +246,12 @@ export default function News() {
           </div>
         )}
 
-        {/* Четкая лента изменений по пунктам */}
-        <div className="space-y-4">
+        {/* Сетка изменений — адаптивная, как в Шаблонах документов */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4 items-stretch">
           {filteredNews.map(item => (
             <div
               key={item.id}
-              className="bg-bx-surface border border-bx-border rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-md transition-all relative overflow-hidden group"
+              className="bg-bx-surface border border-bx-border rounded-2xl p-5 shadow-sm flex flex-col gap-4 hover:shadow-md hover:border-blue-500/30 transition-all relative overflow-hidden group h-full"
             >
               {/* Header карточки */}
               <div className="flex items-center justify-between gap-3 flex-wrap border-b border-bx-border/60 pb-3">
@@ -285,7 +285,7 @@ export default function News() {
               </div>
 
               {/* Ссылка на источник */}
-              <div className="pt-2 flex justify-end">
+              <div className="pt-2 mt-auto flex justify-end">
                 <button
                   onClick={() => openLink(item.url)}
                   className="px-3.5 py-1.5 bg-bx-surface-2 hover:bg-bx-surface border border-bx-border text-bx-text hover:text-blue-600 text-[10px] font-bold rounded-xl transition-all cursor-pointer shadow-sm"
@@ -297,7 +297,7 @@ export default function News() {
           ))}
 
           {filteredNews.length === 0 && (
-            <div className="text-center py-20 bg-bx-surface border border-bx-border border-dashed rounded-2xl text-bx-muted">
+            <div className="col-span-full text-center py-20 bg-bx-surface border border-bx-border border-dashed rounded-2xl text-bx-muted">
               <span className="text-3xl block mb-2">📅</span>
               <p className="text-xs font-bold">Изменений в выбранном разделе пока нет</p>
               <p className="text-[10px] mt-1">Попробуйте выбрать другую тему в меню слева</p>
