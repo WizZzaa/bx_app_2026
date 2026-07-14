@@ -90,3 +90,6 @@ typings/
 
 # Electron-Forge
 out/
+
+# claude-flow runtime session data
+.claude-flow/
