@@ -19,12 +19,13 @@ type IdleLock = 'off' | '5' | '10' | '30' | '60'
 type TabType = 'billing' | 'security' | 'appearance' | 'ai' | 'team' | 'integrations' | 'data'
 
 export default function Settings() {
-  const { plan, isPro } = usePlan()
+  const { plan, isPro, isTrial, trialDaysLeft, planExpiresAt } = usePlan()
   const { active: activeCompany } = useCompany()
   const toast = useToast()
   const navigate = useNavigate()
 
   const [activeTab, setActiveTab] = useState<TabType>('billing')
+  const [billingPeriod, setBillingPeriod] = useState<'month' | 'year'>('month')
   const [userEmail, setUserEmail] = useState('')
   const [userId, setUserId] = useState('')
   const [notifyDays, setNotifyDays] = useState<NotifyDays>('3')
@@ -545,6 +546,31 @@ export default function Settings() {
                 </p>
               </div>
 
+              {/* Баннер триала */}
+              {isTrial && trialDaysLeft > 0 && (
+                <div className="rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-600/15 to-transparent px-4 py-3">
+                  <p className="text-sm font-bold text-bx-text">🎁 Пробный Premium — осталось {trialDaysLeft} {trialDaysLeft === 1 ? 'день' : trialDaysLeft < 5 ? 'дня' : 'дней'}</p>
+                  <p className="text-xs text-bx-muted mt-0.5">
+                    {planExpiresAt ? `Действует до ${new Date(planExpiresAt).toLocaleDateString('ru-RU')}. ` : ''}
+                    После окончания — переход на Free. Оформите подписку, чтобы сохранить безлимитный доступ.
+                  </p>
+                </div>
+              )}
+
+              {/* Переключатель периода */}
+              <div className="flex items-center justify-center gap-2">
+                <div className="flex gap-0.5 p-0.5 bg-bx-bg border border-bx-border rounded-xl">
+                  <button onClick={() => setBillingPeriod('month')}
+                    className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors ${billingPeriod === 'month' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
+                    Помесячно
+                  </button>
+                  <button onClick={() => setBillingPeriod('year')}
+                    className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 ${billingPeriod === 'year' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
+                    Год <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full font-bold">−17%</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Лимиты */}
               <div className="bg-bx-surface rounded-xl border border-bx-border/60 overflow-hidden text-[11px]">
                 <div className="grid grid-cols-4 bg-bx-surface-2 px-4 py-2.5 font-bold text-bx-text border-b border-bx-border/40">
@@ -554,11 +580,16 @@ export default function Settings() {
                   <span className="text-center text-purple-400">Premium</span>
                 </div>
                 {[
-                  ['Стоимость', '0 сум', '99k / мес', '199k / мес'],
+                  billingPeriod === 'year'
+                    ? ['Стоимость', '0 сум', '990k / год', '1 990k / год']
+                    : ['Стоимость', '0 сум', '99k / мес', '199k / мес'],
                   ['Компании / Доски', '1 / 1', 'до 3 / до 5', 'Безлимит'],
-                  ['AI-запросы (в мес)', '10', '150', 'Безлимит'],
+                  ['AI-запросы (в мес)', '5', '150', 'Безлимит'],
                   ['Очеловечивание (в мес)', '—', '50', 'Безлимит'],
-                  ['Управление долгами', 'просмотр', 'до 20 зап.', 'Безлимит'],
+                  ['Кадры и зарплата', '—', '✓', '✓'],
+                  ['База знаний РУз', '—', '✓', '✓'],
+                  ['Облачные документы', 'до 3', 'до 50', 'Безлимит'],
+                  ['Управление долгами', '—', 'до 20 зап.', 'Безлимит'],
                   ['Подпись ЭЦП (в мес)', '—', 'до 5', 'Безлимит'],
                   ['Чистка & Бэкап 1С', '✓', 'ручной', 'автомат'],
                   ['Техподдержка', '—', 'чат', 'AnyDesk'],
@@ -621,6 +652,23 @@ export default function Settings() {
                   )}
                 </div>
               )}
+
+              {/* Реферальная программа */}
+              <div className="bg-bx-surface border border-bx-border rounded-2xl p-4 space-y-3">
+                <h3 className="text-xs font-bold text-bx-text uppercase tracking-wider">🎁 Приведите коллегу</h3>
+                <p className="text-xs text-bx-muted leading-relaxed">
+                  Поделитесь ссылкой с коллегой-бухгалтером. Когда он зарегистрируется и оформит подписку — вы оба получите +1 месяц Standard бесплатно.
+                </p>
+                <div className="flex items-center gap-2">
+                  <input readOnly value={`https://bx.uz/?ref=${userId || ''}`} onFocus={e => e.currentTarget.select()}
+                    className="flex-1 bg-bx-bg text-bx-text px-3 py-2 rounded-lg border border-bx-border-2 text-xs" />
+                  <button
+                    onClick={() => { if (userId) { navigator.clipboard?.writeText(`https://bx.uz/?ref=${userId}`); toast.success('Ссылка скопирована') } }}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors whitespace-nowrap">
+                    Копировать
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

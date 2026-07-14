@@ -7,6 +7,7 @@ import { useToast } from '../lib/ui/ToastContext'
 import { exportPayrollToExcel } from '../lib/excelExport'
 import { setCalcPrefill } from './calc/prefill'
 import { useEconomicIndicators } from '../lib/useEconomicIndicators'
+import { usePlan } from '../lib/plan'
 
 const EMPTY: NewEmployee = {
   company_id: null, full_name: '', position: '', department: '', hire_date: '',
@@ -22,6 +23,7 @@ export default function Hr() {
   const toast = useToast()
   const navigate = useNavigate();
   const { brv, mrot } = useEconomicIndicators()
+  const { limits, loading: planLoading } = usePlan()
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -192,6 +194,24 @@ export default function Hr() {
     } else {
       toast.error('Функция генерации PDF доступна только в Electron')
     }
+  }
+
+  // HR-расчёты (зарплата, налоги, ведомости) — возможность платного тарифа
+  if (!planLoading && !limits.hrPayroll) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="max-w-md text-center">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-600/15 text-blue-400 flex items-center justify-center text-2xl mb-4">🔒</div>
+          <h1 className="text-lg font-bold text-bx-text mb-2">Кадры и зарплата — в тарифе Standard</h1>
+          <p className="text-sm text-bx-muted mb-1">Учёт сотрудников, расчёт зарплаты, НДФЛ, ИНПС и соцналога по актуальным БРВ/МРОТ, печать расчётных листов и ведомостей в Excel.</p>
+          <p className="text-xs text-bx-muted mb-5">На бесплатном тарифе доступны калькуляторы для разовых расчётов.</p>
+          <button onClick={() => navigate('/settings')}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors">
+            Посмотреть тарифы
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (

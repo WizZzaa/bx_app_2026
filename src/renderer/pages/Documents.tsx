@@ -11,7 +11,7 @@ const CATEGORY_ICON: Record<string, string> = {
 
 export default function Documents() {
   const { companies, active } = useCompany();
-  const { isPro } = usePlan();
+  const { limits } = usePlan();
   const {
     documents,
     loading,
@@ -88,9 +88,9 @@ export default function Documents() {
     e.preventDefault();
     if (!selectedFile) return;
 
-    // Check limits for Free users
-    if (!isPro && documents.length >= 5) {
-      setUploadError('Достигнут лимит на Free-тарифе (макс. 5 документов). Перейдите на Pro для неограниченной загрузки.');
+    // Check limits from server-driven plan matrix
+    if (documents.length >= limits.documentsMax) {
+      setUploadError(`Достигнут лимит вашего тарифа (макс. ${limits.documentsMax} докум.). Перейдите на Standard или Premium для увеличения лимита.`);
       return;
     }
 
@@ -179,7 +179,7 @@ export default function Documents() {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold text-bx-muted bg-bx-surface border border-bx-border rounded-full px-3 py-1">
-              {documents.length} {isPro ? 'файлов' : `из 5 · Free`}
+              {documents.length} {Number.isFinite(limits.documentsMax) ? `из ${limits.documentsMax}` : 'файлов'}
             </span>
           </div>
         </div>
