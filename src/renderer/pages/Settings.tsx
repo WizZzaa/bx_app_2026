@@ -19,13 +19,15 @@ type IdleLock = 'off' | '5' | '10' | '30' | '60'
 type TabType = 'billing' | 'security' | 'appearance' | 'ai' | 'team' | 'integrations' | 'data'
 
 export default function Settings() {
-  const { plan, isPro, isTrial, trialDaysLeft, planExpiresAt } = usePlan()
+  const { plan, isPro, isTrial, trialDaysLeft, planExpiresAt, referralCode, refresh: refreshPlan } = usePlan()
   const { active: activeCompany } = useCompany()
   const toast = useToast()
   const navigate = useNavigate()
 
   const [activeTab, setActiveTab] = useState<TabType>('billing')
   const [billingPeriod, setBillingPeriod] = useState<'month' | 'year'>('month')
+  const [promoCode, setPromoCode] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
   const [userEmail, setUserEmail] = useState('')
   const [userId, setUserId] = useState('')
   const [notifyDays, setNotifyDays] = useState<NotifyDays>('3')
@@ -170,6 +172,28 @@ export default function Settings() {
     setAutostartEnabled(val)
     if ((window as any).bx?.autostart?.set) {
       await (window as any).bx.autostart.set(val)
+    }
+  }
+
+  const handleRedeemPromo = async () => {
+    const code = promoCode.trim().toUpperCase()
+    if (!code || promoLoading) return
+    setPromoLoading(true)
+    try {
+      const { data, error } = await supabase.rpc('bx_redeem_promo', { p_code: code })
+      if (error) throw error
+      const res = data as { ok?: boolean; message?: string } | null
+      if (res?.ok) {
+        toast.success(res.message || 'Промокод активирован')
+        setPromoCode('')
+        await refreshPlan()
+      } else {
+        toast.error(res?.message || 'Не удалось активировать промокод')
+      }
+    } catch {
+      toast.error('Ошибка активации. Проверьте подключение и попробуйте снова.')
+    } finally {
+      setPromoLoading(false)
     }
   }
 
@@ -653,21 +677,47 @@ export default function Settings() {
                 </div>
               )}
 
+              {/* Промокод */}
+              <div className="bg-bx-surface border border-bx-border rounded-2xl p-4 space-y-3">
+                <h3 className="text-xs font-bold text-bx-text uppercase tracking-wider">🏷️ Есть промокод?</h3>
+                <p className="text-xs text-bx-muted leading-relaxed">
+                  Введите промокод, чтобы активировать тариф. Срок добавится к текущему.
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    value={promoCode}
+                    onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                    onKeyDown={e => { if (e.key === 'Enter') handleRedeemPromo() }}
+                    placeholder="Например, WELCOME30"
+                    className="flex-1 bg-bx-bg text-bx-text px-3 py-2 rounded-lg border border-bx-border-2 text-xs tracking-wider focus:outline-none focus:border-blue-500/50" />
+                  <button
+                    onClick={handleRedeemPromo}
+                    disabled={promoLoading || !promoCode.trim()}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors whitespace-nowrap">
+                    {promoLoading ? 'Проверяю…' : 'Активировать'}
+                  </button>
+                </div>
+              </div>
+
               {/* Реферальная программа */}
               <div className="bg-bx-surface border border-bx-border rounded-2xl p-4 space-y-3">
                 <h3 className="text-xs font-bold text-bx-text uppercase tracking-wider">🎁 Приведите коллегу</h3>
                 <p className="text-xs text-bx-muted leading-relaxed">
-                  Поделитесь ссылкой с коллегой-бухгалтером. Когда он зарегистрируется и оформит подписку — вы оба получите +1 месяц Standard бесплатно.
+                  Поделитесь ссылкой с коллегой-бухгалтером. Когда он зарегистрируется по ней и оформит подписку — вы оба получите +1 месяц Standard бесплатно.
                 </p>
-                <div className="flex items-center gap-2">
-                  <input readOnly value={`https://bx.uz/?ref=${userId || ''}`} onFocus={e => e.currentTarget.select()}
-                    className="flex-1 bg-bx-bg text-bx-text px-3 py-2 rounded-lg border border-bx-border-2 text-xs" />
-                  <button
-                    onClick={() => { if (userId) { navigator.clipboard?.writeText(`https://bx.uz/?ref=${userId}`); toast.success('Ссылка скопирована') } }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors whitespace-nowrap">
-                    Копировать
-                  </button>
-                </div>
+                {referralCode ? (
+                  <div className="flex items-center gap-2">
+                    <input readOnly value={`https://bx.uz/?ref=${referralCode}`} onFocus={e => e.currentTarget.select()}
+                      className="flex-1 bg-bx-bg text-bx-text px-3 py-2 rounded-lg border border-bx-border-2 text-xs" />
+                    <button
+                      onClick={() => { navigator.clipboard?.writeText(`https://bx.uz/?ref=${referralCode}`); toast.success('Ссылка скопирована') }}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors whitespace-nowrap">
+                      Копировать
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-bx-muted italic">Ваш код приглашения появится после синхронизации профиля.</p>
+                )}
               </div>
             </div>
           )}

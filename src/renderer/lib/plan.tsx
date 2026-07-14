@@ -118,6 +118,7 @@ interface PlanCtx {
   isTrial: boolean
   trialDaysLeft: number
   planExpiresAt: string | null
+  referralCode: string | null
   refresh: () => Promise<void>
 }
 
@@ -125,7 +126,7 @@ const CACHE_KEY = 'bx_plan_cache'
 const Ctx = createContext<PlanCtx>({
   plan: 'free', isPro: false, isPremium: false, role: 'user', isAdmin: false, loading: true,
   limits: DEFAULT_PLAN_LIMITS.free, allLimits: DEFAULT_PLAN_LIMITS, isTrial: false, trialDaysLeft: 0,
-  planExpiresAt: null, refresh: async () => { /* переопределяется в PlanProvider */ },
+  planExpiresAt: null, referralCode: null, refresh: async () => { /* переопределяется в PlanProvider */ },
 })
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -140,6 +141,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const [allLimits, setAllLimits] = useState<Record<Plan, PlanLimits>>(DEFAULT_PLAN_LIMITS)
   const [isTrial, setIsTrial] = useState(false)
   const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null)
+  const [referralCode, setReferralCode] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     // 1) Матрица функций из админки (bx_plan_features). Ошибка/нет таблицы → дефолты.
@@ -168,24 +170,42 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from('bx_profiles').select('*').eq('user_id', user.id).maybeSingle()
       if (error) throw error
-      if (!data) {
-        // Первый вход до срабатывания триггера — создаём free-профиль
-        await supabase.from('bx_profiles').insert({ user_id: user.id }).select().maybeSingle()
-        setPlan('free'); setRole('user'); setIsTrial(false); setPlanExpiresAt(null)
-        localStorage.setItem(CACHE_KEY, 'free')
-      } else {
-        const expires: string | null = data.plan_expires_at ?? null
+      // Профиля ещё нет — создаём; триггер на сервере проставит триал и реф-код,
+      // поэтому используем возвращённую строку, а не хардкодим free.
+      let prof = data
+      if (!prof) {
+        const { data: created } = await supabase
+          .from('bx_profiles').insert({ user_id: user.id }).select('*').maybeSingle()
+        prof = created ?? null
+      }
+      if (prof) {
+        const expires: string | null = prof.plan_expires_at ?? null
         const expired = expires ? new Date(expires) < new Date() : false
         let p: Plan = 'free'
         if (!expired) {
-          if (data.plan === 'premium' || data.plan === 'pro') p = 'premium'
-          else if (data.plan === 'standard') p = 'standard'
+          if (prof.plan === 'premium' || prof.plan === 'pro') p = 'premium'
+          else if (prof.plan === 'standard') p = 'standard'
         }
         setPlan(p)
-        setRole(data.role || 'user')
+        setRole(prof.role || 'user')
         setPlanExpiresAt(expires)
-        setIsTrial(!expired && data.is_trial === true && p !== 'free')
+        setIsTrial(!expired && prof.is_trial === true && p !== 'free')
+        setReferralCode(prof.referral_code ?? null)
         localStorage.setItem(CACHE_KEY, p)
+      } else {
+        setPlan('free'); setRole('user'); setIsTrial(false); setPlanExpiresAt(null)
+        localStorage.setItem(CACHE_KEY, 'free')
+      }
+
+      // Привязываем отложенный код приглашения (после появления профиля).
+      const pendingRef = localStorage.getItem('bx_pending_ref')
+      if (pendingRef && prof) {
+        try {
+          await supabase.rpc('bx_apply_referral', { p_code: pendingRef })
+          localStorage.removeItem('bx_pending_ref') // одна попытка при успешном вызове
+        } catch {
+          // сеть недоступна — попробуем при следующем refresh
+        }
       }
     } catch {
       // офлайн / нет таблицы — работаем по кэшу (по умолчанию free)
@@ -213,6 +233,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       isTrial,
       trialDaysLeft,
       planExpiresAt,
+      referralCode,
       refresh,
     }}>
       {children}

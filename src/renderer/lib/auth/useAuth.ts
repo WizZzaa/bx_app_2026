@@ -25,7 +25,11 @@ export function useAuth() {
     return error?.message ?? null
   }, [])
 
-  const signUp = useCallback(async (email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string, referralCode?: string) => {
+    // Код приглашения запоминаем локально и привязываем после появления сессии
+    // (регистрация может требовать подтверждения email) — см. PlanProvider.refresh.
+    const code = (referralCode || '').trim().toUpperCase()
+    if (code) localStorage.setItem('bx_pending_ref', code)
     const { error } = await supabase.auth.signUp({ email, password })
     return error?.message ?? null
   }, [])

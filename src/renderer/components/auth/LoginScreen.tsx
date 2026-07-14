@@ -4,7 +4,7 @@ import { applyTheme } from '../../lib/theme'
 
 interface Props {
   onSignIn: (email: string, password: string) => Promise<string | null>
-  onSignUp: (email: string, password: string) => Promise<string | null>
+  onSignUp: (email: string, password: string, referralCode?: string) => Promise<string | null>
   onResetPassword: (email: string) => Promise<string | null>
   onResendConfirmation: (email: string) => Promise<string | null>
 }
@@ -13,6 +13,7 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
   const [mode, setMode] = useState<'in' | 'up' | 'reset'>('in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [referralCode, setReferralCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -22,6 +23,14 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'latest' | 'error' | 'downloading' | 'ready'>('idle')
 
   const latestEntry = CHANGELOG[0]
+
+  // Код приглашения из ссылки (?ref=CODE) — в веб-версии сразу переводим в регистрацию.
+  React.useEffect(() => {
+    try {
+      const ref = new URLSearchParams(window.location.search).get('ref')
+      if (ref) { setReferralCode(ref.toUpperCase()); setMode('up') }
+    } catch { /* нет window.location — десктоп */ }
+  }, [])
 
   // Подписка на нативный autoUpdater из Electron
   React.useEffect(() => {
@@ -83,7 +92,7 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
       return
     }
 
-    const err = mode === 'in' ? await onSignIn(email, password) : await onSignUp(email, password)
+    const err = mode === 'in' ? await onSignIn(email, password) : await onSignUp(email, password, referralCode)
     setLoading(false)
     if (err) {
       setError(err)
@@ -291,6 +300,29 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
                   </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Код приглашения — только при регистрации, необязательно */}
+          {mode === 'up' && (
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Код приглашения <span className="text-slate-600 normal-case font-medium">(необязательно)</span></label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 010 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 010-4V7a2 2 0 00-2-2H5z" />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={e => setReferralCode(e.target.value.toUpperCase())}
+                  className="w-full bg-[#0a0d14]/90 text-slate-200 text-sm pl-10 pr-4 py-3 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500 focus:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-all placeholder:text-slate-600 tracking-wider"
+                  placeholder="Код друга (если есть)"
+                  tabIndex={0}
+                  aria-label="Код приглашения от друга"
+                />
+              </div>
             </div>
           )}
 
