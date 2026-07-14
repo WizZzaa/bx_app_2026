@@ -141,20 +141,57 @@ function renderBody(body: string, q: string): React.ReactNode[] {
       continue;
     }
     
-    // 7. Heading 2
+    // 7. Heading 1
+    if (line.startsWith('# ')) {
+      const titleText = line.slice(2);
+      nodes.push(
+        <h2 key={key++} className="text-sm font-extrabold text-slate-900 dark:text-white mt-5 mb-2.5 flex items-center gap-2 border-b border-bx-border/30 pb-1.5 uppercase tracking-wide">
+          {inline(titleText, q)}
+        </h2>
+      );
+      i++;
+      continue;
+    }
+
+    // 8. Heading 2
     if (line.startsWith('## ')) {
       const titleText = line.slice(3);
       nodes.push(
         <h3 key={key++} id={'h-' + slug(titleText)} className="scroll-mt-6 text-xs font-bold text-slate-900 dark:text-white mt-6 mb-2.5 flex items-center gap-2 border-b border-bx-border/30 pb-1.5 uppercase tracking-wider">
           <span className="w-1.5 h-3 bg-blue-500 rounded-full" />
-          {titleText}
+          {inline(titleText, q)}
         </h3>
       );
       i++;
       continue;
     }
-    
-    // 8. Normal paragraph
+
+    // 9. Heading 3
+    if (line.startsWith('### ')) {
+      const titleText = line.slice(4);
+      nodes.push(
+        <h4 key={key++} className="text-xs font-extrabold text-slate-900 dark:text-white mt-4 mb-2 flex items-center gap-1.5">
+          <span className="w-1 h-2 bg-blue-500/60 rounded-full" />
+          {inline(titleText, q)}
+        </h4>
+      );
+      i++;
+      continue;
+    }
+
+    // 10. Heading 4
+    if (line.startsWith('#### ')) {
+      const titleText = line.slice(5);
+      nodes.push(
+        <h5 key={key++} className="text-[11px] font-bold text-slate-800 dark:text-slate-200 mt-3 mb-1.5">
+          {inline(titleText, q)}
+        </h5>
+      );
+      i++;
+      continue;
+    }
+
+    // 11. Normal paragraph
     nodes.push(
       <p key={key++} className="text-xs text-bx-text leading-[1.7] my-2 text-justify">
         {inline(line, q)}
@@ -360,7 +397,7 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
       {toc.length > 1 && (
         <aside className="w-56 flex-shrink-0 py-6 pr-6 hidden lg:block sticky top-0 max-h-[85vh] overflow-y-auto custom-scrollbar">
           <div className="pl-4 border-l border-bx-border">
-            <p className="text-[9px] font-bold text-bx-muted uppercase tracking-wider mb-3">Содержание статьи</p>
+            <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Содержание статьи</p>
             <nav className="space-y-2">
               {toc.map(t => (
                 <button 
@@ -369,7 +406,7 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
                   className={`block w-full text-left text-[11px] leading-snug py-0.5 border-l-2 -ml-[18px] pl-[16px] transition-all truncate cursor-pointer ${
                     activeHeading === t
                       ? 'text-blue-600 dark:text-blue-400 font-extrabold border-blue-500'
-                      : 'text-bx-muted border-transparent hover:text-blue-500 dark:hover:text-blue-400 hover:border-blue-500/40'
+                      : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-500/40 font-bold'
                   }`}
                   title={t}
                 >
