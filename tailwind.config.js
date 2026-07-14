@@ -1,5 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // dark:-варианты управляются классом .dark (applyTheme в lib/theme.ts),
+  // а не темой ОС — иначе hover-стили в светлой теме брали тёмные значения.
+  darkMode: 'class',
   content: ['./index.html', './src/renderer/**/*.{ts,tsx}'],
   theme: {
     extend: {

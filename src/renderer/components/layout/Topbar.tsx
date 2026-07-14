@@ -6,6 +6,7 @@ import Icon from '../../lib/ui/Icon'
 import { getSyncQueue, syncOfflineData } from '../../lib/db/syncQueue'
 import { db } from '../../lib/db/localDb'
 import ConflictModal from '../ConflictModal'
+import { applyTheme } from '../../lib/theme'
 import { useNotifications } from '../../lib/useNotifications'
 
 export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
@@ -40,11 +41,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
     const nextTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(nextTheme)
     localStorage.setItem('bx_theme', nextTheme)
-    if (nextTheme === 'light') {
-      document.documentElement.classList.add('light')
-    } else {
-      document.documentElement.classList.remove('light')
-    }
+    applyTheme(nextTheme)
     window.dispatchEvent(new Event('storage'))
   }
 

@@ -248,7 +248,7 @@ function Row({ left, title, badges, right, onClick }: {
     <button onClick={onClick}
       className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-bx-surface-2 text-left transition-colors group">
       <span className="w-5 flex-shrink-0 text-center">{left}</span>
-      <span className="flex-1 min-w-0 text-[13px] text-bx-text group-hover:text-white truncate">{title}</span>
+      <span className="flex-1 min-w-0 text-[13px] text-bx-text group-hover:text-slate-900 dark:group-hover:text-white truncate">{title}</span>
       {badges.map(b => (
         <span key={b.text} className={`text-[10px] px-1.5 py-0.5 rounded flex-shrink-0 ${b.cls}`}>{b.text}</span>
       ))}

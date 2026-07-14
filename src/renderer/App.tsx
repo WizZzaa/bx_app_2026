@@ -23,6 +23,7 @@ import Counterparties from './pages/Counterparties';
 import Placeholder from './pages/Placeholder';
 import TrayView from './pages/TrayView';
 import Documents from './pages/Documents';
+import { applyTheme, currentTheme } from './lib/theme';
 import { CompanyProvider } from './lib/CompanyContext';
 import { PlanProvider } from './lib/plan';
 
@@ -58,14 +59,9 @@ function EcpRedirect() {
 export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
 
-  // Инициализация темы при первом рендере
+  // Инициализация темы при первом рендере (единый ключ bx_theme + классы .light/.dark)
   useEffect(() => {
-    const isDark = localStorage.getItem('theme') === 'dark';
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    applyTheme(currentTheme());
   }, []);
 
   // Если это режим компактного окна (Трей-вид)

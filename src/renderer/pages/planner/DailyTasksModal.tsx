@@ -110,7 +110,7 @@ export default function DailyTasksModal({
               >
                 <span
                   className={`text-xs block truncate ${
-                    ev.status === 'done' ? 'text-bx-muted line-through' : 'text-bx-text hover:text-white'
+                    ev.status === 'done' ? 'text-bx-muted line-through' : 'text-bx-text hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   {ev.title}
@@ -153,7 +153,7 @@ export default function DailyTasksModal({
                 >
                   <span
                     className={`text-xs block truncate ${
-                      done ? 'text-bx-muted line-through' : 'text-bx-text hover:text-white'
+                      done ? 'text-bx-muted line-through' : 'text-bx-text hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     {cd.title}

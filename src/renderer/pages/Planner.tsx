@@ -368,7 +368,7 @@ export default function Planner() {
                 className={`px-3 py-1 text-[11px] rounded-lg transition-all font-semibold ${
                   typeF === f.id 
                     ? 'bg-blue-600/10 border border-blue-500/20 text-blue-400' 
-                    : 'text-slate-400 border-transparent hover:bg-white/[0.02] hover:text-slate-200'
+                    : 'text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.02] hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 {f.label}

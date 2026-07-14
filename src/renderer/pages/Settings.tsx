@@ -8,6 +8,7 @@ import { usePlan } from '../lib/plan'
 import { useCompany } from '../lib/CompanyContext'
 import { useToast } from '../lib/ui/ToastContext'
 import { loadEcpKeys, saveEcpKeys } from '../lib/ecpStorage'
+import { applyTheme } from '../lib/theme'
 
 const THEME_KEY = 'bx_theme'
 const NOTIFY_KEY = 'bx_notify_days'
@@ -290,11 +291,7 @@ export default function Settings() {
   function saveTheme(t: 'dark' | 'light') {
     setTheme(t)
     localStorage.setItem(THEME_KEY, t)
-    if (t === 'light') {
-      document.documentElement.classList.add('light')
-    } else {
-      document.documentElement.classList.remove('light')
-    }
+    applyTheme(t)
   }
 
   function toggleHoroscope(visible: boolean) {
