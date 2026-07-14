@@ -4,6 +4,8 @@ export default function Titlebar() {
   const [isMaximized, setIsMaximized] = useState(false)
   const isElectron = typeof window !== 'undefined' && !!window.bx
 
+  if (!isElectron) return null
+
   useEffect(() => {
     if (!isElectron || !window.bx?.window) return
 

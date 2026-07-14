@@ -8,7 +8,7 @@ function inline(text: string, q: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
   return parts.map((p, i) => {
     if (p.startsWith('**') && p.endsWith('**')) {
-      return <strong key={i} className="text-slate-900 dark:text-white font-bold">{highlight(p.slice(2, -2), q)}</strong>;
+      return <strong key={i} className="text-bx-text font-extrabold">{highlight(p.slice(2, -2), q)}</strong>;
     }
     if (p.startsWith('`') && p.endsWith('`')) {
       return <code key={i} className="bg-bx-surface-2 text-emerald-600 dark:text-emerald-400 font-mono px-1.5 py-0.5 rounded text-[11px] border border-bx-border-2">{p.slice(1, -1)}</code>;
@@ -56,7 +56,7 @@ function renderBody(body: string, q: string): React.ReactNode[] {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               {rows.length > 0 && (
-                <tr className="bg-bx-surface-2/50 text-slate-900 dark:text-white font-bold border-b border-bx-border">
+                <tr className="bg-bx-surface-2/50 text-bx-text font-bold border-b border-bx-border">
                   {rows[0].map((cell, idx) => (
                     <th key={idx} className="py-2 px-4 font-semibold text-[10px] uppercase tracking-wider">{inline(cell, q)}</th>
                   ))}
@@ -145,7 +145,7 @@ function renderBody(body: string, q: string): React.ReactNode[] {
     if (line.startsWith('# ')) {
       const titleText = line.slice(2);
       nodes.push(
-        <h2 key={key++} className="text-sm font-extrabold text-slate-900 dark:text-white mt-5 mb-2.5 flex items-center gap-2 border-b border-bx-border/30 pb-1.5 uppercase tracking-wide">
+        <h2 key={key++} className="text-sm font-extrabold text-bx-text mt-5 mb-2.5 flex items-center gap-2 border-b border-bx-border/30 pb-1.5 uppercase tracking-wide">
           {inline(titleText, q)}
         </h2>
       );
@@ -157,7 +157,7 @@ function renderBody(body: string, q: string): React.ReactNode[] {
     if (line.startsWith('## ')) {
       const titleText = line.slice(3);
       nodes.push(
-        <h3 key={key++} id={'h-' + slug(titleText)} className="scroll-mt-6 text-xs font-bold text-slate-900 dark:text-white mt-6 mb-2.5 flex items-center gap-2 border-b border-bx-border/30 pb-1.5 uppercase tracking-wider">
+        <h3 key={key++} id={'h-' + slug(titleText)} className="scroll-mt-6 text-xs font-bold text-bx-text mt-6 mb-2.5 flex items-center gap-2 border-b border-bx-border/30 pb-1.5 uppercase tracking-wider">
           <span className="w-1.5 h-3 bg-blue-500 rounded-full" />
           {inline(titleText, q)}
         </h3>
@@ -170,7 +170,7 @@ function renderBody(body: string, q: string): React.ReactNode[] {
     if (line.startsWith('### ')) {
       const titleText = line.slice(4);
       nodes.push(
-        <h4 key={key++} className="text-xs font-extrabold text-slate-900 dark:text-white mt-4 mb-2 flex items-center gap-1.5">
+        <h4 key={key++} className="text-xs font-extrabold text-bx-text mt-4 mb-2 flex items-center gap-1.5">
           <span className="w-1 h-2 bg-blue-500/60 rounded-full" />
           {inline(titleText, q)}
         </h4>
@@ -183,7 +183,7 @@ function renderBody(body: string, q: string): React.ReactNode[] {
     if (line.startsWith('#### ')) {
       const titleText = line.slice(5);
       nodes.push(
-        <h5 key={key++} className="text-[11px] font-bold text-slate-800 dark:text-slate-200 mt-3 mb-1.5">
+        <h5 key={key++} className="text-[11px] font-bold text-bx-text mt-3 mb-1.5">
           {inline(titleText, q)}
         </h5>
       );
@@ -341,7 +341,7 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
 
         {/* Content Box */}
         <div id="article-content-to-export">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight mb-2">{article.title}</h2>
+          <h2 className="text-xl font-bold text-bx-text leading-tight mb-2">{article.title}</h2>
           <div className="text-[10px] text-bx-muted mb-6 border-b border-bx-border/40 pb-3">
             Категория: <span className="text-bx-text font-semibold">{article.category}</span> · Сверено: {article.updated}
           </div>
