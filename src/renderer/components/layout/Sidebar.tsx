@@ -125,7 +125,7 @@ export default function Sidebar() {
                         window.open('https://bx.uz/admin', '_blank', 'noopener,noreferrer')
                       }
                     }}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5 font-semibold"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg text-black dark:text-white hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5 font-semibold"
                   >
                     <Icon name={icon} className="w-4 h-4 flex-shrink-0 opacity-80" />
                     <span className="truncate">{label}</span>
@@ -141,7 +141,7 @@ export default function Sidebar() {
                     `flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg font-semibold ${
                       isActive
                         ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-600/20'
-                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5'
+                        : 'text-black dark:text-white border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5'
                     }`
                   }
                 >
