@@ -34,8 +34,15 @@ export const useTickets = () => {
   const loadTickets = useCallback(async () => {
     setLoading(true)
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setTickets([]); return }
+      // Личная «Поддержка» — только свои обращения. У админа RLS разрешает читать все
+      // тикеты, поэтому здесь фильтруем по user_id явно (иначе админ видит чужие).
+      // Все обращения админ смотрит в разделе /admin.
       const { data, error } = await supabase
-        .from('bx_tickets').select('*').order('updated_at', { ascending: false })
+        .from('bx_tickets').select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
       if (error) throw error
       setTickets((data ?? []) as BxTicket[])
     } catch {
