@@ -125,9 +125,9 @@ export default function Sidebar() {
                         window.open('https://bx.uz/admin', '_blank', 'noopener,noreferrer')
                       }
                     }}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg text-slate-800 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white hover:bg-slate-950/10 dark:hover:bg-white/[0.04] hover:translate-x-0.5 font-bold"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5 font-semibold"
                   >
-                    <Icon name={icon} className="w-4 h-4 flex-shrink-0 opacity-90" />
+                    <Icon name={icon} className="w-4 h-4 flex-shrink-0 opacity-80" />
                     <span className="truncate">{label}</span>
                   </a>
                 )
@@ -138,14 +138,14 @@ export default function Sidebar() {
                   key={to}
                   to={to}
                   className={({ isActive }) =>
-                    `flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg font-bold ${
+                    `flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg font-semibold ${
                       isActive
                         ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-600/20'
-                        : 'text-slate-800 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white border-transparent hover:bg-slate-950/10 dark:hover:bg-white/[0.04] hover:translate-x-0.5'
+                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5'
                     }`
                   }
                 >
-                  <Icon name={icon} className="w-4 h-4 flex-shrink-0 opacity-90" />
+                  <Icon name={icon} className="w-4 h-4 flex-shrink-0 opacity-80" />
                   <span className="truncate">{label}</span>
                 </NavLink>
               )
