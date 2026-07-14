@@ -5,7 +5,10 @@ import App from './App';
 import AuthGate from './components/auth/AuthGate';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './lib/ui/ToastContext';
+import { installGlobalErrorReporting } from './lib/errorReporter';
 import './styles/globals.css';
+
+installGlobalErrorReporting();
 
 const root = createRoot(document.getElementById('root')!);
 root.render(

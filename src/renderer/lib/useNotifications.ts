@@ -16,7 +16,7 @@ export interface BxNotification {
 
 export function useNotifications() {
   const { companies } = useCompany()
-  const { isPro } = usePlan()
+  const { plan, isPro, isPremium } = usePlan()
   const [notifications, setNotifications] = useState<BxNotification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
 
@@ -90,9 +90,12 @@ export function useNotifications() {
 
       const filtered: BxNotification[] = data
         .filter((item: any) => {
+          if (item.send_at && item.send_at > now) return false // отложенная — ещё не время
           if (regTime && item.created_at < regTime) return false
           if (item.expires_at && item.expires_at < now) return false
           if (item.target_type === 'pro' && !isPro) return false
+          if (item.target_type === 'standard' && plan !== 'standard') return false
+          if (item.target_type === 'premium' && !isPremium) return false
 
           if (item.target_type === 'tin') {
             if (!item.target_tins || item.target_tins.length === 0) return false
@@ -151,7 +154,7 @@ export function useNotifications() {
       supabase.removeChannel(channel)
       clearInterval(interval)
     }
-  }, [companies, isPro])
+  }, [companies, plan, isPro, isPremium])
 
   useEffect(() => {
     setUnreadCount(notifications.filter(n => !n.read).length)

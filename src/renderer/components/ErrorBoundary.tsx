@@ -1,5 +1,6 @@
 import React from 'react'
 import { logger } from '../lib/logger'
+import { reportError } from '../lib/errorReporter'
 
 // Глобальная граница ошибок на корне приложения: любой неперехваченный сбой
 // рендера показывает экран восстановления вместо белого экрана.
@@ -16,6 +17,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     logger.error('app', 'Неперехваченная ошибка рендера', { message: error.message, stack: error.stack, componentStack: info.componentStack })
+    reportError(error.message, `${error.stack ?? ''}\n--- component stack ---${info.componentStack ?? ''}`)
   }
 
   private handleReload = () => {
