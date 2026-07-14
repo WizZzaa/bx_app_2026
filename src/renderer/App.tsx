@@ -4,6 +4,7 @@ import Sidebar from './components/layout/Sidebar';
 import Titlebar from './components/layout/Titlebar';
 import Topbar from './components/layout/Topbar';
 import CommandPalette from './components/CommandPalette';
+import OnboardingWizard from './components/OnboardingWizard';
 import Dashboard from './pages/Dashboard';
 import Tools from './pages/Tools';
 import Library from './pages/library/Library';
@@ -126,6 +127,7 @@ export default function App() {
           </div>
 
           <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+          <OnboardingWizard />
         </div>
       </PlanProvider>
     </CompanyProvider>

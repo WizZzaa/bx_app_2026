@@ -182,7 +182,7 @@ export default function Ai() {
     t = setTimeout(tick, 600);
     return () => clearTimeout(t);
   }, []);
-  const { isPro } = usePlan();
+  const { isPro, limits } = usePlan();
   const [paywall, setPaywall] = useState(false);
   const navigate = useNavigate();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -197,7 +197,7 @@ export default function Ai() {
 
   const submit = () => {
     if (!input.trim() || sending) return;
-    if (!isPro && messages.length >= 20) {
+    if (messages.length >= limits.aiSessionMax) {
       setPaywall(true);
       return;
     }
