@@ -182,7 +182,7 @@ export default function Ai() {
     t = setTimeout(tick, 600);
     return () => clearTimeout(t);
   }, []);
-  const { isPro, limits } = usePlan();
+  const { limits } = usePlan();
   const [paywall, setPaywall] = useState(false);
   const navigate = useNavigate();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
