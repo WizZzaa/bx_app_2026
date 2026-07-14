@@ -196,7 +196,7 @@ export default function Finance() {
             <div className="bg-bx-surface border border-bx-border border-l-[6px] border-l-emerald-500 rounded-2xl px-6 py-5 shadow-md flex flex-col justify-between min-h-[100px]">
               <div>
                 <p className="text-[11px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400">Нам должны (Дебиторка)</p>
-                <p className="text-3xl font-black text-slate-900 dark:text-white mt-1 tabular-nums">
+                <p className="text-3xl font-black text-bx-text mt-1 tabular-nums">
                   {fmt(sums.receivable)} <span className="text-sm font-bold text-bx-muted uppercase">сум</span>
                 </p>
               </div>
@@ -206,7 +206,7 @@ export default function Finance() {
             <div className="bg-bx-surface border border-bx-border border-l-[6px] border-l-red-500 rounded-2xl px-6 py-5 shadow-md flex flex-col justify-between min-h-[100px]">
               <div>
                 <p className="text-[11px] font-black uppercase tracking-widest text-red-700 dark:text-red-400">Мы должны (Кредиторка)</p>
-                <p className="text-3xl font-black text-slate-900 dark:text-white mt-1 tabular-nums">
+                <p className="text-3xl font-black text-bx-text mt-1 tabular-nums">
                   {fmt(sums.payable)} <span className="text-sm font-bold text-bx-muted uppercase">сум</span>
                 </p>
               </div>
