@@ -73,13 +73,13 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex flex-col bg-[#e2e6fb] dark:bg-bx-surface border-r border-[#c5cbfa] dark:border-bx-border select-none z-10" style={{ width: 'var(--sidebar-width)', minWidth: 'var(--sidebar-width)' }}>
+    <aside className="flex flex-col bg-bx-surface border-r border-bx-border select-none z-10" style={{ width: 'var(--sidebar-width)', minWidth: 'var(--sidebar-width)' }}>
       {/* Logo — кликабельный, ведет на главную страницу */}
       <button
         onClick={() => navigate('/')}
         onMouseEnter={() => setLogoHovered(true)}
         onMouseLeave={() => setLogoHovered(false)}
-        className="flex items-center gap-2.5 px-4 py-4.5 border-b border-[#c5cbfa] dark:border-bx-border w-full text-left transition-colors hover:bg-white/20 dark:hover:bg-white/[0.02] group"
+        className="flex items-center gap-2.5 px-4 py-4.5 border-b border-bx-border w-full text-left transition-colors hover:bg-white/20 dark:hover:bg-white/[0.02] group"
         title="На главную"
       >
         <div
@@ -108,7 +108,7 @@ export default function Sidebar() {
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4 custom-scrollbar">
         {SECTIONS.map((section, idx) => (
           <div key={idx} className="flex flex-col gap-0.5">
-            <p className="px-3 mb-1 text-[8.5px] font-extrabold uppercase tracking-[0.15em] text-[#6b75a4] dark:text-slate-500">{section.label}</p>
+            <p className="px-3 mb-1 text-[8.5px] font-extrabold uppercase tracking-[0.15em] text-slate-500">{section.label}</p>
             {section.items.map((item) => {
               const { to, icon, label, external } = item
 
@@ -161,7 +161,7 @@ export default function Sidebar() {
       {/* Footer — О программе */}
       <button
         onClick={() => setAboutOpen(true)}
-        className="px-4 py-3 border-t border-[#c5cbfa] dark:border-bx-border text-left hover:bg-white/20 dark:hover:bg-white/[0.02] transition-colors group flex-shrink-0 w-full"
+        className="px-4 py-3 border-t border-bx-border text-left hover:bg-white/20 dark:hover:bg-white/[0.02] transition-colors group flex-shrink-0 w-full"
       >
         <div className="flex items-center gap-2.5">
           <span className="text-xs group-hover:scale-110 transition-transform">ℹ️</span>
