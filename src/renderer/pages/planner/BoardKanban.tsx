@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react'
+import { todayISO, daysFromNowISO } from '../../lib/dates'
 import type { BxCard } from './useCards'
 import type { BxBoard, BoardColumn } from './useBoards'
 import { COLUMN_COLORS } from './useBoards'
@@ -76,6 +77,7 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
   const [prioF, setPrioF] = useState('');
   const [labelF, setLabelF] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(false);
+  const [dateF, setDateF] = useState(''); // '', today, tomorrow, week, month, none
 
   const columns = board.columns;
 
@@ -87,16 +89,26 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
 
   const filteredCards = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const today = todayISO();
     return cards.filter(card => {
       if (q && !(card.title.toLowerCase().includes(q) || (card.description ?? '').toLowerCase().includes(q))) return false;
       if (prioF && card.priority !== prioF) return false;
       if (labelF && !(card.labels ?? []).includes(labelF)) return false;
       if (overdueOnly && !isOverdue(card)) return false;
+      if (dateF) {
+        const day = card.due_date ? card.due_date.slice(0, 10) : null;
+        if (dateF === 'none') { if (day) return false; }
+        else if (!day) return false;
+        else if (dateF === 'today'    && day !== today) return false;
+        else if (dateF === 'tomorrow' && day !== daysFromNowISO(1)) return false;
+        else if (dateF === 'week'     && !(day >= today && day <= daysFromNowISO(7))) return false;
+        else if (dateF === 'month'    && !(day >= today && day <= daysFromNowISO(30))) return false;
+      }
       return true;
     });
-  }, [cards, search, prioF, labelF, overdueOnly]);
+  }, [cards, search, prioF, labelF, overdueOnly, dateF]);
 
-  const filterActive = Boolean(search || prioF || labelF || overdueOnly);
+  const filterActive = Boolean(search || prioF || labelF || overdueOnly || dateF);
 
   // ─── card drag ───
   function onCardDragStart(e: React.DragEvent, id: string) {
@@ -216,12 +228,20 @@ export default function BoardKanban({ board, cards, onCardClick, onAddCard, onMo
             {allLabels.map(l => <option key={l} value={l}>{l}</option>)}
           </select>
         )}
+        <select value={dateF} onChange={e => setDateF(e.target.value)} className={selCls}>
+          <option value="">📅 Срок: любой</option>
+          <option value="today">Сегодня</option>
+          <option value="tomorrow">Завтра</option>
+          <option value="week">Ближайшие 7 дней</option>
+          <option value="month">Ближайшие 30 дней</option>
+          <option value="none">Без срока</option>
+        </select>
         <button onClick={() => setOverdueOnly(v => !v)}
           className={`text-[11px] px-2.5 py-1 rounded-lg transition-colors ${overdueOnly ? 'bg-red-500/20 text-red-400' : 'bg-bx-bg border border-bx-border-2 text-bx-muted hover:text-bx-text'}`}>
           ⚠ Просроченные
         </button>
         {filterActive && (
-          <button onClick={() => { setSearch(''); setPrioF(''); setLabelF(''); setOverdueOnly(false); }}
+          <button onClick={() => { setSearch(''); setPrioF(''); setLabelF(''); setOverdueOnly(false); setDateF(''); }}
             className="text-[11px] text-bx-muted hover:text-bx-muted">сбросить</button>
         )}
         <button onClick={onOpenArchive} className="ml-auto text-[11px] text-bx-muted hover:text-bx-text px-2 py-1">🗄️ Архив</button>
