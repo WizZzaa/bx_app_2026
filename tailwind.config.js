@@ -6,6 +6,16 @@ module.exports = {
   content: ['./index.html', './src/renderer/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      // Нестандартные значения spacing, которые уже используются в разметке
+      // (p-4.5, w-4.5, w-68 и т.п.). Без них классы были no-op — карточки
+      // «прилипали к краям», сайдбары теряли ширину.
+      spacing: {
+        '4.5': '1.125rem',
+        '5.5': '1.375rem',
+        '18': '4.5rem',
+        '34': '8.5rem',
+        '68': '17rem',
+      },
       colors: {
         bx: {
           bg: 'rgb(var(--bx-bg-rgb) / <alpha-value>)',
