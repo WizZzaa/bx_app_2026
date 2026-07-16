@@ -20,7 +20,6 @@
   "18": "ListView.tsx",
   "19": "numToWords.ts",
   "20": "TaxCalculator.tsx",
-  "21": "Services.tsx",
   "22": "CalendarView.tsx",
   "23": "Counterparties.tsx",
   "24": "Topbar.tsx",
@@ -36,7 +35,6 @@
   "34": "SmartCalendar.tsx",
   "35": "Icon.tsx",
   "36": "App.tsx",
-  "37": "MoneyInput.tsx",
   "38": "Tools.tsx",
   "39": "CurrencyHistory.tsx",
   "40": "workbenchCatalog.ts",
@@ -44,7 +42,6 @@
   "42": "todayISO",
   "43": "Planner.tsx",
   "44": "BxEvent",
-  "45": "EventActivityTimeline.tsx",
   "46": "RecyclingCalc.tsx",
   "47": "DigestView.tsx",
   "48": "onecCache.ts",
@@ -64,7 +61,5 @@
   "62": "ToolStub.tsx",
   "63": "vite-env.d.ts",
   "64": "PLAN_LIMITS",
-  "65": "DividendCalc.tsx",
-  "66": "NotificationsWidget.tsx",
   "67": "News.tsx"
 }
