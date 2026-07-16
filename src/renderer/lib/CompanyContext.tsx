@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { companiesRepo } from './db/companiesRepo';
 import { supabase } from './db/supabase';
 import { emitPlannerReload } from '../pages/planner/plannerBus';
 import { syncTaxDeadlines } from '../pages/planner/taxSeeder';
+import { todayISO } from './dates';
 import CompanyProfileWizard, { type CompanyWizardInitial } from '../components/CompanyProfileWizard';
 import { useToast } from './ui/ToastContext';
 import type { Company, CompanyProfileForm } from './db/types';
@@ -28,6 +29,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   const [active, setActiveState] = useState<Company | null>(null);
   const [wizard, setWizard] = useState<{ company?: Company; initial?: CompanyWizardInitial } | null>(null);
   const [wizardBusy, setWizardBusy] = useState(false);
+  const lastTaxHorizonSyncDay = useRef<string | null>(null);
 
   const reload = useCallback(async () => {
     try {
@@ -42,6 +44,54 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncDailyTaxHorizon() {
+      const eligible = companies.filter(company =>
+        company.is_active
+        && company.profile_status === 'confirmed'
+        && Boolean(company.bx_start_date)
+        && (company.enabled_obligation_rules?.length ?? 0) > 0,
+      );
+      if (eligible.length === 0) return;
+
+      const currentDay = todayISO();
+      if (lastTaxHorizonSyncDay.current === currentDay) return;
+      lastTaxHorizonSyncDay.current = currentDay;
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          lastTaxHorizonSyncDay.current = null;
+          return;
+        }
+
+        const ownedCompanies = eligible.filter(company => company.user_id === user.id);
+        const results = await Promise.all(ownedCompanies.map(company => syncTaxDeadlines(user.id, company.id)));
+        if (!cancelled && results.some(result => result.added > 0 || result.removed > 0)) {
+          emitPlannerReload();
+        }
+      } catch (syncError) {
+        lastTaxHorizonSyncDay.current = null;
+        console.error('[CompanyProvider] daily tax horizon sync failed:', syncError);
+      }
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') void syncDailyTaxHorizon();
+    };
+
+    void syncDailyTaxHorizon();
+    const interval = window.setInterval(() => void syncDailyTaxHorizon(), 60 * 60 * 1000);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [companies]);
 
   const setActive = useCallback((c: Company | null) => {
     setActiveState(c);
