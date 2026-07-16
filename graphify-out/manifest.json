@@ -310,8 +310,8 @@
     "semantic_hash": ""
   },
   "src/renderer/lib/CompanyContext.tsx": {
-    "mtime": 1784237408.3474097,
-    "ast_hash": "efff622fc823d39b52c6cde8ee12071a",
+    "mtime": 1784238448.1038208,
+    "ast_hash": "15d7363554d8f0f49ff05b73248b2ed2",
     "semantic_hash": ""
   },
   "src/renderer/lib/ai/aiContextBuilder.ts": {
@@ -370,8 +370,8 @@
     "semantic_hash": ""
   },
   "src/renderer/lib/db/companiesRepo.ts": {
-    "mtime": 1784193685.5012732,
-    "ast_hash": "613838f9979a88619795f6f377095239",
+    "mtime": 1784238823.8904622,
+    "ast_hash": "880f8789d6993cbe4a1d8e55ddf8941e",
     "semantic_hash": ""
   },
   "src/renderer/lib/db/knowledgeRepo.ts": {
@@ -1227,6 +1227,11 @@
   "src/main/services/currency.test.ts": {
     "mtime": 1784236685.8917942,
     "ast_hash": "4890103353eda44862963eab9b03cfc8",
+    "semantic_hash": ""
+  },
+  "src/renderer/lib/db/companiesRepo.test.ts": {
+    "mtime": 1784238823.8913543,
+    "ast_hash": "fb6abcca93e2a9fa1de589ef3946b182",
     "semantic_hash": ""
   }
 }

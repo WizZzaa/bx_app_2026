@@ -23,6 +23,15 @@ const CompanyCtx = createContext<Ctx | null>(null);
 
 const ACTIVE_KEY = 'bx_active_company';
 
+function getCompanySaveErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message;
+  }
+  return 'Не удалось сохранить профиль компании';
+}
+
 export function CompanyProvider({ children }: { children: React.ReactNode }) {
   const toast = useToast();
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -148,7 +157,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         : 'Профиль компании подтверждён');
     } catch (saveError) {
       console.error('[CompanyProfileWizard] save failed:', saveError);
-      const message = saveError instanceof Error ? saveError.message : 'Не удалось сохранить профиль компании';
+      const message = getCompanySaveErrorMessage(saveError);
       toast.error(message.includes('column')
         ? 'Схема профиля компании ещё не обновлена на сервере'
         : message);

@@ -571,8 +571,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "main_services_newsfeed_newsfeeditem",
-      "community": 49,
-      "community_name": "pcClean.ts",
+      "community": 60,
+      "community_name": "currency.ts",
       "norm_label": "newsfeeditem"
     },
     {
@@ -923,7 +923,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "main_services_pcclean_tempdirinfo",
-      "community": 73,
+      "community": 49,
       "community_name": "pcClean.ts",
       "norm_label": "tempdirinfo"
     },
@@ -934,7 +934,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "main_services_pcclean_pccleanresult",
-      "community": 73,
+      "community": 49,
       "community_name": "pcClean.ts",
       "norm_label": "pccleanresult"
     },
@@ -1385,8 +1385,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_components_conflictmodal",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "conflictmodal.tsx"
     },
     {
@@ -1396,8 +1396,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "renderer_components_conflictmodal_conflictmodalprops",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "conflictmodalprops"
     },
     {
@@ -1407,8 +1407,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "renderer_components_conflictmodal_conflictmodal",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "conflictmodal()"
     },
     {
@@ -1418,8 +1418,8 @@
       "source_location": "L179",
       "_origin": "ast",
       "id": "renderer_components_conflictmodal_comparefieldrowprops",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "comparefieldrowprops"
     },
     {
@@ -1429,8 +1429,8 @@
       "source_location": "L188",
       "_origin": "ast",
       "id": "renderer_components_conflictmodal_comparefieldrow",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "comparefieldrow()"
     },
     {
@@ -1528,8 +1528,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_components_onboardingwizard",
-      "community": 36,
-      "community_name": "App.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "onboardingwizard.tsx"
     },
     {
@@ -1539,8 +1539,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "renderer_components_onboardingwizard_step",
-      "community": 36,
-      "community_name": "App.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "step"
     },
     {
@@ -1550,8 +1550,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "renderer_components_onboardingwizard_steps",
-      "community": 36,
-      "community_name": "App.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "steps"
     },
     {
@@ -1561,8 +1561,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "renderer_components_onboardingwizard_onboardingwizard",
-      "community": 36,
-      "community_name": "App.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "onboardingwizard()"
     },
     {
@@ -1572,8 +1572,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_components_paywallmodal",
-      "community": 4,
-      "community_name": "Library.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "paywallmodal.tsx"
     },
     {
@@ -1583,8 +1583,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "renderer_components_paywallmodal_pro_perks",
-      "community": 4,
-      "community_name": "Library.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "pro_perks"
     },
     {
@@ -1594,8 +1594,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "renderer_components_paywallmodal_paywallmodal",
-      "community": 4,
-      "community_name": "Library.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "paywallmodal()"
     },
     {
@@ -1869,8 +1869,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_components_dashboard_smartcalendar_test",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "smartcalendar.test.tsx"
     },
     {
@@ -1880,8 +1880,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_components_dashboard_smartcalendar",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "smartcalendar.tsx"
     },
     {
@@ -1891,8 +1891,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "renderer_components_dashboard_smartcalendar_calendarmarks",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "calendarmarks"
     },
     {
@@ -1902,8 +1902,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "renderer_components_dashboard_smartcalendar_calendarentry",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "calendarentry"
     },
     {
@@ -1913,8 +1913,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "renderer_components_dashboard_smartcalendar_props",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "props"
     },
     {
@@ -1924,8 +1924,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "renderer_components_dashboard_smartcalendar_smartcalendar",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "smartcalendar()"
     },
     {
@@ -1935,8 +1935,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "renderer_components_dashboard_smartcalendar_isodate",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "isodate()"
     },
     {
@@ -1946,8 +1946,8 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "renderer_components_dashboard_smartcalendar_calendarmetric",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "calendarmetric()"
     },
     {
@@ -1957,8 +1957,8 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "renderer_components_dashboard_smartcalendar_legend",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "legend()"
     },
     {
@@ -2067,8 +2067,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_components_documents_documentviewmodeswitch_test",
-      "community": 33,
-      "community_name": "useCompany",
+      "community": 71,
+      "community_name": "Icon.tsx",
       "norm_label": "documentviewmodeswitch.test.tsx"
     },
     {
@@ -2078,8 +2078,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_components_documents_documentviewmodeswitch",
-      "community": 33,
-      "community_name": "useCompany",
+      "community": 71,
+      "community_name": "Icon.tsx",
       "norm_label": "documentviewmodeswitch.tsx"
     },
     {
@@ -2089,8 +2089,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "renderer_components_documents_documentviewmodeswitch_documentviewmode",
-      "community": 33,
-      "community_name": "useCompany",
+      "community": 71,
+      "community_name": "Icon.tsx",
       "norm_label": "documentviewmode"
     },
     {
@@ -2100,8 +2100,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "renderer_components_documents_documentviewmodeswitch_usedocumentviewmode",
-      "community": 33,
-      "community_name": "useCompany",
+      "community": 7,
+      "community_name": "Templates.tsx",
       "norm_label": "usedocumentviewmode()"
     },
     {
@@ -2111,8 +2111,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "renderer_components_documents_documentviewmodeswitch_documentviewmodeswitchprops",
-      "community": 33,
-      "community_name": "useCompany",
+      "community": 71,
+      "community_name": "Icon.tsx",
       "norm_label": "documentviewmodeswitchprops"
     },
     {
@@ -2122,8 +2122,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "renderer_components_documents_documentviewmodeswitch_documentviewmodeswitch",
-      "community": 33,
-      "community_name": "useCompany",
+      "community": 71,
+      "community_name": "Icon.tsx",
       "norm_label": "documentviewmodeswitch()"
     },
     {
@@ -2133,8 +2133,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "renderer_components_documents_documentviewmodeswitch_modebuttons",
-      "community": 33,
-      "community_name": "useCompany",
+      "community": 71,
+      "community_name": "Icon.tsx",
       "norm_label": "modebuttons()"
     },
     {
@@ -2144,8 +2144,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "renderer_components_documents_documentviewmodeswitch_modebutton",
-      "community": 33,
-      "community_name": "useCompany",
+      "community": 71,
+      "community_name": "Icon.tsx",
       "norm_label": "modebutton()"
     },
     {
@@ -2221,8 +2221,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_components_layout_companyswitcher",
-      "community": 36,
-      "community_name": "App.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "companyswitcher.tsx"
     },
     {
@@ -2232,8 +2232,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "renderer_components_layout_companyswitcher_companyswitcher",
-      "community": 36,
-      "community_name": "App.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "companyswitcher()"
     },
     {
@@ -2353,8 +2353,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_components_layout_topbar",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "topbar.tsx"
     },
     {
@@ -2364,8 +2364,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "renderer_components_layout_topbar_topbar",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "topbar()"
     },
     {
@@ -2859,8 +2859,8 @@
       "source_location": "L132",
       "_origin": "ast",
       "id": "renderer_components_workspace_resourceworkspace_resourcesectiontitle",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 33,
+      "community_name": "useCompany",
       "norm_label": "resourcesectiontitle()"
     },
     {
@@ -3464,8 +3464,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "renderer_data_templates_doctemplate",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 7,
+      "community_name": "Templates.tsx",
       "norm_label": "doctemplate"
     },
     {
@@ -3497,8 +3497,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_test",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "uzholidays.test.ts"
     },
     {
@@ -3508,8 +3508,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_data_uzholidays",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "uzholidays.ts"
     },
     {
@@ -3519,8 +3519,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_daytype",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "daytype"
     },
     {
@@ -3541,8 +3541,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_monthnorms",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "monthnorms"
     },
     {
@@ -3563,8 +3563,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_special_days_2026",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "special_days_2026"
     },
     {
@@ -3574,8 +3574,8 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_specialdaymap",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "_specialdaymap"
     },
     {
@@ -3585,8 +3585,8 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_month_norms_2026",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "month_norms_2026"
     },
     {
@@ -3596,8 +3596,8 @@
       "source_location": "L123",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_year_totals_2026",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "year_totals_2026"
     },
     {
@@ -3607,8 +3607,8 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_uz_holidays_2026",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "uz_holidays_2026"
     },
     {
@@ -3618,8 +3618,8 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_uz_holidays",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "uz_holidays"
     },
     {
@@ -3629,8 +3629,8 @@
       "source_location": "L143",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_getspecialday",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "getspecialday()"
     },
     {
@@ -3640,8 +3640,8 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_specialdaysformonth",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "specialdaysformonth()"
     },
     {
@@ -3651,8 +3651,8 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_holidayname",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "holidayname()"
     },
     {
@@ -3662,8 +3662,8 @@
       "source_location": "L166",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_daytooltip",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "daytooltip()"
     },
     {
@@ -3673,8 +3673,8 @@
       "source_location": "L197",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_isnonworkingspecialday",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "isnonworkingspecialday()"
     },
     {
@@ -3684,8 +3684,8 @@
       "source_location": "L204",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_ispreholiday",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "ispreholiday()"
     },
     {
@@ -3695,8 +3695,8 @@
       "source_location": "L210",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_istransferredworkday",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "istransferredworkday()"
     },
     {
@@ -3706,8 +3706,8 @@
       "source_location": "L216",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_isworkday",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "isworkday()"
     },
     {
@@ -3717,8 +3717,8 @@
       "source_location": "L231",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_workdaystats",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "workdaystats()"
     },
     {
@@ -3728,8 +3728,8 @@
       "source_location": "L247",
       "_origin": "ast",
       "id": "renderer_data_uzholidays_getmonthnorms",
-      "community": 34,
-      "community_name": "SmartCalendar.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "getmonthnorms()"
     },
     {
@@ -3849,8 +3849,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_index",
-      "community": 68,
-      "community_name": "ToastContext.tsx",
+      "community": 21,
+      "community_name": "errorReporter.ts",
       "norm_label": "index.tsx"
     },
     {
@@ -3860,8 +3860,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "renderer_index_rootelement",
-      "community": 68,
-      "community_name": "ToastContext.tsx",
+      "community": 21,
+      "community_name": "errorReporter.ts",
       "norm_label": "rootelement"
     },
     {
@@ -3871,8 +3871,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "renderer_index_root",
-      "community": 68,
-      "community_name": "ToastContext.tsx",
+      "community": 21,
+      "community_name": "errorReporter.ts",
       "norm_label": "root"
     },
     {
@@ -3909,25 +3909,36 @@
       "norm_label": "companyctx"
     },
     {
-      "label": "CompanyProvider()",
+      "label": "getCompanySaveErrorMessage()",
       "file_type": "code",
       "source_file": "src/renderer/lib/CompanyContext.tsx",
       "source_location": "L26",
       "_origin": "ast",
+      "id": "renderer_lib_companycontext_getcompanysaveerrormessage",
+      "community": 2,
+      "community_name": "CompanyContext.tsx",
+      "norm_label": "getcompanysaveerrormessage()"
+    },
+    {
+      "label": "CompanyProvider()",
+      "file_type": "code",
+      "source_file": "src/renderer/lib/CompanyContext.tsx",
+      "source_location": "L35",
+      "_origin": "ast",
       "id": "renderer_lib_companycontext_companyprovider",
-      "community": 20,
-      "community_name": "TaxCalculator.tsx",
+      "community": 4,
+      "community_name": "Library.tsx",
       "norm_label": "companyprovider()"
     },
     {
       "label": "useCompany()",
       "file_type": "code",
       "source_file": "src/renderer/lib/CompanyContext.tsx",
-      "source_location": "L176",
+      "source_location": "L185",
       "_origin": "ast",
       "id": "renderer_lib_companycontext_usecompany",
-      "community": 36,
-      "community_name": "App.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "usecompany()"
     },
     {
@@ -4289,8 +4300,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_lib_auth_useauth",
-      "community": 56,
-      "community_name": "Sidebar.tsx",
+      "community": 2,
+      "community_name": "CompanyContext.tsx",
       "norm_label": "useauth.ts"
     },
     {
@@ -4300,8 +4311,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "renderer_lib_auth_useauth_authstate",
-      "community": 56,
-      "community_name": "Sidebar.tsx",
+      "community": 2,
+      "community_name": "CompanyContext.tsx",
       "norm_label": "authstate"
     },
     {
@@ -4613,6 +4624,17 @@
       "norm_label": "nextrecurrenceiso()"
     },
     {
+      "label": "companiesRepo.test.ts",
+      "file_type": "code",
+      "source_file": "src/renderer/lib/db/companiesRepo.test.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "renderer_lib_db_companiesrepo_test",
+      "community": 2,
+      "community_name": "CompanyContext.tsx",
+      "norm_label": "companiesrepo.test.ts"
+    },
+    {
       "label": "companiesRepo.ts",
       "file_type": "code",
       "source_file": "src/renderer/lib/db/companiesRepo.ts",
@@ -4624,10 +4646,21 @@
       "norm_label": "companiesrepo.ts"
     },
     {
-      "label": "companiesRepo",
+      "label": "buildCompanyInsert()",
       "file_type": "code",
       "source_file": "src/renderer/lib/db/companiesRepo.ts",
       "source_location": "L7",
+      "_origin": "ast",
+      "id": "renderer_lib_db_companiesrepo_buildcompanyinsert",
+      "community": 2,
+      "community_name": "CompanyContext.tsx",
+      "norm_label": "buildcompanyinsert()"
+    },
+    {
+      "label": "companiesRepo",
+      "file_type": "code",
+      "source_file": "src/renderer/lib/db/companiesRepo.ts",
+      "source_location": "L25",
       "_origin": "ast",
       "id": "renderer_lib_db_companiesrepo_companiesrepo",
       "community": 2,
@@ -4707,8 +4740,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_lib_db_localdb",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "localdb.ts"
     },
     {
@@ -4729,8 +4762,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "renderer_lib_db_localdb_bxcounterparty",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "bxcounterparty"
     },
     {
@@ -4740,8 +4773,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "renderer_lib_db_localdb_syncconflict",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "syncconflict"
     },
     {
@@ -4751,8 +4784,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "renderer_lib_db_localdb_exchangerate",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "exchangerate"
     },
     {
@@ -4762,8 +4795,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "renderer_lib_db_localdb_businessbxdatabase",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 7,
+      "community_name": "Templates.tsx",
       "norm_label": "businessbxdatabase"
     },
     {
@@ -4773,8 +4806,8 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "renderer_lib_db_localdb_businessbxdatabase_constructor",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 7,
+      "community_name": "Templates.tsx",
       "norm_label": ".constructor()"
     },
     {
@@ -4784,8 +4817,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "renderer_lib_db_localdb_db",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "db"
     },
     {
@@ -4993,8 +5026,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_lib_db_syncconflictresolver",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "syncconflictresolver.ts"
     },
     {
@@ -5004,8 +5037,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "renderer_lib_db_syncconflictresolver_detectandregisterconflict",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "detectandregisterconflict()"
     },
     {
@@ -5015,8 +5048,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "renderer_lib_db_syncconflictresolver_getconflicts",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "getconflicts()"
     },
     {
@@ -5026,8 +5059,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "renderer_lib_db_syncconflictresolver_resolveconflict",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "resolveconflict()"
     },
     {
@@ -5037,8 +5070,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_lib_db_syncqueue",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "syncqueue.ts"
     },
     {
@@ -5048,8 +5081,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "renderer_lib_db_syncqueue_syncqueueitem",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "syncqueueitem"
     },
     {
@@ -5059,8 +5092,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "renderer_lib_db_syncqueue_sleep",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "sleep()"
     },
     {
@@ -5070,8 +5103,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "renderer_lib_db_syncqueue_istransienterror",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "istransienterror()"
     },
     {
@@ -5081,8 +5114,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "renderer_lib_db_syncqueue_getsyncqueue",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "getsyncqueue()"
     },
     {
@@ -5092,8 +5125,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "renderer_lib_db_syncqueue_savesyncqueue",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "savesyncqueue()"
     },
     {
@@ -5103,8 +5136,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "renderer_lib_db_syncqueue_addtosyncqueue",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "addtosyncqueue()"
     },
     {
@@ -5114,8 +5147,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "renderer_lib_db_syncqueue_removefromsyncqueue",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "removefromsyncqueue()"
     },
     {
@@ -5125,8 +5158,8 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "renderer_lib_db_syncqueue_serverchangedsincebase",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "serverchangedsincebase()"
     },
     {
@@ -5136,8 +5169,8 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "renderer_lib_db_syncqueue_pushresult",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "pushresult"
     },
     {
@@ -5147,8 +5180,8 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "renderer_lib_db_syncqueue_pushitem",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "pushitem()"
     },
     {
@@ -5158,8 +5191,8 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "renderer_lib_db_syncqueue_syncofflinedata",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "syncofflinedata()"
     },
     {
@@ -5378,8 +5411,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_lib_db_usecounterparties",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "usecounterparties.ts"
     },
     {
@@ -5389,8 +5422,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "renderer_lib_db_usecounterparties_newcounterparty",
-      "community": 51,
-      "community_name": "pcClean.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "newcounterparty"
     },
     {
@@ -5400,8 +5433,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "renderer_lib_db_usecounterparties_usecounterparties",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "usecounterparties()"
     },
     {
@@ -6940,8 +6973,8 @@
       "source_location": "L244",
       "_origin": "ast",
       "id": "renderer_lib_plan_useplan",
-      "community": 36,
-      "community_name": "App.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "useplan()"
     },
     {
@@ -6995,8 +7028,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "renderer_lib_searchindex_search",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "search()"
     },
     {
@@ -7028,8 +7061,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "renderer_lib_settingsbackup_settingsbackuppayload",
-      "community": 37,
-      "community_name": "Settings.tsx",
+      "community": 8,
+      "community_name": "ipc.ts",
       "norm_label": "settingsbackuppayload"
     },
     {
@@ -7501,8 +7534,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_lib_ui_toastcontext",
-      "community": 68,
-      "community_name": "ToastContext.tsx",
+      "community": 20,
+      "community_name": "TaxCalculator.tsx",
       "norm_label": "toastcontext.tsx"
     },
     {
@@ -7512,8 +7545,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "renderer_lib_ui_toastcontext_toastkind",
-      "community": 68,
-      "community_name": "ToastContext.tsx",
+      "community": 20,
+      "community_name": "TaxCalculator.tsx",
       "norm_label": "toastkind"
     },
     {
@@ -7523,8 +7556,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "renderer_lib_ui_toastcontext_toast",
-      "community": 68,
-      "community_name": "ToastContext.tsx",
+      "community": 20,
+      "community_name": "TaxCalculator.tsx",
       "norm_label": "toast"
     },
     {
@@ -7534,8 +7567,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "renderer_lib_ui_toastcontext_toastapi",
-      "community": 68,
-      "community_name": "ToastContext.tsx",
+      "community": 20,
+      "community_name": "TaxCalculator.tsx",
       "norm_label": "toastapi"
     },
     {
@@ -7545,8 +7578,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "renderer_lib_ui_toastcontext_toastctx",
-      "community": 68,
-      "community_name": "ToastContext.tsx",
+      "community": 20,
+      "community_name": "TaxCalculator.tsx",
       "norm_label": "toastctx"
     },
     {
@@ -7567,8 +7600,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "renderer_lib_ui_toastcontext_style",
-      "community": 68,
-      "community_name": "ToastContext.tsx",
+      "community": 20,
+      "community_name": "TaxCalculator.tsx",
       "norm_label": "style"
     },
     {
@@ -7578,8 +7611,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "renderer_lib_ui_toastcontext_toastprovider",
-      "community": 68,
-      "community_name": "ToastContext.tsx",
+      "community": 20,
+      "community_name": "TaxCalculator.tsx",
       "norm_label": "toastprovider()"
     },
     {
@@ -7611,8 +7644,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "renderer_lib_uiscale_fontscale",
-      "community": 37,
-      "community_name": "Settings.tsx",
+      "community": 8,
+      "community_name": "ipc.ts",
       "norm_label": "fontscale"
     },
     {
@@ -7721,8 +7754,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_lib_usedocuments",
-      "community": 33,
-      "community_name": "useCompany",
+      "community": 2,
+      "community_name": "CompanyContext.tsx",
       "norm_label": "usedocuments.ts"
     },
     {
@@ -7732,8 +7765,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "renderer_lib_usedocuments_bxuserdocument",
-      "community": 33,
-      "community_name": "useCompany",
+      "community": 2,
+      "community_name": "CompanyContext.tsx",
       "norm_label": "bxuserdocument"
     },
     {
@@ -7743,8 +7776,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "renderer_lib_usedocuments_usedocuments",
-      "community": 33,
-      "community_name": "useCompany",
+      "community": 7,
+      "community_name": "Templates.tsx",
       "norm_label": "usedocuments()"
     },
     {
@@ -7787,8 +7820,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_lib_useexchangerates",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "useexchangerates.ts"
     },
     {
@@ -7798,8 +7831,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "renderer_lib_useexchangerates_default_rates",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "default_rates"
     },
     {
@@ -7809,8 +7842,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "renderer_lib_useexchangerates_useexchangerates",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "useexchangerates()"
     },
     {
@@ -7820,8 +7853,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications_changes_regression_1_test",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "usenotifications.changes.regression-1.test.ts"
     },
     {
@@ -7831,8 +7864,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications_changes_regression_1_test_row",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "row"
     },
     {
@@ -7842,8 +7875,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications_test",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "usenotifications.test.ts"
     },
     {
@@ -7853,8 +7886,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications_test_base_row",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "base_row"
     },
     {
@@ -7864,8 +7897,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "usenotifications.ts"
     },
     {
@@ -7875,8 +7908,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications_notificationsource",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "notificationsource"
     },
     {
@@ -7886,8 +7919,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications_notificationtarget",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "notificationtarget"
     },
     {
@@ -7897,8 +7930,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications_bxnotification",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "bxnotification"
     },
     {
@@ -7908,8 +7941,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications_globalnotificationrow",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "globalnotificationrow"
     },
     {
@@ -7919,8 +7952,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications_tasknotificationrow",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "tasknotificationrow"
     },
     {
@@ -7930,8 +7963,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications_formatduedate",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "formatduedate()"
     },
     {
@@ -7941,8 +7974,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications_buildtasknotification",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "buildtasknotification()"
     },
     {
@@ -7952,8 +7985,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "renderer_lib_usenotifications_usenotifications",
-      "community": 52,
-      "community_name": "newsFeed.ts",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "usenotifications()"
     },
     {
@@ -8249,8 +8282,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_ai",
-      "community": 4,
-      "community_name": "Library.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "ai.tsx"
     },
     {
@@ -8260,8 +8293,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "renderer_pages_ai_chatitem",
-      "community": 4,
-      "community_name": "Library.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "chatitem"
     },
     {
@@ -8271,8 +8304,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "renderer_pages_ai_messageitem",
-      "community": 4,
-      "community_name": "Library.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "messageitem"
     },
     {
@@ -8282,8 +8315,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "renderer_pages_ai_quick_questions",
-      "community": 4,
-      "community_name": "Library.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "quick_questions"
     },
     {
@@ -8293,8 +8326,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "renderer_pages_ai_aimessage",
-      "community": 4,
-      "community_name": "Library.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "aimessage()"
     },
     {
@@ -8304,8 +8337,8 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "renderer_pages_ai_typing_examples",
-      "community": 4,
-      "community_name": "Library.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "typing_examples"
     },
     {
@@ -8315,8 +8348,8 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "renderer_pages_ai_ai",
-      "community": 4,
-      "community_name": "Library.tsx",
+      "community": 72,
+      "community_name": "plan.tsx",
       "norm_label": "ai()"
     },
     {
@@ -8425,8 +8458,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_calendarpage",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "calendarpage.tsx"
     },
     {
@@ -8436,8 +8469,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "renderer_pages_calendarpage_weekdays",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "weekdays"
     },
     {
@@ -8447,8 +8480,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "renderer_pages_calendarpage_months",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "months"
     },
     {
@@ -8458,8 +8491,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "renderer_pages_calendarpage_type_color",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "type_color"
     },
     {
@@ -8469,8 +8502,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "renderer_pages_calendarpage_mondayof",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "mondayof()"
     },
     {
@@ -8480,8 +8513,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "renderer_pages_calendarpage_calendarpage",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "calendarpage()"
     },
     {
@@ -8975,8 +9008,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "renderer_pages_documents_documents",
-      "community": 33,
-      "community_name": "useCompany",
+      "community": 7,
+      "community_name": "Templates.tsx",
       "norm_label": "documents()"
     },
     {
@@ -9459,8 +9492,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_services_test",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 33,
+      "community_name": "useCompany",
       "norm_label": "services.test.ts"
     },
     {
@@ -9470,8 +9503,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_services",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 33,
+      "community_name": "useCompany",
       "norm_label": "services.tsx"
     },
     {
@@ -9481,8 +9514,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "renderer_pages_services_serviceitemkey",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 33,
+      "community_name": "useCompany",
       "norm_label": "serviceitemkey()"
     },
     {
@@ -9492,8 +9525,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "renderer_pages_services_openlink",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 33,
+      "community_name": "useCompany",
       "norm_label": "openlink()"
     },
     {
@@ -9503,8 +9536,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "renderer_pages_services_sectionicon",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 33,
+      "community_name": "useCompany",
       "norm_label": "sectionicon()"
     },
     {
@@ -9514,8 +9547,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "renderer_pages_services_services",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 33,
+      "community_name": "useCompany",
       "norm_label": "services()"
     },
     {
@@ -9525,8 +9558,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_settings",
-      "community": 37,
-      "community_name": "Settings.tsx",
+      "community": 8,
+      "community_name": "ipc.ts",
       "norm_label": "settings.tsx"
     },
     {
@@ -9536,8 +9569,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "renderer_pages_settings_notifydays",
-      "community": 37,
-      "community_name": "Settings.tsx",
+      "community": 8,
+      "community_name": "ipc.ts",
       "norm_label": "notifydays"
     },
     {
@@ -9547,8 +9580,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "renderer_pages_settings_idlelock",
-      "community": 37,
-      "community_name": "Settings.tsx",
+      "community": 8,
+      "community_name": "ipc.ts",
       "norm_label": "idlelock"
     },
     {
@@ -9558,8 +9591,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "renderer_pages_settings_tabtype",
-      "community": 37,
-      "community_name": "Settings.tsx",
+      "community": 8,
+      "community_name": "ipc.ts",
       "norm_label": "tabtype"
     },
     {
@@ -9569,8 +9602,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "renderer_pages_settings_dashboardwidgets",
-      "community": 37,
-      "community_name": "Settings.tsx",
+      "community": 8,
+      "community_name": "ipc.ts",
       "norm_label": "dashboardwidgets"
     },
     {
@@ -9580,8 +9613,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "renderer_pages_settings_datastats",
-      "community": 37,
-      "community_name": "Settings.tsx",
+      "community": 8,
+      "community_name": "ipc.ts",
       "norm_label": "datastats"
     },
     {
@@ -9591,8 +9624,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "renderer_pages_settings_default_widgets",
-      "community": 37,
-      "community_name": "Settings.tsx",
+      "community": 8,
+      "community_name": "ipc.ts",
       "norm_label": "default_widgets"
     },
     {
@@ -10856,8 +10889,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_finance_txmodal",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "txmodal.tsx"
     },
     {
@@ -10867,8 +10900,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "renderer_pages_finance_txmodal_props",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "props"
     },
     {
@@ -10878,8 +10911,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "renderer_pages_finance_txmodal_income_cats",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "income_cats"
     },
     {
@@ -10889,8 +10922,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "renderer_pages_finance_txmodal_expense_cats",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "expense_cats"
     },
     {
@@ -10900,8 +10933,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "renderer_pages_finance_txmodal_today",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "today"
     },
     {
@@ -10911,8 +10944,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "renderer_pages_finance_txmodal_txmodal",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "txmodal()"
     },
     {
@@ -10922,8 +10955,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_finance_usetransactions",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "usetransactions.ts"
     },
     {
@@ -10933,8 +10966,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "renderer_pages_finance_usetransactions_newtransaction",
-      "community": 66,
-      "community_name": "TxModal.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "newtransaction"
     },
     {
@@ -10944,8 +10977,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "renderer_pages_finance_usetransactions_usetransactions",
-      "community": 2,
-      "community_name": "CompanyContext.tsx",
+      "community": 17,
+      "community_name": "Finance.tsx",
       "norm_label": "usetransactions()"
     },
     {
@@ -11131,8 +11164,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_library_library",
-      "community": 4,
-      "community_name": "Library.tsx",
+      "community": 33,
+      "community_name": "useCompany",
       "norm_label": "library.tsx"
     },
     {
@@ -11208,8 +11241,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "renderer_pages_library_referenceview_referenceview",
-      "community": 36,
-      "community_name": "App.tsx",
+      "community": 27,
+      "community_name": "ReferenceView.tsx",
       "norm_label": "referenceview()"
     },
     {
@@ -11527,8 +11560,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_planner_boardmodal",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "boardmodal.tsx"
     },
     {
@@ -11538,8 +11571,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "renderer_pages_planner_boardmodal_props",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "props"
     },
     {
@@ -11549,8 +11582,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "renderer_pages_planner_boardmodal_dot",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "dot"
     },
     {
@@ -11560,8 +11593,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "renderer_pages_planner_boardmodal_boardmodal",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "boardmodal()"
     },
     {
@@ -11571,8 +11604,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_planner_calendarview_test",
-      "community": 22,
-      "community_name": "CalendarView.tsx",
+      "community": 12,
+      "community_name": "useEvents.ts",
       "norm_label": "calendarview.test.tsx"
     },
     {
@@ -11582,8 +11615,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "renderer_pages_planner_calendarview_test_event",
-      "community": 22,
-      "community_name": "CalendarView.tsx",
+      "community": 12,
+      "community_name": "useEvents.ts",
       "norm_label": "event"
     },
     {
@@ -11626,8 +11659,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "renderer_pages_planner_calendarview_props",
-      "community": 22,
-      "community_name": "CalendarView.tsx",
+      "community": 50,
+      "community_name": "FocusView.tsx",
       "norm_label": "props"
     },
     {
@@ -12286,8 +12319,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "renderer_pages_planner_focusview_props",
-      "community": 18,
-      "community_name": "ListView.tsx",
+      "community": 50,
+      "community_name": "FocusView.tsx",
       "norm_label": "props"
     },
     {
@@ -12539,8 +12572,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "renderer_pages_planner_systemtaskboard_props",
-      "community": 53,
-      "community_name": "WidgetBoundary",
+      "community": 50,
+      "community_name": "FocusView.tsx",
       "norm_label": "props"
     },
     {
@@ -12594,8 +12627,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_planner_plannerbus",
-      "community": 74,
-      "community_name": "QuickNotes.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "plannerbus.ts"
     },
     {
@@ -12605,8 +12638,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "renderer_pages_planner_plannerbus_emitplannerreload",
-      "community": 74,
-      "community_name": "QuickNotes.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "emitplannerreload()"
     },
     {
@@ -12616,8 +12649,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "renderer_pages_planner_plannerbus_subscribeplannerreload",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "subscribeplannerreload()"
     },
     {
@@ -12770,8 +12803,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_planner_useboards",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "useboards.ts"
     },
     {
@@ -12803,8 +12836,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "renderer_pages_planner_useboards_column_colors",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "column_colors"
     },
     {
@@ -12814,8 +12847,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "renderer_pages_planner_useboards_board_icons",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "board_icons"
     },
     {
@@ -12825,8 +12858,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "renderer_pages_planner_useboards_col",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "col()"
     },
     {
@@ -12836,8 +12869,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "renderer_pages_planner_useboards_defaultcolumns",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "defaultcolumns()"
     },
     {
@@ -12847,8 +12880,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "renderer_pages_planner_useboards_baseboarddefs",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "baseboarddefs()"
     },
     {
@@ -12858,8 +12891,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "renderer_pages_planner_useboards_localbaseboards",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "localbaseboards()"
     },
     {
@@ -12869,8 +12902,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "renderer_pages_planner_useboards_readcache",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "readcache()"
     },
     {
@@ -12880,8 +12913,8 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "renderer_pages_planner_useboards_writecache",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "writecache()"
     },
     {
@@ -12891,8 +12924,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "renderer_pages_planner_useboards_useboards",
-      "community": 61,
-      "community_name": "ecpParser.ts",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "useboards()"
     },
     {
@@ -12902,8 +12935,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "usecards.ts"
     },
     {
@@ -12913,8 +12946,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards_checklistitem",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "checklistitem"
     },
     {
@@ -12946,8 +12979,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards_newcard",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "newcard"
     },
     {
@@ -12957,8 +12990,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards_cachekey",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "cachekey()"
     },
     {
@@ -12968,8 +13001,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards_readcache",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "readcache()"
     },
     {
@@ -12979,8 +13012,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards_writecache",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "writecache()"
     },
     {
@@ -12990,8 +13023,8 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards_usecards",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "usecards()"
     },
     {
@@ -13001,8 +13034,8 @@
       "source_location": "L235",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards_datedcard",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "datedcard"
     },
     {
@@ -13012,8 +13045,8 @@
       "source_location": "L237",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards_fetchdatedcards",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "fetchdatedcards()"
     },
     {
@@ -13023,8 +13056,8 @@
       "source_location": "L247",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards_fetchcardbyid",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "fetchcardbyid()"
     },
     {
@@ -13045,8 +13078,8 @@
       "source_location": "L259",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards_fetchallcards",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "fetchallcards()"
     },
     {
@@ -13056,8 +13089,8 @@
       "source_location": "L269",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards_fetchboardcolumns",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "fetchboardcolumns()"
     },
     {
@@ -13067,8 +13100,8 @@
       "source_location": "L282",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecards_togglecarddone",
-      "community": 14,
-      "community_name": "Documents.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "togglecarddone()"
     },
     {
@@ -13089,8 +13122,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "renderer_pages_planner_usecompanymembers_companymember",
-      "community": 53,
-      "community_name": "WidgetBoundary",
+      "community": 50,
+      "community_name": "FocusView.tsx",
       "norm_label": "companymember"
     },
     {
@@ -13199,8 +13232,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "renderer_pages_planner_useevents_eventpriority",
-      "community": 18,
-      "community_name": "ListView.tsx",
+      "community": 53,
+      "community_name": "WidgetBoundary",
       "norm_label": "eventpriority"
     },
     {
@@ -13232,8 +13265,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "renderer_pages_planner_useevents_bxevent",
-      "community": 18,
-      "community_name": "ListView.tsx",
+      "community": 50,
+      "community_name": "FocusView.tsx",
       "norm_label": "bxevent"
     },
     {
@@ -13694,8 +13727,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "renderer_pages_tools_currencyconverter_currencyconverter",
-      "community": 25,
-      "community_name": "CacheCleaner.tsx",
+      "community": 42,
+      "community_name": "todayISO",
       "norm_label": "currencyconverter()"
     },
     {
@@ -13727,8 +13760,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_tools_datecalc",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "datecalc.tsx"
     },
     {
@@ -13738,8 +13771,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "renderer_pages_tools_datecalc_addcalendardays",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "addcalendardays()"
     },
     {
@@ -13749,8 +13782,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "renderer_pages_tools_datecalc_addworkdays",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "addworkdays()"
     },
     {
@@ -13760,8 +13793,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "renderer_pages_tools_datecalc_diffdays",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "diffdays()"
     },
     {
@@ -13771,8 +13804,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "renderer_pages_tools_datecalc_diffworkdays",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "diffworkdays()"
     },
     {
@@ -13782,8 +13815,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "renderer_pages_tools_datecalc_fmt",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "fmt()"
     },
     {
@@ -13793,8 +13826,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "renderer_pages_tools_datecalc_fmtlong",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "fmtlong()"
     },
     {
@@ -13804,8 +13837,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "renderer_pages_tools_datecalc_mode",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "mode"
     },
     {
@@ -13815,8 +13848,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "renderer_pages_tools_datecalc_datecalc",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "datecalc()"
     },
     {
@@ -13826,8 +13859,8 @@
       "source_location": "L243",
       "_origin": "ast",
       "id": "renderer_pages_tools_datecalc_row",
-      "community": 70,
-      "community_name": "DateCalc.tsx",
+      "community": 22,
+      "community_name": "CalendarView.tsx",
       "norm_label": "row()"
     },
     {
@@ -14299,8 +14332,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_pages_tools_quicknotes",
-      "community": 74,
-      "community_name": "QuickNotes.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "quicknotes.tsx"
     },
     {
@@ -14310,8 +14343,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "renderer_pages_tools_quicknotes_note",
-      "community": 74,
-      "community_name": "QuickNotes.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "note"
     },
     {
@@ -14321,8 +14354,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "renderer_pages_tools_quicknotes_loadnotes",
-      "community": 74,
-      "community_name": "QuickNotes.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "loadnotes()"
     },
     {
@@ -14332,8 +14365,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "renderer_pages_tools_quicknotes_savenotes",
-      "community": 74,
-      "community_name": "QuickNotes.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "savenotes()"
     },
     {
@@ -14343,8 +14376,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "renderer_pages_tools_quicknotes_quicknotes",
-      "community": 74,
-      "community_name": "QuickNotes.tsx",
+      "community": 29,
+      "community_name": "types.ts",
       "norm_label": "quicknotes()"
     },
     {
@@ -14684,8 +14717,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "shared_types_bankexchangerate",
-      "community": 16,
-      "community_name": "Currency.tsx",
+      "community": 10,
+      "community_name": "widgetsApi.ts",
       "norm_label": "bankexchangerate"
     },
     {
@@ -26272,6 +26305,17 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/renderer/lib/CompanyContext.tsx",
+      "source_location": "L26",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "renderer_lib_companycontext",
+      "target": "renderer_lib_companycontext_getcompanysaveerrormessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "renderer/lib/CompanyContext.tsx",
       "source_location": "L176",
       "weight": 1.0,
@@ -29408,6 +29452,41 @@
       "confidence_score": 1.0,
       "source": "renderer_pages_planner",
       "target": "renderer_lib_dates_nextrecurrenceiso"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/renderer/lib/db/companiesRepo.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "renderer_lib_db_companiesrepo_test",
+      "target": "renderer_lib_db_companiesrepo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/renderer/lib/db/companiesRepo.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "renderer_lib_db_companiesrepo_test",
+      "target": "renderer_lib_db_companiesrepo_buildcompanyinsert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/renderer/lib/db/companiesRepo.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "renderer_lib_db_companiesrepo",
+      "target": "renderer_lib_db_companiesrepo_buildcompanyinsert",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -51664,5 +51743,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "eae351202ec9937cac420724c9efd957a771ed11"
+  "built_at_commit": "6da74cb11435c598a3463f75040ee87f6c10460e"
 }

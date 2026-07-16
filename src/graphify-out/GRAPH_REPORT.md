@@ -1,16 +1,16 @@
 # Graph Report - src  (2026-07-17)
 
 ## Corpus Check
-- 239 files · ~320,160 words
+- 240 files · ~320,286 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1339 nodes · 3169 edges · 75 communities (72 shown, 3 thin omitted)
+- 1342 nodes · 3173 edges · 66 communities (63 shown, 3 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 24 edges (avg confidence: 0.69)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `eae35120`
+- Built from commit: `6da74cb1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -29,7 +29,6 @@
 - Translator.tsx
 - useEvents.ts
 - TrayView.tsx
-- Documents.tsx
 - CalendarPage.tsx
 - Currency.tsx
 - Finance.tsx
@@ -49,9 +48,7 @@
 - syncQueue.ts
 - EcpManager.tsx
 - useCompany
-- SmartCalendar.tsx
 - Icon.tsx
-- App.tsx
 - Settings.tsx
 - Tools.tsx
 - CurrencyHistory.tsx
@@ -67,7 +64,6 @@
 - pcClean.ts
 - FocusView.tsx
 - pcClean.ts
-- newsFeed.ts
 - WidgetBoundary
 - onecProcess.ts
 - uiScale.ts
@@ -76,19 +72,14 @@
 - EimzoDiag.tsx
 - PcCleaner.tsx
 - currency.ts
-- ecpParser.ts
 - vite-env.d.ts
 - PLAN_LIMITS
 - pcClean.ts
-- TxModal.tsx
 - News.tsx
-- ToastContext.tsx
 - PdfCompress.tsx
-- DateCalc.tsx
 - Icon.tsx
 - plan.tsx
 - pcClean.ts
-- QuickNotes.tsx
 
 ## God Nodes (most connected - your core abstractions)
 1. `todayISO()` - 49 edges
@@ -109,15 +100,15 @@
   src/renderer/components/dashboard/TaskPanel.tsx → src/renderer/lib/CompanyContext.tsx
 - `CompanySwitcher()` --indirect_call--> `c()`  [INFERRED]
   src/renderer/components/layout/CompanySwitcher.tsx → src/renderer/pages/planner/BoardKanban.tsx
-- `CompanyProvider()` --indirect_call--> `c()`  [INFERRED]
-  src/renderer/lib/CompanyContext.tsx → src/renderer/pages/planner/BoardKanban.tsx
-- `CurrencyConverter()` --calls--> `todayISO()`  [EXTRACTED]
-  src/renderer/pages/tools/CurrencyConverter.tsx → src/renderer/lib/dates.ts
+- `mergeSections()` --indirect_call--> `c()`  [INFERRED]
+  src/renderer/lib/db/servicesRepo.ts → src/renderer/pages/planner/BoardKanban.tsx
+- `ReferenceView()` --calls--> `usePlan()`  [EXTRACTED]
+  src/renderer/pages/library/ReferenceView.tsx → src/renderer/lib/plan.tsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (75 total, 3 thin omitted)
+## Communities (66 total, 3 thin omitted)
 
 ### Community 0 - "Settings.tsx"
 Cohesion: 0.15
@@ -128,32 +119,32 @@ Cohesion: 0.27
 Nodes (7): CalcHistoryPanel(), CalcHistoryEntry, CalcRowData, clearCalcHistory(), logCalc(), readCalcHistory(), Row()
 
 ### Community 2 - "CompanyContext.tsx"
-Cohesion: 0.06
-Nodes (57): CompanyProfileWizard(), CompanyWizardInitial, defaultRuleIds(), initialProfile(), Props, WEEKDAYS, CompareFieldRowProps, ConflictModal() (+49 more)
+Cohesion: 0.07
+Nodes (41): CompanyProfileWizard(), CompanyWizardInitial, defaultRuleIds(), initialProfile(), Props, WEEKDAYS, Props, statusMeta (+33 more)
 
 ### Community 3 - "useToast"
 Cohesion: 0.20
 Nodes (16): toastError, Support(), SupportRequiredField, Props, SupportTicketNavItem(), TICKET, buildSupportMessage(), formatTicketDate() (+8 more)
 
 ### Community 4 - "Library.tsx"
-Cohesion: 0.07
-Nodes (47): Cmd, CommandPalette(), COMMANDS, PRO_PERKS, KB_ARTICLES, KB_CATEGORIES, KB_CATEGORY_META, KB_POPULAR_IDS (+39 more)
+Cohesion: 0.08
+Nodes (42): Cmd, CommandPalette(), COMMANDS, KB_ARTICLES, KB_CATEGORIES, KB_CATEGORY_META, KB_POPULAR_IDS, KbArticle (+34 more)
 
 ### Community 5 - "App.tsx"
-Cohesion: 0.20
-Nodes (17): ResourceSectionTitle(), BUNDLED_SECTION_IDS, SECTIONS, ServiceItem, ServiceSection, CloudService, getSectionsSync(), mergeSections() (+9 more)
+Cohesion: 0.26
+Nodes (12): BUNDLED_SECTION_IDS, SECTIONS, ServiceItem, ServiceSection, CloudService, getSectionsSync(), mergeSections(), normUrl() (+4 more)
 
 ### Community 6 - "onecApi.ts"
 Cohesion: 0.04
 Nodes (3): mockCache, mockProcs, Window
 
 ### Community 7 - "Templates.tsx"
-Cohesion: 0.12
-Nodes (27): TEMPLATE_CATEGORIES, TEMPLATES, TemplateVar, CP_PREFIXES, DOCUMENT_KEYS, FIELD_GROUP_META, getFieldGroup(), getFieldHint() (+19 more)
+Cohesion: 0.10
+Nodes (32): useDocumentViewMode(), DocTemplate, TEMPLATE_CATEGORIES, TEMPLATES, TemplateVar, BusinessBxDatabase, CP_PREFIXES, DOCUMENT_KEYS (+24 more)
 
 ### Community 8 - "ipc.ts"
-Cohesion: 0.42
-Nodes (7): parseSettingsBackup(), settingsBackupSummary, VALID_IDLE, VALID_NOTIFY, VALID_SCALE, VALID_THEME, Settings()
+Cohesion: 0.20
+Nodes (15): parseSettingsBackup(), SettingsBackupPayload, settingsBackupSummary, VALID_IDLE, VALID_NOTIFY, VALID_SCALE, VALID_THEME, FontScale (+7 more)
 
 ### Community 9 - "referenceRepo.ts"
 Cohesion: 0.12
@@ -161,23 +152,19 @@ Nodes (27): indicators, paymentCodes, taxes, DataMeta, Indicator, IndicatorValue
 
 ### Community 10 - "widgetsApi.ts"
 Cohesion: 0.10
-Nodes (10): Condition, fetchRatesDirect(), FLAGS, mapRate(), WidgetBridge, widgetsApi, WMO, CurrencyExportRow (+2 more)
+Nodes (11): Condition, fetchRatesDirect(), FLAGS, mapRate(), WidgetBridge, widgetsApi, WMO, CurrencyExportRow (+3 more)
 
 ### Community 11 - "Translator.tsx"
 Cohesion: 0.12
 Nodes (21): TranslatorTutorial(), TranslatorWorkspaceMode, TranslatorWorkspaceSwitch(), TranslatorWorkspaceSwitchProps, buildPlainLanguagePrompt(), buildTranslationPrompt(), countWords(), languageName() (+13 more)
 
 ### Community 12 - "useEvents.ts"
-Cohesion: 0.17
-Nodes (13): EventModal(), PRIORITY_LABELS, Props, RECURRENCE_LABELS, STATUS_LABELS, TAX_TAGS, today, TYPE_LABELS (+5 more)
+Cohesion: 0.15
+Nodes (14): event, EventModal(), PRIORITY_LABELS, Props, RECURRENCE_LABELS, STATUS_LABELS, TAX_TAGS, today (+6 more)
 
 ### Community 13 - "TrayView.tsx"
 Cohesion: 0.14
 Nodes (19): NotificationsWidget(), styleByLevel, buildNotices(), CachedEvent, daysTo(), EcpKeyLite, Notice, NoticeLevel (+11 more)
-
-### Community 14 - "Documents.tsx"
-Cohesion: 0.18
-Nodes (17): CalendarPage(), mondayOf(), MONTHS, TYPE_COLOR, WEEKDAYS, subscribePlannerReload(), cacheKey(), ChecklistItem (+9 more)
 
 ### Community 15 - "CalendarPage.tsx"
 Cohesion: 0.22
@@ -185,31 +172,31 @@ Nodes (16): PinScreen(), Props, AttemptsData, getAttemptsData(), getAttemptsLeft
 
 ### Community 16 - "Currency.tsx"
 Cohesion: 0.15
-Nodes (20): ALL_CODES, BankValue(), buildCurrencyCsv(), convertCurrency(), CORE_CODES, Currency(), CurrencyCode, daysAgo() (+12 more)
+Nodes (19): ALL_CODES, BankValue(), buildCurrencyCsv(), convertCurrency(), CORE_CODES, Currency(), CurrencyCode, daysAgo() (+11 more)
 
 ### Community 17 - "Finance.tsx"
-Cohesion: 0.16
-Nodes (19): parseBankStatement(), ParsedTransaction, BxTransaction, exportTransactionsToExcel(), baseTx, filterPayments(), paymentDayDiff(), paymentSummary() (+11 more)
+Cohesion: 0.05
+Nodes (63): CompareFieldRowProps, ConflictModal(), ConflictModalProps, Topbar(), parseBankStatement(), ParsedTransaction, BxCounterparty, BxTransaction (+55 more)
 
 ### Community 18 - "ListView.tsx"
-Cohesion: 0.15
-Nodes (23): Item, Props, TYPE_BADGE, CalCard, PRI_COLOR, Props, TYPE_ICON, Props (+15 more)
+Cohesion: 0.14
+Nodes (20): Item, Props, TYPE_BADGE, CalCard, PRI_COLOR, Props, TYPE_ICON, Props (+12 more)
 
 ### Community 19 - "numToWords.ts"
 Cohesion: 0.17
 Nodes (18): CompanyRoleGuide(), ROLE_TONES, CompanyTeamPanel(), INVITABLE_ROLES, Props, canManageCompanyTeam(), COMPANY_ROLE_DESCRIPTIONS, COMPANY_ROLE_GUIDE (+10 more)
 
 ### Community 20 - "TaxCalculator.tsx"
-Cohesion: 0.08
-Nodes (28): CompanyProvider(), check(), fetch(), useToast(), BANKS_MFO, getBankNameByMfo(), validateBankAccount(), validateInn() (+20 more)
+Cohesion: 0.07
+Nodes (33): check(), fetch(), STYLE, Toast, ToastApi, ToastCtx, ToastKind, ToastProvider() (+25 more)
 
 ### Community 21 - "errorReporter.ts"
-Cohesion: 0.14
-Nodes (10): ErrorBoundary, Props, State, detectPlatform(), installGlobalErrorReporting(), reportError(), seen, isDev (+2 more)
+Cohesion: 0.13
+Nodes (12): ErrorBoundary, Props, State, root, rootElement, detectPlatform(), installGlobalErrorReporting(), reportError() (+4 more)
 
 ### Community 22 - "CalendarView.tsx"
-Cohesion: 0.10
-Nodes (27): MONTHS, Props, TaxCalendar(), WEEKDAYS, deadlineDaysInMonth(), deadlinesForMonth(), TaxDeadline, taxDeadlines (+19 more)
+Cohesion: 0.05
+Nodes (66): CalendarEntry, CalendarMarks, isoDate(), Props, SmartCalendar(), MONTHS, Props, TaxCalendar() (+58 more)
 
 ### Community 23 - "Counterparties.tsx"
 Cohesion: 0.17
@@ -220,24 +207,24 @@ Cohesion: 0.22
 Nodes (11): getNewsItem(), LEGISLATION_NEWS, NewsItem, News(), NEWS_SOURCES, openLink(), buildAiPrompt(), buildTaskNote() (+3 more)
 
 ### Community 25 - "CacheCleaner.tsx"
-Cohesion: 0.17
-Nodes (17): Button(), Props, styles, Variant, Props, BxBridge, formatBytes(), onecApi (+9 more)
+Cohesion: 0.18
+Nodes (16): Button(), Props, styles, Variant, Props, BxBridge, formatBytes(), onecApi (+8 more)
 
 ### Community 26 - "Dashboard.tsx"
 Cohesion: 0.14
 Nodes (9): Props, State, WidgetBoundary, Dashboard(), DEFAULT_WIDGETS, getExpiringEcpCount(), greeting(), ServiceVisibility (+1 more)
 
 ### Community 27 - "ReferenceView.tsx"
-Cohesion: 0.20
-Nodes (11): dutyItems, penaltyItems, regions, statItems, travelNorms, vedItems, RefTabId, tabs (+3 more)
+Cohesion: 0.18
+Nodes (12): dutyItems, penaltyItems, regions, statItems, travelNorms, vedItems, ReferenceView(), RefTabId (+4 more)
 
 ### Community 28 - "main.ts"
 Cohesion: 0.21
 Nodes (14): broadcastUpdateStatus(), checkForUpdatesAndDownload(), createTray(), createTrayWindow(), downloadAsset(), gotLock, isNewerVersion(), loadTrayState() (+6 more)
 
 ### Community 29 - "types.ts"
-Cohesion: 0.14
-Nodes (18): uid(), Props, AddCardPayload, BoardKanban(), COLOR_MAP, fmtDate(), isOverdue(), PRIORITY_BAR (+10 more)
+Cohesion: 0.08
+Nodes (41): uid(), Props, AddCardPayload, BoardKanban(), COLOR_MAP, fmtDate(), isOverdue(), PRIORITY_BAR (+33 more)
 
 ### Community 30 - "horoscope.ts"
 Cohesion: 0.17
@@ -252,24 +239,16 @@ Cohesion: 0.23
 Nodes (13): EcpKeyRecord, getSafe(), loadEcpKeys(), SafeBridge, saveEcpKeys(), daysUntil(), EcpKey, EcpManager() (+5 more)
 
 ### Community 33 - "useCompany"
-Cohesion: 0.14
-Nodes (16): DocumentViewMode, DocumentViewModeSwitch(), DocumentViewModeSwitchProps, useDocumentViewMode(), ResourceEmpty(), ResourceHero(), ResourceHeroProps, ResourceLayout() (+8 more)
-
-### Community 34 - "SmartCalendar.tsx"
-Cohesion: 0.15
-Nodes (20): CalendarEntry, CalendarMarks, isoDate(), Props, SmartCalendar(), dayTooltip(), DayType, getMonthNorms() (+12 more)
+Cohesion: 0.24
+Nodes (14): ResourceEmpty(), ResourceHero(), ResourceHeroProps, ResourceLayout(), ResourceNavItem(), ResourceSectionTitle(), ResourceSidebar(), ResourceSidebarProps (+6 more)
 
 ### Community 35 - "Icon.tsx"
 Cohesion: 0.24
 Nodes (13): BANK_SOURCES, CbuItem, DEFAULT_CODES, fetchBankExchangeRates(), fetchRateOnDate(), fetchRates(), fetchText(), FLAGS (+5 more)
 
-### Community 36 - "App.tsx"
-Cohesion: 0.31
-Nodes (7): CompanySwitcher(), OnboardingWizard(), Step, STEPS, useCompany(), usePlan(), ReferenceView()
-
 ### Community 37 - "Settings.tsx"
-Cohesion: 0.24
-Nodes (13): SettingsBackupPayload, applyFontScale(), currentFontScale(), FONT_SCALE_OPTIONS, FontScale, normalizeFontScale(), saveFontScale(), DashboardWidgets (+5 more)
+Cohesion: 0.71
+Nodes (5): applyFontScale(), currentFontScale(), FONT_SCALE_OPTIONS, normalizeFontScale(), saveFontScale()
 
 ### Community 38 - "Tools.tsx"
 Cohesion: 0.11
@@ -288,8 +267,8 @@ Cohesion: 0.25
 Nodes (8): fmt(), InpsCalc(), fmt(), SalaryCalc(), calcPayroll(), DEFAULT_RATES, PayrollRates, PayrollResult
 
 ### Community 42 - "todayISO"
-Cohesion: 0.29
-Nodes (12): daysFromNowISO(), nextRecurrenceISO(), todayISO(), toLocalISO(), AllTasksView(), fmtDue(), fmtNum(), periodLabel() (+4 more)
+Cohesion: 0.26
+Nodes (13): daysFromNowISO(), nextRecurrenceISO(), todayISO(), toLocalISO(), AllTasksView(), fmtDue(), CurrencyConverter(), fmtNum() (+5 more)
 
 ### Community 43 - "Planner.tsx"
 Cohesion: 0.31
@@ -316,24 +295,20 @@ Cohesion: 0.44
 Nodes (8): cleanCache(), copyFolderRecursive(), dirSize(), getCacheRoots(), getV8iPath(), parseV8i(), scanCache(), CacheEntry
 
 ### Community 49 - "pcClean.ts"
-Cohesion: 0.19
-Nodes (10): parseCertificateText(), ParsedEcpInfo, parsePfx(), pickPfxFile(), fetchTrader(), TraderInfo, NewsFeedItem, api (+2 more)
+Cohesion: 0.17
+Nodes (11): parseCertificateText(), ParsedEcpInfo, parsePfx(), pickPfxFile(), fetchTrader(), TraderInfo, PcCleanResult, TempDirInfo (+3 more)
 
 ### Community 50 - "FocusView.tsx"
-Cohesion: 0.31
-Nodes (6): buildFocusGroups(), CompanyGroup, dateLabel(), FocusDateGroup, FocusView(), STATUS_LABELS
+Cohesion: 0.24
+Nodes (11): Props, buildFocusGroups(), CompanyGroup, dateLabel(), FocusDateGroup, FocusView(), Props, STATUS_LABELS (+3 more)
 
 ### Community 51 - "pcClean.ts"
-Cohesion: 0.23
-Nodes (12): NewCounterparty, COMPANY_REQUIRED, companyDetailsCompletion(), CompanyDetailsSnapshot, counterpartyHealth(), EMPTY_COMPANY_DETAILS, loadCompanyDetails(), saveCompanyDetails() (+4 more)
-
-### Community 52 - "newsFeed.ts"
-Cohesion: 0.21
-Nodes (12): Topbar(), search(), buildTaskNotification(), BxNotification, ROW, formatDueDate(), GlobalNotificationRow, NotificationSource (+4 more)
+Cohesion: 0.25
+Nodes (11): COMPANY_REQUIRED, companyDetailsCompletion(), CompanyDetailsSnapshot, counterpartyHealth(), EMPTY_COMPANY_DETAILS, loadCompanyDetails(), saveCompanyDetails(), Counterparties() (+3 more)
 
 ### Community 53 - "WidgetBoundary"
-Cohesion: 0.18
-Nodes (11): EVENT_TYPE_LABELS, formatPlannerDate(), PlannerEventSummary(), PRIORITY_META, Props, COLUMNS, groupEventsByStatus(), PRIORITY_BORDER (+3 more)
+Cohesion: 0.19
+Nodes (10): EVENT_TYPE_LABELS, formatPlannerDate(), PlannerEventSummary(), PRIORITY_META, Props, COLUMNS, groupEventsByStatus(), PRIORITY_BORDER (+2 more)
 
 ### Community 54 - "onecProcess.ts"
 Cohesion: 0.57
@@ -344,8 +319,8 @@ Cohesion: 0.29
 Nodes (9): describeEventActivity(), EventActivityTimeline(), STATUS_LABELS, activity, member, valueLabel(), EventActivity, EventActivityType (+1 more)
 
 ### Community 56 - "Sidebar.tsx"
-Cohesion: 0.28
-Nodes (10): AuthGate(), clearPin(), hasPin(), isPinEnabled(), setPinEnabled(), AuthState, useAuth(), getIdleTimeout() (+2 more)
+Cohesion: 0.35
+Nodes (9): AuthGate(), clearPin(), hasPin(), isPinEnabled(), setPinEnabled(), useAuth(), getIdleTimeout(), IdleTimeout (+1 more)
 
 ### Community 57 - "Transliterate.tsx"
 Cohesion: 0.43
@@ -360,48 +335,28 @@ Cohesion: 0.40
 Nodes (5): DEMO_DIRS, fmtSize(), PcCleaner(), State, TempDirInfo
 
 ### Community 60 - "currency.ts"
-Cohesion: 0.53
-Nodes (5): BUSINESS_RE, decodeEntities(), FEEDS, fetchNewsFeed(), parseRss()
-
-### Community 61 - "ecpParser.ts"
-Cohesion: 0.26
-Nodes (12): BoardModal(), DOT, Props, baseBoardDefs(), BOARD_ICONS, col(), COLUMN_COLORS, defaultColumns() (+4 more)
+Cohesion: 0.43
+Nodes (6): BUSINESS_RE, decodeEntities(), FEEDS, fetchNewsFeed(), NewsFeedItem, parseRss()
 
 ### Community 65 - "pcClean.ts"
 Cohesion: 0.50
 Nodes (4): Condition, describe(), fetchWeather(), WMO
 
-### Community 66 - "TxModal.tsx"
-Cohesion: 0.17
-Nodes (14): DocTemplate, BusinessBxDatabase, BxCounterparty, db, ExchangeRate, useCounterparties(), DEFAULT_RATES, useExchangeRates() (+6 more)
-
 ### Community 67 - "News.tsx"
 Cohesion: 0.22
 Nodes (6): App(), applyTheme(), BxTheme, currentTheme(), Placeholder(), Props
 
-### Community 68 - "ToastContext.tsx"
-Cohesion: 0.22
-Nodes (8): root, rootElement, STYLE, Toast, ToastApi, ToastCtx, ToastKind, ToastProvider()
-
-### Community 70 - "DateCalc.tsx"
-Cohesion: 0.27
-Nodes (11): holidayName(), isWorkday(), UZ_HOLIDAYS, addCalendarDays(), addWorkdays(), DateCalc(), diffDays(), diffWorkdays() (+3 more)
-
 ### Community 71 - "Icon.tsx"
-Cohesion: 0.20
-Nodes (4): DocumentWorkspace, STEPS, IconName, PATHS
+Cohesion: 0.12
+Nodes (7): DocumentViewMode, DocumentViewModeSwitch(), DocumentViewModeSwitchProps, DocumentWorkspace, STEPS, IconName, PATHS
 
 ### Community 72 - "plan.tsx"
-Cohesion: 0.27
-Nodes (9): Ctx, DEFAULT_PLAN_LIMITS, normalizeLimits(), NUMERIC_KEYS, Plan, PlanCtx, PlanLimits, PlanProvider() (+1 more)
+Cohesion: 0.10
+Nodes (21): CompanySwitcher(), OnboardingWizard(), Step, STEPS, PRO_PERKS, useCompany(), Ctx, DEFAULT_PLAN_LIMITS (+13 more)
 
 ### Community 73 - "pcClean.ts"
-Cohesion: 0.33
-Nodes (8): checkRunningBrowsers(), cleanPcTemp(), getCandidateDirs(), getDirSizeSync(), PcCleanResult, rmDirContents(), scanPcTemp(), TempDirInfo
-
-### Community 74 - "QuickNotes.tsx"
-Cohesion: 0.43
-Nodes (4): emitPlannerReload(), loadNotes(), Note, QuickNotes()
+Cohesion: 0.48
+Nodes (6): checkRunningBrowsers(), cleanPcTemp(), getCandidateDirs(), getDirSizeSync(), rmDirContents(), scanPcTemp()
 
 ## Knowledge Gaps
 - **303 isolated node(s):** `gotLock`, `TrayState`, `FLAGS`, `DEFAULT_CODES`, `CbuItem` (+298 more)
@@ -411,17 +366,17 @@ Nodes (4): emitPlannerReload(), loadNotes(), Note, QuickNotes()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `supabase` connect `CompanyContext.tsx` to `useToast`, `Library.tsx`, `App.tsx`, `referenceRepo.ts`, `Translator.tsx`, `useEvents.ts`, `TrayView.tsx`, `Documents.tsx`, `Finance.tsx`, `numToWords.ts`, `errorReporter.ts`, `Topbar.tsx`, `types.ts`, `useCompany`, `Settings.tsx`, `Planner.tsx`, `newsFeed.ts`, `uiScale.ts`, `Sidebar.tsx`, `ecpParser.ts`, `plan.tsx`, `QuickNotes.tsx`?**
-  _High betweenness centrality (0.070) - this node is a cross-community bridge._
-- **Why does `todayISO()` connect `todayISO` to `CompanyContext.tsx`, `Templates.tsx`, `ipc.ts`, `referenceRepo.ts`, `useEvents.ts`, `TrayView.tsx`, `Currency.tsx`, `Finance.tsx`, `ListView.tsx`, `CacheCleaner.tsx`, `Dashboard.tsx`, `types.ts`, `EcpManager.tsx`, `Settings.tsx`, `Planner.tsx`, `DigestView.tsx`, `FocusView.tsx`, `WidgetBoundary`, `TxModal.tsx`, `DateCalc.tsx`?**
-  _High betweenness centrality (0.068) - this node is a cross-community bridge._
-- **Why does `useToast()` connect `TaxCalculator.tsx` to `CompanyContext.tsx`, `useToast`, `ToastContext.tsx`, `Library.tsx`, `Settings.tsx`, `Templates.tsx`, `ipc.ts`, `QuickNotes.tsx`, `Planner.tsx`, `BxEvent`, `Translator.tsx`, `Finance.tsx`, `numToWords.ts`, `pcClean.ts`, `syncQueue.ts`?**
-  _High betweenness centrality (0.032) - this node is a cross-community bridge._
+- **Why does `supabase` connect `CompanyContext.tsx` to `useToast`, `Library.tsx`, `App.tsx`, `plan.tsx`, `referenceRepo.ts`, `ipc.ts`, `Planner.tsx`, `useEvents.ts`, `Translator.tsx`, `TrayView.tsx`, `Finance.tsx`, `numToWords.ts`, `errorReporter.ts`, `uiScale.ts`, `Topbar.tsx`, `types.ts`?**
+  _High betweenness centrality (0.073) - this node is a cross-community bridge._
+- **Why does `todayISO()` connect `todayISO` to `EcpManager.tsx`, `CompanyContext.tsx`, `Templates.tsx`, `ipc.ts`, `referenceRepo.ts`, `Planner.tsx`, `useEvents.ts`, `TrayView.tsx`, `DigestView.tsx`, `Currency.tsx`, `Finance.tsx`, `ListView.tsx`, `FocusView.tsx`, `WidgetBoundary`, `CalendarView.tsx`, `CacheCleaner.tsx`, `Dashboard.tsx`, `types.ts`?**
+  _High betweenness centrality (0.063) - this node is a cross-community bridge._
+- **Why does `useCompany()` connect `plan.tsx` to `useCompany`, `CompanyContext.tsx`, `useToast`, `Templates.tsx`, `ipc.ts`, `todayISO`, `Planner.tsx`, `Translator.tsx`, `Finance.tsx`, `numToWords.ts`, `pcClean.ts`, `TaxCalculator.tsx`, `CalendarView.tsx`, `Dashboard.tsx`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
 - **What connects `gotLock`, `TrayState`, `FLAGS` to the rest of the system?**
   _303 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Settings.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.14736842105263157 - nodes in this community are weakly interconnected._
 - **Should `CompanyContext.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.05669710806697108 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06948051948051948 - nodes in this community are weakly interconnected._
 - **Should `Library.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.07086197778952935 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08069381598793364 - nodes in this community are weakly interconnected._
