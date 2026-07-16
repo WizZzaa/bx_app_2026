@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { loadAccounts, loadNsbu, AccountRow, NsbuRow } from '../../lib/db/referenceRepo';
+import Icon from '../../lib/ui/Icon';
 
 export default function AccountingTab() {
   const [accounts, setAccounts] = useState<AccountRow[]>([]);
@@ -35,12 +36,12 @@ export default function AccountingTab() {
       {/* План счетов */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-medium text-bx-muted">План счетов (НСБУ №21)</h2>
+          <h2 className="text-sm font-black text-bx-text">План счетов (НСБУ №21)</h2>
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder="Поиск по счёту…"
-            className="bg-bx-bg text-bx-text placeholder-slate-600 text-xs px-3 py-1.5 rounded-lg border border-bx-border w-48 focus:outline-none focus:border-blue-500/50"
+            className="h-10 w-56 rounded-xl border border-bx-border-2 bg-bx-bg px-3 text-xs text-bx-text outline-none placeholder:text-bx-muted focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/15"
           />
         </div>
         <div className="space-y-4">
@@ -62,7 +63,7 @@ export default function AccountingTab() {
 
       {/* НСБУ */}
       <section>
-        <h2 className="text-sm font-medium text-bx-muted mb-3">Национальные стандарты бухучёта (НСБУ)</h2>
+        <h2 className="mb-3 text-sm font-black text-bx-text">Национальные стандарты бухучёта (НСБУ)</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {nsbu.map(n => (
             <div key={n.number} className="flex items-start gap-3 px-4 py-2.5 rounded-lg bg-bx-surface border border-bx-border">
@@ -75,7 +76,7 @@ export default function AccountingTab() {
 
       {/* Амортизация */}
       <section>
-        <h2 className="text-sm font-medium text-bx-muted mb-3">Нормы амортизации (предельные годовые)</h2>
+        <h2 className="mb-3 text-sm font-black text-bx-text">Нормы амортизации (предельные годовые)</h2>
         <div className="rounded-xl border border-bx-border bg-bx-surface overflow-hidden">
           <table className="w-full text-sm">
             <tbody>
@@ -94,7 +95,7 @@ export default function AccountingTab() {
               ))}
             </tbody>
           </table>
-          <div className="px-4 py-2 text-[11px] text-amber-400 bg-amber-500/5">⚠ Нормы требуют сверки со ст. НК РУз.</div>
+          <div className="flex items-center gap-2 bg-amber-500/[0.07] px-4 py-2.5 text-[11px] text-amber-800 dark:text-amber-300"><Icon name="alert" className="h-4 w-4" />Нормы требуют сверки со ст. НК РУз.</div>
         </div>
       </section>
     </div>

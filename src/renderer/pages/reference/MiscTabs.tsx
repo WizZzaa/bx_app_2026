@@ -1,15 +1,16 @@
 import React from 'react';
 import { regions, vedItems, statItems, dutyItems, penaltyItems, travelNorms } from '../../data/reference/misc';
+import Icon from '../../lib/ui/Icon';
 
 function VerifyNote() {
-  return <div className="text-[11px] text-amber-400 bg-amber-500/5 rounded-lg px-3 py-2">⚠ Раздел требует наполнения и сверки с официальными источниками.</div>;
+  return <div className="flex items-center gap-2 rounded-xl border border-amber-500/15 bg-amber-500/[0.07] px-3 py-2.5 text-[11px] text-amber-800 dark:text-amber-300"><Icon name="alert" className="h-4 w-4 flex-shrink-0" />Раздел требует наполнения и сверки с официальными источниками.</div>;
 }
 
 export function GovTab() {
   return (
     <div className="space-y-4">
       <VerifyNote />
-      <h2 className="text-sm font-medium text-bx-muted">Налоговые и статистические органы по регионам</h2>
+      <h2 className="text-sm font-black text-bx-text">Налоговые и статистические органы по регионам</h2>
       <div className="rounded-xl border border-bx-border bg-bx-surface overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -52,19 +53,19 @@ export function VedTab() {
     <div className="space-y-5">
       <VerifyNote />
       <section>
-        <h2 className="text-sm font-medium text-bx-muted mb-3">ВЭД</h2>
+        <h2 className="mb-3 text-sm font-black text-bx-text">ВЭД</h2>
         <SimpleList rows={vedItems.map(v => ({ left: v.name, right: v.value, note: v.note }))} />
       </section>
       <section>
-        <h2 className="text-sm font-medium text-bx-muted mb-3">Командировочные (суточные)</h2>
+        <h2 className="mb-3 text-sm font-black text-bx-text">Командировочные (суточные)</h2>
         <SimpleList rows={travelNorms.map(t => ({ left: t.name + (t.verified ? '  ✓' : ''), right: t.value, note: t.note }))} />
       </section>
       <section>
-        <h2 className="text-sm font-medium text-bx-muted mb-3">Статистика</h2>
+        <h2 className="mb-3 text-sm font-black text-bx-text">Статистика</h2>
         <SimpleList rows={statItems.map(s => ({ left: s.name, right: '', note: s.note }))} />
       </section>
       <section>
-        <h2 className="text-sm font-medium text-bx-muted mb-3">Госпошлина</h2>
+        <h2 className="mb-3 text-sm font-black text-bx-text">Госпошлина</h2>
         <SimpleList rows={dutyItems.map(d => ({ left: d.name, right: d.value }))} />
       </section>
     </div>
@@ -75,7 +76,7 @@ export function LawTab() {
   return (
     <div className="space-y-4">
       <VerifyNote />
-      <h2 className="text-sm font-medium text-bx-muted">Штрафы и санкции</h2>
+      <h2 className="text-sm font-black text-bx-text">Штрафы и санкции</h2>
       <div className="rounded-xl border border-bx-border bg-bx-surface overflow-hidden">
         <table className="w-full text-sm">
           <thead>

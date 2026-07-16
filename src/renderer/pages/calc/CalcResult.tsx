@@ -68,6 +68,17 @@ export default function CalcResult({ title, rows }: { title: string; rows: CalcR
     } catch { /* ignore */ }
   }
 
+  function downloadText() {
+    const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${title.replace(/[^а-яА-ЯёЁa-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '') || 'Расчёт'}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+    logCalc({ title, text: fullText, main: main?.value ?? rows[rows.length - 1]?.value ?? '', ts: Date.now() });
+  }
+
   return (
     <div className="rounded-2xl border border-bx-border overflow-hidden">
       {/* Hero: главный результат */}
@@ -86,21 +97,30 @@ export default function CalcResult({ title, rows }: { title: string; rows: CalcR
                 {copiedMain ? 'Скопировано ✓' : main.value}
               </button>
             </div>
-            <button
-              onClick={copyAll}
-              title="Скопировать весь расчёт текстом"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all flex-shrink-0 ${
-                copiedAll
-                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
-                  : 'bg-bx-bg/60 border-bx-border-2 text-bx-text hover:border-blue-500/50 hover:text-bx-text'
-              }`}
-            >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none">
-                <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
-                <path d="M11 5V4a1.5 1.5 0 0 0-1.5-1.5h-5A1.5 1.5 0 0 0 3 4v5A1.5 1.5 0 0 0 4.5 10.5H5" stroke="currentColor" strokeWidth="1.3"/>
-              </svg>
-              {copiedAll ? 'Расчёт скопирован' : 'Весь расчёт'}
-            </button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={downloadText}
+                title="Скачать расчёт в TXT"
+                className="min-h-11 px-3 rounded-xl text-[11px] font-bold border bg-bx-bg/60 border-bx-border-2 text-bx-text hover:border-blue-500/50 transition-colors"
+              >
+                TXT
+              </button>
+              <button
+                onClick={copyAll}
+                title="Скопировать весь расчёт текстом"
+                className={`min-h-11 flex items-center gap-1.5 px-3 rounded-xl text-[11px] font-bold border transition-all ${
+                  copiedAll
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-bx-bg/60 border-bx-border-2 text-bx-text hover:border-blue-500/50'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+                  <path d="M11 5V4a1.5 1.5 0 0 0-1.5-1.5h-5A1.5 1.5 0 0 0 3 4v5A1.5 1.5 0 0 0 4.5 10.5H5" stroke="currentColor" strokeWidth="1.3"/>
+                </svg>
+                {copiedAll ? 'Скопировано' : 'Копировать'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -11,19 +11,21 @@ import Library from './pages/library/Library';
 import ReferenceView from './pages/library/ReferenceView';
 import Calc from './pages/Calc';
 import Planner from './pages/Planner';
-import CalendarPage from './pages/CalendarPage';
 import Templates from './pages/Templates';
 import Ai from './pages/Ai';
 import Support from './pages/Support';
 import Hr from './pages/Hr';
 import Finance from './pages/Finance';
+import Currency from './pages/Currency';
 import Services from './pages/Services';
 import News from './pages/News';
+import NewsDetail from './pages/NewsDetail';
 import Settings from './pages/Settings';
 import Counterparties from './pages/Counterparties';
 import Placeholder from './pages/Placeholder';
 import TrayView from './pages/TrayView';
 import Documents from './pages/Documents';
+import Translator from './pages/Translator';
 import { applyTheme, currentTheme } from './lib/theme';
 import { CompanyProvider } from './lib/CompanyContext';
 import { PlanProvider } from './lib/plan';
@@ -103,22 +105,28 @@ export default function App() {
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/tools" element={<Tools />} />
+                  <Route path="/translator" element={<Translator />} />
                   <Route path="/reference" element={<ReferenceView />} />
                   <Route path="/services" element={<Services />} />
                   <Route path="/news" element={<News />} />
+                  <Route path="/news/:id" element={<NewsDetail />} />
                   <Route path="/knowledge" element={<Library />} />
                   <Route path="/templates" element={<Templates />} />
                   <Route path="/documents" element={<Documents />} />
                   <Route path="/hr" element={<Hr />} />
                   <Route path="/finance" element={<Finance />} />
+                  <Route path="/finance/:id" element={<Finance />} />
+                  <Route path="/currency" element={<Currency />} />
                   <Route path="/planner" element={<Planner />} />
-                  <Route path="/calendar" element={<CalendarPage />} />
+                  <Route path="/calendar" element={<Navigate to="/planner" replace />} />
                   <Route path="/calc" element={<Calc />} />
                   <Route path="/ecp" element={<EcpRedirect />} />
                   <Route path="/ai" element={<Ai />} />
                   <Route path="/support" element={<Support />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/counterparties" element={<Counterparties />} />
+                  <Route path="/counterparties/:id" element={<Counterparties />} />
+                  <Route path="/companies/:id" element={<Counterparties />} />
                   <Route path="/placeholder" element={<Placeholder icon="🚧" title="Страница в разработке" description="Этот раздел временно недоступен или находится на стадии проектирования." />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

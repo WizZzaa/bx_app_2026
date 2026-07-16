@@ -61,5 +61,5 @@ export function highlight(text: string, q: string): React.ReactNode {
   if (!q || q.length < 2) return text;
   const idx = text.toLowerCase().indexOf(q.toLowerCase());
   if (idx === -1) return text;
-  return <>{text.slice(0, idx)}<mark className="bg-amber-400/30 text-amber-200 rounded px-0.5">{text.slice(idx, idx + q.length)}</mark>{text.slice(idx + q.length)}</>;
+  return <>{text.slice(0, idx)}<mark className="rounded border border-amber-400/70 bg-amber-200 px-1 py-0.5 font-extrabold text-amber-950 shadow-[inset_0_-1px_0_rgba(217,119,6,0.22)] dark:border-amber-400/40 dark:bg-amber-300/20 dark:text-amber-100">{text.slice(idx, idx + q.length)}</mark>{text.slice(idx + q.length)}</>;
 }

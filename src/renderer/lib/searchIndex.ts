@@ -1,6 +1,7 @@
 // Глобальный поиск по приложению: справочники + статьи БЗ + разделы + действия.
 import { loadAccounts, loadNsbu, loadTaxes, loadIndicators } from './db/referenceRepo';
 import { getAllArticlesSync } from './db/knowledgeRepo';
+import { LEGISLATION_NEWS } from '../data/newsItems';
 
 export interface SearchItem {
   title: string;
@@ -13,6 +14,7 @@ export interface SearchItem {
 const staticItems: SearchItem[] = [
   { title: 'Дашборд', subtitle: 'Рабочий стол', category: 'Раздел', route: '/' },
   { title: 'Утилиты', subtitle: '1С, файлы, система, ЭЦП', category: 'Раздел', route: '/tools' },
+  { title: 'Переводчик документов', subtitle: 'Узбекский, русский и английский', category: 'Раздел', route: '/translator' },
   { title: 'Очистка кэша 1С', subtitle: 'Утилиты', category: 'Действие', route: '/tools' },
   { title: 'Снятие зависших процессов 1С', subtitle: 'Утилиты', category: 'Действие', route: '/tools' },
   { title: 'Бэкап базы 1С', subtitle: 'Утилиты', category: 'Действие', route: '/tools' },
@@ -41,6 +43,7 @@ export async function buildIndex(): Promise<SearchItem[]> {
   for (const a of accounts) items.push({ title: `${a.code} — ${a.name}`, subtitle: a.account_class, category: 'Счёт', route: '/reference' });
   for (const n of nsbu) items.push({ title: `НСБУ №${n.number}`, subtitle: n.title, category: 'Стандарт', route: '/reference' });
   for (const a of getAllArticlesSync()) items.push({ title: a.title, subtitle: a.category, category: 'Статья', route: `/knowledge?article=${a.id}` });
+  for (const item of LEGISLATION_NEWS) items.push({ title: item.title, subtitle: `${item.tag} · ${item.source}`, category: 'Новость', route: `/news/${item.id}` });
 
   cache = items;
   return items;

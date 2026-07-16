@@ -73,7 +73,7 @@ export default function RecyclingCalc() {
           <button key={c} onClick={() => switchCategory(c)}
             className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${category === c ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
           >
-            {c === 'passenger' ? '🚗 Легковые' : c === 'commercial' ? '🚛 Коммерч.' : '🏍 Мото'}
+            {c === 'passenger' ? 'Легковые' : c === 'commercial' ? 'Коммерческие' : 'Мото'}
           </button>
         ))}
       </div>

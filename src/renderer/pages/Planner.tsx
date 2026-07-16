@@ -1,29 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useEvents } from './planner/useEvents';
-import { useBoards, type BxBoard, type BoardColumn } from './planner/useBoards';
-import { useCards, fetchDatedCards, fetchCardById, fetchAllCards, fetchBoardColumns, toggleCardDone, createCardFromEvent, type BxCard, type DatedCard, type AllCard } from './planner/useCards';
-import { seedTaxDeadlines } from './planner/taxSeeder';
-import { subscribePlannerReload } from './planner/plannerBus';
+import { seedTaxDeadlines, syncTaxDeadlines } from './planner/taxSeeder';
+import { useCompanyMembers } from './planner/useCompanyMembers';
 import CalendarView from './planner/CalendarView';
 import DailyTasksModal from './planner/DailyTasksModal';
-import AllTasksView from './planner/AllTasksView';
-import DigestView from './planner/DigestView';
-import ListView from './planner/ListView';
+import FocusView from './planner/FocusView';
 import EventModal from './planner/EventModal';
-import BoardKanban from './planner/BoardKanban';
-import BoardModal from './planner/BoardModal';
-import CardModal from './planner/CardModal';
-import ArchivePanel from './planner/ArchivePanel';
+import SystemTaskBoard from './planner/SystemTaskBoard';
 import { useCompany } from '../lib/CompanyContext';
-import { usePlan } from '../lib/plan';
-import PaywallModal from '../components/PaywallModal';
 import { useToast } from '../lib/ui/ToastContext';
 import { supabase } from '../lib/db/supabase';
 import { requestNotificationPermission, startReminderLoop, stopReminderLoop } from '../lib/notifications';
 import type { BxEvent, NewEvent, EventStatus } from './planner/useEvents';
 import { todayISO, nextRecurrenceISO } from '../lib/dates';
+import type { TaxDeadline } from '../data/taxCalendar';
 
-type View = 'board' | 'all' | 'digest' | 'calendar' | 'list';
+type View = 'focus' | 'calendar' | 'board';
 
 const TYPE_FILTERS = [
   { id: '',             label: 'Все' },
@@ -34,109 +27,40 @@ const TYPE_FILTERS = [
 ];
 
 export default function Planner() {
-  const { active } = useCompany();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { active, companies, setActive } = useCompany();
   const toast = useToast();
-  const { isPro, limits } = usePlan();
-  const [paywall, setPaywall] = useState<string | null>(null);
-  const { events, loading, reload, add, update, remove, bulkRemove } = useEvents(active?.id ?? null);
-  const { boards, loading: boardsLoading, error: boardsError, createBoard, updateBoard, deleteBoard } = useBoards(active?.id ?? null);
+  const { events, loading, error: eventsError, reload, add, update, remove } = useEvents();
 
-  const [view,      setView]      = useState<View>('board');
-  const [activeBoardId, setActiveBoardId] = useState<string | null>(null);
+  const [view,      setView]      = useState<View>('focus');
 
   // events modal (calendar/list)
   const [modalOpen, setModalOpen] = useState(false);
   const [editing,   setEditing]   = useState<BxEvent | null>(null);
   const [defDate,   setDefDate]   = useState('');
+  const [defaultEvent, setDefaultEvent] = useState<Partial<NewEvent> | null>(null);
   const [typeF,     setTypeF]     = useState('');
 
-  // board modals
-  const [boardModalOpen, setBoardModalOpen] = useState(false);
-  const [editingBoard,   setEditingBoard]   = useState<BxBoard | null>(null);
-  const [activeCard,     setActiveCard]     = useState<BxCard | null>(null);
+  const memberCompanyId = editing?.company_id ?? active?.id ?? null;
+  const { members, loading: membersLoading } = useCompanyMembers(memberCompanyId);
 
   const [seedMsg, setSeedMsg] = useState('');
-
-  // active board resolution
-  useEffect(() => {
-    if (boards.length && !boards.find(b => b.id === activeBoardId)) {
-      setActiveBoardId(boards[0].id);
-    }
-  }, [boards, activeBoardId]);
-
-  const activeBoard = boards.find(b => b.id === activeBoardId) ?? null;
-  const { cards, addCard, updateCard, removeCard, archiveCard, moveCard, loadArchived, restoreCard, duplicateCard, loadComments, addComment, removeComment } = useCards(activeBoard?.id ?? null);
-
-  const [activeCardColumns, setActiveCardColumns] = useState<BoardColumn[]>([]);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const triggerRefresh = () => setRefreshTrigger(prev => prev + 1);
-
-  const [archiveOpen, setArchiveOpen] = useState(false);
-  const [datedCards,  setDatedCards]  = useState<DatedCard[]>([]);
-  const [allCards,    setAllCards]    = useState<AllCard[]>([]);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-  async function handleDeleteEventDirect(id: string) {
-    await remove(id);
-    toast.info('Событие удалено');
-  }
-
-  async function handleDeleteCardDirect(id: string) {
-    await removeCard(id);
-    triggerRefresh();
-    toast.info('Карточка удалена');
-  }
-
-  // Карточки со сроком по всем доскам — для Календаря
+  // Одноразово убираем локальные кэши удалённой проектной подсистемы.
   useEffect(() => {
-    if (view === 'calendar') fetchDatedCards().then(setDatedCards);
-    if (view === 'all' || view === 'digest') fetchAllCards().then(setAllCards);
-  }, [view, cards, refreshTrigger]);
-
-  // Общая шина планировщика: любая мутация (событие/карточка) обновляет агрегаты
-  useEffect(() => subscribePlannerReload(triggerRefresh), []);
-
-  // События и карточки синхронизированы 1-к-1. В календарь и списки попадают только events.
-  const visibleAllCards: any[] = [];
-  const visibleDatedCards: any[] = [];
-
-  async function openCardFromCalendar(id: string) {
-    const card = await fetchCardById(id);
-    if (!card) return;
-    const cols = await fetchBoardColumns(card.board_id);
-    setActiveCardColumns(cols);
-    setActiveCard(card);
-  }
-
-  async function handleUpdateCard(id: string, patch: any) {
-    await updateCard(id, patch);
-    triggerRefresh();
-  }
-
-  async function handleArchiveCard(id: string) {
-    await archiveCard(id);
-    triggerRefresh();
-  }
-
-  async function handleDeleteCard(id: string) {
-    await removeCard(id);
-    triggerRefresh();
-  }
-
-  async function handleDuplicateCard(card: BxCard) {
-    await duplicateCard(card);
-    triggerRefresh();
-  }
-
-  async function handleToggleCardDone(cardId: string, boardId: string, makeDone: boolean) {
-    const nextColId = await toggleCardDone(cardId, boardId, makeDone);
-    if (nextColId) {
-      toast.success(makeDone ? 'Карточка выполнена' : 'Карточка возвращена в работу');
-      triggerRefresh();
-      if (activeBoardId === boardId) {
-        updateCard(cardId, { column_id: nextColId });
-      }
+    localStorage.removeItem('bx_boards_cache_v1');
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith('bx_cards_cache_')) localStorage.removeItem(key);
     }
+  }, []);
+
+  async function handleDeleteEventDirect(id: string) {
+    const removed = await remove(id);
+    if (removed) toast.info('Событие удалено');
+    else toast.error('Не удалось удалить событие');
   }
 
   // Уведомления
@@ -148,16 +72,26 @@ export default function Planner() {
   const [syncing, setSyncing] = useState(false);
 
   async function handleForceSync() {
+    if (!active?.id) {
+      toast.info('Сначала выберите компанию');
+      return;
+    }
+    if (active.profile_status !== 'confirmed' || !active.bx_start_date) {
+      toast.info('Сначала откройте настройки компании и подтвердите её профиль');
+      return;
+    }
     setSyncing(true);
-    toast.info('Синхронизация дедлайнов...');
+    toast.info('Проверяем горизонт на 60 дней...');
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const year = new Date().getFullYear();
-      const count = await seedTaxDeadlines(year, user.id, active?.id ?? null, true);
+      const result = await syncTaxDeadlines(user.id, active.id);
       await reload();
-      triggerRefresh();
-      toast.success(`Успешно синхронизировано ${count} дедлайнов на ${year} год!`);
+      if (result.added > 0 || result.removed > 0) {
+        toast.success(`Обязательства обновлены: +${result.added}, −${result.removed}`);
+      } else {
+        toast.success('Горизонт уже актуален');
+      }
     } catch (e) {
       console.error(e);
       toast.error('Ошибка синхронизации');
@@ -169,28 +103,113 @@ export default function Planner() {
   // Seed tax deadlines
   useEffect(() => {
     async function doSeed() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const year = new Date().getFullYear();
-      const count = await seedTaxDeadlines(year, user.id, active?.id ?? null);
-      if (count > 0) {
-        await reload();
-        triggerRefresh();
-        setSeedMsg(`Загружено ${count} налоговых дедлайнов ${year}`);
-        setTimeout(() => setSeedMsg(''), 4000);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const activeCompanies = companies.filter(company =>
+          company.is_active
+          && company.profile_status === 'confirmed'
+          && Boolean(company.bx_start_date)
+          && (company.enabled_obligation_rules?.length ?? 0) > 0,
+        );
+        const counts = await Promise.all(activeCompanies.map(company => seedTaxDeadlines(user.id, company.id)));
+        const count = counts.reduce((total, value) => total + value, 0);
+        if (count > 0) {
+          await reload();
+          setSeedMsg(`Добавлено ${count} обязательств на 60 дней`);
+          setTimeout(() => setSeedMsg(''), 4000);
+        }
+      } catch (seedError) {
+        console.error('[Planner] automatic obligations sync failed:', seedError);
       }
     }
     doSeed();
-  }, [active?.id]);
+  }, [companies, reload]);
 
   const today = todayISO();
   const filtered = typeF ? events.filter(e => e.type === typeF) : events;
   const todayCount = events.filter(e => (e.due_date || e.date) === today && e.status !== 'done').length;
   const overdueCount = events.filter(e => e.due_date && e.due_date < today && e.status !== 'done' && (e.type === 'task' || e.type === 'reminder')).length;
 
+  useEffect(() => {
+    const routeState = location.state as { newTask?: { title?: string; note?: string; date?: string } } | null;
+    if (!routeState?.newTask) return;
+    setEditing(null);
+    setDefDate(routeState.newTask.date || today);
+    setDefaultEvent({
+      type: 'task',
+      title: routeState.newTask.title?.trim() || 'Новая задача',
+      note: routeState.newTask.note?.trim() || null,
+      status: 'todo',
+      priority: 'normal',
+    });
+    setModalOpen(true);
+    navigate('/planner', { replace: true, state: null });
+  }, [location.state, navigate, today]);
+
   // ── events handlers ──
-  function openNewEvent(date?: string) { setEditing(null); setDefDate(date || today); setModalOpen(true); }
-  function openEditEvent(ev: BxEvent) { setEditing(ev); setModalOpen(true); }
+  function openNewEvent(date?: string, preset?: Partial<NewEvent>) {
+    setEditing(null);
+    setDefDate(date || today);
+    setDefaultEvent(preset ?? null);
+    setModalOpen(true);
+  }
+  function openEditEvent(ev: BxEvent) {
+    setEditing(ev);
+    setDefaultEvent(null);
+    setModalOpen(true);
+  }
+
+  useEffect(() => {
+    function openRequestedEvent(eventId: string | null) {
+      if (!eventId) return;
+      const requested = events.find(event => event.id === eventId);
+      if (!requested) return;
+      const requestedCompany = companies.find(company => company.id === requested.company_id);
+      if (requestedCompany) setActive(requestedCompany);
+      setEditing(requested);
+      setDefaultEvent(null);
+      setModalOpen(true);
+      localStorage.removeItem('bx_planner_open_event_id');
+    }
+
+    function handleOpenRequest(event: Event) {
+      const detail = (event as CustomEvent<{ eventId?: string }>).detail;
+      openRequestedEvent(detail?.eventId ?? null);
+    }
+
+    openRequestedEvent(localStorage.getItem('bx_planner_open_event_id'));
+    window.addEventListener('bx:open-planner-event', handleOpenRequest);
+    return () => window.removeEventListener('bx:open-planner-event', handleOpenRequest);
+  }, [companies, events, setActive]);
+
+  function handleAddTaxDeadline(date: string, deadline: TaxDeadline) {
+    const sourceKey = `tax:${deadline.id}:${date}`;
+    const existing = events.find(event => event.company_id === active?.id && event.source_key === sourceKey);
+    if (existing) {
+      openEditEvent(existing);
+      return;
+    }
+    openNewEvent(date, {
+      company_id: active?.id ?? null,
+      type: 'tax_deadline',
+      title: deadline.title,
+      date,
+      due_date: date,
+      status: 'todo',
+      priority: deadline.kind === 'payment' || deadline.kind === 'both' ? 'high' : 'normal',
+      tags: [deadline.taxType],
+      tax_type: deadline.taxType,
+      kind: deadline.kind,
+      regime: deadline.regime,
+      note: [deadline.note, deadline.law].filter(Boolean).join('\n') || null,
+      source: 'seeded',
+      source_key: sourceKey,
+      reminder_at: null,
+      recurrence: null,
+      assignee_id: null,
+    });
+  }
 
   // Повторяющиеся задачи: при завершении создаём следующее вхождение
   async function spawnNextOccurrence(base: NewEvent) {
@@ -206,33 +225,69 @@ export default function Planner() {
   }
 
   async function handleSaveEvent(data: NewEvent) {
+    const companyId = editing?.company_id ?? active?.id ?? null;
+    if (!companyId) {
+      toast.info('Сначала выберите компанию');
+      return;
+    }
+    const companyEvent = { ...data, company_id: companyId };
     if (editing) {
-      await update(editing.id, data);
-      if (data.status === 'done' && editing.status !== 'done') await spawnNextOccurrence(data);
+      const saved = await update(editing.id, companyEvent);
+      if (!saved) {
+        toast.error('Не удалось сохранить изменения');
+        return;
+      }
+      if (companyEvent.status === 'done' && editing.status !== 'done') await spawnNextOccurrence(companyEvent);
     } else {
-      await add(data);
+      const created = await add(companyEvent);
+      if (!created) {
+        toast.error('Не удалось добавить событие');
+        return;
+      }
     }
     toast.success(editing ? 'Событие обновлено' : 'Событие добавлено');
-    setModalOpen(false); setEditing(null);
+    setTypeF('');
+    setModalOpen(false); setEditing(null); setDefaultEvent(null);
   }
-  async function handleDeleteEvent() { if (editing) await remove(editing.id); toast.info('Событие удалено'); setModalOpen(false); setEditing(null); }
-
-  async function handleConvertToCard(event: BxEvent) {
-    const card = await createCardFromEvent(event, active?.id ?? null);
-    if (card) {
-      toast.success(`Событие «${event.title}» добавлено в Kanban!`);
-      triggerRefresh();
-    } else {
-      toast.error('Не удалось добавить событие. Убедитесь, что создана хотя бы одна Kanban-доска.');
+  async function handleDeleteEvent() {
+    if (!editing) return;
+    const removed = await remove(editing.id);
+    if (!removed) {
+      toast.error('Не удалось удалить событие');
+      return;
     }
+    toast.info('Событие удалено');
+    setModalOpen(false); setEditing(null); setDefaultEvent(null);
   }
 
   async function handleStatusChange(id: string, status: EventStatus) {
     const ev = events.find(e => e.id === id);
-    await update(id, { status });
+    const saved = await update(id, { status });
+    if (!saved) {
+      toast.error('Не удалось изменить статус');
+      return;
+    }
     if (ev && status === 'done' && ev.status !== 'done' && ev.recurrence) {
-      const { id: _id, user_id: _u, created_at: _c, ...base } = ev;
-      await spawnNextOccurrence(base as NewEvent);
+      const base: NewEvent = {
+        company_id: ev.company_id,
+        type: ev.type,
+        title: ev.title,
+        date: ev.date,
+        due_date: ev.due_date,
+        status: ev.status,
+        priority: ev.priority,
+        tags: ev.tags,
+        tax_type: ev.tax_type,
+        kind: ev.kind,
+        regime: ev.regime,
+        note: ev.note,
+        source: ev.source,
+        source_key: null,
+        reminder_at: ev.reminder_at,
+        recurrence: ev.recurrence ?? null,
+        assignee_id: ev.assignee_id,
+      };
+      await spawnNextOccurrence(base);
     }
   }
 
@@ -241,47 +296,19 @@ export default function Planner() {
     const ev = events.find(e => e.id === id);
     if (!ev) return;
     // Переносим то поле, по которому событие показано в календаре
-    if (ev.due_date) await update(id, { due_date: newDate });
-    else await update(id, { date: newDate });
+    const saved = ev.due_date
+      ? await update(id, { due_date: newDate })
+      : await update(id, { date: newDate });
+    if (!saved) {
+      toast.error('Не удалось перенести срок');
+      return;
+    }
     toast.success(`Перенесено на ${new Date(newDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`);
   }
 
-  async function handleCardDrop(id: string, newDate: string) {
-    const { error } = await supabase.from('bx_cards').update({ due_date: newDate }).eq('id', id);
-    if (error) { toast.error('Не удалось перенести карточку'); return; }
-    triggerRefresh();
-    toast.success(`Срок карточки: ${new Date(newDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`);
-  }
-
-  // ── board handlers ──
-  async function handleSaveBoard(name: string, icon: string, color: string) {
-    if (editingBoard) {
-      await updateBoard(editingBoard.id, { name, icon, color });
-    } else {
-      const b = await createBoard(name, icon, color);
-      if (b) setActiveBoardId(b.id);
-    }
-    toast.success(editingBoard ? 'Доска сохранена' : 'Доска создана');
-    setBoardModalOpen(false); setEditingBoard(null);
-  }
-  async function handleDeleteBoard() {
-    if (editingBoard) { await deleteBoard(editingBoard.id); setActiveBoardId(boards.find(b => b.id !== editingBoard.id)?.id ?? null); toast.info('Доска удалена'); }
-    setBoardModalOpen(false); setEditingBoard(null);
-  }
-  function handleUpdateColumns(columns: BoardColumn[]) {
-    if (activeBoard) updateBoard(activeBoard.id, { columns });
-  }
-  function handleAddCard(columnId: string, payload: import('./planner/BoardKanban').AddCardPayload) {
-    if (activeBoard) addCard({
-      board_id: activeBoard.id,
-      column_id: columnId,
-      title: payload.title,
-      priority: payload.priority,
-      due_date: payload.due_date,
-      labels: payload.labels,
-      description: payload.description,
-    })
-  }
+  const systemEvents = active
+    ? filtered.filter(event => event.company_id === active.id)
+    : filtered;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden relative bg-bx-bg">
@@ -303,12 +330,12 @@ export default function Planner() {
               disabled={syncing}
               className="px-3.5 py-2 bg-bx-surface hover:bg-bx-surface-2 text-bx-text hover:text-blue-500 text-xs font-bold rounded-xl transition-all border border-bx-border hover:border-blue-500/20 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm"
             >
-              <span>{syncing ? '⌛' : '🔄'}</span> Синхронизировать дедлайны 2026
+              <span>{syncing ? '⌛' : '🔄'}</span> Продлить горизонт
             </button>
 
             {/* Segmented Control */}
             <div className="flex bg-bx-surface-2 border border-bx-border rounded-xl p-0.5">
-              {([['board','Доски'],['all','Все задачи'],['digest','Сводка'],['calendar','Календарь'],['list','Список']] as const).map(([v,l]) => (
+              {([['focus','Фокус'],['calendar','Календарь'],['board','Доска']] as const).map(([v,l]) => (
                 <button 
                   key={v} 
                   onClick={() => setView(v as View)}
@@ -323,191 +350,93 @@ export default function Planner() {
               ))}
             </div>
 
-            {view === 'board' ? (
-              <button onClick={() => {
-                if (!isPro && boards.length >= limits.boards) { setPaywall('Несколько досок Планировщика'); return; }
-                setEditingBoard(null); setBoardModalOpen(true);
-              }}
-                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer">+ Доска</button>
-            ) : (
-              <button onClick={() => openNewEvent()}
-                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer">+ Добавить</button>
-            )}
+            <button onClick={() => openNewEvent()}
+              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer">
+              {view === 'board' ? '+ Задача' : '+ Добавить'}
+            </button>
           </div>
         </div>
 
-        {/* Board switcher OR type filters */}
-        {view === 'board' ? (
-          <div className="flex items-center gap-1.5 mt-3 flex-wrap">
-            {boards.map(b => (
-              <button 
-                key={b.id} 
-                onClick={() => setActiveBoardId(b.id)}
-                onDoubleClick={() => { setEditingBoard(b); setBoardModalOpen(true); }}
-                className={`group px-3 py-1.5 text-xs rounded-xl transition-all flex items-center gap-2 border cursor-pointer ${
-                  activeBoardId === b.id 
-                    ? 'bg-bx-surface-2 text-bx-text font-bold border-bx-border shadow-sm' 
-                    : 'text-bx-muted border-transparent hover:bg-bx-surface-2/40 hover:text-bx-text'
-                }`}
-              >
-                <span>{b.icon}</span>{b.name}
-                {activeBoardId === b.id && (
-                  <span onClick={(e) => { e.stopPropagation(); setEditingBoard(b); setBoardModalOpen(true); }}
-                    className="text-bx-muted hover:text-bx-text ml-0.5 transition-colors">⚙</span>
-                )}
-              </button>
-            ))}
-            {boards.length === 0 && <span className="text-[11px] text-bx-muted">Создаётся доска по умолчанию...</span>}
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5 mt-3 flex-wrap">
-            {TYPE_FILTERS.map(f => (
-              <button 
-                key={f.id} 
-                onClick={() => setTypeF(f.id)}
-                className={`px-3 py-1 text-[11px] rounded-lg transition-all font-semibold ${
-                  typeF === f.id 
-                    ? 'bg-blue-600/10 border border-blue-500/20 text-blue-400' 
-                    : 'text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.02] hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-            {loading && <span className="text-[10px] text-slate-500 ml-auto italic animate-pulse">обновление...</span>}
-          </div>
-        )}
+        <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+          {TYPE_FILTERS.map(f => (
+            <button
+              key={f.id}
+              onClick={() => setTypeF(f.id)}
+              className={`px-3 py-1 text-[11px] rounded-lg transition-all font-semibold ${
+                typeF === f.id
+                  ? 'bg-blue-600/10 border border-blue-500/20 text-blue-400'
+                  : 'text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.02] hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+          {loading && <span className="text-[10px] text-slate-500 ml-auto italic animate-pulse">обновление...</span>}
+        </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-hidden p-4">
-        {view === 'board' && activeBoard && (
-          <BoardKanban
-            board={activeBoard}
-            cards={cards}
-            onCardClick={(card) => {
-              setActiveCardColumns(activeBoard?.columns || []);
-              setActiveCard(card);
-            }}
-            onAddCard={handleAddCard}
-            onMoveCard={moveCard}
-            onUpdateColumns={handleUpdateColumns}
-            onOpenArchive={() => setArchiveOpen(true)}
-          />
-        )}
-        {view === 'board' && !activeBoard && boardsLoading && (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-bx-muted text-sm">
-            <span className="w-5 h-5 border-2 border-bx-border-2 border-t-blue-500 rounded-full animate-spin" />
-            Загрузка досок...
+        {eventsError && (
+          <div className="mb-3 px-3 py-2 text-xs text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl">
+            Не удалось обновить события: {eventsError}
           </div>
         )}
-        {view === 'board' && !activeBoard && !boardsLoading && (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-8">
-            <p className="text-4xl">🗂️</p>
-            <p className="text-sm text-bx-muted">Пока нет ни одной доски</p>
-            {boardsError && <p className="text-[11px] text-red-400/70 max-w-sm">{boardsError}</p>}
-            <button onClick={() => { setEditingBoard(null); setBoardModalOpen(true); }}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">
-              + Создать доску
-            </button>
-          </div>
-        )}
-        {view === 'all' && (
-          <AllTasksView
-            events={filtered}
-            cards={visibleAllCards}
-            boards={boards}
+        {view === 'board' && (
+          <SystemTaskBoard
+            events={systemEvents}
+            members={members}
+            loading={loading}
             onEventClick={openEditEvent}
-            onCardClick={openCardFromCalendar}
-            onEventStatusChange={handleStatusChange}
-            onCardStatusChange={handleToggleCardDone}
+            onStatusChange={handleStatusChange}
+            onAdd={status => openNewEvent(undefined, { status })}
           />
         )}
-        {view === 'digest' && (
-          <DigestView
+        {view === 'focus' && (
+          <FocusView
             events={filtered}
-            cards={visibleAllCards}
-            boards={boards}
+            companies={companies}
+            loading={loading}
             onEventClick={openEditEvent}
-            onCardClick={openCardFromCalendar}
-            onOpenBoard={(id) => { setActiveBoardId(id); setView('board'); }}
+            onStatusChange={handleStatusChange}
+            members={members}
           />
         )}
         {view === 'calendar' && (
           <CalendarView
             events={filtered}
-            cards={visibleDatedCards}
-            boards={boards}
             onDayClick={(date) => setSelectedDay(date)}
             onAddEvent={openNewEvent}
             onEventClick={openEditEvent}
-            onCardClick={openCardFromCalendar}
+            onEventStatusChange={handleStatusChange}
             onEventDrop={handleEventDrop}
-            onCardDrop={handleCardDrop}
-          />
-        )}
-        {view === 'list' && (
-          <ListView
-            events={filtered}
-            cards={visibleAllCards}
-            boards={boards}
-            onEdit={openEditEvent}
-            onCardClick={openCardFromCalendar}
-            onStatusChange={handleStatusChange}
-            onCardStatusChange={handleToggleCardDone}
-            onDelete={bulkRemove}
+            onAddDeadline={handleAddTaxDeadline}
+            members={members}
+            companyId={active?.id ?? null}
+            companyRegime={active?.regime ?? null}
           />
         )}
       </div>
 
       {/* Modals */}
       {modalOpen && (
-        <EventModal event={editing} defaultDate={defDate} defaultType="task"
+        <EventModal event={editing} defaultDate={defDate} defaultType="task" defaultEvent={defaultEvent}
+          members={members} membersLoading={membersLoading}
           onSave={handleSaveEvent} onDelete={editing ? handleDeleteEvent : undefined}
-          onConvertToCard={editing ? () => handleConvertToCard(editing) : undefined}
-          onClose={() => { setModalOpen(false); setEditing(null); }} />
-      )}
-      {boardModalOpen && (
-        <BoardModal board={editingBoard} onSave={handleSaveBoard}
-          onDelete={editingBoard ? handleDeleteBoard : undefined}
-          onClose={() => { setBoardModalOpen(false); setEditingBoard(null); }} />
-      )}
-      {activeCard && (
-        <CardModal
-          card={activeCard}
-          columns={activeCardColumns}
-          onUpdate={handleUpdateCard}
-          onArchive={(id) => { handleArchiveCard(id); setActiveCard(null); toast.info('Карточка в архиве'); }}
-          onDelete={(id) => { handleDeleteCard(id); setActiveCard(null); toast.info('Карточка удалена'); }}
-          onDuplicate={(card) => handleDuplicateCard(card)}
-          onClose={() => setActiveCard(null)}
-          loadComments={loadComments}
-          addComment={addComment}
-          removeComment={removeComment}
-        />
-      )}
-      {paywall && <PaywallModal feature={paywall} onClose={() => setPaywall(null)} />}
-      {archiveOpen && activeBoard && (
-        <ArchivePanel
-          boardName={activeBoard.name}
-          loadArchived={loadArchived}
-          onRestore={async (id) => { await restoreCard(id); triggerRefresh(); }}
-          onDelete={async (id) => { await removeCard(id); triggerRefresh(); }}
-          onClose={() => setArchiveOpen(false)}
-        />
+          onClose={() => { setModalOpen(false); setEditing(null); setDefaultEvent(null); }} />
       )}
       {selectedDay && (
         <DailyTasksModal
           date={selectedDay}
           events={events.filter(e => (e.due_date || e.date) === selectedDay)}
-          cards={visibleDatedCards.filter(c => c.due_date === selectedDay)}
-          boards={boards}
+          cards={[]}
+          boards={[]}
           onEventClick={openEditEvent}
-          onCardClick={openCardFromCalendar}
+          onCardClick={() => undefined}
           onEventStatusChange={handleStatusChange}
-          onCardStatusChange={handleToggleCardDone}
+          onCardStatusChange={() => undefined}
           onDeleteEvent={handleDeleteEventDirect}
-          onDeleteCard={handleDeleteCardDirect}
+          onDeleteCard={async () => undefined}
           onAddClick={openNewEvent}
           onClose={() => setSelectedDay(null)}
         />

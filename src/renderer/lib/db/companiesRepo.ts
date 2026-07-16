@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Company } from './types';
+import type { Company, CompanyProfileForm } from './types';
 
 // Компании пользователя (контекст аутсорсера). Облачное хранилище (RLS).
 // user_id проставляется в БД через default auth.uid().
@@ -14,10 +14,29 @@ export const companiesRepo = {
     return data ?? [];
   },
 
-  async add(input: { name: string; inn?: string; regime?: string; color?: string }): Promise<Company> {
+  async add(input: CompanyProfileForm & { color?: string }): Promise<Company> {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    if (!user) throw new Error('Для создания компании необходимо войти в BX');
+
     const { data, error } = await supabase
       .from('bx_companies')
-      .insert({ name: input.name, inn: input.inn ?? null, regime: input.regime ?? null, color: input.color ?? null })
+      .insert({
+        user_id: user.id,
+        name: input.name,
+        inn: input.inn ?? null,
+        regime: input.regime,
+        color: input.color ?? null,
+        legal_form: input.legal_form,
+        registration_date: input.registration_date,
+        bx_start_date: input.bx_start_date,
+        is_vat_payer: input.is_vat_payer,
+        work_weekdays: input.work_weekdays,
+        notification_channels: input.notification_channels,
+        preferred_language: input.preferred_language,
+        enabled_obligation_rules: input.enabled_obligation_rules,
+        profile_status: 'confirmed',
+      })
       .select()
       .single();
     if (error) throw error;
@@ -29,10 +48,13 @@ export const companiesRepo = {
     if (error) throw error;
   },
 
-  async update(id: string, updates: { name?: string; inn?: string | null; regime?: string | null; color?: string | null }): Promise<Company> {
+  async update(
+    id: string,
+    updates: Partial<CompanyProfileForm> & { color?: string | null; is_active?: boolean },
+  ): Promise<Company> {
     const { data, error } = await supabase
       .from('bx_companies')
-      .update(updates)
+      .update({ ...updates, profile_status: 'confirmed' })
       .eq('id', id)
       .select()
       .single();

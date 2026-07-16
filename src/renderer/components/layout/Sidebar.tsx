@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { APP_VERSION } from '../../../shared/version'
 import AboutModal from '../AboutModal'
@@ -17,163 +17,150 @@ interface MenuSection {
   items: MenuItem[]
 }
 
+const STORAGE_KEY = 'bx_sidebar_collapsed'
+
+function initialCollapsed() {
+  if (typeof window === 'undefined') return false
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (stored !== null) return stored === 'true'
+  return window.innerWidth < 1180
+}
+
 export default function Sidebar() {
   const navigate = useNavigate()
   const [aboutOpen, setAboutOpen] = useState(false)
-  const [logoHovered, setLogoHovered] = useState(false)
+  const [collapsed, setCollapsed] = useState(initialCollapsed)
   const { isAdmin } = usePlan()
 
-  // Группировка меню по логическим слоям
-  const SECTIONS: MenuSection[] = [
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, String(collapsed))
+    document.documentElement.style.setProperty('--sidebar-width', collapsed ? '72px' : '240px')
+    return () => { document.documentElement.style.removeProperty('--sidebar-width') }
+  }, [collapsed])
+
+  const sections: MenuSection[] = [
     {
       label: 'Главное',
       items: [
         { to: '/dashboard', icon: 'dashboard', label: 'Дашборд' },
-        { to: '/calendar',  icon: 'planner',   label: 'Календарь' },
-        { to: '/planner',    icon: 'planner',   label: 'Канбан-доска' },
-        { to: '/ai',         icon: 'ai',        label: 'AI-Консультант' },
-        { to: '/news',       icon: 'news',      label: 'Новости' },
-      ]
+        { to: '/planner', icon: 'planner', label: 'Планировщик' },
+        { to: '/ai', icon: 'ai', label: 'AI-Консультант' },
+        { to: '/news', icon: 'news', label: 'Новости' },
+      ],
     },
     {
-      label: 'Учет и кадры',
+      label: 'Учёт и команда',
       items: [
-        { to: '/hr',         icon: 'hr',        label: 'Сотрудники' },
+        { to: '/hr', icon: 'hr', label: 'Сотрудники' },
         { to: '/counterparties', icon: 'users', label: 'Организации' },
-        { to: '/documents',  icon: 'note',      label: 'Документы' },
-        { to: '/finance',    icon: 'finance',   label: 'Контроль оплат' },
-      ]
+        { to: '/documents', icon: 'note', label: 'Документы' },
+        { to: '/templates', icon: 'templates', label: 'Шаблоны' },
+        { to: '/finance', icon: 'finance', label: 'Контроль оплат' },
+      ],
     },
     {
       label: 'Инструменты',
       items: [
-        { to: '/calc',       icon: 'calc',      label: 'Калькуляторы' },
-        { to: '/tools',      icon: 'tools',     label: 'Утилиты' },
-        { to: '/templates',  icon: 'templates', label: 'Шаблоны' },
-        { to: '/knowledge',  icon: 'knowledge', label: 'База знаний' },
-        { to: '/reference',  icon: 'reference', label: 'Справочники' },
-        { to: '/services',   icon: 'services',  label: 'Сервисы' },
-      ]
+        { to: '/currency', icon: 'exchange', label: 'Курсы валют' },
+        { to: '/calc', icon: 'calc', label: 'Калькуляторы' },
+        { to: '/tools', icon: 'tools', label: 'Утилиты' },
+        { to: '/translator', icon: 'languages', label: 'Переводчик' },
+        { to: '/knowledge', icon: 'knowledge', label: 'База знаний' },
+        { to: '/reference', icon: 'reference', label: 'Справочники' },
+        { to: '/services', icon: 'services', label: 'Сервисы' },
+      ],
     },
-    {
-      label: 'Поддержка',
-      items: [
-        { to: '/support',    icon: 'info',      label: 'Поддержка' },
-      ]
-    }
+    { label: 'Помощь', items: [{ to: '/support', icon: 'info', label: 'Поддержка' }] },
   ]
 
-  if (isAdmin) {
-    SECTIONS.push({
-      label: 'Администрирование',
-      items: [
-        { to: '/admin', icon: 'settings', label: 'Админка', external: true }
-      ]
-    })
+  if (isAdmin) sections.push({ label: 'Управление', items: [{ to: '/admin', icon: 'settings', label: 'Админка', external: true }] })
+
+  const openAdmin = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault()
+    if (window.bx?.shell?.openExternal) window.bx.shell.openExternal('https://bx.uz/admin')
+    else window.open('https://bx.uz/admin', '_blank', 'noopener,noreferrer')
   }
 
   return (
-    <aside className="flex flex-col bg-bx-surface border-r border-bx-border select-none z-10" style={{ width: 'var(--sidebar-width)', minWidth: 'var(--sidebar-width)' }}>
-      {/* Logo — кликабельный, ведет на главную страницу */}
-      <button
-        onClick={() => navigate('/')}
-        onMouseEnter={() => setLogoHovered(true)}
-        onMouseLeave={() => setLogoHovered(false)}
-        className="flex items-center gap-2.5 px-4 py-4.5 border-b border-bx-border w-full text-left transition-colors hover:bg-white/20 dark:hover:bg-white/[0.02] group"
-        title="На главную"
+    <aside
+      data-testid="app-sidebar"
+      data-collapsed={collapsed}
+      className="relative z-20 flex flex-shrink-0 select-none flex-col border-r border-bx-border bg-bx-surface shadow-[4px_0_24px_rgba(15,23,42,0.025)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.08)]"
+      style={{ width: collapsed ? 72 : 240, minWidth: collapsed ? 72 : 240 }}
+      aria-label="Основная навигация"
+    >
+      <div
+        data-testid="sidebar-header"
+        className={`flex flex-shrink-0 items-center border-b border-bx-border ${collapsed ? 'h-28 flex-col justify-center gap-1 px-2 py-2' : 'h-16 gap-2 px-3'}`}
       >
-        <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center font-extrabold text-white text-xs flex-shrink-0 transition-all duration-300"
-          style={{
-            background: logoHovered
-              ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)'
-              : 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-            boxShadow: logoHovered ? '0 0 14px rgba(59,130,246,0.4)' : 'none',
-            transform: logoHovered ? 'scale(1.05)' : 'scale(1)',
-          }}
+        <button
+          onClick={() => navigate('/dashboard')}
+          className={`group flex min-h-11 min-w-0 items-center rounded-xl outline-none transition-colors hover:bg-blue-500/[0.07] focus-visible:ring-2 focus-visible:ring-blue-500 ${collapsed ? 'h-11 w-11 justify-center' : 'flex-1 gap-2.5 px-1.5 text-left'}`}
+          title={collapsed ? 'BX · На главную' : undefined}
+          aria-label="BX — перейти на дашборд"
         >
-          BX
-        </div>
-        <div>
-          <div className="text-[13px] font-bold text-slate-950 dark:text-white leading-tight group-hover:text-indigo-600 dark:group-hover:text-blue-300 transition-colors">
-            BX
-          </div>
-          <div className="text-[9px] text-slate-600 dark:text-slate-400 leading-tight group-hover:text-slate-800 dark:group-hover:text-slate-300 transition-colors">
-            {logoHovered ? '↩ На главную' : 'Помощник Бухгалтера'}
-          </div>
-        </div>
-      </button>
+          <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-[11px] font-black tracking-tight text-white shadow-lg shadow-blue-600/20">BX</span>
+          {!collapsed && <span className="min-w-0"><span className="block text-sm font-black leading-tight text-bx-text">BX</span><span className="mt-0.5 block truncate text-[9px] font-semibold text-bx-muted">Помощник бухгалтера</span></span>}
+        </button>
+        <button
+          onClick={() => setCollapsed(value => !value)}
+          className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-xl border border-bx-border bg-bx-bg text-bx-muted outline-none transition-colors hover:border-blue-500/30 hover:bg-blue-500/[0.07] hover:text-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:text-blue-300"
+          aria-label={collapsed ? 'Развернуть боковую панель' : 'Свернуть боковую панель'}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
+        >
+          <Icon name="arrowR" className={`h-4 w-4 transition-transform duration-200 motion-reduce:transition-none ${collapsed ? '' : 'rotate-180'}`} />
+        </button>
+      </div>
 
-      {/* Навигация с группировкой */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4 custom-scrollbar">
-        {SECTIONS.map((section, idx) => (
-          <div key={idx} className="flex flex-col gap-0.5">
-            <p className="px-3 mb-1 text-[8.5px] font-extrabold uppercase tracking-[0.15em] text-slate-500">{section.label}</p>
-            {section.items.map((item) => {
-              const { to, icon, label, external } = item
-
-              if (external) {
-                return (
-                  <a
-                    key={to}
-                    href="https://bx.uz/admin"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (window.bx?.shell?.openExternal) {
-                        window.bx.shell.openExternal('https://bx.uz/admin')
-                      } else {
-                        window.open('https://bx.uz/admin', '_blank', 'noopener,noreferrer')
-                      }
-                    }}
-                    style={{ color: 'var(--bx-sidebar-text)' }}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5 font-semibold"
-                  >
-                    <Icon name={icon} className="w-4 h-4 flex-shrink-0 opacity-80" />
-                    <span className="truncate">{label}</span>
+      <nav className={`custom-scrollbar flex-1 overflow-y-auto overflow-x-hidden py-3 ${collapsed ? 'px-2' : 'px-2.5'}`} aria-label="Разделы приложения">
+        <div className={collapsed ? 'space-y-2.5' : 'space-y-4'}>
+          {sections.map((section, sectionIndex) => (
+            <section key={section.label} aria-label={section.label}>
+              {collapsed ? (
+                sectionIndex > 0 && <div className="mx-auto mb-2.5 h-px w-7 bg-bx-border" aria-hidden="true" />
+              ) : (
+                <p className="mb-1.5 px-2.5 text-[8px] font-extrabold uppercase tracking-[0.16em] text-bx-muted">{section.label}</p>
+              )}
+              <div className="space-y-1">
+                {section.items.map(item => item.external ? (
+                  <a key={item.to} href="https://bx.uz/admin" onClick={openAdmin} className={navItemClass(false, collapsed)} title={collapsed ? item.label : undefined} aria-label={item.label}>
+                    <NavIcon name={item.icon} active={false} collapsed={collapsed} />
+                    {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+                    {!collapsed && <Icon name="arrowR" className="h-3 w-3 text-bx-muted" />}
                   </a>
-                )
-              }
-
-              return (
-                <NavLink
-                  key={to}
-                  to={to}
-                  style={({ isActive }) =>
-                    isActive ? {} : { color: 'var(--bx-sidebar-text)' }
-                  }
-                  className={({ isActive }) =>
-                    `flex items-center gap-2.5 px-3 py-2 text-xs transition-all cursor-pointer rounded-lg font-semibold ${
-                      isActive
-                        ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-600/20'
-                        : 'border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.03] hover:translate-x-0.5'
-                    }`
-                  }
-                >
-                  <Icon name={icon} className="w-4 h-4 flex-shrink-0 opacity-80" />
-                  <span className="truncate">{label}</span>
-                </NavLink>
-              )
-            })}
-          </div>
-        ))}
+                ) : (
+                  <NavLink key={item.to} to={item.to} title={collapsed ? item.label : undefined} aria-label={item.label} className={({ isActive }) => navItemClass(isActive, collapsed)}>
+                    {({ isActive }) => <><NavIcon name={item.icon} active={isActive} collapsed={collapsed} />{!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}{isActive && !collapsed && <span className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.65)]" aria-hidden="true" />}</>}
+                  </NavLink>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       </nav>
 
-      {/* Footer — О программе */}
-      <button
-        onClick={() => setAboutOpen(true)}
-        className="px-4 py-3 border-t border-bx-border text-left hover:bg-white/20 dark:hover:bg-white/[0.02] transition-colors group flex-shrink-0 w-full"
-      >
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs group-hover:scale-110 transition-transform">ℹ️</span>
-          <div className="flex-1">
-            <div className="text-[10px] text-slate-600 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-slate-200 transition-colors font-semibold">О программе</div>
-            <div className="text-[9px] text-slate-500">Версия {APP_VERSION}</div>
-          </div>
-        </div>
-      </button>
+      <div className="flex-shrink-0 border-t border-bx-border p-2">
+        {!collapsed && <div className="mb-2 rounded-xl border border-blue-500/10 bg-gradient-to-r from-blue-500/[0.06] to-violet-500/[0.04] px-3 py-2.5"><p className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Рабочее пространство</p><p className="mt-1 text-[9px] leading-relaxed text-bx-muted">Навигация BX · версия {APP_VERSION}</p></div>}
+        <button onClick={() => setAboutOpen(true)} className={`flex min-h-11 w-full items-center rounded-xl text-bx-muted outline-none transition-colors hover:bg-bx-bg hover:text-bx-text focus-visible:ring-2 focus-visible:ring-blue-500 ${collapsed ? 'justify-center' : 'gap-2.5 px-3 text-left'}`} title={collapsed ? `О программе · ${APP_VERSION}` : undefined} aria-label={`О программе. Версия ${APP_VERSION}`}>
+          <Icon name="info" className="h-4 w-4 flex-shrink-0" />
+          {!collapsed && <span><span className="block text-[10px] font-bold">О программе</span><span className="mt-0.5 block text-[8px] text-bx-muted">Версия {APP_VERSION}</span></span>}
+        </button>
+      </div>
 
-      {/* Модалка о программе */}
       <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
     </aside>
   )
+}
+
+function navItemClass(active: boolean, collapsed: boolean) {
+  const layout = collapsed ? 'justify-center px-0' : 'gap-2.5 px-2.5'
+  const state = active
+    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+    : 'text-[color:var(--bx-sidebar-text)] hover:bg-bx-bg hover:text-bx-text'
+  return `group relative flex min-h-10 w-full cursor-pointer items-center rounded-xl text-xs font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 ${layout} ${state}`
+}
+
+function NavIcon({ name, active, collapsed }: { name: string; active: boolean; collapsed: boolean }) {
+  return <span className={`grid flex-shrink-0 place-items-center rounded-lg transition-colors ${collapsed ? 'h-9 w-9' : 'h-7 w-7'} ${active ? 'bg-white/12 text-white' : 'bg-bx-bg text-bx-muted group-hover:text-blue-600 dark:group-hover:text-blue-300'}`}><Icon name={name} className="h-4 w-4" /></span>
 }

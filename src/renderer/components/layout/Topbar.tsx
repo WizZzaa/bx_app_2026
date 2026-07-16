@@ -7,7 +7,7 @@ import { getSyncQueue, syncOfflineData } from '../../lib/db/syncQueue'
 import { db } from '../../lib/db/localDb'
 import ConflictModal from '../ConflictModal'
 import { applyTheme } from '../../lib/theme'
-import { useNotifications } from '../../lib/useNotifications'
+import { useNotifications, type BxNotification } from '../../lib/useNotifications'
 
 export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
   const [query, setQuery] = useState('')
@@ -115,6 +115,18 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
     navigate(item.route)
     setQuery('')
     setOpen(false)
+  }
+
+  async function openNotification(notification: BxNotification) {
+    await markAsRead(notification.id)
+    if (notification.event_id) {
+      localStorage.setItem('bx_planner_open_event_id', notification.event_id)
+      navigate('/planner')
+      window.dispatchEvent(new CustomEvent('bx:open-planner-event', {
+        detail: { eventId: notification.event_id },
+      }))
+      setNotifOpen(false)
+    }
   }
 
   return (
@@ -258,7 +270,11 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
                     <div key={n.id} className={`p-2.5 rounded-lg border transition-colors ${
                       n.read ? 'bg-bx-bg/10 border-bx-border/60' : 'bg-blue-500/5 border-blue-500/15'
                     } flex items-start gap-2 justify-between`}>
-                      <div className="space-y-0.5 flex-1 min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => { void openNotification(n) }}
+                        className="space-y-0.5 flex-1 min-w-0 text-left"
+                      >
                         <div className="flex items-center gap-1.5">
                           <span className={`w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 ${n.read ? 'opacity-0' : ''}`} />
                           <h4 className={`font-semibold text-bx-text truncate ${n.read ? '' : 'font-bold'}`}>{n.title}</h4>
@@ -267,7 +283,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
                         <p className="text-[9px] text-bx-muted/65 font-mono pt-0.5">
                           {new Date(n.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                         </p>
-                      </div>
+                      </button>
                       <div className="flex flex-col gap-1.5">
                         {!n.read && (
                           <button

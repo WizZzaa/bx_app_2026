@@ -1,12 +1,33 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { db } from '../lib/db/localDb'
 import { useCompany } from '../lib/CompanyContext'
 import { useCounterparties } from '../lib/db/useCounterparties'
 import { useToast } from '../lib/ui/ToastContext'
 import Icon from '../lib/ui/Icon'
+import DocumentWorkflowBridge from '../components/documents/DocumentWorkflowBridge'
 import { TEMPLATES, TEMPLATE_CATEGORIES, type DocTemplate, type TemplateVar } from '../data/templates'
 import { toWordsRu } from '../lib/numToWords'
 import mammoth from 'mammoth'
+import { useDocuments } from '../lib/useDocuments'
+import { usePlan } from '../lib/plan'
+import {
+  FIELD_GROUP_META,
+  getFieldHint,
+  getMissingVars,
+  getTemplateGuide,
+  groupTemplateVars,
+} from '../lib/templateGuidance'
+import {
+  ResourceEmpty,
+  ResourceHero,
+  ResourceLayout,
+  ResourceNavItem,
+  ResourceSectionTitle,
+  ResourceSidebar,
+  primaryActionClass,
+  secondaryActionClass,
+} from '../components/workspace/ResourceWorkspace'
 
 const RU_MONTHS = [
   'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -31,6 +52,15 @@ const COLOR: Record<string, { text: string; bg: string; border: string }> = {
 
 const catMeta = (c: string) => CAT_META[c] ?? { icon: 'file', color: 'blue', desc: '' }
 const catColor = (c: string) => COLOR[catMeta(c).color] ?? COLOR.blue
+
+type StoredCompanyDetails = Partial<{
+  director: string
+  bank: string
+  account: string
+  mfo: string
+  address: string
+  phone: string
+}>
 
 function formatDateParts(iso: string): { d: string; m: string; y: string } {
   if (!iso) return { d: '___', m: '_______', y: '____' }
@@ -79,10 +109,12 @@ const ruLabels: Record<string, string> = {
 }
 
 function InputField({ v, value, onChange }: { v: TemplateVar; value: string; onChange: (val: string) => void }) {
-  const cls = 'w-full bg-bx-surface-2 text-bx-text border border-bx-border rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/25 transition-all font-medium'
-  if (v.type === 'textarea') return <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={v.placeholder} rows={3} className={`${cls} resize-none`} />
-  if (v.type === 'select' && v.options) return <select value={value} onChange={e => onChange(e.target.value)} className={cls}>{v.options.map(o => <option key={o} value={o}>{o}</option>)}</select>
-  return <input type={v.type === 'date' ? 'date' : v.type === 'number' ? 'number' : 'text'} value={value} onChange={e => onChange(e.target.value)} placeholder={v.placeholder} className={cls} />
+  const fieldId = `template-field-${v.key}`
+  const missing = !value.trim()
+  const cls = `min-h-11 w-full rounded-xl border bg-bx-surface-2 px-3 py-2.5 text-xs font-medium text-bx-text outline-none transition-colors focus:ring-2 focus:ring-blue-500/20 ${missing ? 'border-amber-500/45 focus:border-amber-500' : 'border-bx-border focus:border-blue-500/60'}`
+  if (v.type === 'textarea') return <textarea id={fieldId} aria-describedby={`${fieldId}-hint`} value={value} onChange={e => onChange(e.target.value)} placeholder={v.placeholder} rows={3} className={`${cls} resize-y`} />
+  if (v.type === 'select' && v.options) return <select id={fieldId} aria-describedby={`${fieldId}-hint`} value={value} onChange={e => onChange(e.target.value)} className={cls}>{v.options.map(o => <option key={o} value={o}>{o}</option>)}</select>
+  return <input id={fieldId} aria-describedby={`${fieldId}-hint`} type={v.type === 'date' ? 'date' : v.type === 'number' ? 'number' : 'text'} value={value} onChange={e => onChange(e.target.value)} placeholder={v.placeholder} className={cls} />
 }
 
 const extractVars = (body: string): TemplateVar[] => {
@@ -108,16 +140,19 @@ const extractVars = (body: string): TemplateVar[] => {
 }
 
 export default function Templates() {
+  const navigate = useNavigate()
   const { active, companies } = useCompany()
   const { counterparties } = useCounterparties(active?.id ?? null)
+  const { documents, loadDocuments, uploadDocument } = useDocuments()
+  const { limits } = usePlan()
   
   // Динамически загружаем полные реквизиты для всех компаний пользователя из настроек
   const myCompanies = useMemo(() => {
     return companies.map(c => {
-      let details: any = {}
+      let details: StoredCompanyDetails = {}
       try {
         const stored = localStorage.getItem(`bx_company_details_${c.id}`)
-        if (stored) details = JSON.parse(stored)
+        if (stored) details = JSON.parse(stored) as StoredCompanyDetails
       } catch (err) {
         console.warn('Ignore details parse error', err)
       }
@@ -140,6 +175,8 @@ export default function Templates() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [vals,     setVals]     = useState<Record<string, string>>({})
   const [copied,   setCopied]   = useState(false)
+  const [selectedCompanyId, setSelectedCompanyId] = useState(active?.id ?? '')
+  const [savingDocument, setSavingDocument] = useState(false)
   
   // Custom templates states
   const [customTpls, setCustomTpls] = useState<DocTemplate[]>([])
@@ -147,7 +184,7 @@ export default function Templates() {
   const [newTitle, setNewTitle] = useState('')
   const [newDesc, setNewDesc] = useState('')
   const [newCat, setNewCat] = useState('Договоры')
-  const [newIcon, setNewIcon] = useState('📄')
+  const [newIcon, setNewIcon] = useState('DOC')
   const [newBody, setNewBody] = useState('')
 
   const toast = useToast()
@@ -163,7 +200,12 @@ export default function Templates() {
 
   useEffect(() => {
     loadCustom()
-  }, [])
+    void loadDocuments()
+  }, [loadDocuments])
+
+  useEffect(() => {
+    if (active?.id) setSelectedCompanyId(active.id)
+  }, [active?.id])
 
   const allTemplates = useMemo(() => [...TEMPLATES, ...customTpls], [customTpls])
 
@@ -185,7 +227,8 @@ export default function Templates() {
     setVals(prev => {
       const next = { ...prev }
       for (const v of tpl.vars) {
-        if (extra[v.key] !== undefined) { next[v.key] = extra[v.key]!; continue }
+        const extraValue = extra[v.key]
+        if (extraValue !== undefined) { next[v.key] = extraValue; continue }
         const m = v.key.match(/^([a-z0-9]+)_([a-z]+)$/)
         if (!m) continue
         const [, prefix, suffix] = m
@@ -201,6 +244,7 @@ export default function Templates() {
     if (!reqId) return
     const r = myCompanies.find(x => x.id === reqId)
     if (!r) return
+    setSelectedCompanyId(reqId)
     fillParty(MY_PREFIXES, {
       name: r.name, inn: r.inn, rep: r.director, bank: r.bank,
       account: r.account, mfo: r.mfo, address: r.address, phone: r.phone,
@@ -239,6 +283,29 @@ export default function Templates() {
     setCopied(false)
     const defaults: Record<string, string> = {}
     for (const v of t.vars) defaults[v.key] = v.default ?? ''
+    const selectedCompany = myCompanies.find(company => company.id === (selectedCompanyId || active?.id))
+    if (selectedCompany) {
+      const valuesBySuffix: Record<string, string> = {
+        name: selectedCompany.name,
+        tin: selectedCompany.inn,
+        inn: selectedCompany.inn,
+        rep: selectedCompany.director,
+        bank: selectedCompany.bank,
+        account: selectedCompany.account,
+        mfo: selectedCompany.mfo,
+        address: selectedCompany.address,
+        phone: selectedCompany.phone,
+      }
+      for (const variable of t.vars) {
+        const match = variable.key.match(/^([a-z0-9]+)_([a-z]+)$/)
+        if (match && MY_PREFIXES.includes(match[1]) && valuesBySuffix[match[2]]) defaults[variable.key] = valuesBySuffix[match[2]]
+      }
+      if (t.vars.some(variable => variable.key === 'company_name')) defaults.company_name = selectedCompany.name
+      if (t.vars.some(variable => variable.key === 'company_tin')) defaults.company_tin = selectedCompany.inn
+      if (t.vars.some(variable => variable.key === 'director_name')) defaults.director_name = selectedCompany.director
+      if (t.vars.some(variable => variable.key === 'rep_name')) defaults.rep_name = selectedCompany.director
+      setSelectedCompanyId(selectedCompany.id)
+    }
     setVals(defaults)
   }
 
@@ -261,6 +328,17 @@ export default function Templates() {
   const preview = useMemo(() => tpl ? substituteVars(tpl.body, vals, tpl.vars) : '', [tpl, vals])
   const filledCount = tpl ? tpl.vars.filter(v => (vals[v.key] ?? '').trim()).length : 0
   const progress = tpl && tpl.vars.length ? Math.round(filledCount / tpl.vars.length * 100) : 0
+  const missingVars = useMemo(() => tpl ? getMissingVars(tpl, vals) : [], [tpl, vals])
+  const fieldGroups = useMemo(() => tpl ? groupTemplateVars(tpl.vars) : [], [tpl])
+  const guide = tpl ? getTemplateGuide(tpl) : null
+
+  const ensureComplete = () => {
+    if (missingVars.length === 0) return true
+    const first = missingVars[0]
+    document.getElementById(`template-field-${first.key}`)?.focus()
+    toast.error(`Заполните обязательные поля: осталось ${missingVars.length}. Первое — «${first.label}».`)
+    return false
+  }
 
   const handleCopyText = () => {
     navigator.clipboard.writeText(preview).catch(() => { void 0 })
@@ -269,6 +347,7 @@ export default function Templates() {
   }
 
   const handlePrintDoc = () => {
+    if (!ensureComplete()) return
     const w = window.open('', '_blank')
     if (!w) return
     w.document.write(docHtml())
@@ -278,6 +357,7 @@ export default function Templates() {
   }
 
   const handleDownloadDoc = () => {
+    if (!ensureComplete()) return
     const blob = new Blob(['﻿' + docHtml()], { type: 'application/msword' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -297,6 +377,7 @@ export default function Templates() {
   }
 
   const handleExportPDF = async () => {
+    if (!ensureComplete()) return
     if (!window.bx?.pdf?.generate) {
       toast.error('Экспорт PDF доступен только в Electron')
       return
@@ -305,6 +386,30 @@ export default function Templates() {
     const ok = await window.bx.pdf.generate(docHtml(), `${cleanTitle}.pdf`)
     if (ok) {
       toast.success('Документ успешно сохранен в PDF')
+    }
+  }
+
+  const handleSaveToDocuments = async () => {
+    if (!tpl || !ensureComplete()) return
+    if (!selectedCompanyId) {
+      toast.error('Выберите вашу компанию — документ должен быть привязан к организации.')
+      return
+    }
+    if (documents.length >= limits.documentsMax) {
+      toast.error(`Достигнут лимит хранилища: ${limits.documentsMax} документов.`)
+      return
+    }
+    setSavingDocument(true)
+    try {
+      const safeTitle = tpl.title.replace(/[^а-яa-z0-9 _-]/gi, '').trim() || 'Документ'
+      const file = new File(['\uFEFF' + docHtml()], `${safeTitle}.doc`, { type: 'application/msword' })
+      const category = tpl.category === 'Договоры' ? 'Договор' : tpl.category === 'Акты и счета' ? 'Акт' : 'Другое'
+      await uploadDocument(file, selectedCompanyId, category, ['из-шаблона', tpl.id])
+      toast.success('Готовый документ сохранён в разделе «Документы»')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Не удалось сохранить документ')
+    } finally {
+      setSavingDocument(false)
     }
   }
 
@@ -320,7 +425,7 @@ export default function Templates() {
     const newTemplate: DocTemplate = {
       id,
       category: newCat,
-      icon: newIcon || '📄',
+      icon: newIcon || 'DOC',
       title: newTitle,
       description: newDesc,
       vars,
@@ -374,9 +479,9 @@ export default function Templates() {
   // ── Режим создания шаблона ──
   if (creatingTpl) {
     return (
-      <div className="flex-1 flex overflow-hidden bg-bx-bg text-bx-text font-sans">
+      <div className="flex flex-1 gap-4 overflow-hidden bg-bx-bg p-4 text-bx-text">
         {/* Форма слева */}
-        <div className="w-80 flex-shrink-0 border-r border-bx-border flex flex-col p-5 bg-bx-surface shadow-sm space-y-4">
+        <div className="flex w-80 flex-shrink-0 flex-col space-y-4 rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm">
           <div>
             <button onClick={() => setCreatingTpl(false)} className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-bx-muted hover:text-bx-text mb-3 cursor-pointer">
               <Icon name="arrowL" className="w-3 h-3" />Назад к списку
@@ -404,8 +509,8 @@ export default function Templates() {
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-bx-muted uppercase tracking-wider mb-1.5">Иконка (эмодзи)</label>
-                <input value={newIcon} onChange={e => setNewIcon(e.target.value)} placeholder="📄" className="w-full bg-bx-surface-2 text-bx-text border border-bx-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none text-center focus:border-blue-500/50 font-bold" />
+                <label className="block text-[10px] font-bold text-bx-muted uppercase tracking-wider mb-1.5">Короткий знак</label>
+                <input value={newIcon} onChange={e => setNewIcon(e.target.value)} placeholder="DOC" maxLength={4} className="w-full bg-bx-surface-2 text-bx-text border border-bx-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none text-center focus:border-blue-500/50 font-bold uppercase" />
               </div>
             </div>
           </div>
@@ -418,7 +523,7 @@ export default function Templates() {
         </div>
 
         {/* Редактор текста справа */}
-        <div className="flex-1 flex flex-col p-6 space-y-4">
+        <div className="flex min-w-0 flex-1 flex-col space-y-4 overflow-hidden rounded-[24px] border border-bx-border bg-bx-surface/40 p-5">
           <div className="flex-shrink-0 flex items-start justify-between bg-bx-surface border border-bx-border rounded-2xl p-4.5 shadow-sm">
             <div className="max-w-xl">
               <h3 className="text-xs font-black text-bx-text uppercase tracking-wider">Текст шаблона документа</h3>
@@ -457,110 +562,83 @@ export default function Templates() {
     const cc = catColor(tpl.category)
     const isCustom = tpl.id.startsWith('custom-')
     return (
-      <div className="flex-1 flex overflow-hidden bg-bx-bg text-bx-text font-sans">
-        {/* Форма слева */}
-        <div className="w-80 flex-shrink-0 border-r border-bx-border flex flex-col bg-bx-surface shadow-sm">
-          <div className="px-5 py-4 border-b border-bx-border space-y-4">
-            <button onClick={() => setActiveId(null)} className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-bx-muted hover:text-bx-text cursor-pointer">
-              <Icon name="arrowL" className="w-3 h-3" />Все шаблоны
-            </button>
-            <div className="flex items-center gap-3">
-              <span className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cc.bg} ${cc.text} border ${cc.border}`}>
-                {isCustom ? <span className="text-xl font-bold">{tpl.icon}</span> : <Icon name={catMeta(tpl.category).icon} className="w-5 h-5" />}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-extrabold text-bx-text leading-snug truncate">{tpl.title}</p>
-                <p className="text-[10px] text-bx-muted uppercase tracking-wider font-semibold mt-0.5">{tpl.category}</p>
-              </div>
-            </div>
-
-            {/* Автозаполнение */}
-            {myCompanies.length > 0 && (
-              <div>
-                <label className="block text-[9px] font-bold text-bx-muted mb-1.5 uppercase tracking-wider">Моя компания (Исполнитель)</label>
-                <select
-                  onChange={e => handleApplyMyCompany(e.target.value)}
-                  defaultValue=""
-                  className="w-full bg-bx-surface-2 text-bx-text text-xs rounded-xl border border-bx-border px-3 py-2.5 focus:outline-none focus:border-blue-500/50 font-semibold"
-                >
-                  <option value="">-- Выбрать --</option>
-                  {myCompanies.map(r => (
-                    <option key={r.id} value={r.id}>{r.name}{r.inn ? ` (ИНН: ${r.inn})` : ''}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-            {counterparties.length > 0 && (
-              <div>
-                <label className="block text-[9px] font-bold text-bx-muted mb-1.5 uppercase tracking-wider">Контрагент (Заказчик)</label>
-                <select
-                  onChange={e => handleApplyCounterparty(e.target.value)}
-                  defaultValue=""
-                  className="w-full bg-bx-surface-2 text-bx-text text-xs rounded-xl border border-bx-border px-3 py-2.5 focus:outline-none focus:border-blue-500/50 font-semibold"
-                >
-                  <option value="">-- Выбрать --</option>
-                  {counterparties.map(c => (
-                    <option key={c.id} value={c.id}>{c.name} (ИНН: {c.inn})</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Заполненость */}
-            {tpl.vars.length > 0 && (
-              <div className="pt-2">
-                <div className="flex justify-between text-[10px] font-bold text-bx-muted mb-1.5 uppercase tracking-wider"><span>Заполнено полей</span><span>{filledCount}/{tpl.vars.length}</span></div>
-                <div className="h-1.5 bg-bx-surface-2 rounded-full overflow-hidden border border-bx-border/50">
-                  <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
+      <div className="flex flex-1 overflow-y-auto bg-bx-bg text-bx-text custom-scrollbar">
+        <div className="bx-page-container w-full space-y-5 py-5">
+          <header className="rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className={`grid h-11 w-11 flex-shrink-0 place-items-center rounded-2xl border ${cc.bg} ${cc.text} ${cc.border}`}><Icon name={isCustom ? 'file' : catMeta(tpl.category).icon} className="h-5 w-5" /></span>
+                <div>
+                  <button type="button" onClick={() => setActiveId(null)} className="mb-1 inline-flex min-h-8 items-center gap-1 text-[10px] font-black uppercase tracking-[0.12em] text-bx-muted hover:text-bx-text"><Icon name="arrowL" className="h-3 w-3" />Все шаблоны</button>
+                  <h1 className="text-xl font-black tracking-tight text-bx-text">{tpl.title}</h1>
+                  <p className="mt-1 max-w-3xl text-xs leading-relaxed text-bx-muted">{guide?.whenToUse}</p>
                 </div>
               </div>
-            )}
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-            {tpl.vars.length === 0 ? (
-              <p className="text-xs text-bx-muted text-center py-10 italic font-medium">Для этого бланка нет настраиваемых параметров.</p>
-            ) : (
-              tpl.vars.map(v => (
-                <div key={v.key} className="space-y-1">
-                  <label className="block text-[10px] font-bold text-bx-muted uppercase tracking-wider">{v.label}</label>
-                  <InputField v={v} value={vals[v.key] ?? ''} onChange={val => handleSetVal(v.key, val)} />
-                </div>
-              ))
-            )}
-          </div>
-          
-          <div className="px-5 py-4 border-t border-bx-border bg-bx-surface-2/20 space-y-2.5">
-            <div className="grid grid-cols-4 gap-2">
-              <button onClick={handlePrintDoc} className="flex flex-col items-center justify-center gap-1.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-xl transition-all shadow-sm cursor-pointer active:scale-95">
-                <Icon name="printer" className="w-4 h-4" />Печать
-              </button>
-              <button onClick={handleExportPDF} className="flex flex-col items-center justify-center gap-1.5 py-2.5 bg-bx-surface border border-bx-border hover:bg-bx-surface-2 text-bx-text text-[10px] font-bold rounded-xl transition-all shadow-sm cursor-pointer active:scale-95">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                PDF
-              </button>
-              <button onClick={handleDownloadDoc} className="flex flex-col items-center justify-center gap-1.5 py-2.5 bg-bx-surface border border-bx-border hover:bg-bx-surface-2 text-bx-text text-[10px] font-bold rounded-xl transition-all shadow-sm cursor-pointer active:scale-95">
-                <Icon name="word" className="w-4 h-4" />Word
-              </button>
-              <button onClick={handleCopyText} className={`flex flex-col items-center justify-center gap-1.5 py-2.5 text-[10px] font-bold rounded-xl transition-all shadow-sm cursor-pointer active:scale-95 ${copied ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400' : 'bg-bx-surface border border-bx-border hover:bg-bx-surface-2 text-bx-text'}`}>
-                <Icon name={copied ? 'check' : 'copy'} className="w-4 h-4" />{copied ? 'Копир.' : 'Копир.'}
-              </button>
+              <div className="flex items-center gap-2 rounded-xl border border-bx-border bg-bx-surface-2 p-1.5" aria-label="Этапы подготовки документа">
+                {['1. Стороны', '2. Условия', '3. Проверка'].map((step, index) => <span key={step} className={`rounded-lg px-3 py-2 text-[10px] font-black ${progress >= [1, 50, 100][index] ? 'bg-blue-600 text-white' : 'text-bx-muted'}`}>{step}</span>)}
+              </div>
             </div>
-            
-            {isCustom && (
-              <button onClick={() => handleDeleteCustom(tpl.id)} className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-red-500/10 hover:bg-red-500/15 text-red-600 dark:text-red-400 text-xs font-bold rounded-xl border border-red-500/20 transition-all cursor-pointer">
-                <Icon name="trash" className="w-3.5 h-3.5" />Удалить шаблон
-              </button>
-            )}
-          </div>
-        </div>
+            <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_240px]">
+              <label className="block text-[10px] font-black uppercase tracking-[0.1em] text-bx-muted">1. Подставить нашу компанию
+                <select value={selectedCompanyId} onChange={e => handleApplyMyCompany(e.target.value)} className="mt-1.5 min-h-11 w-full rounded-xl border border-bx-border bg-bx-surface-2 px-3 text-xs font-bold text-bx-text outline-none focus:border-blue-500">
+                  <option value="">Выберите организацию</option>{myCompanies.map(r => <option key={r.id} value={r.id}>{r.name}{r.inn ? ` · ИНН ${r.inn}` : ''}</option>)}
+                </select>
+              </label>
+              <label className="block text-[10px] font-black uppercase tracking-[0.1em] text-bx-muted">2. Подставить контрагента
+                <select defaultValue="" onChange={e => handleApplyCounterparty(e.target.value)} className="mt-1.5 min-h-11 w-full rounded-xl border border-bx-border bg-bx-surface-2 px-3 text-xs font-bold text-bx-text outline-none focus:border-blue-500">
+                  <option value="">Выберите из справочника</option>{counterparties.map(c => <option key={c.id} value={c.id}>{c.name} · ИНН {c.inn}</option>)}
+                </select>
+              </label>
+              <div className="rounded-xl border border-bx-border bg-bx-surface-2 p-3">
+                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider"><span>Готовность</span><span className={missingVars.length ? 'text-amber-600 dark:text-amber-300' : 'text-emerald-600 dark:text-emerald-300'}>{progress}%</span></div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-bx-border"><div className={`h-full rounded-full transition-all ${missingVars.length ? 'bg-blue-600' : 'bg-emerald-500'}`} style={{ width: `${progress}%` }} /></div>
+                <p className="mt-2 text-[10px] text-bx-muted">{missingVars.length ? `Осталось заполнить: ${missingVars.length}` : 'Все поля заполнены — можно сохранять'}</p>
+              </div>
+            </div>
+          </header>
 
-        {/* Лист бумаги предпросмотра */}
-        <div className="flex-1 overflow-y-auto bg-bx-surface-2/40 p-6 flex justify-center">
-          <div className="max-w-3xl w-full">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-bx-muted mb-4 text-center">📄 Виртуальный бланк Times New Roman (Незаполненные поля отмечены скобками)</p>
-            <div className="bg-white text-gray-900 rounded-2xl shadow-2xl p-10 sm:p-14 border border-bx-border/30 min-h-[842px]">
-              <pre className="text-xs leading-relaxed whitespace-pre-wrap break-words font-medium" style={{ fontFamily: "'Times New Roman', serif" }}>{preview}</pre>
+          <DocumentWorkflowBridge current="templates" />
+
+          <div className="grid items-start gap-5 xl:grid-cols-[minmax(420px,0.9fr)_minmax(560px,1.1fr)]">
+            <div className="space-y-4">
+              <section className="rounded-[20px] border border-blue-500/20 bg-blue-500/[0.055] p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300">Что получится</p>
+                <p className="mt-1 text-xs font-bold leading-relaxed text-bx-text">{guide?.result}</p>
+              </section>
+              {fieldGroups.length ? fieldGroups.map((group, groupIndex) => {
+                const meta = FIELD_GROUP_META[group.id]
+                const groupMissing = group.vars.filter(variable => !(vals[variable.key] ?? '').trim()).length
+                return <section key={group.id} className="rounded-[20px] border border-bx-border bg-bx-surface p-4 shadow-sm">
+                  <div className="mb-4 flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300">Блок {groupIndex + 1}</p><h2 className="mt-0.5 text-sm font-black text-bx-text">{meta.title}</h2><p className="mt-0.5 text-[11px] text-bx-muted">{meta.description}</p></div><span className={`rounded-full border px-2.5 py-1 text-[9px] font-black ${groupMissing ? 'border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'}`}>{groupMissing ? `${groupMissing} не заполнено` : 'Готово'}</span></div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {group.vars.map(v => <div key={v.key} className={v.type === 'textarea' ? 'md:col-span-2' : ''}>
+                      <label htmlFor={`template-field-${v.key}`} className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.08em] text-bx-text">{v.label} <span className="text-amber-600" aria-label="обязательное поле">*</span></label>
+                      <InputField v={v} value={vals[v.key] ?? ''} onChange={val => handleSetVal(v.key, val)} />
+                      <p id={`template-field-${v.key}-hint`} className="mt-1.5 text-[10px] leading-relaxed text-bx-muted">{getFieldHint(v)}</p>
+                    </div>)}
+                  </div>
+                </section>
+              }) : <ResourceEmpty icon="file" title="В этом шаблоне нет переменных" description="Текст уже готов: проверьте его справа и выгрузите удобным способом." />}
+            </div>
+
+            <div className="space-y-4 xl:sticky xl:top-5">
+              <section className="rounded-[20px] border border-bx-border bg-bx-surface p-4 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[0.12em] text-bx-muted">Предпросмотр</p><h2 className="mt-0.5 text-sm font-black text-bx-text">Проверьте документ целиком</h2></div><span className="text-[10px] font-bold text-bx-muted">Поля в [скобках] ещё не заполнены</span></div>
+                <div className="mt-4 max-h-[620px] overflow-y-auto rounded-xl border border-bx-border bg-white p-8 text-gray-900 custom-scrollbar"><pre className="whitespace-pre-wrap break-words text-xs font-medium leading-relaxed" style={{ fontFamily: "'Times New Roman', serif" }}>{preview}</pre></div>
+              </section>
+              <section className="rounded-[20px] border border-bx-border bg-bx-surface p-4 shadow-sm">
+                <h2 className="text-sm font-black text-bx-text">Перед сохранением проверьте</h2>
+                <div className="mt-3 grid gap-2 sm:grid-cols-3">{guide?.checks.map((check, index) => <div key={check} className="flex gap-2 rounded-xl border border-bx-border bg-bx-surface-2 p-3 text-[10px] font-semibold leading-relaxed text-bx-text"><span className="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-blue-600 text-[9px] font-black text-white">{index + 1}</span>{check}</div>)}</div>
+                {missingVars.length > 0 && <div role="alert" className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-[11px] font-bold text-amber-800 dark:text-amber-200"><Icon name="alert" className="mt-0.5 h-4 w-4 flex-shrink-0" />Нельзя выгрузить неполный бланк. Заполните ещё {missingVars.length}: {missingVars.slice(0, 3).map(v => v.label).join(', ')}{missingVars.length > 3 ? '…' : ''}</div>}
+                <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                  <button type="button" disabled={savingDocument || missingVars.length > 0} onClick={handleSaveToDocuments} className="sm:col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-black text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-45"><Icon name="save" className="h-4 w-4" />{savingDocument ? 'Сохраняю…' : 'Сохранить в Документы'}</button>
+                  <button type="button" onClick={handleExportPDF} className={secondaryActionClass}><Icon name="download" className="h-4 w-4" />PDF</button>
+                  <button type="button" onClick={handleDownloadDoc} className={secondaryActionClass}><Icon name="word" className="h-4 w-4" />Word</button>
+                  <button type="button" onClick={handlePrintDoc} className={secondaryActionClass}><Icon name="printer" className="h-4 w-4" />Печать</button>
+                </div>
+                <div className="mt-2 flex flex-wrap justify-between gap-2"><button type="button" onClick={handleCopyText} className="inline-flex min-h-10 items-center gap-2 px-2 text-[10px] font-black text-bx-muted hover:text-bx-text"><Icon name={copied ? 'check' : 'copy'} className="h-4 w-4" />{copied ? 'Текст скопирован' : 'Скопировать текст'}</button><button type="button" onClick={() => navigate('/documents')} className="inline-flex min-h-10 items-center gap-1 px-2 text-[10px] font-black text-blue-600 dark:text-blue-300">Открыть Документы <Icon name="arrowR" className="h-3.5 w-3.5" /></button></div>
+                {isCustom && <button type="button" onClick={() => handleDeleteCustom(tpl.id)} className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 text-xs font-bold text-red-600 hover:bg-red-500/15 dark:text-red-300"><Icon name="trash" className="h-4 w-4" />Удалить личный шаблон</button>}
+              </section>
             </div>
           </div>
         </div>
@@ -569,130 +647,42 @@ export default function Templates() {
   }
 
   // ── Галерея ──
+  const sidebar = (
+    <ResourceSidebar icon="templates" title="Шаблоны" subtitle={`${allTemplates.length} готовых и личных бланков`} search={search} searchPlaceholder="Найти документ" onSearch={setSearch} onClear={() => setSearch('')} label="Категории документов" footer={<button type="button" onClick={() => setCreatingTpl(true)} className={`${primaryActionClass} w-full`}><Icon name="plus" className="h-4 w-4" />Создать шаблон</button>}>
+      {TEMPLATE_CATEGORIES.map(c => {
+        const count = allTemplates.filter(t => c === 'Все' || t.category === c).length
+        return <ResourceNavItem key={c} icon={c === 'Все' ? 'folder' : catMeta(c).icon} label={c === 'Все' ? 'Все шаблоны' : c} count={count} active={category === c && !search.trim()} onClick={() => { setCategory(c); setSearch('') }} />
+      })}
+    </ResourceSidebar>
+  )
+
   return (
-    <div className="flex-1 flex overflow-hidden bg-bx-bg text-bx-text font-sans">
-      {/* Левая панель: категории и поиск */}
-      <aside className="w-68 flex-shrink-0 border-r border-bx-border flex flex-col bg-bx-surface/10 backdrop-blur-md">
-        {/* Поиск */}
-        <div className="px-4 pt-4 pb-2 flex-shrink-0">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bx-muted">🔍</span>
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Поиск шаблонов..."
-              className="w-full bg-bx-surface-2 text-bx-text placeholder-bx-muted pl-9 pr-3 py-2 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/50 text-xs transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* Заголовок разделов */}
-        <div className="px-3 pb-2 flex-shrink-0 border-b border-bx-border/40 flex items-center justify-between">
-          <span className="text-[10px] font-bold text-bx-muted uppercase tracking-wider">Категории бланков</span>
-          {search.trim() && (
-            <button 
-              onClick={() => setSearch('')}
-              className="text-[10px] text-blue-500 hover:underline font-semibold"
-            >
-              Сбросить
-            </button>
-          )}
-        </div>
-
-        {/* Список папок (категорий) */}
-        <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1.5 custom-scrollbar">
-          {TEMPLATE_CATEGORIES.map(c => {
-            const count = allTemplates.filter(t => c === 'Все' || t.category === c).length
-            const isSel = category === c && !search.trim()
-            
-            return (
-              <button
-                key={c}
-                onClick={() => { setCategory(c); setSearch(''); }}
-                className={`w-full flex items-center justify-between px-2.5 py-2.5 rounded-xl text-left transition-all cursor-pointer border ${
-                  isSel 
-                    ? 'bg-blue-600/10 border-blue-500/10 text-blue-500 font-extrabold shadow-sm shadow-blue-500/5' 
-                    : 'hover:bg-bx-surface/20 border-transparent text-bx-text'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="text-sm flex-shrink-0">
-                    {c === 'Все' ? '📂' : '📁'}
-                  </span>
-                  <span className="text-xs truncate font-semibold">
-                    {c}
-                  </span>
-                </div>
-                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                  isSel ? 'bg-blue-500/20 text-blue-500' : 'bg-bx-surface-2 text-bx-muted'
-                }`}>
-                  {count}
-                </span>
-              </button>
-            )
-          })}
-        </nav>
-      </aside>
-
-      {/* Правая часть: Сетка шаблонов */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
-        {/* Заголовок и создание бланка */}
-        <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 shadow-sm mb-6 flex items-center justify-between gap-4">
-          <div className="space-y-0.5">
-            <h1 className="text-sm font-extrabold text-bx-text uppercase tracking-wider">Шаблоны документов</h1>
-            <p className="text-[11px] text-bx-muted">Автозаполнение реквизитов компаний и контрагентов в бланки Республики Узбекистан</p>
-          </div>
-          <button 
-            onClick={() => setCreatingTpl(true)} 
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold shadow-md transition-all cursor-pointer flex-shrink-0"
-          >
-            ＋ Создать бланк
-          </button>
-        </div>
-
-        {search.trim() && (
-          <p className="text-xs text-bx-muted mb-3 font-bold">Найдено бланков: {filtered.length}</p>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filtered.map(t => {
-            const cc = catColor(t.category)
-            const isCustom = t.id.startsWith('custom-')
-            return (
-              <button 
-                key={t.id} 
-                onClick={() => handleSelectTemplate(t)}
-                className="text-left bg-bx-surface border border-bx-border hover:border-blue-500/40 rounded-2xl p-4.5 transition-all group flex flex-col justify-between min-h-[140px] hover:shadow-md cursor-pointer"
-              >
-                <div className="space-y-2.5 w-full">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${cc.bg} ${cc.text} border ${cc.border}`}>
-                      {isCustom ? <span className="text-base font-bold">{t.icon}</span> : <Icon name={catMeta(t.category).icon} className="w-5 h-5" />}
-                    </span>
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${cc.bg} ${cc.text} border ${cc.border}`}>{t.category}</span>
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-extrabold text-bx-text group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug line-clamp-1">{t.title}</h4>
-                    <p className="text-[10px] text-bx-muted mt-1 leading-relaxed line-clamp-2">{t.description}</p>
-                  </div>
-                </div>
-                <div className="border-t border-bx-border/50 pt-2.5 mt-3 w-full text-[10px] text-bx-muted font-bold flex justify-between items-center">
-                  <span>Переменных: {t.vars.length}</span>
-                  <span className="text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform">Выбрать →</span>
-                </div>
-              </button>
-            )
-          })}
-          {filtered.length === 0 && (
-            <div className="col-span-full py-16 text-center text-bx-muted bg-bx-surface border border-bx-border border-dashed rounded-2xl">
-              <span className="text-3xl">🔍</span>
-              <p className="text-xs font-bold mt-2">Бланки не найдены</p>
-              <p className="text-[10px] mt-1">Попробуйте изменить поисковый запрос или категорию в сайдбаре</p>
+    <ResourceLayout sidebar={sidebar}>
+      <div className="space-y-6">
+        <ResourceHero eyebrow="Документ из реквизитов за несколько минут" title="Бланки, которые не приходится собирать заново" description="Выберите документ, подставьте свою компанию и контрагента, проверьте поля и выгрузите готовый результат. Личные шаблоны живут рядом со встроенными." icon="templates" stats={[{ value: allTemplates.length, label: 'шаблонов' }, { value: customTpls.length, label: 'создано вами' }, { value: filtered.length, label: search ? 'найдено' : 'в категории' }]} actions={<button type="button" onClick={() => setCreatingTpl(true)} className={primaryActionClass}><Icon name="plus" className="h-4 w-4" />Создать шаблон</button>} />
+        <DocumentWorkflowBridge current="templates" />
+        <section className="space-y-3.5">
+          <ResourceSectionTitle title={search.trim() ? `Результаты по запросу «${search.trim()}»` : category === 'Все' ? 'Все шаблоны' : category} subtitle="Откройте бланк, заполните реквизиты и проверьте предпросмотр перед выгрузкой" count={filtered.length} action={search.trim() ? <button type="button" onClick={() => setSearch('')} className={secondaryActionClass}>Очистить поиск</button> : undefined} />
+          {filtered.length > 0 ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {filtered.map(t => {
+                const cc = catColor(t.category)
+                const isCustom = t.id.startsWith('custom-')
+                const cardGuide = getTemplateGuide(t)
+                return (
+                  <button type="button" key={t.id} onClick={() => handleSelectTemplate(t)} className="group flex min-h-[240px] cursor-pointer flex-col rounded-[20px] border border-bx-border bg-bx-surface p-4.5 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/[0.035] focus-visible:ring-2 focus-visible:ring-blue-500">
+                    <div className="flex items-start justify-between gap-3"><span className={`grid h-10 w-10 place-items-center rounded-xl border ${cc.bg} ${cc.text} ${cc.border}`}><Icon name={isCustom ? 'file' : catMeta(t.category).icon} className="h-[18px] w-[18px]" /></span><span className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] ${cc.bg} ${cc.text} ${cc.border}`}>{t.category}</span></div>
+                    <h4 className="mt-4 text-[13px] font-black leading-snug text-bx-text transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-300">{t.title}</h4>
+                    <p className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-bx-muted">{cardGuide.whenToUse}</p>
+                    <div className="mt-3 rounded-xl border border-bx-border bg-bx-surface-2 p-2.5"><p className="text-[9px] font-black uppercase tracking-[0.1em] text-bx-muted">На выходе</p><p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-relaxed text-bx-text">{cardGuide.result}</p></div>
+                    <div className="mt-auto flex items-center justify-between border-t border-bx-border pt-3 text-[10px] font-bold"><span className="text-bx-muted">{t.vars.length} полей</span><span className="flex items-center gap-1 text-blue-600 dark:text-blue-300">Заполнить <Icon name="arrowR" className="h-3.5 w-3.5" /></span></div>
+                  </button>
+                )
+              })}
             </div>
-          )}
-        </div>
+          ) : <ResourceEmpty icon="file" title="Шаблоны не найдены" description="Измените запрос, выберите другую категорию или создайте собственный документ." action={<button type="button" onClick={() => { setSearch(''); setCategory('Все') }} className={secondaryActionClass}>Показать все шаблоны</button>} />}
+        </section>
       </div>
-    </div>
+    </ResourceLayout>
   )
 }

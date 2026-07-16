@@ -16,6 +16,9 @@ import TaxCalculator from './tools/TaxCalculator'
 import DateCalc from './tools/DateCalc'
 import Icon from '../lib/ui/Icon'
 import { useToast } from '../lib/ui/ToastContext'
+import { CALCULATOR_PROPOSALS } from '../data/workbenchCatalog'
+import { ProposalWorkbench } from '../components/workspace/ProposalWorkbench'
+import { useWorkbenchFavorites } from '../lib/useWorkbenchFavorites'
 
 interface Tab {
   id: string
@@ -24,9 +27,10 @@ interface Tab {
   desc: string
   group: string
   component: React.ReactNode
+  status?: 'ready' | 'proposal'
 }
 
-const TABS: Tab[] = [
+const READY_TABS: Tab[] = [
   // Налоги
   { id: 'vat',      icon: 'percent',  label: 'НДС',                group: 'Налоги', desc: 'Начислить или выделить 12%', component: <VatCalc /> },
   { id: 'ndfl',     icon: 'user',     label: 'НДФЛ',               group: 'Налоги', desc: 'Подоходный 12%, льгота БРВ', component: <NdflCalc /> },
@@ -45,12 +49,27 @@ const TABS: Tab[] = [
   { id: 'datecalc', icon: 'planner',  label: 'Калькулятор дат',    group: 'Прочее', desc: 'Рабочие дни, праздники РУз', component: <DateCalc /> },
 ]
 
-const GROUPS = ['Налоги', 'Зарплата и кадры', 'Прочее']
+const PROPOSAL_TABS: Tab[] = CALCULATOR_PROPOSALS.map(proposal => ({
+  id: proposal.id,
+  icon: proposal.icon,
+  label: proposal.title,
+  group: `${proposal.sector} · идеи`,
+  desc: proposal.summary,
+  component: <ProposalWorkbench proposal={proposal} />,
+  status: 'proposal',
+}))
+
+const TABS: Tab[] = [...READY_TABS, ...PROPOSAL_TABS]
+
+const GROUPS = ['Налоги', 'Зарплата и кадры', 'Прочее', 'Документы и право · идеи', 'Агро · идеи', 'Строительство · идеи']
 
 const ACCENT: Record<string, { text: string; chipBg: string; activeBg: string; iconBg: string; grad: string }> = {
   'Налоги':           { text: 'text-blue-600 dark:text-blue-400',  chipBg: 'bg-blue-500/10 dark:bg-blue-600/10 border-blue-500/20',  activeBg: 'bg-blue-500/10 dark:bg-blue-600/10 border-blue-500/20',  iconBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',   grad: 'from-blue-500/5 dark:from-blue-600/5' },
   'Зарплата и кадры': { text: 'text-amber-700 dark:text-amber-400', chipBg: 'bg-amber-500/10 border-amber-500/20', activeBg: 'bg-amber-500/10 border-amber-500/20', iconBg: 'bg-amber-500/10 text-amber-700 dark:text-amber-400', grad: 'from-amber-500/5' },
   'Прочее':           { text: 'text-cyan-700 dark:text-cyan-400',  chipBg: 'bg-cyan-500/10 border-cyan-500/20',  activeBg: 'bg-cyan-500/10 border-cyan-500/20',  iconBg: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-400',   grad: 'from-cyan-500/5' },
+  'Документы и право · идеи': { text: 'text-violet-700 dark:text-violet-400', chipBg: 'bg-violet-500/10 border-violet-500/20', activeBg: 'bg-violet-500/10 border-violet-500/20', iconBg: 'bg-violet-500/10 text-violet-700 dark:text-violet-400', grad: 'from-violet-500/5' },
+  'Агро · идеи':      { text: 'text-emerald-700 dark:text-emerald-400', chipBg: 'bg-emerald-500/10 border-emerald-500/20', activeBg: 'bg-emerald-500/10 border-emerald-500/20', iconBg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400', grad: 'from-emerald-500/5' },
+  'Строительство · идеи': { text: 'text-orange-700 dark:text-orange-400', chipBg: 'bg-orange-500/10 border-orange-500/20', activeBg: 'bg-orange-500/10 border-orange-500/20', iconBg: 'bg-orange-500/10 text-orange-700 dark:text-orange-400', grad: 'from-orange-500/5' },
 }
 
 const LAST_CALC_KEY = 'bx_calc_last'
@@ -63,6 +82,8 @@ const Calc = () => {
     return last && TABS.some(t => t.id === last) ? last : 'vat'
   })
   const [search, setSearch] = useState('')
+  const [favoritesOnly, setFavoritesOnly] = useState(false)
+  const { favorites, toggleFavorite } = useWorkbenchFavorites('calculator')
   const tab = TABS.find(t => t.id === active) ?? TABS[0]
 
   const handleSetActive = (id: string) => {
@@ -120,17 +141,17 @@ const Calc = () => {
   }
 
   const q = search.trim().toLowerCase()
-  const visibleTabs = q
-    ? TABS.filter(t => t.label.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q))
-    : TABS
+  const visibleTabs = TABS.filter(t =>
+    (!q || t.label.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.group.toLowerCase().includes(q))
+    && (!favoritesOnly || favorites.includes(t.id)))
 
   return (
     <div className="flex-1 flex overflow-hidden z-10 font-sans bg-bx-bg text-bx-text">
       {/* Левая панель — список калькуляторов */}
-      <aside className="w-64 flex-shrink-0 border-r border-bx-border bg-bx-surface-2/65 dark:bg-bx-surface flex flex-col z-10 overflow-hidden">
+      <aside className="w-[292px] flex-shrink-0 border-r border-bx-border bg-bx-surface-2/65 dark:bg-bx-surface flex flex-col z-10 overflow-hidden">
         <div className="px-5 pt-5 pb-3">
           <h1 className="text-xs font-black text-bx-text uppercase tracking-wider">Калькуляторы</h1>
-          <p className="text-[10px] text-bx-muted mt-0.5">{TABS.length} готовых бухотчетов</p>
+          <p className="text-[10px] text-bx-muted mt-0.5">{READY_TABS.length} работают · {PROPOSAL_TABS.length} идей на согласование</p>
         </div>
         
         <div className="px-4 pb-3 flex-shrink-0">
@@ -141,15 +162,27 @@ const Calc = () => {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
+              aria-label="Поиск калькулятора"
               placeholder="Поиск калькулятора..."
-              className="w-full bg-bx-surface text-bx-text placeholder-bx-muted text-xs pl-9 pr-3 py-2 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/50 shadow-inner transition-all font-semibold"
+              className="w-full bg-bx-surface text-bx-text placeholder-bx-muted text-xs pl-9 pr-3 py-2 rounded-xl border border-bx-border focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 shadow-inner transition-all font-semibold"
             />
           </div>
+          <button
+            type="button"
+            onClick={() => setFavoritesOnly(value => !value)}
+            className={`mt-2 w-full min-h-11 rounded-xl border px-3 flex items-center justify-between text-xs font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${favoritesOnly ? 'bg-blue-600 border-blue-600 text-white' : 'bg-bx-surface border-bx-border text-bx-muted hover:text-bx-text'}`}
+          >
+            <span>Избранные</span>
+            <span>{favorites.length}</span>
+          </button>
         </div>
 
         <nav className="flex-1 px-2.5 pb-4 space-y-3.5 overflow-y-auto custom-scrollbar">
           {visibleTabs.length === 0 && (
-            <p className="text-xs text-bx-muted text-center py-4 italic font-medium">Ничего не найдено</p>
+            <div className="px-3 py-4 text-center">
+              <p className="text-xs text-bx-muted font-medium">Подходящих калькуляторов нет</p>
+              <button type="button" onClick={() => { setSearch(''); setFavoritesOnly(false) }} className="mt-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500/40 rounded">Показать весь каталог</button>
+            </div>
           )}
           {GROUPS.map(g => {
             const items = visibleTabs.filter(t => t.group === g)
@@ -176,7 +209,7 @@ const Calc = () => {
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className={`block text-xs font-bold leading-tight ${isTabActive ? 'text-white' : 'text-bx-text'}`}>{t.label}</span>
-                          <span className={`block text-[9px] mt-0.5 leading-snug truncate ${isTabActive ? 'text-white/85' : 'text-bx-muted'}`}>{t.desc}</span>
+                          <span className={`block text-[9px] mt-0.5 leading-snug line-clamp-2 ${isTabActive ? 'text-white/85' : 'text-bx-muted'}`}>{t.desc}</span>
                         </span>
                       </button>
                     );
@@ -190,7 +223,21 @@ const Calc = () => {
 
       {/* Правая панель — активный калькулятор */}
       <div className="flex-1 overflow-y-auto bg-bx-bg">
-        <div className="max-w-2xl mx-auto px-6 py-6">
+        <div className="max-w-5xl mx-auto px-6 py-6">
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            <div className="rounded-2xl border border-bx-border bg-bx-surface px-4 py-3">
+              <p className="text-[10px] uppercase tracking-wider font-bold text-bx-muted">Готово сейчас</p>
+              <p className="text-xl font-black text-bx-text mt-1">{READY_TABS.length}</p>
+            </div>
+            <div className="rounded-2xl border border-bx-border bg-bx-surface px-4 py-3">
+              <p className="text-[10px] uppercase tracking-wider font-bold text-bx-muted">Отраслевые идеи</p>
+              <p className="text-xl font-black text-emerald-700 dark:text-emerald-400 mt-1">{PROPOSAL_TABS.length}</p>
+            </div>
+            <div className="rounded-2xl border border-bx-border bg-bx-surface px-4 py-3">
+              <p className="text-[10px] uppercase tracking-wider font-bold text-bx-muted">Результат</p>
+              <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">Копирование · PDF · TXT</p>
+            </div>
+          </div>
           {/* Hero-шапка с акцентом группы */}
           <div className={`rounded-3xl bg-gradient-to-br ${ACCENT[tab.group].grad} via-transparent to-transparent border border-bx-border px-5 py-4.5 mb-5 bg-bx-surface shadow-sm`}>
             <div className="flex items-center justify-between gap-3.5 flex-wrap">
@@ -204,17 +251,30 @@ const Calc = () => {
                     <span className={`text-[9px] px-2 py-0.5 rounded-full border ${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-bold uppercase`}>
                       {tab.group}
                     </span>
+                    <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold uppercase ${tab.status === 'proposal' ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'}`}>
+                      {tab.status === 'proposal' ? 'На согласование' : 'Работает'}
+                    </span>
                   </div>
                   <p className="text-[11px] text-bx-muted mt-1">{tab.desc} · Законодательство РУз</p>
                 </div>
               </div>
+              <div className="flex items-center gap-2">
               <button
+                type="button"
+                onClick={() => toggleFavorite(tab.id)}
+                aria-pressed={favorites.includes(tab.id)}
+                className={`min-h-11 px-3.5 border text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${favorites.includes(tab.id) ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400' : 'bg-bx-surface border-bx-border text-bx-muted hover:text-bx-text'}`}
+              >
+                {favorites.includes(tab.id) ? 'В избранном' : 'В избранное'}
+              </button>
+              {tab.status !== 'proposal' && <button
                 onClick={handleExportPDF}
                 className="px-3.5 py-2 bg-bx-surface border border-bx-border hover:bg-bx-surface-2 text-bx-text text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-bx-muted"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                 PDF
-              </button>
+              </button>}
+              </div>
             </div>
             {/* Быстрое переключение внутри группы */}
             <div className="flex flex-wrap gap-1.5 mt-4">

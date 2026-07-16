@@ -1,311 +1,178 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { type KbArticle, KB_CATEGORIES, KB_CATEGORY_META, KB_POPULAR_IDS } from '../../data/knowledge';
-import { getAllArticlesSync, refreshArticles } from '../../lib/db/knowledgeRepo';
-import { highlight, excerpt, readMinutes } from './shared';
-import Icon from '../../lib/ui/Icon';
-import ArticleReader from './ArticleReader';
-import { usePlan } from '../../lib/plan';
-import PaywallModal from '../../components/PaywallModal';
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { type KbArticle, KB_CATEGORIES, KB_POPULAR_IDS } from '../../data/knowledge'
+import { getAllArticlesSync, refreshArticles } from '../../lib/db/knowledgeRepo'
+import { excerpt, highlight, readMinutes } from './shared'
+import Icon from '../../lib/ui/Icon'
+import ArticleReader from './ArticleReader'
+import { usePlan } from '../../lib/plan'
+import PaywallModal from '../../components/PaywallModal'
+import {
+  ResourceEmpty,
+  ResourceHero,
+  ResourceLayout,
+  ResourceNavItem,
+  ResourceSectionTitle,
+  ResourceSidebar,
+  secondaryActionClass,
+} from '../../components/workspace/ResourceWorkspace'
+
+function categoryIcon(category: string) {
+  if (category === 'Налоги и взносы') return 'finance'
+  if (category === 'Трудовое право') return 'users'
+  if (category === 'ВЭД и таможня') return 'globe'
+  if (category === 'ЭДО и E-Imzo') return 'shield'
+  if (category === 'Работа с 1С') return 'monitor'
+  if (category === 'Штрафы и санкции') return 'alert'
+  return 'book'
+}
+
+function ArticleCard({ article, search, featured, onOpen }: { article: KbArticle; search: string; featured?: boolean; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={`group flex cursor-pointer flex-col rounded-[20px] border bg-bx-surface p-4.5 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/[0.035] focus-visible:ring-2 focus-visible:ring-blue-500 ${featured ? 'border-blue-500/20' : 'border-bx-border'}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-300"><Icon name={categoryIcon(article.category)} className="h-4 w-4" /></span>
+        <span className="rounded-full bg-bx-bg px-2 py-1 text-[9px] font-black text-bx-muted"><Icon name="clock" className="mr-1 inline h-3 w-3 align-[-2px]" />{readMinutes(article.body)} мин</span>
+      </div>
+      <p className="mt-3 text-[9px] font-black uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300">{article.category}</p>
+      <h4 className="mt-1.5 text-[13px] font-black leading-snug text-bx-text transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-300">{search ? highlight(article.title, search) : article.title}</h4>
+      <p className="mt-2 line-clamp-3 text-[11px] leading-relaxed text-bx-muted">{excerpt(article.body)}</p>
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-bx-border pt-3 text-[10px] font-bold">
+        <span className="min-w-0 truncate text-bx-muted">Источник: {article.source}</span>
+        <span className="flex flex-shrink-0 items-center gap-1 text-blue-600 dark:text-blue-300">Читать <Icon name="arrowR" className="h-3.5 w-3.5" /></span>
+      </div>
+    </button>
+  )
+}
 
 export default function Library() {
-  const { plan } = usePlan();
-  const [paywall, setPaywall] = useState(false);
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('Все');
-  const [articles, setArticles] = useState<KbArticle[]>(() => getAllArticlesSync());
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [params, setParams] = useSearchParams();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const { plan } = usePlan()
+  const [paywall, setPaywall] = useState(false)
+  const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('Все')
+  const [articles, setArticles] = useState<KbArticle[]>(() => getAllArticlesSync())
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [params, setParams] = useSearchParams()
+  const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Подтянуть облачные статьи при открытии
   useEffect(() => {
-    if (plan === 'free') return;
-    refreshArticles().then(setArticles).catch(() => { void 0 });
-  }, [plan]);
+    if (plan === 'free') return
+    let active = true
+    refreshArticles().then(value => { if (active) setArticles(value) }).catch(() => { /* локальные статьи остаются доступны */ })
+    return () => { active = false }
+  }, [plan])
 
-  // Открыть статью по ссылке из глобального поиска (?article=id)
   useEffect(() => {
-    const id = params.get('article');
-    if (id) {
-      setActiveId(id);
-      params.delete('article');
-      setParams(params, { replace: true });
-    }
-  }, [params, setParams]);
+    const id = params.get('article')
+    if (!id) return
+    setActiveId(id)
+    const next = new URLSearchParams(params)
+    next.delete('article')
+    setParams(next, { replace: true })
+  }, [params, setParams])
 
-  // Скролл вверх при смене активной статьи
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [activeId]);
+    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+    scrollRef.current?.scrollTo({ top: 0, behavior })
+  }, [activeId])
 
-  // Фильтрация статей
-  const filteredArticles = useMemo(() => {
-    return articles.filter(a => {
-      // 1. Фильтр по категории
-      if (selectedCategory !== 'Все' && a.category !== selectedCategory) return false;
+  const filteredArticles = useMemo(() => articles.filter(article => {
+    if (selectedCategory !== 'Все' && article.category !== selectedCategory) return false
+    if (!search.trim()) return true
+    const q = search.toLowerCase().trim()
+    return article.title.toLowerCase().includes(q) || article.body.toLowerCase().includes(q) || article.tags?.some(tag => tag.toLowerCase().includes(q))
+  }), [articles, selectedCategory, search])
 
-      // 2. Поиск по тексту
-      if (search.trim()) {
-        const q = search.toLowerCase().trim();
-        const matchesTitle = a.title.toLowerCase().includes(q);
-        const matchesBody = a.body.toLowerCase().includes(q);
-        const matchesTags = a.tags?.some(t => t.toLowerCase().includes(q));
-        if (!matchesTitle && !matchesBody && !matchesTags) return false;
-      }
-      return true;
-    });
-  }, [articles, selectedCategory, search]);
+  const activeArticle = useMemo(() => activeId ? articles.find(article => article.id === activeId) ?? null : null, [articles, activeId])
+  const popularArticles = useMemo(() => KB_POPULAR_IDS.map(id => articles.find(article => article.id === id)).filter(Boolean).slice(0, 4) as KbArticle[], [articles])
 
-  const activeArticle = useMemo(() => {
-    if (!activeId) return null;
-    return articles.find(a => a.id === activeId) || null;
-  }, [articles, activeId]);
+  const openArticle = (id: string) => {
+    if (plan === 'free') { setPaywall(true); return }
+    setActiveId(id)
+  }
+  const chooseCategory = (category: string) => {
+    if (plan === 'free') { setPaywall(true); return }
+    setSelectedCategory(category)
+    setActiveId(null)
+  }
 
-  const popularArticles = useMemo(() => {
-    return KB_POPULAR_IDS.map(id => articles.find(a => a.id === id)).filter(Boolean) as KbArticle[];
-  }, [articles]);
-
-  const handleOpenArticle = (id: string) => {
-    if (plan === 'free') {
-      setPaywall(true);
-      return;
-    }
-    setActiveId(id);
-  };
-
-  const handleCategorySelect = (category: string) => {
-    if (plan === 'free') {
-      setPaywall(true);
-      return;
-    }
-    setSelectedCategory(category);
-    setActiveId(null);
-  };
+  const sidebar = (
+    <ResourceSidebar
+      icon="knowledge"
+      title="База знаний"
+      subtitle={`${articles.length} практических материалов`}
+      search={search}
+      searchPlaceholder="Найти ответ или тему"
+      onSearch={value => { if (plan === 'free') setPaywall(true); else setSearch(value) }}
+      onClear={() => setSearch('')}
+      label="Разделы знаний"
+      footer={<div className="rounded-xl bg-bx-bg px-3 py-3 text-[10px] leading-relaxed text-bx-muted"><span className="font-black text-bx-text">Важно:</span> материалы помогают разобраться, но не заменяют проверку действующей нормы.</div>}
+    >
+      <ResourceNavItem icon="book" label="Все публикации" count={articles.length} active={selectedCategory === 'Все'} onClick={() => chooseCategory('Все')} />
+      {KB_CATEGORIES.slice(1).map(category => (
+        <ResourceNavItem key={category} icon={categoryIcon(category)} label={category} count={articles.filter(article => article.category === category).length} active={selectedCategory === category} onClick={() => chooseCategory(category)} />
+      ))}
+    </ResourceSidebar>
+  )
 
   return (
-    <div className="flex-1 flex overflow-hidden bg-bx-bg relative">
-      
-      {/* Левый Сайдбар Базы знаний */}
-      <aside className="w-64 flex-shrink-0 border-r border-bx-border bg-bx-surface/20 flex flex-col z-10">
-        
-        {/* Шапка/Поиск */}
-        <div className="p-4 border-b border-bx-border flex-shrink-0 flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center flex-shrink-0">
-              <Icon name="knowledge" className="w-4 h-4" />
-            </span>
-            <div className="min-w-0">
-              <h2 className="text-xs font-bold text-bx-text leading-tight">База знаний</h2>
-              <p className="text-[10px] text-bx-muted mt-0.5 truncate">{articles.length} полезных статей</p>
-            </div>
-          </div>
-
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bx-muted">
-              <Icon name="search" className="w-3.5 h-3.5" />
-            </span>
-            <input
-              type="text"
-              value={search}
-              onChange={e => {
-                if (plan === 'free') {
-                  setPaywall(true);
-                  return;
-                }
-                setSearch(e.target.value);
-              }}
-              placeholder="Поиск статей..."
-              className="w-full bg-bx-surface/80 text-bx-text placeholder-bx-muted pl-9 pr-3 py-2 rounded-xl border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-xs transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* Список Категорий */}
-        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5 custom-scrollbar">
-          <p className="px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-wider text-bx-muted">Разделы</p>
-          
-          {/* Кнопка "Все" */}
-          <button
-            onClick={() => handleCategorySelect('Все')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all border ${
-              selectedCategory === 'Все'
-                ? 'bg-blue-600/10 border-blue-500/30 text-blue-400 font-bold'
-                : 'text-bx-muted border-transparent hover:bg-bx-surface/20 hover:text-bx-text'
-            }`}
-          >
-            <span className="text-base leading-none">📚</span>
-            <span className="flex-1 text-left">Все публикации</span>
-            <span className="text-[10px] font-bold opacity-60 bg-bx-surface-2 px-2 py-0.5 rounded-full">{articles.length}</span>
-          </button>
-
-          {KB_CATEGORIES.slice(1).map(catName => {
-            const isActive = selectedCategory === catName;
-            const meta = KB_CATEGORY_META[catName];
-            const count = articles.filter(a => a.category === catName).length;
-
-            return (
-              <button
-                key={catName}
-                onClick={() => handleCategorySelect(catName)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all border ${
-                  isActive
-                    ? 'bg-blue-600/10 border-blue-500/30 text-blue-400 font-bold'
-                    : 'text-bx-muted border-transparent hover:bg-bx-surface/20 hover:text-bx-text'
-                }`}
-              >
-                <span className="text-base leading-none">
-                  {catName === 'Налоги и взносы' && '🪙'}
-                  {catName === 'Трудовое право' && '👥'}
-                  {catName === 'ВЭД и таможня' && '🌍'}
-                  {catName === 'ЭДО и E-Imzo' && '🛡️'}
-                  {catName === 'Работа с 1С' && '💾'}
-                  {catName === 'Штрафы и санкции' && '⚠️'}
-                </span>
-                <span className="flex-1 text-left truncate">{catName}</span>
-                <span className="text-[10px] font-bold opacity-60 bg-bx-surface-2 px-2 py-0.5 rounded-full">{count}</span>
-              </button>
-            );
-          })}
-        </nav>
-      </aside>
-
-      {/* Основная панель */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-bx-bg flex flex-col z-10">
+    <ResourceLayout sidebar={sidebar}>
+      <div ref={scrollRef}>
         {activeArticle ? (
           <ArticleReader
             article={activeArticle}
             articles={articles}
             search={search}
-            onOpen={a => handleOpenArticle(a.id)}
+            onOpen={article => openArticle(article.id)}
             onBack={() => setActiveId(null)}
-            onCategory={c => { setSelectedCategory(c); setActiveId(null); }}
+            onCategory={category => { setSelectedCategory(category); setActiveId(null) }}
           />
         ) : (
-          <div className="max-w-[1600px] w-full px-6 py-6 space-y-6">
-            
-            {/* Поисковый режим или отфильтрованные карточки */}
-            {search.trim() ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-bx-border/40 pb-2">
-                  <p className="text-xs text-bx-muted">
-                    Результаты поиска: найдено <span className="text-bx-text font-bold">{filteredArticles.length}</span>
-                  </p>
-                  <button 
-                    onClick={() => setSearch('')}
-                    className="text-xs text-blue-400 hover:text-blue-300 font-semibold"
-                  >
-                    Очистить
-                  </button>
-                </div>
+          <div className="space-y-6">
+            <ResourceHero
+              eyebrow="Проверенные знания в рабочем контексте"
+              title="Ответы, которые можно применить в работе"
+              description="Налоги, ЭДО, 1С, ВЭД и трудовые вопросы собраны в короткие практические материалы: с источником, временем чтения и переходом к связанным инструментам BX."
+              icon="knowledge"
+              stats={[
+                { value: articles.length, label: 'материалов' },
+                { value: KB_CATEGORIES.length - 1, label: 'направлений' },
+                { value: filteredArticles.length, label: search ? 'найдено' : 'в выбранном разделе' },
+              ]}
+            />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredArticles.map(a => (
-                    <button
-                      key={a.id}
-                      onClick={() => handleOpenArticle(a.id)}
-                      className="text-left bg-bx-surface border border-bx-border hover:border-blue-500/30 rounded-2xl p-4 flex flex-col justify-between gap-3.5 transition-all hover:bg-bx-surface-2 group shadow-sm"
-                    >
-                      <div className="min-w-0 flex-1 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase bg-blue-500/10 text-blue-400 border border-blue-500/15">
-                            {a.category}
-                          </span>
-                          <span className="text-[10px] text-bx-muted font-mono">{readMinutes(a.body)} мин</span>
-                        </div>
-                        <h4 className="text-xs font-extrabold text-bx-text leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                          {highlight(a.title, search)}
-                        </h4>
-                        <p className="text-xs text-bx-muted leading-relaxed line-clamp-2">
-                          {excerpt(a.body)}
-                        </p>
-                      </div>
-                      <div className="flex items-center justify-between border-t border-bx-border/40 pt-3 mt-1.5 flex-shrink-0">
-                        <span className="text-[10px] text-bx-muted truncate font-mono">Источник: {a.source}</span>
-                        <span className="text-blue-400 group-hover:translate-x-0.5 transition-transform">➔</span>
-                      </div>
-                    </button>
-                  ))}
-                  {filteredArticles.length === 0 && (
-                    <div className="col-span-full text-center py-12">
-                      <span className="text-3xl block mb-2">🔍</span>
-                      <p className="text-xs text-bx-muted">Ничего не найдено. Попробуйте другой запрос.</p>
-                    </div>
-                  )}
+            {!search.trim() && selectedCategory === 'Все' && popularArticles.length > 0 && (
+              <section className="space-y-3.5">
+                <ResourceSectionTitle title="С чего начать" subtitle="Материалы, к которым чаще всего возвращаются в ежедневной работе" count={popularArticles.length} />
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  {popularArticles.map(article => <ArticleCard key={article.id} article={article} search="" featured onOpen={() => openArticle(article.id)} />)}
                 </div>
-              </div>
-            ) : (
-              <>
-                {/* Сетка всех статей для выбранной категории */}
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-xs font-extrabold text-bx-text uppercase tracking-wider">
-                      {selectedCategory === 'Все' ? 'Все публикации' : selectedCategory}
-                    </h3>
-                    <span className="text-[10px] text-bx-muted font-mono">{filteredArticles.length} статей</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {filteredArticles.map(a => (
-                      <button
-                        key={a.id}
-                        onClick={() => handleOpenArticle(a.id)}
-                        className="text-left bg-bx-surface border border-bx-border hover:border-blue-500/30 rounded-2xl p-4 flex flex-col justify-between gap-3.5 transition-all hover:bg-bx-surface-2 group shadow-sm"
-                      >
-                        <div className="min-w-0 flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase bg-blue-500/10 text-blue-400 border border-blue-500/15">
-                              {a.category}
-                            </span>
-                            <span className="text-[10px] text-bx-muted font-mono">{readMinutes(a.body)} мин</span>
-                          </div>
-                          <h4 className="text-xs font-extrabold text-bx-text leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                            {a.title}
-                          </h4>
-                          <p className="text-xs text-bx-muted leading-relaxed line-clamp-2">
-                            {excerpt(a.body)}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-between border-t border-bx-border/40 pt-3 mt-1.5 flex-shrink-0">
-                          <span className="text-[10px] text-bx-muted truncate font-mono">Источник: {a.source}</span>
-                          <span className="text-blue-400 group-hover:translate-x-0.5 transition-transform">➔</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Популярные статьи на главной (только если выбрано "Все") */}
-                {selectedCategory === 'Все' && popularArticles.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-extrabold text-bx-text uppercase tracking-wider mb-3">Популярное</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {popularArticles.map((a, i) => (
-                        <button 
-                          key={a.id} 
-                          onClick={() => handleOpenArticle(a.id)} 
-                          className="w-full text-left bg-bx-surface border border-bx-border hover:border-blue-500/30 hover:bg-bx-surface-2 rounded-2xl p-4 flex items-center gap-3.5 transition-all group"
-                        >
-                          <span className="text-sm font-black text-bx-muted/50 w-5 flex-shrink-0">{i + 1}</span>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-bx-text group-hover:text-blue-400 transition-colors truncate">{a.title}</p>
-                            <p className="text-[9px] text-bx-muted mt-0.5">{a.category} · {readMinutes(a.body)} мин</p>
-                          </div>
-                          <span className="text-bx-muted group-hover:text-blue-400 transition-all flex-shrink-0 group-hover:translate-x-0.5">➔</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
+              </section>
             )}
+
+            <section className="space-y-3.5">
+              <ResourceSectionTitle
+                title={search.trim() ? `Результаты по запросу «${search.trim()}»` : selectedCategory === 'Все' ? 'Все публикации' : selectedCategory}
+                subtitle={search.trim() ? 'Поиск учитывает заголовок, текст и теги' : 'Откройте материал, чтобы увидеть содержание, источники и связанные действия'}
+                count={filteredArticles.length}
+                action={search.trim() ? <button type="button" onClick={() => setSearch('')} className={secondaryActionClass}>Очистить поиск</button> : undefined}
+              />
+              {filteredArticles.length > 0 ? (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                  {filteredArticles.map(article => <ArticleCard key={article.id} article={article} search={search} onOpen={() => openArticle(article.id)} />)}
+                </div>
+              ) : (
+                <ResourceEmpty title="Ничего не найдено" description="Попробуйте более короткий запрос, выберите другой раздел или вернитесь ко всем публикациям." action={<button type="button" onClick={() => { setSearch(''); setSelectedCategory('Все') }} className={secondaryActionClass}>Показать все материалы</button>} />
+              )}
+            </section>
           </div>
         )}
       </div>
-      
-      {paywall && <PaywallModal feature="Доступ к Базе знаний РУз" onClose={() => setPaywall(false)} />}
-    </div>
-  );
+      {paywall && <PaywallModal feature="База знаний бухгалтера" onClose={() => setPaywall(false)} />}
+    </ResourceLayout>
+  )
 }

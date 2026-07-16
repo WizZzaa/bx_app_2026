@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import type { BxEvent, EventType, EventStatus, EventPriority, EventRecurrence, NewEvent } from './useEvents';
+import { COMPANY_ROLE_LABELS, type CompanyMember } from './useCompanyMembers';
 import { todayISO } from '../../lib/dates';
 
 interface Props {
   event?: BxEvent | null;
   defaultDate?: string;
   defaultType?: EventType;
+  defaultEvent?: Partial<NewEvent> | null;
+  members?: CompanyMember[];
+  membersLoading?: boolean;
   onSave: (e: NewEvent) => void;
   onDelete?: () => void;
-  onConvertToCard?: () => void;
   onClose: () => void;
 }
 
@@ -44,16 +47,17 @@ const RECURRENCE_LABELS: Record<Exclude<EventRecurrence, null> | 'none', string>
 
 const today = todayISO();
 
-export default function EventModal({ event, defaultDate, defaultType, onSave, onDelete, onConvertToCard, onClose }: Props) {
+export default function EventModal({ event, defaultDate, defaultType, defaultEvent, members = [], membersLoading = false, onSave, onDelete, onClose }: Props) {
   const isEdit = Boolean(event);
-  const [type,     setType]     = useState<EventType>(event?.type     ?? defaultType ?? 'task');
-  const [title,    setTitle]    = useState(event?.title    ?? '');
-  const [date,     setDate]     = useState(event?.date     ?? defaultDate ?? today);
-  const [dueDate,  setDueDate]  = useState(event?.due_date ?? '');
-  const [status,   setStatus]   = useState<EventStatus>(event?.status   ?? 'todo');
-  const [priority, setPriority] = useState<EventPriority>(event?.priority ?? 'normal');
-  const [note,     setNote]     = useState(event?.note     ?? '');
-  const [tags,     setTags]     = useState<string[]>(event?.tags ?? []);
+  const [type,     setType]     = useState<EventType>(event?.type ?? defaultEvent?.type ?? defaultType ?? 'task');
+  const [title,    setTitle]    = useState(event?.title ?? defaultEvent?.title ?? '');
+  const [date,     setDate]     = useState(event?.date ?? defaultEvent?.date ?? defaultDate ?? today);
+  const [dueDate,  setDueDate]  = useState(event?.due_date ?? defaultEvent?.due_date ?? '');
+  const [status,   setStatus]   = useState<EventStatus>(event?.status ?? defaultEvent?.status ?? 'todo');
+  const [priority, setPriority] = useState<EventPriority>(event?.priority ?? defaultEvent?.priority ?? 'normal');
+  const [note,     setNote]     = useState(event?.note ?? defaultEvent?.note ?? '');
+  const [tags,     setTags]     = useState<string[]>(event?.tags ?? defaultEvent?.tags ?? []);
+  const [assigneeId, setAssigneeId] = useState(event?.assignee_id ?? defaultEvent?.assignee_id ?? '');
   const getInitialReminderStates = () => {
     if (event?.reminder_at && event.due_date) {
       const due = new Date(event.due_date + 'T00:00:00')
@@ -74,7 +78,7 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
   const [remind,   setRemind]   = useState(initReminder.remind);
   const [remindDays, setRemindDays] = useState(initReminder.days);
   const [remindTime, setRemindTime] = useState(initReminder.time);
-  const [recurrence, setRecurrence] = useState<EventRecurrence>(event?.recurrence ?? null);
+  const [recurrence, setRecurrence] = useState<EventRecurrence>(event?.recurrence ?? defaultEvent?.recurrence ?? null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
@@ -90,7 +94,7 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
   function save() {
     if (!title.trim()) return;
     onSave({
-      company_id: null,
+      company_id: event?.company_id ?? defaultEvent?.company_id ?? null,
       type,
       title: title.trim(),
       date,
@@ -98,11 +102,12 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
       status,
       priority,
       tags: tags.length ? tags : null,
-      tax_type: type === 'tax_deadline' ? (tags[0] ?? null) : null,
-      kind: null,
-      regime: null,
+      tax_type: type === 'tax_deadline' ? (tags[0] ?? event?.tax_type ?? defaultEvent?.tax_type ?? null) : null,
+      kind: type === 'tax_deadline' ? (event?.kind ?? defaultEvent?.kind ?? null) : null,
+      regime: type === 'tax_deadline' ? (event?.regime ?? defaultEvent?.regime ?? null) : null,
       note: note.trim() || null,
-      source: 'manual',
+      source: event?.source ?? defaultEvent?.source ?? 'manual',
+      source_key: event?.source_key ?? defaultEvent?.source_key ?? null,
       reminder_at: (() => {
         if (!remind || !dueDate) return null;
         const due = new Date(dueDate + 'T00:00:00');
@@ -113,6 +118,7 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
         return new Date(`${yyyy}-${mm}-${dd}T${remindTime}:00`).toISOString();
       })(),
       recurrence,
+      assignee_id: assigneeId || null,
     });
   }
 
@@ -121,7 +127,10 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
       <div className="bg-bx-surface border border-bx-border-2 rounded-2xl w-[480px] max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-bx-border">
-          <h2 className="text-base font-semibold text-bx-text">{isEdit ? 'Редактировать' : 'Новое событие'}</h2>
+          <div>
+            <h2 className="text-base font-semibold text-bx-text">{isEdit ? 'Редактировать задачу' : 'Новая задача или событие'}</h2>
+            <p className="text-[10px] text-bx-muted mt-0.5">Компания, исполнитель, срок и напоминание — в одном окне</p>
+          </div>
           <button onClick={onClose} className="text-bx-muted hover:text-bx-text text-lg leading-none">✕</button>
         </div>
 
@@ -161,6 +170,31 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
               <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
                 className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
             </div>
+          </div>
+
+          {/* Исполнитель */}
+          <div>
+            <label className="text-xs text-bx-muted block mb-1.5">Исполнитель</label>
+            <select
+              value={assigneeId}
+              onChange={e => setAssigneeId(e.target.value)}
+              disabled={membersLoading}
+              className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm disabled:opacity-60"
+            >
+              <option value="">Не назначен</option>
+              {members.map(member => (
+                <option key={member.id} value={member.user_id}>
+                  {member.invited_email} · {COMPANY_ROLE_LABELS[member.role]}
+                </option>
+              ))}
+            </select>
+            <p className="text-[10px] text-bx-muted mt-1">
+              {membersLoading
+                ? 'Загружаем команду…'
+                : members.length > 0
+                  ? 'В списке только активные участники выбранной компании.'
+                  : 'Пригласить участников можно в Настройки → Моя команда.'}
+            </p>
           </div>
 
           {/* Статус + Приоритет */}
@@ -268,17 +302,6 @@ export default function EventModal({ event, defaultDate, defaultType, onSave, on
                     <button onClick={() => setConfirmDelete(false)} className="text-xs text-bx-muted hover:text-bx-text">Отмена</button>
                   </div>
                 : <button onClick={() => setConfirmDelete(true)} className="text-xs text-bx-muted hover:text-red-400 transition-colors">Удалить</button>
-            )}
-            {isEdit && onConvertToCard && (
-              <button
-                onClick={() => {
-                  onConvertToCard();
-                  onClose();
-                }}
-                className="text-xs text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
-              >
-                + в Kanban
-              </button>
             )}
           </div>
           <div className="flex gap-2">

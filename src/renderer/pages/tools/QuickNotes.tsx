@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { uid } from '../../lib/uid';
-import { useBoards } from '../planner/useBoards';
 import { supabase } from '../../lib/db/supabase';
 import { emitPlannerReload } from '../planner/plannerBus';
 import { useToast } from '../../lib/ui/ToastContext';
-import Icon from '../../lib/ui/Icon';
 
 const STORAGE_KEY = 'bx_quick_notes';
 
@@ -29,15 +27,7 @@ export default function QuickNotes() {
   const [expanded, setExpanded] = useState(false);
   const [search, setSearch] = useState('');
   
-  // Доски из планировщика
-  const { boards } = useBoards();
   const toast = useToast();
-
-  // Модальные окна интеграции
-  const [plannerModalId, setPlannerModalId] = useState<string | null>(null);
-  const [selectedBoardId, setSelectedBoardId] = useState<string>('');
-  const [selectedColId, setSelectedColId] = useState<string>('');
-  const [sendingPlanner, setSendingPlanner] = useState(false);
 
   const [calendarModalId, setCalendarModalId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -46,27 +36,6 @@ export default function QuickNotes() {
   useEffect(() => { 
     setNotes(loadNotes()); 
   }, []);
-
-  // Установим доску по умолчанию при открытии модального окна
-  useEffect(() => {
-    if (boards.length > 0 && !selectedBoardId) {
-      setSelectedBoardId(boards[0].id);
-      if (boards[0].columns.length > 0) {
-        setSelectedColId(boards[0].columns[0].id);
-      }
-    }
-  }, [boards, plannerModalId, selectedBoardId]);
-
-  // Обновим колонку по умолчанию при смене доски
-  const handleBoardChange = (boardId: string) => {
-    setSelectedBoardId(boardId);
-    const b = boards.find(x => x.id === boardId);
-    if (b && b.columns.length > 0) {
-      setSelectedColId(b.columns[0].id);
-    } else {
-      setSelectedColId('');
-    }
-  };
 
   function persist(updated: Note[]) { 
     setNotes(updated); 
@@ -128,47 +97,7 @@ export default function QuickNotes() {
     });
   }
 
-  // Интеграция с Канбан-доской
-  const handlePushToPlanner = async (noteText: string) => {
-    if (!selectedBoardId || !selectedColId) {
-      toast.error('Выберите доску и колонку');
-      return;
-    }
-    setSendingPlanner(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Пользователь не авторизован');
-
-      // Создаем карточку в Supabase
-      const newCard = {
-        id: uid(),
-        user_id: user.id,
-        board_id: selectedBoardId,
-        column_id: selectedColId,
-        title: noteText.split('\n')[0].slice(0, 100) || 'Задача из заметок',
-        description: noteText,
-        priority: 'normal',
-        checklist: [],
-        position: 999,
-        archived: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      const { error } = await supabase.from('bx_cards').insert(newCard);
-      if (error) throw error;
-
-      toast.success('Задача создана в планировщике');
-      setPlannerModalId(null);
-      emitPlannerReload(); // Обновим доски
-    } catch (e: any) {
-      toast.error(e?.message || 'Не удалось отправить в планировщик');
-    } finally {
-      setSendingPlanner(false);
-    }
-  };
-
-  // Интеграция с Календарем
+  // Быстрая заметка становится канонической задачей планировщика.
   const handlePushToCalendar = async (noteText: string) => {
     if (!selectedDate) {
       toast.error('Выберите дату');
@@ -197,11 +126,11 @@ export default function QuickNotes() {
       const { error } = await supabase.from('bx_events').insert(newEvent);
       if (error) throw error;
 
-      toast.success('Событие добавлено в календарь');
+      toast.success('Задача добавлена в планировщик');
       setCalendarModalId(null);
-      emitPlannerReload(); // Обновим календарь
-    } catch (e: any) {
-      toast.error(e?.message || 'Не удалось добавить в календарь');
+      emitPlannerReload();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Не удалось добавить задачу');
     } finally {
       setSendingCalendar(false);
     }
@@ -328,18 +257,11 @@ export default function QuickNotes() {
                 ✏️
               </button>
               <button 
-                onClick={() => setPlannerModalId(n.id)} 
-                title="Создать задачу в Канбан"
-                className="p-1.5 text-bx-muted hover:text-blue-500 bg-bx-surface border border-bx-border hover:border-blue-500/30 rounded-lg transition-all text-xs cursor-pointer shadow-sm"
-              >
-                📋
-              </button>
-              <button 
                 onClick={() => setCalendarModalId(n.id)} 
-                title="Создать событие в календаре"
+                title="Создать задачу в планировщике"
                 className="p-1.5 text-bx-muted hover:text-indigo-500 bg-bx-surface border border-bx-border hover:border-blue-500/30 rounded-lg transition-all text-xs cursor-pointer shadow-sm"
               >
-                📅
+                ✅
               </button>
               <button 
                 onClick={() => remove(n.id)} 
@@ -350,61 +272,11 @@ export default function QuickNotes() {
               </button>
             </div>
 
-            {/* Всплывающее меню: Отправить в Канбан */}
-            {plannerModalId === n.id && (
-              <div className="absolute right-10 top-0 z-[50] w-64 bg-bx-surface border border-bx-border rounded-2xl p-4.5 shadow-2xl flex flex-col gap-3 font-sans animate-in fade-in zoom-in-95 duration-100 text-bx-text">
-                <div className="flex items-center justify-between border-b border-bx-border/50 pb-2">
-                  <span className="text-xs font-black uppercase">Экспорт в Канбан</span>
-                  <button onClick={() => setPlannerModalId(null)} className="text-bx-muted hover:text-bx-text text-sm">✕</button>
-                </div>
-                
-                {boards.length === 0 ? (
-                  <p className="text-[10px] text-bx-muted">У вас нет досок. Сначала создайте доску в Планировщике.</p>
-                ) : (
-                  <>
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-bold text-bx-muted uppercase tracking-wider">Выберите доску</label>
-                      <select 
-                        value={selectedBoardId} 
-                        onChange={e => handleBoardChange(e.target.value)}
-                        className="w-full bg-bx-surface-2 text-bx-text text-xs p-2 rounded-xl border border-bx-border focus:outline-none"
-                      >
-                        {boards.map(b => <option key={b.id} value={b.id}>{b.icon} {b.name}</option>)}
-                      </select>
-                    </div>
-
-                    {selectedBoardId && (
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-bx-muted uppercase tracking-wider">Колонка назначения</label>
-                        <select 
-                          value={selectedColId} 
-                          onChange={e => setSelectedColId(e.target.value)}
-                          className="w-full bg-bx-surface-2 text-bx-text text-xs p-2 rounded-xl border border-bx-border focus:outline-none"
-                        >
-                          {boards.find(x => x.id === selectedBoardId)?.columns.map(c => (
-                            <option key={c.id} value={c.id}>{c.title}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={() => handlePushToPlanner(n.text)}
-                      disabled={sendingPlanner}
-                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-xl transition-all shadow-md mt-1 cursor-pointer"
-                    >
-                      {sendingPlanner ? 'Создаю...' : 'Создать задачу'}
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Всплывающее меню: Отправить в Календарь */}
+            {/* Всплывающее меню: создать единую задачу */}
             {calendarModalId === n.id && (
               <div className="absolute right-10 top-0 z-[50] w-60 bg-bx-surface border border-bx-border rounded-2xl p-4.5 shadow-2xl flex flex-col gap-3 font-sans animate-in fade-in zoom-in-95 duration-100 text-bx-text">
                 <div className="flex items-center justify-between border-b border-bx-border/50 pb-2">
-                  <span className="text-xs font-black uppercase">Экспорт в календарь</span>
+                  <span className="text-xs font-black uppercase">Новая задача</span>
                   <button onClick={() => setCalendarModalId(null)} className="text-bx-muted hover:text-bx-text text-sm">✕</button>
                 </div>
                 
@@ -423,7 +295,7 @@ export default function QuickNotes() {
                   disabled={sendingCalendar || !selectedDate}
                   className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-xl transition-all shadow-md mt-1 cursor-pointer"
                 >
-                  {sendingCalendar ? 'Создаю...' : 'Добавить событие'}
+                  {sendingCalendar ? 'Создаю...' : 'Создать задачу'}
                 </button>
               </div>
             )}

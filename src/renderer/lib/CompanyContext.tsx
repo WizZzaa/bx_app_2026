@@ -1,15 +1,21 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { companiesRepo } from './db/companiesRepo';
-import type { Company } from './db/types';
+import { supabase } from './db/supabase';
+import { emitPlannerReload } from '../pages/planner/plannerBus';
+import { syncTaxDeadlines } from '../pages/planner/taxSeeder';
+import CompanyProfileWizard, { type CompanyWizardInitial } from '../components/CompanyProfileWizard';
+import { useToast } from './ui/ToastContext';
+import type { Company, CompanyProfileForm } from './db/types';
 
 interface Ctx {
   companies: Company[];
   active: Company | null;
   setActive: (c: Company | null) => void;
   reload: () => Promise<void>;
-  addCompany: (input: { name: string; inn?: string; regime?: string }) => Promise<void>;
-  updateCompany: (id: string, updates: { name?: string; inn?: string | null; regime?: string | null; color?: string | null }) => Promise<void>;
+  updateCompany: (id: string, updates: Partial<CompanyProfileForm> & { color?: string | null; is_active?: boolean }) => Promise<void>;
   removeCompany: (id: string) => Promise<void>;
+  startCompanyCreation: (initial?: CompanyWizardInitial) => void;
+  startCompanyEdit: (company?: Company) => void;
 }
 
 const CompanyCtx = createContext<Ctx | null>(null);
@@ -17,8 +23,11 @@ const CompanyCtx = createContext<Ctx | null>(null);
 const ACTIVE_KEY = 'bx_active_company';
 
 export function CompanyProvider({ children }: { children: React.ReactNode }) {
+  const toast = useToast();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [active, setActiveState] = useState<Company | null>(null);
+  const [wizard, setWizard] = useState<{ company?: Company; initial?: CompanyWizardInitial } | null>(null);
+  const [wizardBusy, setWizardBusy] = useState(false);
 
   const reload = useCallback(async () => {
     try {
@@ -40,12 +49,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     else localStorage.removeItem(ACTIVE_KEY);
   }, []);
 
-  const addCompany = useCallback(async (input: { name: string; inn?: string; regime?: string }) => {
-    await companiesRepo.add(input);
-    await reload();
-  }, [reload]);
-
-  const updateCompany = useCallback(async (id: string, updates: { name?: string; inn?: string | null; regime?: string | null; color?: string | null }) => {
+  const updateCompany = useCallback(async (id: string, updates: Partial<CompanyProfileForm> & { color?: string | null; is_active?: boolean }) => {
     await companiesRepo.update(id, updates);
     await reload();
   }, [reload]);
@@ -58,9 +62,63 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     await reload();
   }, [active, reload, setActive]);
 
+  const startCompanyCreation = useCallback((initial?: CompanyWizardInitial) => {
+    setWizard({ initial });
+  }, []);
+
+  const startCompanyEdit = useCallback((company?: Company) => {
+    const target = company ?? active;
+    if (target) setWizard({ company: target });
+  }, [active]);
+
+  async function confirmCompanyProfile(profile: CompanyProfileForm) {
+    if (!wizard) return;
+    setWizardBusy(true);
+    try {
+      const saved = wizard.company
+        ? await companiesRepo.update(wizard.company.id, profile)
+        : await companiesRepo.add(profile);
+
+      localStorage.setItem(ACTIVE_KEY, saved.id);
+      setActiveState(saved);
+      await reload();
+
+      const { data: { user } } = await supabase.auth.getUser();
+      const syncResult = user
+        ? await syncTaxDeadlines(user.id, saved.id)
+        : { added: 0, removed: 0 };
+      emitPlannerReload();
+      setWizard(null);
+      const changes = [
+        syncResult.added > 0 ? `добавлено: ${syncResult.added}` : '',
+        syncResult.removed > 0 ? `убрано: ${syncResult.removed}` : '',
+      ].filter(Boolean).join(', ');
+      toast.success(changes
+        ? `Профиль подтверждён; обязательства — ${changes}`
+        : 'Профиль компании подтверждён');
+    } catch (saveError) {
+      console.error('[CompanyProfileWizard] save failed:', saveError);
+      const message = saveError instanceof Error ? saveError.message : 'Не удалось сохранить профиль компании';
+      toast.error(message.includes('column')
+        ? 'Схема профиля компании ещё не обновлена на сервере'
+        : message);
+    } finally {
+      setWizardBusy(false);
+    }
+  }
+
   return (
-    <CompanyCtx.Provider value={{ companies, active, setActive, reload, addCompany, updateCompany, removeCompany }}>
+    <CompanyCtx.Provider value={{ companies, active, setActive, reload, updateCompany, removeCompany, startCompanyCreation, startCompanyEdit }}>
       {children}
+      {wizard && (
+        <CompanyProfileWizard
+          company={wizard.company}
+          initial={wizard.initial}
+          busy={wizardBusy}
+          onCancel={() => setWizard(null)}
+          onConfirm={confirmCompanyProfile}
+        />
+      )}
     </CompanyCtx.Provider>
   );
 }
