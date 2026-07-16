@@ -14,6 +14,7 @@ import { useDocuments } from '../lib/useDocuments'
 import { usePlan } from '../lib/plan'
 import { useToast } from '../lib/ui/ToastContext'
 import { ResourceHero, primaryActionClass, secondaryActionClass } from '../components/workspace/ResourceWorkspace'
+import { TranslatorTutorial } from '../components/TranslatorTutorial'
 import {
   TRANSLATION_LANGUAGES,
   TRANSLATION_MODES,
@@ -41,6 +42,7 @@ interface TranslationHistoryItem {
 
 const HISTORY_KEY = 'bx_translation_history'
 const HISTORY_ENABLED_KEY = 'bx_translation_history_enabled'
+const TUTORIAL_ENABLED_KEY = 'bx_translator_tutorial_enabled'
 const MAX_FILE_SIZE = 15 * 1024 * 1024
 const DOCUMENT_CATEGORIES = ['Договор', 'Акт', 'Устав', 'Справка', 'Другое']
 
@@ -106,6 +108,7 @@ export default function Translator() {
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
   const [historyEnabled, setHistoryEnabled] = useState(() => localStorage.getItem(HISTORY_ENABLED_KEY) === 'true')
+  const [tutorialEnabled, setTutorialEnabled] = useState(() => localStorage.getItem(TUTORIAL_ENABLED_KEY) !== 'false')
   const [history, setHistory] = useState<TranslationHistoryItem[]>(loadHistory)
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [archiveCompanyId, setArchiveCompanyId] = useState('')
@@ -289,6 +292,12 @@ export default function Translator() {
     localStorage.setItem(HISTORY_ENABLED_KEY, String(next))
   }
 
+  const toggleTutorial = () => {
+    const next = !tutorialEnabled
+    setTutorialEnabled(next)
+    localStorage.setItem(TUTORIAL_ENABLED_KEY, String(next))
+  }
+
   const restoreHistory = (item: TranslationHistoryItem) => {
     setSource(item.source); setTarget(item.target); setMode(item.mode); setSourceText(item.sourceText); setResultText(item.resultText); setPlainText(''); setFileName(item.title); setActiveResult('translation')
   }
@@ -299,6 +308,8 @@ export default function Translator() {
     <div className="custom-scrollbar flex-1 overflow-y-auto bg-bx-bg text-bx-text">
       <div className="bx-page-container space-y-5 py-5 lg:py-6">
         <ResourceHero eyebrow="Профессиональная работа с документами" title="Перевод без потери терминов, структуры и смысла" description="Рабочий стол для договоров, писем, счетов, таблиц и нормативных текстов на узбекском, русском и английском языках. Результат остаётся редактируемым перед выгрузкой." icon="languages" stats={[{ value: '4', label: 'языковых варианта' }, { value: '7', label: 'форматов файлов' }, { value: '15 МБ', label: 'до одного файла' }]} />
+
+        <TranslatorTutorial enabled={tutorialEnabled} literalActive={mode === 'literal'} onToggle={toggleTutorial} onChooseLiteral={() => setMode('literal')} />
 
         <section className="grid gap-3 lg:grid-cols-[1fr_auto_1fr]" aria-label="Направление перевода">
           <LanguageSelect label="Исходный язык" value={source} onChange={setSourceLanguage} />

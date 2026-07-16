@@ -12,7 +12,7 @@ export const TRANSLATION_MODES: Array<{ id: TranslationMode; label: string; desc
   { id: 'official', label: 'Официально-деловой', description: 'Для писем, заявлений и внутренних документов' },
   { id: 'accounting', label: 'Бухгалтерский', description: 'Сохраняет налоговые термины, суммы и обозначения' },
   { id: 'legal', label: 'Юридический', description: 'Для договоров, обязательств и формулировок сторон' },
-  { id: 'literal', label: 'Максимально близко', description: 'Минимум перефразирования исходного текста' },
+  { id: 'literal', label: 'Дословный перевод', description: 'Обычный перевод максимально близко к исходному тексту' },
 ]
 
 const languageName = (id: TranslationLanguage) => TRANSLATION_LANGUAGES.find(language => language.id === id)?.label ?? id
