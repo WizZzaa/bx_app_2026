@@ -700,8 +700,8 @@
     "semantic_hash": ""
   },
   "renderer/pages/Support.tsx": {
-    "mtime": 1784223817.673732,
-    "ast_hash": "72bd575fa439670188af71e84ab76bb8",
+    "mtime": 1784233172.0854442,
+    "ast_hash": "0789d4d29b16af23fe8263464b7a2a9e",
     "semantic_hash": ""
   },
   "renderer/pages/Templates.tsx": {
@@ -1005,8 +1005,8 @@
     "semantic_hash": ""
   },
   "renderer/pages/support/useTickets.ts": {
-    "mtime": 1784064416.5510297,
-    "ast_hash": "a68b2e5e46949f472c0bda32c0e3f90f",
+    "mtime": 1784232857.616489,
+    "ast_hash": "2957dbce78bf5fd151d09f63c0f0640e",
     "semantic_hash": ""
   },
   "renderer/pages/tools/ActiveXConfigurator.tsx": {
@@ -1120,8 +1120,8 @@
     "semantic_hash": ""
   },
   "shared/version.ts": {
-    "mtime": 1784232389.6026986,
-    "ast_hash": "463a78eab7f435531892307eeda0bf75",
+    "mtime": 1784232857.6215353,
+    "ast_hash": "87333f1b1cbf5a2c37109cd984719bde",
     "semantic_hash": ""
   },
   "renderer/assets/widgets/horoscope.png": {
@@ -1167,6 +1167,26 @@
   "renderer/components/CompanyRoleGuide.tsx": {
     "mtime": 1784232396.262214,
     "ast_hash": "0bb0710095e0493b1d6b1a8205b06fec",
+    "semantic_hash": ""
+  },
+  "renderer/pages/Support.form.test.tsx": {
+    "mtime": 1784232976.4044514,
+    "ast_hash": "be83d25f2ba514d305e888a7845d1b42",
+    "semantic_hash": ""
+  },
+  "renderer/pages/support/SupportTicketNavItem.test.tsx": {
+    "mtime": 1784232857.615963,
+    "ast_hash": "3dd762ea7ab5d0297a05fbb66d7e0285",
+    "semantic_hash": ""
+  },
+  "renderer/pages/support/SupportTicketNavItem.tsx": {
+    "mtime": 1784233172.085017,
+    "ast_hash": "69a93e9e080599045cdba633a4ebe397",
+    "semantic_hash": ""
+  },
+  "renderer/pages/support/supportUi.ts": {
+    "mtime": 1784232857.6152675,
+    "ast_hash": "3478ef1d24fe57da5df933da0cc2b3c1",
     "semantic_hash": ""
   }
 }
