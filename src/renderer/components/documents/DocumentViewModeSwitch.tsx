@@ -1,16 +1,15 @@
 import React, { useState } from 'react'
 import Icon from '../../lib/ui/Icon'
+import { DOCUMENT_WORKSPACE_MODE_KEY, loadDocumentWorkspaceMode } from '../../lib/workspaceModes'
 
 export type DocumentViewMode = 'simple' | 'detailed'
 
-const DOCUMENT_VIEW_MODE_KEY = 'bx_document_workspace_view_mode'
-
 export function useDocumentViewMode() {
-  const [viewMode, setViewMode] = useState<DocumentViewMode>(() => localStorage.getItem(DOCUMENT_VIEW_MODE_KEY) === 'detailed' ? 'detailed' : 'simple')
+  const [viewMode, setViewMode] = useState<DocumentViewMode>(loadDocumentWorkspaceMode)
 
   const changeViewMode = (next: DocumentViewMode) => {
     setViewMode(next)
-    localStorage.setItem(DOCUMENT_VIEW_MODE_KEY, next)
+    localStorage.setItem(DOCUMENT_WORKSPACE_MODE_KEY, next)
   }
 
   return [viewMode, changeViewMode] as const

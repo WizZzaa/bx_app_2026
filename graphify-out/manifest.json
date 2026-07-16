@@ -715,8 +715,8 @@
     "semantic_hash": ""
   },
   "src/renderer/pages/Translator.tsx": {
-    "mtime": 1784233667.8676713,
-    "ast_hash": "a6f4e0a6f4f69acc690822df3f8b35e3",
+    "mtime": 1784239162.375939,
+    "ast_hash": "b2782c52c5c0a9b8bbbb2168aa537c23",
     "semantic_hash": ""
   },
   "src/renderer/pages/TranslatorTutorial.regression-1.test.tsx": {
@@ -1205,8 +1205,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/documents/DocumentViewModeSwitch.tsx": {
-    "mtime": 1784234201.8712723,
-    "ast_hash": "6901cf30bc7b8f8eb8357077c740384d",
+    "mtime": 1784239162.3767262,
+    "ast_hash": "69666b106b4393d21ad2a3af4ffeb10a",
     "semantic_hash": ""
   },
   "src/renderer/components/workspace/WorkbenchChrome.test.tsx": {
@@ -1232,6 +1232,16 @@
   "src/renderer/lib/db/companiesRepo.test.ts": {
     "mtime": 1784238823.8913543,
     "ast_hash": "fb6abcca93e2a9fa1de589ef3946b182",
+    "semantic_hash": ""
+  },
+  "src/renderer/lib/workspaceModes.test.ts": {
+    "mtime": 1784239162.377,
+    "ast_hash": "cfe44a1a45cb5ee3c093e616bdbb2880",
+    "semantic_hash": ""
+  },
+  "src/renderer/lib/workspaceModes.ts": {
+    "mtime": 1784239162.3753636,
+    "ast_hash": "c02afdda250f521614d9f600c5bc611e",
     "semantic_hash": ""
   }
 }

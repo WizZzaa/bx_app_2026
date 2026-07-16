@@ -16,6 +16,7 @@ import { useToast } from '../lib/ui/ToastContext'
 import { ResourceHero, primaryActionClass, secondaryActionClass } from '../components/workspace/ResourceWorkspace'
 import { TranslatorTutorial } from '../components/TranslatorTutorial'
 import { TranslatorWorkspaceSwitch, type TranslatorWorkspaceMode } from '../components/TranslatorWorkspaceSwitch'
+import { loadTranslatorWorkspaceMode, TRANSLATOR_WORKSPACE_MODE_KEY } from '../lib/workspaceModes'
 import {
   TRANSLATION_LANGUAGES,
   TRANSLATION_MODES,
@@ -44,7 +45,6 @@ interface TranslationHistoryItem {
 const HISTORY_KEY = 'bx_translation_history'
 const HISTORY_ENABLED_KEY = 'bx_translation_history_enabled'
 const TUTORIAL_ENABLED_KEY = 'bx_translator_tutorial_enabled'
-const WORKSPACE_MODE_KEY = 'bx_translator_workspace_mode'
 const MAX_FILE_SIZE = 15 * 1024 * 1024
 const DOCUMENT_CATEGORIES = ['Договор', 'Акт', 'Устав', 'Справка', 'Другое']
 
@@ -111,7 +111,7 @@ export default function Translator() {
   const [error, setError] = useState('')
   const [historyEnabled, setHistoryEnabled] = useState(() => localStorage.getItem(HISTORY_ENABLED_KEY) === 'true')
   const [tutorialEnabled, setTutorialEnabled] = useState(() => localStorage.getItem(TUTORIAL_ENABLED_KEY) !== 'false')
-  const [workspaceMode, setWorkspaceMode] = useState<TranslatorWorkspaceMode>(() => localStorage.getItem(WORKSPACE_MODE_KEY) === 'professional' ? 'professional' : 'simple')
+  const [workspaceMode, setWorkspaceMode] = useState<TranslatorWorkspaceMode>(loadTranslatorWorkspaceMode)
   const [history, setHistory] = useState<TranslationHistoryItem[]>(loadHistory)
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [archiveCompanyId, setArchiveCompanyId] = useState('')
@@ -309,7 +309,7 @@ export default function Translator() {
 
   const changeWorkspaceMode = (next: TranslatorWorkspaceMode) => {
     setWorkspaceMode(next)
-    localStorage.setItem(WORKSPACE_MODE_KEY, next)
+    localStorage.setItem(TRANSLATOR_WORKSPACE_MODE_KEY, next)
   }
 
   const professionalMode = workspaceMode === 'professional'
