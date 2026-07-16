@@ -93,3 +93,6 @@ out/
 
 # claude-flow runtime session data
 .claude-flow/
+
+# Local QA evidence and reports
+.gstack/
