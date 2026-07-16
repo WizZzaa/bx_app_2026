@@ -59,3 +59,14 @@ export interface CurrencyRate {
   diff: number;  // изменение к прошлому дню
   date: string;  // дата курса (DD.MM.YYYY от cbu.uz)
 }
+
+export interface BankExchangeRate {
+  bankId: 'ipak-yuli' | 'aloqabank' | 'trustbank';
+  bankName: string;
+  sourceUrl: string;
+  updatedAt: string | null;
+  code: string;
+  buy: number;
+  sell: number;
+  centralBank: number | null;
+}

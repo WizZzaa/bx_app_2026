@@ -5,7 +5,7 @@ import { scanCache, cleanCache } from './services/onecCache';
 import { listProcesses, killProcesses } from './services/onecProcess';
 import { pickDatabaseFile, pickBackupDir, backupDatabase } from './services/onecBackup';
 import { fetchWeather } from './services/weather';
-import { fetchRates, fetchRateOnDate } from './services/currency';
+import { fetchRates, fetchRateOnDate, fetchBankExchangeRates } from './services/currency';
 import { scanPcTemp, cleanPcTemp, checkRunningBrowsers } from './services/pcClean'
 import { pickPfxFile, parsePfx } from './services/ecpParser'
 import { signFile, verifySig, pickFileToSign, pickSigFile } from './services/ecpSigner'
@@ -33,6 +33,7 @@ export function registerIpcHandlers() {
   ipcMain.handle(IPC.WEATHER_GET, () => fetchWeather())
   ipcMain.handle(IPC.CURRENCY_GET, (_e, codes?: string[]) => fetchRates(codes))
   ipcMain.handle(IPC.CURRENCY_ON_DATE, (_e, code: string, date: string) => fetchRateOnDate(code, date))
+  ipcMain.handle(IPC.CURRENCY_BANKS_GET, (_e, codes?: string[]) => fetchBankExchangeRates(codes))
 
   // --- PC Cleaner ---
   ipcMain.handle(IPC.PC_SCAN, () => scanPcTemp())
@@ -129,4 +130,3 @@ export function registerIpcHandlers() {
     return win?.isMaximized() ?? false
   })
 }
-

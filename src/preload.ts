@@ -10,6 +10,7 @@ import type {
   BackupResult,
   WeatherData,
   CurrencyRate,
+  BankExchangeRate,
 } from './shared/types';
 import type { TempDirInfo, PcCleanResult } from './main/services/pcClean'
 import type { ParsedEcpInfo } from './main/services/ecpParser'
@@ -34,7 +35,9 @@ const api = {
     getWeather: (): Promise<WeatherData> => ipcRenderer.invoke(IPC.WEATHER_GET),
     getRates: (codes?: string[]): Promise<CurrencyRate[]> => ipcRenderer.invoke(IPC.CURRENCY_GET, codes),
     getRateOnDate: (code: string, date: string): Promise<CurrencyRate | null> =>
-      ipcRenderer.invoke(IPC.CURRENCY_ON_DATE, code, date)
+      ipcRenderer.invoke(IPC.CURRENCY_ON_DATE, code, date),
+    getBankRates: (codes?: string[]): Promise<BankExchangeRate[]> =>
+      ipcRenderer.invoke(IPC.CURRENCY_BANKS_GET, codes)
   },
   pc: {
     scan: (): Promise<TempDirInfo[]> => ipcRenderer.invoke(IPC.PC_SCAN),
@@ -108,4 +111,3 @@ const api = {
 contextBridge.exposeInMainWorld('bx', api)
 
 export type BxApi = typeof api
-

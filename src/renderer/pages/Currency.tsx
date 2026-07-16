@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import type { CurrencyRate } from '../../shared/types'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { BankExchangeRate, CurrencyRate } from '../../shared/types'
 import { todayISO } from '../lib/dates'
 import Icon from '../lib/ui/Icon'
 import { widgetsApi } from '../lib/widgetsApi'
@@ -46,6 +46,14 @@ export function buildCurrencyCsv(rows: CurrencyExportRow[]) {
   return `\uFEFF${lines.map(line => line.map(quote).join(';')).join('\r\n')}`
 }
 
+export function findBestBankRates(rates: BankExchangeRate[], code: string) {
+  const available = rates.filter(rate => rate.code === code && rate.buy > 0 && rate.sell > 0)
+  return {
+    bestBuy: available.reduce<BankExchangeRate | null>((best, rate) => !best || rate.buy > best.buy ? rate : best, null),
+    bestSell: available.reduce<BankExchangeRate | null>((best, rate) => !best || rate.sell < best.sell ? rate : best, null),
+  }
+}
+
 function localISO(date: Date) { const y = date.getFullYear(); const m = String(date.getMonth() + 1).padStart(2, '0'); const d = String(date.getDate()).padStart(2, '0'); return `${y}-${m}-${d}` }
 function daysAgo(days: number) { const date = new Date(); date.setDate(date.getDate() - days); return localISO(date) }
 
@@ -73,12 +81,31 @@ export default function Currency() {
   const [exportProgress, setExportProgress] = useState({ done: 0, total: 0 })
   const [exportError, setExportError] = useState('')
   const [exportSuccess, setExportSuccess] = useState(false)
+  const [bankCode, setBankCode] = useState<ForeignCode>('USD')
+  const [bankRates, setBankRates] = useState<BankExchangeRate[]>([])
+  const [bankLoading, setBankLoading] = useState(true)
+  const [bankError, setBankError] = useState('')
+  const bankRequestId = useRef(0)
 
   const load = useCallback(() => {
     setLoading(true); setError(false)
     widgetsApi.getRates(selectedCodes).then(setRates).catch(() => setError(true)).finally(() => setLoading(false))
   }, [selectedCodes])
   useEffect(load, [load])
+
+  const loadBankRates = useCallback(() => {
+    const requestId = ++bankRequestId.current
+    setBankLoading(true); setBankError('')
+    widgetsApi.getBankRates(selectedCodes)
+      .then(items => { if (requestId === bankRequestId.current) setBankRates(items) })
+      .catch(() => {
+        if (requestId !== bankRequestId.current) return
+        setBankRates([])
+        setBankError('Официальные страницы банков сейчас не ответили. Повторите обновление позже.')
+      })
+      .finally(() => { if (requestId === bankRequestId.current) setBankLoading(false) })
+  }, [selectedCodes])
+  useEffect(loadBankRates, [loadBankRates])
 
   useEffect(() => {
     let active = true
@@ -92,6 +119,8 @@ export default function Currency() {
   const rateMap = useMemo(() => Object.fromEntries(rates.map(rate => [rate.code, rate.value])), [rates])
   const converterCodes = useMemo(() => ['UZS', ...selectedCodes] as CurrencyCode[], [selectedCodes])
   const converted = convertCurrency(Number(amount.replace(',', '.')), from, to, rateMap)
+  const bankComparison = useMemo(() => findBestBankRates(bankRates, bankCode), [bankRates, bankCode])
+  const visibleBankRates = useMemo(() => bankRates.filter(rate => rate.code === bankCode), [bankRates, bankCode])
 
   const toggleExtra = (code: string) => {
     const next = extraCodes.includes(code) ? extraCodes.filter(item => item !== code) : [...extraCodes, code]
@@ -133,7 +162,7 @@ export default function Currency() {
     <main className="z-10 flex-1 overflow-y-auto bg-bx-bg px-5 py-5 text-bx-text sm:px-6">
       <div className="bx-page-container space-y-4">
         <header className="relative overflow-hidden rounded-[28px] border border-bx-border bg-gradient-to-r from-blue-600/[0.10] via-bx-surface to-cyan-500/[0.07] p-6 shadow-sm">
-          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">Финансовый инструмент</p><h1 className="mt-2 text-3xl font-black tracking-tight text-bx-text">Курсы валют</h1><p className="mt-2 max-w-2xl text-xs leading-relaxed text-bx-muted">Точные курсы ЦБ РУз на дату, конвертер, архивная динамика и выгрузка периода в Excel-совместимый CSV.</p></div><button onClick={load} className="flex min-h-11 items-center gap-2 rounded-xl border border-bx-border bg-bx-surface px-4 text-xs font-bold text-bx-text hover:border-blue-500/30"><Icon name="recycle" className="h-4 w-4" />Обновить</button></div>
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">Финансовый инструмент</p><h1 className="mt-2 text-3xl font-black tracking-tight text-bx-text">Курсы валют</h1><p className="mt-2 max-w-2xl text-xs leading-relaxed text-bx-muted">Курс ЦБ РУз, официальные предложения банков, архивная динамика и выгрузка периода в Excel-совместимый CSV.</p></div><button onClick={() => { load(); loadBankRates() }} className="flex min-h-11 items-center gap-2 rounded-xl border border-bx-border bg-bx-surface px-4 text-xs font-bold text-bx-text hover:border-blue-500/30"><Icon name="recycle" className="h-4 w-4" />Обновить всё</button></div>
         </header>
 
         <section className="rounded-[24px] border border-bx-border bg-bx-surface p-4 shadow-sm" aria-labelledby="currency-selection-title">
@@ -142,6 +171,22 @@ export default function Currency() {
 
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Текущие курсы">
           {loading ? Array.from({ length: selectedCodes.length }).map((_, i) => <div key={i} className="h-28 animate-pulse rounded-[22px] bg-bx-surface" />) : error ? <button onClick={load} className="col-span-full rounded-[22px] border border-dashed border-bx-border bg-bx-surface py-10 text-sm font-bold text-bx-muted">Курсы не загрузились · Повторить</button> : rates.map(rate => <RateCard key={rate.code} rate={rate} />)}
+        </section>
+
+        <section className="overflow-hidden rounded-[24px] border border-bx-border bg-bx-surface shadow-sm" aria-labelledby="bank-rates-title">
+          <div className="border-b border-bx-border bg-gradient-to-r from-emerald-500/[0.08] via-bx-surface to-blue-500/[0.06] p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div><p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">Официальные страницы банков</p><h2 id="bank-rates-title" className="mt-1 text-lg font-black text-bx-text">Где выгоднее купить или продать валюту</h2><p className="mt-1 max-w-3xl text-[10px] leading-relaxed text-bx-muted">«Покупка» — банк покупает валюту у вас: выгоднее максимальный курс. «Продажа» — вы покупаете валюту у банка: выгоднее минимальный курс.</p></div>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Валюта для сравнения банков">{selectedCodes.map(code => <button key={code} onClick={() => setBankCode(code)} aria-pressed={bankCode === code} className={`min-h-10 rounded-xl px-3 text-[10px] font-black transition-colors ${bankCode === code ? 'bg-emerald-600 text-white' : 'border border-bx-border bg-bx-bg text-bx-muted hover:text-bx-text'}`}>{code}</button>)}</div>
+            </div>
+          </div>
+          <div className="p-5">
+            {bankLoading ? <div className="grid gap-3 md:grid-cols-3">{Array.from({ length: 3 }).map((_, index) => <div key={index} className="h-36 animate-pulse rounded-2xl bg-bx-bg" />)}</div> : bankError ? <div className="rounded-2xl border border-dashed border-amber-500/30 bg-amber-500/[0.08] p-5"><p role="alert" className="text-xs font-bold text-amber-800 dark:text-amber-200">{bankError}</p><button onClick={loadBankRates} className="mt-3 min-h-10 rounded-xl bg-amber-600 px-4 text-[10px] font-black text-white">Повторить</button></div> : visibleBankRates.length ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{visibleBankRates.map(rate => {
+              const bestBuy = bankComparison.bestBuy?.bankId === rate.bankId
+              const bestSell = bankComparison.bestSell?.bankId === rate.bankId
+              return <article key={`${rate.bankId}-${rate.code}`} className={`rounded-2xl border p-4 ${bestBuy || bestSell ? 'border-emerald-500/30 bg-emerald-500/[0.045]' : 'border-bx-border bg-bx-bg'}`}><div className="flex items-start justify-between gap-3"><div><h3 className="text-sm font-black text-bx-text">{rate.bankName}</h3><p className="mt-1 text-[9px] text-bx-muted">{rate.updatedAt ? `Обновлено: ${formatBankUpdatedAt(rate.updatedAt)}` : 'Получено с официальной страницы'}</p></div><a href={rate.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-bx-border bg-bx-surface px-2.5 text-[9px] font-bold text-blue-600 dark:text-blue-300">Источник <Icon name="external" className="h-3 w-3" /></a></div><div className="mt-4 grid grid-cols-2 gap-2"><BankValue label="Банк покупает" value={rate.buy} highlighted={bestBuy} badge="Лучший курс" /><BankValue label="Банк продаёт" value={rate.sell} highlighted={bestSell} badge="Самая низкая цена" /></div><p className="mt-3 text-[9px] text-bx-muted">Разница покупки и продажи: <b className="tabular-nums text-bx-text">{formatRate(rate.sell - rate.buy)} сум</b></p></article>
+            })}</div> : <p className="rounded-2xl border border-dashed border-bx-border py-8 text-center text-xs text-bx-muted">Для {bankCode} банки пока не опубликовали сравнимые курсы.</p>}
+          </div>
         </section>
 
         <section className="grid gap-4 xl:grid-cols-2">
@@ -175,6 +220,8 @@ export default function Currency() {
 
 function downloadCsv(content: string, filename: string) { const url = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8' })); const link = document.createElement('a'); link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url) }
 function formatRate(value: number) { return value.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) }
+function formatBankUpdatedAt(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }
+function BankValue({ label, value, highlighted, badge }: { label: string; value: number; highlighted: boolean; badge: string }) { return <div className={`rounded-xl border p-3 ${highlighted ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-bx-border bg-bx-surface'}`}><p className="text-[8px] font-black uppercase tracking-wide text-bx-muted">{label}</p><p className="mt-1 text-lg font-black tabular-nums text-bx-text">{formatRate(value)}</p>{highlighted && <p className="mt-1 text-[8px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{badge}</p>}</div> }
 function RateCard({ rate }: { rate: CurrencyRate }) { return <article className="rounded-[22px] border border-bx-border bg-bx-surface p-5 shadow-sm"><div className="flex items-start justify-between"><span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-500/10 text-xs font-black text-blue-600 dark:text-blue-300">{rate.code}</span><span className={`rounded-lg px-2 py-1 text-[9px] font-bold ${rate.diff >= 0 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300' : 'bg-rose-500/10 text-rose-600 dark:text-rose-300'}`}>{rate.diff >= 0 ? '+' : '−'}{Math.abs(rate.diff).toFixed(2)}</span></div><p className="mt-4 text-2xl font-black tabular-nums text-bx-text">{formatRate(rate.value)} <span className="text-xs text-bx-muted">сум</span></p><p className="mt-1 text-[10px] text-bx-muted">{rate.name}</p></article> }
 function ToolHeader({ icon, tone, eyebrow, title }: { icon: string; tone: 'blue' | 'emerald'; eyebrow: string; title: string }) { const style = tone === 'blue' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-300' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'; return <div className="flex items-center gap-2.5"><span className={`grid h-9 w-9 place-items-center rounded-xl ${style}`}><Icon name={icon} className="h-4 w-4" /></span><div><p className={`text-[9px] font-extrabold uppercase tracking-wide ${tone === 'blue' ? 'text-blue-600 dark:text-blue-300' : 'text-emerald-600 dark:text-emerald-300'}`}>{eyebrow}</p><h2 className="text-sm font-black text-bx-text">{title}</h2></div></div> }
 function DateField({ label, value, onChange, min, max }: { label: string; value: string; onChange: (value: string) => void; min?: string; max?: string }) { return <label className="block flex-1 text-[9px] font-bold uppercase tracking-wide text-bx-muted">{label}<input type="date" value={value} min={min} max={max} onChange={event => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-xs font-bold text-bx-text outline-none focus:border-blue-500" /></label> }

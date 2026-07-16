@@ -1,4 +1,4 @@
-import type { WeatherData, CurrencyRate } from '../../shared/types';
+import type { WeatherData, CurrencyRate, BankExchangeRate } from '../../shared/types';
 
 // Доступ к window.bx (расширяем тип из onecApi.ts через отдельную декларацию)
 interface WidgetBridge {
@@ -6,6 +6,7 @@ interface WidgetBridge {
     getWeather(): Promise<WeatherData>;
     getRates(codes?: string[]): Promise<CurrencyRate[]>;
     getRateOnDate(code: string, date: string): Promise<CurrencyRate | null>;
+    getBankRates(codes?: string[]): Promise<BankExchangeRate[]>;
   };
 }
 
@@ -106,5 +107,12 @@ export const widgetsApi = {
     const wanted = new Set(codes);
     return data.filter((item: { Ccy: string }) => wanted.has(item.Ccy)).map(mapRate)
       .sort((a: CurrencyRate, b: CurrencyRate) => codes.indexOf(a.code) - codes.indexOf(b.code));
+  },
+  async getBankRates(codes = ['USD', 'EUR', 'RUB']): Promise<BankExchangeRate[]> {
+    const b = bridge();
+    if (b?.widgets) return b.widgets.getBankRates(codes);
+    const response = await fetch(`/__bx/bank-rates?codes=${encodeURIComponent(codes.join(','))}`);
+    if (!response.ok) throw new Error(`Bank rates ${response.status}`);
+    return response.json();
   },
 };
