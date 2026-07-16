@@ -5,13 +5,13 @@
     "semantic_hash": ""
   },
   "src/main/ipc.ts": {
-    "mtime": 1783888544.120765,
-    "ast_hash": "1c726c50f42ed8159191ac69cf03fb82",
+    "mtime": 1784236557.6831777,
+    "ast_hash": "1ad180ea501c8e2ccdb974c4d6ed377a",
     "semantic_hash": ""
   },
   "src/main/services/currency.ts": {
-    "mtime": 1781811947.7300258,
-    "ast_hash": "4b010b11742cdb011aed0d72a81207d5",
+    "mtime": 1784236685.8910682,
+    "ast_hash": "396191db29a8359f7c3a81c22e4cbed6",
     "semantic_hash": ""
   },
   "src/main/services/ecpParser.ts": {
@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "src/preload.ts": {
-    "mtime": 1783888544.121409,
-    "ast_hash": "b0c130a1a405219b1ce9727392ab6a0a",
+    "mtime": 1784236557.6840446,
+    "ast_hash": "7936a40033e0c77b539822b6b501dcfd",
     "semantic_hash": ""
   },
   "src/renderer/App.tsx": {
@@ -310,8 +310,8 @@
     "semantic_hash": ""
   },
   "src/renderer/lib/CompanyContext.tsx": {
-    "mtime": 1784194290.0657055,
-    "ast_hash": "63cf1b0c81e3033e4c5e36575e2359a0",
+    "mtime": 1784237408.3474097,
+    "ast_hash": "efff622fc823d39b52c6cde8ee12071a",
     "semantic_hash": ""
   },
   "src/renderer/lib/ai/aiContextBuilder.ts": {
@@ -605,8 +605,8 @@
     "semantic_hash": ""
   },
   "src/renderer/lib/widgetsApi.ts": {
-    "mtime": 1784221980.3576152,
-    "ast_hash": "67a944a39e7e627747d8c4dd25d9bee4",
+    "mtime": 1784236557.6854236,
+    "ast_hash": "85a388167472bac8864bcd1b1be53cce",
     "semantic_hash": ""
   },
   "src/renderer/pages/Ai.tsx": {
@@ -630,13 +630,13 @@
     "semantic_hash": ""
   },
   "src/renderer/pages/Currency.test.ts": {
-    "mtime": 1784221864.292872,
-    "ast_hash": "beaf77ef92e50b506b6c5be8776724fb",
+    "mtime": 1784236627.1727173,
+    "ast_hash": "3bd5ce40880b525ba8a9ec05546c9d92",
     "semantic_hash": ""
   },
   "src/renderer/pages/Currency.tsx": {
-    "mtime": 1784224011.1388986,
-    "ast_hash": "a1aa252b7b64c5f2742a8e0dccade3b9",
+    "mtime": 1784236993.5777779,
+    "ast_hash": "03291657cdd2685f79bdde19c263ddc5",
     "semantic_hash": ""
   },
   "src/renderer/pages/Dashboard.tsx": {
@@ -655,8 +655,8 @@
     "semantic_hash": ""
   },
   "src/renderer/pages/Finance.tsx": {
-    "mtime": 1784225680.2027419,
-    "ast_hash": "876f627efcda1c14c85ee0f732d1c49a",
+    "mtime": 1784237163.5451653,
+    "ast_hash": "d620bb98d11a1ee89a331b0559dbda5e",
     "semantic_hash": ""
   },
   "src/renderer/pages/InnCheck.tsx": {
@@ -690,8 +690,8 @@
     "semantic_hash": ""
   },
   "src/renderer/pages/Services.tsx": {
-    "mtime": 1784223850.05186,
-    "ast_hash": "769a6cc6df9760c51d6b6ad91f385981",
+    "mtime": 1784236133.0224175,
+    "ast_hash": "4a34b75906f94d5f6e5d74bd4e13c0d9",
     "semantic_hash": ""
   },
   "src/renderer/pages/Settings.tsx": {
@@ -1110,18 +1110,18 @@
     "semantic_hash": ""
   },
   "src/shared/ipc-channels.ts": {
-    "mtime": 1783888544.1328971,
-    "ast_hash": "78017107d069fdf15b4e7d3c80e99223",
+    "mtime": 1784236557.6822424,
+    "ast_hash": "b79ad0b8c4bceae00f544728bbac30ce",
     "semantic_hash": ""
   },
   "src/shared/types.ts": {
-    "mtime": 1782540259.5526907,
-    "ast_hash": "32a24c3967793782b2cf4c88385e8d70",
+    "mtime": 1784236557.6812751,
+    "ast_hash": "5d17c62bec35e971f93d944030a84464",
     "semantic_hash": ""
   },
   "src/shared/version.ts": {
-    "mtime": 1784235038.8548698,
-    "ast_hash": "cfef217ef4a941e81c00fd705f158480",
+    "mtime": 1784237476.2181628,
+    "ast_hash": "d56a18788abfab333ac9d83a0d2e07e5",
     "semantic_hash": ""
   },
   "src/renderer/assets/widgets/horoscope.png": {
@@ -1217,6 +1217,16 @@
   "src/renderer/components/workspace/WorkbenchChrome.tsx": {
     "mtime": 1784234732.324149,
     "ast_hash": "621345f05a9f72a4178e8ba5d30586e3",
+    "semantic_hash": ""
+  },
+  "src/renderer/pages/Services.test.ts": {
+    "mtime": 1784236133.022968,
+    "ast_hash": "a44b99fe4be0e431f36252513ad630d4",
+    "semantic_hash": ""
+  },
+  "src/main/services/currency.test.ts": {
+    "mtime": 1784236685.8917942,
+    "ast_hash": "4890103353eda44862963eab9b03cfc8",
     "semantic_hash": ""
   }
 }
