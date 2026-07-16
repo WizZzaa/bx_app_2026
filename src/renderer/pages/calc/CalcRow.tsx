@@ -17,12 +17,12 @@ export function Row({ label, value, highlight }: { label: string; value: string;
   }
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 group">
+    <div className="flex items-center justify-between gap-4 px-4 py-3 group">
       <span className="text-sm text-bx-muted">{label}</span>
       <button
         onClick={copy}
         title="Скопировать число"
-        className={`text-sm font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
+        className={`min-h-11 rounded-lg px-2 text-right text-sm font-semibold flex items-center gap-1.5 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${
           copied ? 'text-emerald-400' : highlight ? 'text-blue-400 hover:text-blue-300' : 'text-bx-text hover:text-bx-text'
         }`}
       >

@@ -615,8 +615,8 @@
     "semantic_hash": ""
   },
   "renderer/pages/Calc.tsx": {
-    "mtime": 1784226232.2606428,
-    "ast_hash": "dabcbe95cfcd526736dafd506dee6884",
+    "mtime": 1784235248.548045,
+    "ast_hash": "ebe4b2e6a8cd8767bfed6af79a9ff221",
     "semantic_hash": ""
   },
   "renderer/pages/CalendarPage.tsx": {
@@ -710,8 +710,8 @@
     "semantic_hash": ""
   },
   "renderer/pages/Tools.tsx": {
-    "mtime": 1784228481.4537373,
-    "ast_hash": "42ac675760182a0f0a9f5d84e53e6009",
+    "mtime": 1784235248.5494075,
+    "ast_hash": "0d3274db36786644b6ec6854dc4392e1",
     "semantic_hash": ""
   },
   "renderer/pages/Translator.tsx": {
@@ -730,13 +730,13 @@
     "semantic_hash": ""
   },
   "renderer/pages/calc/CalcResult.tsx": {
-    "mtime": 1784226173.034198,
-    "ast_hash": "5e4c48c9f1b46b51088fb70271a9a554",
+    "mtime": 1784234732.3263726,
+    "ast_hash": "423f4e04683bdc02fccdae08dbe759a4",
     "semantic_hash": ""
   },
   "renderer/pages/calc/CalcRow.tsx": {
-    "mtime": 1783402121.0078206,
-    "ast_hash": "b51bd0591809115f428b6929c13f5687",
+    "mtime": 1784234732.327081,
+    "ast_hash": "4f7a606d7589be5bd1ea0444e3282cc8",
     "semantic_hash": ""
   },
   "renderer/pages/calc/DividendCalc.tsx": {
@@ -1120,8 +1120,8 @@
     "semantic_hash": ""
   },
   "shared/version.ts": {
-    "mtime": 1784234201.8890774,
-    "ast_hash": "a3d0d9c15857e6e0831e2f679ec14e5c",
+    "mtime": 1784235038.8548698,
+    "ast_hash": "cfef217ef4a941e81c00fd705f158480",
     "semantic_hash": ""
   },
   "renderer/assets/widgets/horoscope.png": {
@@ -1207,6 +1207,16 @@
   "renderer/components/documents/DocumentViewModeSwitch.tsx": {
     "mtime": 1784234201.8712723,
     "ast_hash": "6901cf30bc7b8f8eb8357077c740384d",
+    "semantic_hash": ""
+  },
+  "renderer/components/workspace/WorkbenchChrome.test.tsx": {
+    "mtime": 1784234942.577681,
+    "ast_hash": "0bc5917762e609715d0e03676fd03a44",
+    "semantic_hash": ""
+  },
+  "renderer/components/workspace/WorkbenchChrome.tsx": {
+    "mtime": 1784234732.324149,
+    "ast_hash": "621345f05a9f72a4178e8ba5d30586e3",
     "semantic_hash": ""
   }
 }

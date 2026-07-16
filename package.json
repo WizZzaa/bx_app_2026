@@ -1,7 +1,7 @@
 {
   "name": "app",
   "productName": "BX Помощник Бухгалтера",
-  "version": "2.27.6",
+  "version": "2.28.0",
   "description": "BX — помощник бухгалтера Республики Узбекистан: планировщик, калькуляторы, справочники, AI-консультант",
   "main": ".vite/build/main.js",
   "private": true,

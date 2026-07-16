@@ -80,18 +80,18 @@ export default function CalcResult({ title, rows }: { title: string; rows: CalcR
   }
 
   return (
-    <div className="rounded-2xl border border-bx-border overflow-hidden">
+    <div className="rounded-2xl border border-bx-border overflow-hidden" aria-live="polite">
       {/* Hero: главный результат */}
       {main && (
         <div className="relative bg-gradient-to-br from-blue-600/15 via-bx-surface to-bx-bg px-5 py-4 border-b border-bx-border">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] text-blue-300/70 uppercase tracking-wider font-semibold mb-1">{main.label}</p>
+              <p className="text-[11px] text-blue-700 dark:text-blue-300 uppercase tracking-wider font-semibold mb-1">{main.label}</p>
               <button
                 onClick={copyMain}
                 title="Скопировать число"
                 className={`text-2xl font-bold tabular-nums leading-tight transition-colors ${
-                  copiedMain ? 'text-emerald-400' : 'text-bx-text hover:text-blue-300'
+                  copiedMain ? 'text-emerald-700 dark:text-emerald-400' : 'text-bx-text hover:text-blue-700 dark:hover:text-blue-300'
                 }`}
               >
                 {copiedMain ? 'Скопировано ✓' : main.value}

@@ -20,6 +20,7 @@ import Icon from '../lib/ui/Icon'
 import { UTILITY_PROPOSALS } from '../data/workbenchCatalog'
 import { ProposalWorkbench } from '../components/workspace/ProposalWorkbench'
 import { useWorkbenchFavorites } from '../lib/useWorkbenchFavorites'
+import { WorkbenchActions, WorkbenchCanvas, WorkbenchGuide, WorkbenchModeSwitch, type WorkbenchView } from '../components/workspace/WorkbenchChrome'
 
 interface Tool {
   id: string
@@ -84,6 +85,7 @@ const ACCENT: Record<string, { text: string; chipBg: string; activeBg: string; i
 const FULL_HEIGHT_TOOLS = new Set(['notes', 'ecp', 'activex'])
 
 const LAST_TOOL_KEY = 'bx_tools_last'
+const TOOLS_VIEW_KEY = 'bx_tools_view'
 
 const Tools = () => {
   const [active, setActiveRaw] = useState(() => {
@@ -92,6 +94,10 @@ const Tools = () => {
   })
   const [search, setSearch] = useState('')
   const [favoritesOnly, setFavoritesOnly] = useState(false)
+  const [catalog, setCatalog] = useState<'ready' | 'proposal'>(() => TOOLS.find(item => item.id === active)?.status === 'proposal' ? 'proposal' : 'ready')
+  const [view, setView] = useState<WorkbenchView>(() => localStorage.getItem(TOOLS_VIEW_KEY) === 'guided' ? 'guided' : 'compact')
+  const [showGuide, setShowGuide] = useState(() => localStorage.getItem(TOOLS_VIEW_KEY) === 'guided')
+  const [workspaceRevision, setWorkspaceRevision] = useState(0)
   const { favorites, toggleFavorite } = useWorkbenchFavorites('utility')
 
   React.useEffect(() => {
@@ -109,10 +115,36 @@ const Tools = () => {
     localStorage.setItem(LAST_TOOL_KEY, id)
   }
 
+  const handleViewChange = (next: WorkbenchView) => {
+    setView(next)
+    setShowGuide(next === 'guided')
+    localStorage.setItem(TOOLS_VIEW_KEY, next)
+  }
+
+  const handleCatalogChange = (next: 'ready' | 'proposal') => {
+    setCatalog(next)
+    const current = TOOLS.find(item => item.id === active)
+    const activeMatches = next === 'proposal' ? current?.status === 'proposal' : current?.status !== 'proposal'
+    if (!activeMatches) {
+      const nextTool = next === 'proposal' ? PROPOSAL_TOOLS[0] : READY_TOOLS[0]
+      if (nextTool) handleSetActive(nextTool.id)
+    }
+  }
+
   const q = search.trim().toLowerCase()
   const visible = TOOLS.filter(t =>
     (!q || t.label.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.group.toLowerCase().includes(q))
-    && (!favoritesOnly || favorites.includes(t.id)))
+    && (!favoritesOnly || favorites.includes(t.id))
+    && (catalog === 'proposal' ? t.status === 'proposal' : t.status !== 'proposal'))
+
+  React.useEffect(() => {
+    if (visible.length > 0 && !visible.some(item => item.id === active)) {
+      const nextId = visible[0].id
+      setActiveRaw(nextId)
+      localStorage.setItem(LAST_TOOL_KEY, nextId)
+    }
+  }, [active, catalog, favorites, favoritesOnly, q])
+
   const tool = TOOLS.find(t => t.id === active) ?? TOOLS[0]
   const a = ACCENT[tool.group]
   const isFullHeight = FULL_HEIGHT_TOOLS.has(tool.id)
@@ -127,6 +159,7 @@ const Tools = () => {
         </div>
 
         <div className="px-4 pb-3 flex-shrink-0">
+          <WorkbenchModeSwitch kind="utility" view={view} onViewChange={handleViewChange} />
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bx-muted">
               <Icon name="search" className="w-3.5 h-3.5" />
@@ -136,8 +169,12 @@ const Tools = () => {
               onChange={e => setSearch(e.target.value)}
               aria-label="Поиск утилиты"
               placeholder="Поиск утилиты..."
-              className="w-full bg-bx-surface text-bx-text placeholder-bx-muted text-xs pl-9 pr-3 py-2 rounded-xl border border-bx-border focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 shadow-inner transition-all font-semibold"
+              className="mt-2 w-full bg-bx-surface text-bx-text placeholder-bx-muted text-xs pl-9 pr-3 py-2 rounded-xl border border-bx-border focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 shadow-inner transition-all font-semibold"
             />
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-1 rounded-xl border border-bx-border bg-bx-bg p-1" aria-label="Статус утилит">
+            <button type="button" onClick={() => handleCatalogChange('ready')} aria-pressed={catalog === 'ready'} className={`min-h-9 rounded-lg px-2 text-[10px] font-bold transition-colors ${catalog === 'ready' ? 'bg-emerald-600 text-white' : 'text-bx-muted hover:bg-bx-surface hover:text-bx-text'}`}>Работают · {READY_TOOLS.length}</button>
+            <button type="button" onClick={() => handleCatalogChange('proposal')} aria-pressed={catalog === 'proposal'} className={`min-h-9 rounded-lg px-2 text-[10px] font-bold transition-colors ${catalog === 'proposal' ? 'bg-amber-500 text-slate-950' : 'text-bx-muted hover:bg-bx-surface hover:text-bx-text'}`}>Идеи · {PROPOSAL_TOOLS.length}</button>
           </div>
           <button
             type="button"
@@ -153,7 +190,7 @@ const Tools = () => {
           {visible.length === 0 && (
             <div className="px-3 py-4 text-center">
               <p className="text-xs text-bx-muted font-medium">Подходящих утилит нет</p>
-              <button type="button" onClick={() => { setSearch(''); setFavoritesOnly(false) }} className="mt-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500/40 rounded">Показать весь каталог</button>
+              <button type="button" onClick={() => { setSearch(''); setFavoritesOnly(false) }} className="mt-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500/40 rounded">Сбросить фильтры</button>
             </div>
           )}
           {GROUPS.map(g => {
@@ -181,7 +218,7 @@ const Tools = () => {
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className={`block text-xs font-bold leading-tight ${isToolActive ? 'text-white' : 'text-bx-text'}`}>{t.label}</span>
-                          <span className={`block text-[9px] mt-0.5 leading-snug line-clamp-2 ${isToolActive ? 'text-white/85' : 'text-bx-muted'}`}>{t.desc}</span>
+                          {view === 'guided' && <span className={`block text-[9px] mt-0.5 leading-snug line-clamp-2 ${isToolActive ? 'text-white/85' : 'text-bx-muted'}`}>{t.desc}</span>}
                         </span>
                       </button>
                     );
@@ -196,8 +233,8 @@ const Tools = () => {
       {/* Правая панель */}
       <div className={`flex-1 ${isFullHeight ? 'flex flex-col overflow-hidden bg-bx-bg' : 'overflow-y-auto bg-bx-bg'}`}>
         <div className={isFullHeight ? 'px-6 pt-6 flex-shrink-0' : 'max-w-5xl mx-auto px-6 pt-6'}>
-          {!isFullHeight && (
-            <div className="grid grid-cols-3 gap-3 mb-5">
+          {!isFullHeight && view === 'guided' && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               <div className="rounded-2xl border border-bx-border bg-bx-surface px-4 py-3">
                 <p className="text-[10px] uppercase tracking-wider font-bold text-bx-muted">Рабочие утилиты</p>
                 <p className="text-xl font-black text-bx-text mt-1">{READY_TOOLS.length}</p>
@@ -228,14 +265,15 @@ const Tools = () => {
                 </div>
                 <p className="text-[11px] text-bx-muted mt-1">{tool.desc}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => toggleFavorite(tool.id)}
-                aria-pressed={favorites.includes(tool.id)}
-                className={`ml-auto min-h-11 px-3.5 border text-xs font-semibold rounded-xl transition-colors flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${favorites.includes(tool.id) ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400' : 'bg-bx-surface border-bx-border text-bx-muted hover:text-bx-text'}`}
-              >
-                {favorites.includes(tool.id) ? 'В избранном' : 'В избранное'}
-              </button>
+              <div className="ml-auto">
+                <WorkbenchActions
+                  isFavorite={favorites.includes(tool.id)}
+                  onToggleFavorite={() => toggleFavorite(tool.id)}
+                  onReset={() => setWorkspaceRevision(value => value + 1)}
+                  showGuide={showGuide}
+                  onToggleGuide={() => setShowGuide(value => !value)}
+                />
+              </div>
             </div>
             {/* Быстрое переключение внутри группы */}
             <div className="flex flex-wrap gap-1.5 mt-4">
@@ -260,20 +298,17 @@ const Tools = () => {
               Системные операции работают только в десктоп-версии Electron.
             </div>
           )}
+          {showGuide && <WorkbenchGuide kind="utility" />}
         </div>
 
         {/* Верстак инструмента */}
         {!isFullHeight ? (
           <div className="max-w-5xl mx-auto px-6 pb-6">
-            <div className="rounded-3xl bg-bx-surface border border-bx-border p-5 shadow-sm">
-              {tool.component}
-            </div>
+            <WorkbenchCanvas resetKey={`${tool.id}-${workspaceRevision}`}>{tool.component}</WorkbenchCanvas>
           </div>
         ) : (
           <div className="flex-1 overflow-hidden px-6 pb-6">
-            <div className="rounded-3xl bg-bx-surface border border-bx-border p-4 h-full overflow-hidden shadow-sm">
-              {tool.component}
-            </div>
+            <WorkbenchCanvas resetKey={`${tool.id}-${workspaceRevision}`} fullHeight>{tool.component}</WorkbenchCanvas>
           </div>
         )}
       </div>
