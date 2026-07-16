@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `13dc7310`
+- Built from commit: `30ade30c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -97,16 +97,16 @@
 10. `EventStatus` - 16 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `CommandPalette()` --indirect_call--> `c()`  [INFERRED]
-  renderer/components/CommandPalette.tsx → renderer/pages/planner/BoardKanban.tsx
-- `WidgetBridge` --references--> `WeatherData`  [EXTRACTED]
-  renderer/lib/widgetsApi.ts → shared/types.ts
-- `CurrencyExportRow` --references--> `CurrencyRate`  [EXTRACTED]
-  renderer/pages/Currency.tsx → shared/types.ts
-- `listProcessesWindows()` --references--> `ONEC_PROCESS_NAMES`  [EXTRACTED]
-  main/services/onecProcess.ts → shared/types.ts
-- `OnboardingWizard()` --calls--> `usePlan()`  [EXTRACTED]
-  renderer/components/OnboardingWizard.tsx → renderer/lib/plan.tsx
+- `Templates()` --indirect_call--> `c()`  [INFERRED]
+  src/renderer/pages/Templates.tsx → renderer/pages/planner/BoardKanban.tsx
+- `Templates()` --calls--> `useCompany()`  [EXTRACTED]
+  src/renderer/pages/Templates.tsx → renderer/lib/CompanyContext.tsx
+- `Templates()` --calls--> `useCounterparties()`  [EXTRACTED]
+  src/renderer/pages/Templates.tsx → renderer/lib/db/useCounterparties.ts
+- `Templates()` --calls--> `toWordsRu()`  [EXTRACTED]
+  src/renderer/pages/Templates.tsx → renderer/lib/numToWords.ts
+- `Templates()` --calls--> `usePlan()`  [EXTRACTED]
+  src/renderer/pages/Templates.tsx → renderer/lib/plan.tsx
 
 ## Import Cycles
 - None detected.
@@ -370,20 +370,20 @@ Cohesion: 0.50
 Nodes (4): Condition, describe(), fetchWeather(), WMO
 
 ## Knowledge Gaps
-- **299 isolated node(s):** `gotLock`, `TrayState`, `FLAGS`, `DEFAULT_CODES`, `CbuItem` (+294 more)
+- **299 isolated node(s):** `DocumentViewMode`, `DocumentViewModeSwitchProps`, `ResourceSidebarProps`, `ResourceHeroProps`, `CATEGORIES` (+294 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `supabase` connect `Topbar.tsx` to `useCompany`, `CompanyContext.tsx`, `News.tsx`, `Library.tsx`, `App.tsx`, `useToast`, `referenceRepo.ts`, `Planner.tsx`, `useEvents.ts`, `Translator.tsx`, `TrayView.tsx`, `CalendarPage.tsx`, `Finance.tsx`, `numToWords.ts`, `CalendarView.tsx`, `types.ts`?**
-  _High betweenness centrality (0.068) - this node is a cross-community bridge._
 - **Why does `todayISO()` connect `todayISO` to `CompanyContext.tsx`, `Templates.tsx`, `referenceRepo.ts`, `useEvents.ts`, `TrayView.tsx`, `CalendarPage.tsx`, `Currency.tsx`, `Finance.tsx`, `TaxCalculator.tsx`, `CalendarView.tsx`, `Topbar.tsx`, `CacheCleaner.tsx`, `Dashboard.tsx`, `types.ts`, `EcpManager.tsx`, `SmartCalendar.tsx`, `Planner.tsx`, `DigestView.tsx`, `FocusView.tsx`, `WidgetBoundary`?**
-  _High betweenness centrality (0.048) - this node is a cross-community bridge._
-- **Why does `useToast()` connect `useToast` to `CompanyContext.tsx`, `Library.tsx`, `Templates.tsx`, `Planner.tsx`, `Translator.tsx`, `CalendarPage.tsx`, `Finance.tsx`, `numToWords.ts`, `TaxCalculator.tsx`, `types.ts`, `syncQueue.ts`?**
-  _High betweenness centrality (0.037) - this node is a cross-community bridge._
-- **What connects `gotLock`, `TrayState`, `FLAGS` to the rest of the system?**
+  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+- **Why does `supabase` connect `Topbar.tsx` to `useCompany`, `CompanyContext.tsx`, `News.tsx`, `Library.tsx`, `App.tsx`, `useToast`, `referenceRepo.ts`, `Planner.tsx`, `useEvents.ts`, `Translator.tsx`, `TrayView.tsx`, `CalendarPage.tsx`, `Finance.tsx`, `numToWords.ts`, `CalendarView.tsx`, `types.ts`?**
+  _High betweenness centrality (0.065) - this node is a cross-community bridge._
+- **Why does `useCompany()` connect `useCompany` to `CompanyContext.tsx`, `SmartCalendar.tsx`, `useToast`, `Templates.tsx`, `referenceRepo.ts`, `todayISO`, `Planner.tsx`, `Translator.tsx`, `CalendarPage.tsx`, `Finance.tsx`, `numToWords.ts`, `TaxCalculator.tsx`, `Topbar.tsx`, `Dashboard.tsx`?**
+  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+- **What connects `DocumentViewMode`, `DocumentViewModeSwitchProps`, `ResourceSidebarProps` to the rest of the system?**
   _299 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Settings.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.14736842105263157 - nodes in this community are weakly interconnected._
