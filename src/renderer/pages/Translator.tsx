@@ -15,6 +15,7 @@ import { usePlan } from '../lib/plan'
 import { useToast } from '../lib/ui/ToastContext'
 import { ResourceHero, primaryActionClass, secondaryActionClass } from '../components/workspace/ResourceWorkspace'
 import { TranslatorTutorial } from '../components/TranslatorTutorial'
+import { TranslatorWorkspaceSwitch, type TranslatorWorkspaceMode } from '../components/TranslatorWorkspaceSwitch'
 import {
   TRANSLATION_LANGUAGES,
   TRANSLATION_MODES,
@@ -43,6 +44,7 @@ interface TranslationHistoryItem {
 const HISTORY_KEY = 'bx_translation_history'
 const HISTORY_ENABLED_KEY = 'bx_translation_history_enabled'
 const TUTORIAL_ENABLED_KEY = 'bx_translator_tutorial_enabled'
+const WORKSPACE_MODE_KEY = 'bx_translator_workspace_mode'
 const MAX_FILE_SIZE = 15 * 1024 * 1024
 const DOCUMENT_CATEGORIES = ['Договор', 'Акт', 'Устав', 'Справка', 'Другое']
 
@@ -109,6 +111,7 @@ export default function Translator() {
   const [error, setError] = useState('')
   const [historyEnabled, setHistoryEnabled] = useState(() => localStorage.getItem(HISTORY_ENABLED_KEY) === 'true')
   const [tutorialEnabled, setTutorialEnabled] = useState(() => localStorage.getItem(TUTORIAL_ENABLED_KEY) !== 'false')
+  const [workspaceMode, setWorkspaceMode] = useState<TranslatorWorkspaceMode>(() => localStorage.getItem(WORKSPACE_MODE_KEY) === 'professional' ? 'professional' : 'simple')
   const [history, setHistory] = useState<TranslationHistoryItem[]>(loadHistory)
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [archiveCompanyId, setArchiveCompanyId] = useState('')
@@ -304,12 +307,22 @@ export default function Translator() {
 
   const clearHistory = () => { setHistory([]); localStorage.removeItem(HISTORY_KEY) }
 
+  const changeWorkspaceMode = (next: TranslatorWorkspaceMode) => {
+    setWorkspaceMode(next)
+    localStorage.setItem(WORKSPACE_MODE_KEY, next)
+  }
+
+  const professionalMode = workspaceMode === 'professional'
+  const selectedMode = TRANSLATION_MODES.find(item => item.id === mode) ?? TRANSLATION_MODES[0]
+
   return (
     <div className="custom-scrollbar flex-1 overflow-y-auto bg-bx-bg text-bx-text">
       <div className="bx-page-container space-y-5 py-5 lg:py-6">
-        <ResourceHero eyebrow="Профессиональная работа с документами" title="Перевод без потери терминов, структуры и смысла" description="Рабочий стол для договоров, писем, счетов, таблиц и нормативных текстов на узбекском, русском и английском языках. Результат остаётся редактируемым перед выгрузкой." icon="languages" stats={[{ value: '4', label: 'языковых варианта' }, { value: '7', label: 'форматов файлов' }, { value: '15 МБ', label: 'до одного файла' }]} />
+        <TranslatorWorkspaceSwitch value={workspaceMode} onChange={changeWorkspaceMode} />
 
-        <TranslatorTutorial enabled={tutorialEnabled} literalActive={mode === 'literal'} onToggle={toggleTutorial} onChooseLiteral={() => setMode('literal')} />
+        {professionalMode && <ResourceHero eyebrow="Профессиональная работа с документами" title="Перевод без потери терминов, структуры и смысла" description="Рабочий стол для договоров, писем, счетов, таблиц и нормативных текстов на узбекском, русском и английском языках. Результат остаётся редактируемым перед выгрузкой." icon="languages" stats={[{ value: '4', label: 'языковых варианта' }, { value: '7', label: 'форматов файлов' }, { value: '15 МБ', label: 'до одного файла' }]} />}
+
+        {professionalMode && <TranslatorTutorial enabled={tutorialEnabled} literalActive={mode === 'literal'} onToggle={toggleTutorial} onChooseLiteral={() => setMode('literal')} />}
 
         <section className="grid gap-3 lg:grid-cols-[1fr_auto_1fr]" aria-label="Направление перевода">
           <LanguageSelect label="Исходный язык" value={source} onChange={setSourceLanguage} />
@@ -317,17 +330,19 @@ export default function Translator() {
           <LanguageSelect label="Язык перевода" value={target} onChange={setTargetLanguage} />
         </section>
 
-        <section className="rounded-[22px] border border-bx-border bg-bx-surface p-4 shadow-sm">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {TRANSLATION_MODES.map(item => <button key={item.id} type="button" onClick={() => setMode(item.id)} aria-pressed={mode === item.id} className={`min-h-20 rounded-2xl border p-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 ${mode === item.id ? 'border-blue-500/35 bg-blue-600 text-white shadow-md shadow-blue-600/15' : 'border-bx-border bg-bx-bg hover:border-blue-500/25'}`}><span className="text-xs font-black">{item.label}</span><span className={`mt-1 block text-[10px] leading-relaxed ${mode === item.id ? 'text-blue-100' : 'text-bx-muted'}`}>{item.description}</span></button>)}
+        {professionalMode ? <section className="rounded-[22px] border border-bx-border bg-bx-surface p-4 shadow-sm">
+          <TranslationModeCards value={mode} onChange={setMode} />
+          <TranslatorAdvancedSettings glossary={glossary} preserveStructure={preserveStructure} onGlossaryChange={setGlossary} onPreserveStructureChange={setPreserveStructure} />
+        </section> : <details className="group rounded-2xl border border-bx-border bg-bx-surface shadow-sm">
+          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 [&::-webkit-details-marker]:hidden">
+            <span className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-300"><Icon name="settings" className="h-4 w-4" /></span><span className="min-w-0"><span className="block text-xs font-black text-bx-text">Настройки перевода</span><span className="mt-0.5 block truncate text-[10px] text-bx-muted">{selectedMode.label} · глоссарий и структура</span></span></span>
+            <Icon name="arrowR" className="h-4 w-4 flex-shrink-0 rotate-90 text-bx-muted transition-transform duration-200 group-open:-rotate-90" />
+          </summary>
+          <div className="border-t border-bx-border p-4">
+            <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Стиль перевода<select value={mode} onChange={event => setMode(event.target.value as TranslationMode)} className="mt-1.5 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-xs font-bold normal-case tracking-normal text-bx-text outline-none focus:border-blue-500">{TRANSLATION_MODES.map(item => <option key={item.id} value={item.id}>{item.label} — {item.description}</option>)}</select></label>
+            <TranslatorAdvancedSettings glossary={glossary} preserveStructure={preserveStructure} onGlossaryChange={setGlossary} onPreserveStructureChange={setPreserveStructure} />
           </div>
-          <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
-            <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Обязательный глоссарий
-              <textarea value={glossary} onChange={event => setGlossary(event.target.value)} rows={2} placeholder={'Например: QQS = НДС\nMChJ = ООО'} className="mt-1.5 w-full resize-y rounded-xl border border-bx-border bg-bx-bg px-3 py-2.5 text-xs font-semibold normal-case tracking-normal text-bx-text outline-none placeholder:font-normal focus:border-blue-500" />
-            </label>
-            <label className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-xl border border-bx-border bg-bx-bg px-3 text-xs font-bold"><input type="checkbox" checked={preserveStructure} onChange={event => setPreserveStructure(event.target.checked)} className="h-4 w-4 accent-blue-600" />Сохранять структуру документа</label>
-          </div>
-        </section>
+        </details>}
 
         <section className="grid gap-4 xl:grid-cols-2" aria-label="Рабочая область перевода">
           <article className="overflow-hidden rounded-[22px] border border-bx-border bg-bx-surface shadow-sm">
@@ -339,7 +354,7 @@ export default function Translator() {
                 <span className="min-w-0"><span className="block truncate text-xs font-black text-bx-text">{extracting ? 'Извлекаю текст…' : fileName || 'Загрузить или перетащить документ'}</span><span className="mt-1 block text-[10px] text-bx-muted">{fileName ? `${fileSize} · нажмите, чтобы заменить` : 'PDF · DOCX · XLS/XLSX · TXT · CSV · JSON · XML'}</span></span>
               </label>
               <label className="mt-4 block text-[10px] font-black uppercase tracking-wider text-bx-muted">Текст для перевода
-                <textarea value={sourceText} onChange={event => setSourceText(event.target.value)} rows={18} placeholder="Вставьте текст или загрузите документ…" className="custom-scrollbar mt-1.5 min-h-[390px] w-full resize-y rounded-2xl border border-bx-border bg-bx-bg p-4 text-sm font-medium leading-6 normal-case tracking-normal text-bx-text outline-none placeholder:text-bx-muted focus:border-blue-500" />
+                <textarea value={sourceText} onChange={event => setSourceText(event.target.value)} rows={professionalMode ? 18 : 13} placeholder="Вставьте текст или загрузите документ…" className={`custom-scrollbar mt-1.5 w-full resize-y rounded-2xl border border-bx-border bg-bx-bg p-4 text-sm font-medium leading-6 normal-case tracking-normal text-bx-text outline-none placeholder:text-bx-muted focus:border-blue-500 ${professionalMode ? 'min-h-[390px]' : 'min-h-[300px]'}`} />
               </label>
               <button type="button" onClick={() => void translate()} disabled={!sourceText.trim() || translating || extracting} className={`${primaryActionClass} mt-4 w-full disabled:cursor-not-allowed disabled:opacity-45`}><Icon name={translating ? 'clock' : 'languages'} className="h-4 w-4" />{translating ? 'Выполняю перевод…' : 'Перевести документ'}</button>
             </div>
@@ -348,7 +363,7 @@ export default function Translator() {
           <article className="overflow-hidden rounded-[22px] border border-bx-border bg-bx-surface shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-bx-border px-4 py-3"><div className="flex rounded-xl border border-bx-border bg-bx-bg p-1"><ResultTab active={activeResult === 'translation'} label="Перевод" icon="languages" onClick={() => setActiveResult('translation')} /><ResultTab active={activeResult === 'plain'} label="Простыми словами" icon="ai" onClick={() => setActiveResult('plain')} /></div><p className="text-[10px] text-bx-muted">{resultWordCount.toLocaleString('ru-RU')} слов · {displayedResult.length.toLocaleString('ru-RU')} знаков</p></div>
             <div className="p-4">
-              {activeResult === 'plain' && !plainText ? <div className="grid min-h-[390px] place-items-center rounded-2xl border border-dashed border-bx-border bg-bx-bg p-6 text-center"><div><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-300"><Icon name="ai" className="h-5 w-5" /></span><h2 className="mt-3 text-sm font-black">Объяснить директору или клиенту</h2><p className="mx-auto mt-2 max-w-md text-[11px] leading-relaxed text-bx-muted">BX выделит суть, суммы, сроки, обязанности и возможные риски без тяжёлого официального языка.</p><button type="button" onClick={() => void explainPlainly()} disabled={!resultText || explaining} className={`${primaryActionClass} mt-4 disabled:opacity-45`}><Icon name={explaining ? 'clock' : 'ai'} className="h-4 w-4" />{explaining ? 'Готовлю объяснение…' : 'Объяснить простыми словами'}</button></div></div> : <label className="block text-[10px] font-black uppercase tracking-wider text-bx-muted">{activeResult === 'translation' ? 'Редактируемый результат' : 'Понятное объяснение'}<textarea value={displayedResult} onChange={event => activeResult === 'translation' ? setResultText(event.target.value) : setPlainText(event.target.value)} rows={18} placeholder="Здесь появится результат…" className="custom-scrollbar mt-1.5 min-h-[390px] w-full resize-y rounded-2xl border border-bx-border bg-bx-bg p-4 text-sm font-medium leading-6 normal-case tracking-normal text-bx-text outline-none placeholder:text-bx-muted focus:border-blue-500" /></label>}
+              {activeResult === 'plain' && !plainText ? <div className={`grid place-items-center rounded-2xl border border-dashed border-bx-border bg-bx-bg p-6 text-center ${professionalMode ? 'min-h-[390px]' : 'min-h-[300px]'}`}><div><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-300"><Icon name="ai" className="h-5 w-5" /></span><h2 className="mt-3 text-sm font-black">Объяснить директору или клиенту</h2><p className="mx-auto mt-2 max-w-md text-[11px] leading-relaxed text-bx-muted">BX выделит суть, суммы, сроки, обязанности и возможные риски без тяжёлого официального языка.</p><button type="button" onClick={() => void explainPlainly()} disabled={!resultText || explaining} className={`${primaryActionClass} mt-4 disabled:opacity-45`}><Icon name={explaining ? 'clock' : 'ai'} className="h-4 w-4" />{explaining ? 'Готовлю объяснение…' : 'Объяснить простыми словами'}</button></div></div> : <label className="block text-[10px] font-black uppercase tracking-wider text-bx-muted">{activeResult === 'translation' ? 'Редактируемый результат' : 'Понятное объяснение'}<textarea value={displayedResult} onChange={event => activeResult === 'translation' ? setResultText(event.target.value) : setPlainText(event.target.value)} rows={professionalMode ? 18 : 13} placeholder="Здесь появится результат…" className={`custom-scrollbar mt-1.5 w-full resize-y rounded-2xl border border-bx-border bg-bx-bg p-4 text-sm font-medium leading-6 normal-case tracking-normal text-bx-text outline-none placeholder:text-bx-muted focus:border-blue-500 ${professionalMode ? 'min-h-[390px]' : 'min-h-[300px]'}`} /></label>}
               <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4"><button type="button" onClick={() => void copyResult()} disabled={!displayedResult} className={`${secondaryActionClass} disabled:opacity-40`}><Icon name={copied ? 'check' : 'copy'} className="h-4 w-4" />{copied ? 'Скопировано' : 'Копировать'}</button><button type="button" onClick={downloadResult} disabled={!displayedResult} className={`${secondaryActionClass} disabled:opacity-40`}><Icon name="download" className="h-4 w-4" />Скачать TXT</button><button type="button" onClick={openArchive} disabled={!displayedResult} className={`${primaryActionClass} disabled:opacity-40`}><Icon name="save" className="h-4 w-4" />В Документы</button><button type="button" onClick={() => void explainPlainly()} disabled={!resultText || explaining} className={`${secondaryActionClass} disabled:opacity-40`}><Icon name="ai" className="h-4 w-4" />Объяснить</button></div>
             </div>
           </article>
@@ -356,10 +371,16 @@ export default function Translator() {
 
         {error && <div role="alert" className="flex items-start gap-3 rounded-2xl border border-red-500/25 bg-red-500/10 p-4 text-xs font-bold text-red-700 dark:text-red-300"><Icon name="alert" className="h-5 w-5 flex-shrink-0" /><span>{error}</span></div>}
 
-        <section className="grid gap-4 lg:grid-cols-[1fr_1.1fr]">
+        {professionalMode ? <section className="grid gap-4 lg:grid-cols-[1fr_1.1fr]">
           <div className="rounded-[22px] border border-bx-border bg-bx-surface p-5 shadow-sm"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"><Icon name="shield" className="h-4 w-4" /></span><div><h2 className="text-sm font-black">Контроль качества перевода</h2><p className="mt-0.5 text-[10px] text-bx-muted">Автоматические ориентиры перед использованием документа</p></div></div><div className="mt-4 grid gap-2 sm:grid-cols-3"><QualityItem label="Структура" value={preserveStructure ? 'Сохраняется' : 'Можно улучшать'} ok={preserveStructure} /><QualityItem label="Числа и суммы" value={sourceNumbers.length ? `${preservedNumbers} из ${sourceNumbers.length}` : 'Не найдены'} ok={!sourceNumbers.length || preservedNumbers === sourceNumbers.length} /><QualityItem label="Глоссарий" value={glossary.trim() ? 'Подключён' : 'Не задан'} ok={!!glossary.trim()} /></div><p className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/[0.07] p-3 text-[10px] leading-relaxed text-amber-950 dark:text-amber-100"><strong>Важно:</strong> перед подписанием договора или отправкой официального документа проверьте перевод вручную. BX помогает подготовить текст, но не заменяет дипломированного переводчика.</p></div>
           <div className="rounded-[22px] border border-bx-border bg-bx-surface p-5 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-sm font-black">Локальная история</h2><p className="mt-1 text-[10px] leading-relaxed text-bx-muted">Выключена по умолчанию. При включении до 10 переводов сохраняются только на этом устройстве.</p></div><button type="button" onClick={toggleHistory} aria-pressed={historyEnabled} className={`min-h-10 rounded-xl border px-3 text-[10px] font-black ${historyEnabled ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-bx-border bg-bx-bg text-bx-muted'}`}>{historyEnabled ? 'История включена' : 'Включить историю'}</button></div>{history.length ? <div className="mt-4 space-y-2">{history.slice(0, 4).map(item => <button type="button" key={item.id} onClick={() => restoreHistory(item)} className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-bx-border bg-bx-bg px-3 text-left hover:border-blue-500/30"><span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg bg-blue-500/10 text-[9px] font-black text-blue-600 dark:text-blue-300">{TRANSLATION_LANGUAGES.find(language => language.id === item.target)?.short}</span><span className="min-w-0 flex-1"><span className="block truncate text-[11px] font-black">{item.title}</span><span className="mt-0.5 block text-[9px] text-bx-muted">{new Date(item.createdAt).toLocaleString('ru-RU')}</span></span><Icon name="arrowR" className="h-3.5 w-3.5 text-bx-muted" /></button>)}<button type="button" onClick={clearHistory} className="min-h-10 text-[10px] font-bold text-red-600 dark:text-red-300">Очистить историю</button></div> : <div className="mt-4 rounded-xl border border-dashed border-bx-border p-5 text-center text-[10px] text-bx-muted">Сохранённых переводов пока нет.</div>}</div>
-        </section>
+        </section> : <details className="group rounded-2xl border border-bx-border bg-bx-surface shadow-sm">
+          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 [&::-webkit-details-marker]:hidden"><span className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"><Icon name="shield" className="h-4 w-4" /></span><span className="min-w-0"><span className="block text-xs font-black text-bx-text">Проверка и история</span><span className="mt-0.5 block truncate text-[10px] text-bx-muted">Числа, структура, глоссарий и последние переводы</span></span></span><Icon name="arrowR" className="h-4 w-4 flex-shrink-0 rotate-90 text-bx-muted transition-transform duration-200 group-open:-rotate-90" /></summary>
+          <section className="grid gap-4 border-t border-bx-border p-4 lg:grid-cols-[1fr_1.1fr]">
+            <div className="rounded-2xl border border-bx-border bg-bx-bg p-4"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"><Icon name="shield" className="h-4 w-4" /></span><div><h2 className="text-sm font-black">Контроль качества перевода</h2><p className="mt-0.5 text-[10px] text-bx-muted">Автоматические ориентиры перед использованием документа</p></div></div><div className="mt-4 grid gap-2 sm:grid-cols-3"><QualityItem label="Структура" value={preserveStructure ? 'Сохраняется' : 'Можно улучшать'} ok={preserveStructure} /><QualityItem label="Числа и суммы" value={sourceNumbers.length ? `${preservedNumbers} из ${sourceNumbers.length}` : 'Не найдены'} ok={!sourceNumbers.length || preservedNumbers === sourceNumbers.length} /><QualityItem label="Глоссарий" value={glossary.trim() ? 'Подключён' : 'Не задан'} ok={!!glossary.trim()} /></div><p className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/[0.07] p-3 text-[10px] leading-relaxed text-amber-950 dark:text-amber-100"><strong>Важно:</strong> перед подписанием договора или отправкой официального документа проверьте перевод вручную. BX помогает подготовить текст, но не заменяет дипломированного переводчика.</p></div>
+            <div className="rounded-2xl border border-bx-border bg-bx-bg p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-sm font-black">Локальная история</h2><p className="mt-1 text-[10px] leading-relaxed text-bx-muted">Выключена по умолчанию. При включении до 10 переводов сохраняются только на этом устройстве.</p></div><button type="button" onClick={toggleHistory} aria-pressed={historyEnabled} className={`min-h-10 rounded-xl border px-3 text-[10px] font-black ${historyEnabled ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-bx-border bg-bx-surface text-bx-muted'}`}>{historyEnabled ? 'История включена' : 'Включить историю'}</button></div>{history.length ? <div className="mt-4 space-y-2">{history.slice(0, 4).map(item => <button type="button" key={item.id} onClick={() => restoreHistory(item)} className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-bx-border bg-bx-surface px-3 text-left hover:border-blue-500/30"><span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg bg-blue-500/10 text-[9px] font-black text-blue-600 dark:text-blue-300">{TRANSLATION_LANGUAGES.find(language => language.id === item.target)?.short}</span><span className="min-w-0 flex-1"><span className="block truncate text-[11px] font-black">{item.title}</span><span className="mt-0.5 block text-[9px] text-bx-muted">{new Date(item.createdAt).toLocaleString('ru-RU')}</span></span><Icon name="arrowR" className="h-3.5 w-3.5 text-bx-muted" /></button>)}<button type="button" onClick={clearHistory} className="min-h-10 text-[10px] font-bold text-red-600 dark:text-red-300">Очистить историю</button></div> : <div className="mt-4 rounded-xl border border-dashed border-bx-border p-5 text-center text-[10px] text-bx-muted">Сохранённых переводов пока нет.</div>}</div>
+          </section>
+        </details>}
       </div>
 
       {archiveOpen && <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="translator-archive-title" onMouseDown={event => { if (event.target === event.currentTarget && !archiveSaving) setArchiveOpen(false) }}>
@@ -387,6 +408,14 @@ export default function Translator() {
 
 function LanguageSelect({ label, value, onChange }: { label: string; value: TranslationLanguage; onChange: (value: TranslationLanguage) => void }) {
   return <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted">{label}<select value={value} onChange={event => onChange(event.target.value as TranslationLanguage)} className="mt-1.5 min-h-12 w-full rounded-xl border border-bx-border bg-bx-surface px-4 text-sm font-black normal-case tracking-normal text-bx-text outline-none focus:border-blue-500">{TRANSLATION_LANGUAGES.map(language => <option key={language.id} value={language.id}>{language.short} · {language.label}</option>)}</select></label>
+}
+
+function TranslationModeCards({ value, onChange }: { value: TranslationMode; onChange: (value: TranslationMode) => void }) {
+  return <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{TRANSLATION_MODES.map(item => <button key={item.id} type="button" onClick={() => onChange(item.id)} aria-pressed={value === item.id} className={`min-h-20 rounded-2xl border p-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 ${value === item.id ? 'border-blue-500/35 bg-blue-600 text-white shadow-md shadow-blue-600/15' : 'border-bx-border bg-bx-bg hover:border-blue-500/25'}`}><span className="text-xs font-black">{item.label}</span><span className={`mt-1 block text-[10px] leading-relaxed ${value === item.id ? 'text-blue-100' : 'text-bx-muted'}`}>{item.description}</span></button>)}</div>
+}
+
+function TranslatorAdvancedSettings({ glossary, preserveStructure, onGlossaryChange, onPreserveStructureChange }: { glossary: string; preserveStructure: boolean; onGlossaryChange: (value: string) => void; onPreserveStructureChange: (value: boolean) => void }) {
+  return <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end"><label className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Обязательный глоссарий<textarea value={glossary} onChange={event => onGlossaryChange(event.target.value)} rows={2} placeholder={'Например: QQS = НДС\nMChJ = ООО'} className="mt-1.5 w-full resize-y rounded-xl border border-bx-border bg-bx-bg px-3 py-2.5 text-xs font-semibold normal-case tracking-normal text-bx-text outline-none placeholder:font-normal focus:border-blue-500" /></label><label className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-xl border border-bx-border bg-bx-bg px-3 text-xs font-bold"><input type="checkbox" checked={preserveStructure} onChange={event => onPreserveStructureChange(event.target.checked)} className="h-4 w-4 accent-blue-600" />Сохранять структуру документа</label></div>
 }
 
 function ResultTab({ active, label, icon, onClick }: { active: boolean; label: string; icon: string; onClick: () => void }) {

@@ -715,8 +715,8 @@
     "semantic_hash": ""
   },
   "renderer/pages/Translator.tsx": {
-    "mtime": 1784230053.8572497,
-    "ast_hash": "075739e31cc272e9e124e16ebdb59f97",
+    "mtime": 1784233667.8676713,
+    "ast_hash": "a6f4e0a6f4f69acc690822df3f8b35e3",
     "semantic_hash": ""
   },
   "renderer/pages/TranslatorTutorial.regression-1.test.tsx": {
@@ -1120,8 +1120,8 @@
     "semantic_hash": ""
   },
   "shared/version.ts": {
-    "mtime": 1784232857.6215353,
-    "ast_hash": "87333f1b1cbf5a2c37109cd984719bde",
+    "mtime": 1784233580.7410703,
+    "ast_hash": "6744bf8333d20526a4351080787a0760",
     "semantic_hash": ""
   },
   "renderer/assets/widgets/horoscope.png": {
@@ -1187,6 +1187,16 @@
   "renderer/pages/support/supportUi.ts": {
     "mtime": 1784232857.6152675,
     "ast_hash": "3478ef1d24fe57da5df933da0cc2b3c1",
+    "semantic_hash": ""
+  },
+  "renderer/components/TranslatorWorkspaceSwitch.test.tsx": {
+    "mtime": 1784233690.7794893,
+    "ast_hash": "58445e603d0dd7beb57f8ceb88dcb333",
+    "semantic_hash": ""
+  },
+  "renderer/components/TranslatorWorkspaceSwitch.tsx": {
+    "mtime": 1784233667.8682866,
+    "ast_hash": "9df65e8f3cc3632f852f29db6bd02c1b",
     "semantic_hash": ""
   }
 }
