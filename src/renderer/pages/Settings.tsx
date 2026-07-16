@@ -405,7 +405,7 @@ export default function Settings() {
     return (
       <button type="button" onClick={onChange} role="switch" aria-checked={checked} aria-label={label}
         className={`relative h-7 w-12 rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${checked ? 'border-blue-600 bg-blue-600' : 'border-bx-border-2 bg-bx-bg'}`}>
-        <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-5' : 'translate-x-1'}`} />
+        <span aria-hidden="true" className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
     )
   }
