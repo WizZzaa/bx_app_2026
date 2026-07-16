@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `19e61625`
+- Built from commit: `6ee9f7c4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -87,21 +87,21 @@
 5. `useToast()` - 31 edges
 6. `usePlan()` - 29 edges
 7. `registerIpcHandlers()` - 25 edges
-8. `Templates()` - 16 edges
-9. `Translator()` - 16 edges
+8. `Translator()` - 16 edges
+9. `Templates()` - 16 edges
 10. `EventStatus` - 16 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `CurrencyExportRow` --references--> `CurrencyRate`  [EXTRACTED]
   renderer/pages/Currency.tsx → shared/types.ts
-- `CommandPalette()` --indirect_call--> `c()`  [INFERRED]
-  renderer/components/CommandPalette.tsx → renderer/pages/planner/BoardKanban.tsx
-- `listProcessesWindows()` --references--> `ONEC_PROCESS_NAMES`  [EXTRACTED]
-  main/services/onecProcess.ts → shared/types.ts
-- `LoginScreen()` --references--> `CHANGELOG`  [EXTRACTED]
-  renderer/components/auth/LoginScreen.tsx → shared/version.ts
-- `TaskPanel()` --calls--> `useCompany()`  [EXTRACTED]
-  renderer/components/dashboard/TaskPanel.tsx → renderer/lib/CompanyContext.tsx
+- `Translator()` --calls--> `useCompany()`  [EXTRACTED]
+  src/renderer/pages/Translator.tsx → renderer/lib/CompanyContext.tsx
+- `Translator()` --calls--> `usePlan()`  [EXTRACTED]
+  src/renderer/pages/Translator.tsx → renderer/lib/plan.tsx
+- `Translator()` --calls--> `useToast()`  [EXTRACTED]
+  src/renderer/pages/Translator.tsx → renderer/lib/ui/ToastContext.tsx
+- `Translator()` --calls--> `useDocuments()`  [EXTRACTED]
+  src/renderer/pages/Translator.tsx → renderer/lib/useDocuments.ts
 
 ## Import Cycles
 - None detected.
@@ -349,7 +349,7 @@ Cohesion: 0.50
 Nodes (4): Condition, describe(), fetchWeather(), WMO
 
 ## Knowledge Gaps
-- **297 isolated node(s):** `gotLock`, `TrayState`, `FLAGS`, `DEFAULT_CODES`, `CbuItem` (+292 more)
+- **297 isolated node(s):** `TranslatorWorkspaceSwitchProps`, `DOCUMENT_CATEGORIES`, `ChangelogEntry`, `gotLock`, `TrayState` (+292 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -357,12 +357,12 @@ Nodes (4): Condition, describe(), fetchWeather(), WMO
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `supabase` connect `Topbar.tsx` to `Settings.tsx`, `CompanyContext.tsx`, `Library.tsx`, `App.tsx`, `referenceRepo.ts`, `Planner.tsx`, `useEvents.ts`, `EventActivityTimeline.tsx`, `Documents.tsx`, `CalendarPage.tsx`, `Translator.tsx`, `Finance.tsx`, `TrayView.tsx`, `numToWords.ts`, `Services.tsx`, `types.ts`, `syncQueue.ts`?**
-  _High betweenness centrality (0.073) - this node is a cross-community bridge._
+  _High betweenness centrality (0.072) - this node is a cross-community bridge._
 - **Why does `todayISO()` connect `todayISO` to `Settings.tsx`, `CompanyContext.tsx`, `Templates.tsx`, `referenceRepo.ts`, `useEvents.ts`, `TrayView.tsx`, `Currency.tsx`, `Finance.tsx`, `ListView.tsx`, `TaxCalculator.tsx`, `Topbar.tsx`, `CacheCleaner.tsx`, `Dashboard.tsx`, `types.ts`, `EcpManager.tsx`, `SmartCalendar.tsx`, `MoneyInput.tsx`, `Planner.tsx`, `DigestView.tsx`, `FocusView.tsx`, `NotificationsWidget.tsx`?**
-  _High betweenness centrality (0.059) - this node is a cross-community bridge._
+  _High betweenness centrality (0.048) - this node is a cross-community bridge._
 - **Why does `useToast()` connect `useToast` to `Settings.tsx`, `Calc.tsx`, `CompanyContext.tsx`, `Library.tsx`, `Tools.tsx`, `Templates.tsx`, `Planner.tsx`, `Translator.tsx`, `Finance.tsx`, `numToWords.ts`, `TaxCalculator.tsx`, `types.ts`, `syncQueue.ts`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
-- **What connects `gotLock`, `TrayState`, `FLAGS` to the rest of the system?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+- **What connects `TranslatorWorkspaceSwitchProps`, `DOCUMENT_CATEGORIES`, `ChangelogEntry` to the rest of the system?**
   _297 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Calc.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.1383399209486166 - nodes in this community are weakly interconnected._
