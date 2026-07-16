@@ -129,12 +129,13 @@ export function ResourceHero({ eyebrow, title, description, icon, stats = [], ac
   )
 }
 
-export function ResourceSectionTitle({ title, subtitle, count, action }: { title: string; subtitle?: string; count?: number; action?: React.ReactNode }) {
+export function ResourceSectionTitle({ title, subtitle, count, action, headingLevel = 'h3' }: { title: string; subtitle?: string; count?: number; action?: React.ReactNode; headingLevel?: 'h2' | 'h3' }) {
+  const Heading = headingLevel
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
         <div className="flex items-center gap-2">
-          <h3 className="text-base font-black text-bx-text">{title}</h3>
+          <Heading className="text-base font-black text-bx-text">{title}</Heading>
           {count !== undefined && <span className="rounded-full bg-bx-surface-2 px-2 py-0.5 text-[10px] font-black text-bx-muted tabular-nums">{count}</span>}
         </div>
         {subtitle && <p className="mt-1 text-[11px] leading-relaxed text-bx-muted">{subtitle}</p>}

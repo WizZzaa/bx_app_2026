@@ -5,6 +5,7 @@ import { useDocuments, type BxUserDocument } from '../lib/useDocuments'
 import { usePlan } from '../lib/plan'
 import Icon from '../lib/ui/Icon'
 import DocumentWorkflowBridge from '../components/documents/DocumentWorkflowBridge'
+import { DocumentViewModeSwitch, useDocumentViewMode } from '../components/documents/DocumentViewModeSwitch'
 import {
   ResourceEmpty,
   ResourceHero,
@@ -37,6 +38,7 @@ export default function Documents() {
   const [search, setSearch] = useState('')
   const [filterCompany, setFilterCompany] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
+  const [viewMode, setViewMode] = useDocumentViewMode()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { void loadDocuments() }, [loadDocuments])
@@ -115,6 +117,7 @@ export default function Documents() {
 
   const companyMap = useMemo(() => new Map(companies.map(company => [company.id, company.name])), [companies])
   const usedPercent = Number.isFinite(limits.documentsMax) && limits.documentsMax > 0 ? Math.min(100, Math.round(documents.length / limits.documentsMax * 100)) : 0
+  const simpleView = viewMode === 'simple'
   const resetFilters = () => { setSearch(''); setFilterCategory(''); setFilterCompany('') }
 
   const sidebar = <ResourceSidebar icon="note" title="Документы" subtitle="Готовые файлы и созданные бланки" search={search} searchPlaceholder="Название или тег" onSearch={setSearch} onClear={() => setSearch('')} label="Тип документа" footer={<button type="button" onClick={() => setUploadOpen(open => !open)} className={`${secondaryActionClass} w-full`}><Icon name={uploadOpen ? 'crossSmall' : 'plus'} className="h-4 w-4" />{uploadOpen ? 'Закрыть загрузку' : 'Загрузить файл'}</button>}>
@@ -123,9 +126,9 @@ export default function Documents() {
   </ResourceSidebar>
 
   return <ResourceLayout sidebar={sidebar}>
-    <div className="space-y-6">
-      <ResourceHero eyebrow="Единый архив компании" title="Документ легко создать, найти и передать" description="Создайте новый документ из проверяемого шаблона или загрузите готовый файл. Каждый документ привязан к организации, категории и поисковым меткам." icon="note" stats={[{ value: documents.length, label: 'всего файлов' }, { value: filteredDocs.length, label: 'видно сейчас' }, { value: Number.isFinite(limits.documentsMax) ? `${usedPercent}%` : 'Без лимита', label: 'занято по тарифу' }]} actions={<><button type="button" onClick={() => navigate('/templates')} className={primaryActionClass}><Icon name="templates" className="h-4 w-4" />Создать по шаблону</button><button type="button" onClick={() => setUploadOpen(true)} className={secondaryActionClass}><Icon name="download" className="h-4 w-4 rotate-180" />Загрузить готовый</button></>} />
-      <DocumentWorkflowBridge current="documents" />
+    <div className={simpleView ? 'space-y-4' : 'space-y-6'}>
+      <DocumentViewModeSwitch current="documents" value={viewMode} onChange={setViewMode} actions={simpleView ? <><button type="button" onClick={() => navigate('/templates')} className={primaryActionClass}><Icon name="templates" className="h-4 w-4" />Создать</button><button type="button" onClick={() => setUploadOpen(true)} className={secondaryActionClass}><Icon name="download" className="h-4 w-4 rotate-180" />Загрузить</button></> : undefined} />
+      {!simpleView && <><ResourceHero eyebrow="Единый архив компании" title="Документ легко создать, найти и передать" description="Создайте новый документ из проверяемого шаблона или загрузите готовый файл. Каждый документ привязан к организации, категории и поисковым меткам." icon="note" stats={[{ value: documents.length, label: 'всего файлов' }, { value: filteredDocs.length, label: 'видно сейчас' }, { value: Number.isFinite(limits.documentsMax) ? `${usedPercent}%` : 'Без лимита', label: 'занято по тарифу' }]} actions={<><button type="button" onClick={() => navigate('/templates')} className={primaryActionClass}><Icon name="templates" className="h-4 w-4" />Создать по шаблону</button><button type="button" onClick={() => setUploadOpen(true)} className={secondaryActionClass}><Icon name="download" className="h-4 w-4 rotate-180" />Загрузить готовый</button></>} /><DocumentWorkflowBridge current="documents" /></>}
 
       {uploadOpen && <form onSubmit={handleUpload} className="rounded-[22px] border border-blue-500/20 bg-bx-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Загрузка готового файла</p><h2 className="mt-1 text-base font-black text-bx-text">Сначала файл, затем понятные реквизиты</h2><p className="mt-1 text-[11px] text-bx-muted">PDF, Word или изображение до 10 МБ. Поля со звёздочкой обязательны.</p></div>{uploadSuccess && <span role="status" className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-[10px] font-black text-emerald-700 dark:text-emerald-300"><Icon name="check" className="h-4 w-4" />Документ сохранён</span>}</div>
@@ -150,10 +153,10 @@ export default function Documents() {
       </form>}
 
       <section className="space-y-4">
-        <ResourceSectionTitle title="Архив документов" subtitle="Фильтры работают вместе: поиск, организация и тип документа" count={filteredDocs.length} action={(search || filterCategory || filterCompany) ? <button type="button" onClick={resetFilters} className={secondaryActionClass}>Сбросить фильтры</button> : undefined} />
+        <ResourceSectionTitle headingLevel="h2" title="Архив документов" subtitle={simpleView ? undefined : 'Фильтры работают вместе: поиск, организация и тип документа'} count={filteredDocs.length} action={(search || filterCategory || filterCompany) ? <button type="button" onClick={resetFilters} className={secondaryActionClass}>Сбросить фильтры</button> : undefined} />
         <div className="flex flex-wrap items-end gap-3 rounded-[18px] border border-bx-border bg-bx-surface p-3">
           <label className="min-w-[220px] flex-1 text-[9px] font-black uppercase tracking-wider text-bx-muted">Организация<select value={filterCompany} onChange={event => setFilterCompany(event.target.value)} className="mt-1.5 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-xs font-bold text-bx-text outline-none focus:border-blue-500"><option value="">Все организации</option>{companies.map(company => <option key={company.id} value={company.id}>{company.name}</option>)}</select></label>
-          <div className="rounded-xl border border-bx-border bg-bx-bg px-3 py-2 text-[10px] text-bx-muted"><span className="block font-black uppercase tracking-wider">Хранилище</span><span className="mt-1 block font-bold text-bx-text">{documents.length} {Number.isFinite(limits.documentsMax) ? `из ${limits.documentsMax}` : 'файлов · без лимита'}</span></div>
+          {!simpleView && <div className="rounded-xl border border-bx-border bg-bx-bg px-3 py-2 text-[10px] text-bx-muted"><span className="block font-black uppercase tracking-wider">Хранилище</span><span className="mt-1 block font-bold text-bx-text">{documents.length} {Number.isFinite(limits.documentsMax) ? `из ${limits.documentsMax}` : 'файлов · без лимита'}</span></div>}
         </div>
 
         {loading ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-48 animate-pulse rounded-[20px] border border-bx-border bg-bx-surface" />)}</div> : filteredDocs.length === 0 ? <ResourceEmpty icon="folder" title={documents.length ? 'По этим фильтрам ничего нет' : 'Архив пока пуст'} description={documents.length ? 'Сбросьте фильтры или попробуйте другое название и теги.' : 'Создайте первый документ по шаблону или загрузите готовый файл.'} action={<button type="button" onClick={documents.length ? resetFilters : () => navigate('/templates')} className={primaryActionClass}>{documents.length ? 'Показать все' : 'Выбрать шаблон'}</button>} /> : <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">

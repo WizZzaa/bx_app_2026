@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "renderer/components/workspace/ResourceWorkspace.tsx": {
-    "mtime": 1784227577.2660825,
-    "ast_hash": "244bf600a77b0c9a22e3029c64d133ed",
+    "mtime": 1784234366.689549,
+    "ast_hash": "7404c318531e0c57d425271a923b0612",
     "semantic_hash": ""
   },
   "renderer/data/knowledge.ts": {
@@ -645,8 +645,8 @@
     "semantic_hash": ""
   },
   "renderer/pages/Documents.tsx": {
-    "mtime": 1784227346.1278207,
-    "ast_hash": "1b5cbdb0f23679d4ac3deb4e7ffae06a",
+    "mtime": 1784234366.690458,
+    "ast_hash": "fbeb0fd4e9bf416ddd663749bb1b0ba1",
     "semantic_hash": ""
   },
   "renderer/pages/EcpManager.tsx": {
@@ -705,8 +705,8 @@
     "semantic_hash": ""
   },
   "renderer/pages/Templates.tsx": {
-    "mtime": 1784227346.1293569,
-    "ast_hash": "37aec3ee5ebcc9058415b2db41fe7346",
+    "mtime": 1784234366.6914186,
+    "ast_hash": "5cd17feb1e32abca0e05610561e8f8b0",
     "semantic_hash": ""
   },
   "renderer/pages/Tools.tsx": {
@@ -1120,8 +1120,8 @@
     "semantic_hash": ""
   },
   "shared/version.ts": {
-    "mtime": 1784233580.7410703,
-    "ast_hash": "6744bf8333d20526a4351080787a0760",
+    "mtime": 1784234201.8890774,
+    "ast_hash": "a3d0d9c15857e6e0831e2f679ec14e5c",
     "semantic_hash": ""
   },
   "renderer/assets/widgets/horoscope.png": {
@@ -1197,6 +1197,16 @@
   "renderer/components/TranslatorWorkspaceSwitch.tsx": {
     "mtime": 1784233667.8682866,
     "ast_hash": "9df65e8f3cc3632f852f29db6bd02c1b",
+    "semantic_hash": ""
+  },
+  "renderer/components/documents/DocumentViewModeSwitch.test.tsx": {
+    "mtime": 1784234201.8719854,
+    "ast_hash": "9add1304bf9ee56b0aa85d45d8ea61cf",
+    "semantic_hash": ""
+  },
+  "renderer/components/documents/DocumentViewModeSwitch.tsx": {
+    "mtime": 1784234201.8712723,
+    "ast_hash": "6901cf30bc7b8f8eb8357077c740384d",
     "semantic_hash": ""
   }
 }

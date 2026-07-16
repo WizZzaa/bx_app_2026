@@ -6,6 +6,7 @@ import { useCounterparties } from '../lib/db/useCounterparties'
 import { useToast } from '../lib/ui/ToastContext'
 import Icon from '../lib/ui/Icon'
 import DocumentWorkflowBridge from '../components/documents/DocumentWorkflowBridge'
+import { DocumentViewModeSwitch, useDocumentViewMode } from '../components/documents/DocumentViewModeSwitch'
 import { TEMPLATES, TEMPLATE_CATEGORIES, type DocTemplate, type TemplateVar } from '../data/templates'
 import { toWordsRu } from '../lib/numToWords'
 import mammoth from 'mammoth'
@@ -108,13 +109,14 @@ const ruLabels: Record<string, string> = {
   director_name: 'ФИО директора'
 }
 
-function InputField({ v, value, onChange }: { v: TemplateVar; value: string; onChange: (val: string) => void }) {
+function InputField({ v, value, onChange, showHint }: { v: TemplateVar; value: string; onChange: (val: string) => void; showHint: boolean }) {
   const fieldId = `template-field-${v.key}`
+  const describedBy = showHint ? `${fieldId}-hint` : undefined
   const missing = !value.trim()
   const cls = `min-h-11 w-full rounded-xl border bg-bx-surface-2 px-3 py-2.5 text-xs font-medium text-bx-text outline-none transition-colors focus:ring-2 focus:ring-blue-500/20 ${missing ? 'border-amber-500/45 focus:border-amber-500' : 'border-bx-border focus:border-blue-500/60'}`
-  if (v.type === 'textarea') return <textarea id={fieldId} aria-describedby={`${fieldId}-hint`} value={value} onChange={e => onChange(e.target.value)} placeholder={v.placeholder} rows={3} className={`${cls} resize-y`} />
-  if (v.type === 'select' && v.options) return <select id={fieldId} aria-describedby={`${fieldId}-hint`} value={value} onChange={e => onChange(e.target.value)} className={cls}>{v.options.map(o => <option key={o} value={o}>{o}</option>)}</select>
-  return <input id={fieldId} aria-describedby={`${fieldId}-hint`} type={v.type === 'date' ? 'date' : v.type === 'number' ? 'number' : 'text'} value={value} onChange={e => onChange(e.target.value)} placeholder={v.placeholder} className={cls} />
+  if (v.type === 'textarea') return <textarea id={fieldId} aria-describedby={describedBy} value={value} onChange={e => onChange(e.target.value)} placeholder={v.placeholder} rows={3} className={`${cls} resize-y`} />
+  if (v.type === 'select' && v.options) return <select id={fieldId} aria-describedby={describedBy} value={value} onChange={e => onChange(e.target.value)} className={cls}>{v.options.map(o => <option key={o} value={o}>{o}</option>)}</select>
+  return <input id={fieldId} aria-describedby={describedBy} type={v.type === 'date' ? 'date' : v.type === 'number' ? 'number' : 'text'} value={value} onChange={e => onChange(e.target.value)} placeholder={v.placeholder} className={cls} />
 }
 
 const extractVars = (body: string): TemplateVar[] => {
@@ -177,6 +179,7 @@ export default function Templates() {
   const [copied,   setCopied]   = useState(false)
   const [selectedCompanyId, setSelectedCompanyId] = useState(active?.id ?? '')
   const [savingDocument, setSavingDocument] = useState(false)
+  const [viewMode, setViewMode] = useDocumentViewMode()
   
   // Custom templates states
   const [customTpls, setCustomTpls] = useState<DocTemplate[]>([])
@@ -331,6 +334,7 @@ export default function Templates() {
   const missingVars = useMemo(() => tpl ? getMissingVars(tpl, vals) : [], [tpl, vals])
   const fieldGroups = useMemo(() => tpl ? groupTemplateVars(tpl.vars) : [], [tpl])
   const guide = tpl ? getTemplateGuide(tpl) : null
+  const simpleView = viewMode === 'simple'
 
   const ensureComplete = () => {
     if (missingVars.length === 0) return true
@@ -564,6 +568,7 @@ export default function Templates() {
     return (
       <div className="flex flex-1 overflow-y-auto bg-bx-bg text-bx-text custom-scrollbar">
         <div className="bx-page-container w-full space-y-5 py-5">
+          <DocumentViewModeSwitch current="templates" value={viewMode} onChange={setViewMode} compact />
           <header className="rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex min-w-0 items-start gap-3">
@@ -571,12 +576,12 @@ export default function Templates() {
                 <div>
                   <button type="button" onClick={() => setActiveId(null)} className="mb-1 inline-flex min-h-8 items-center gap-1 text-[10px] font-black uppercase tracking-[0.12em] text-bx-muted hover:text-bx-text"><Icon name="arrowL" className="h-3 w-3" />Все шаблоны</button>
                   <h1 className="text-xl font-black tracking-tight text-bx-text">{tpl.title}</h1>
-                  <p className="mt-1 max-w-3xl text-xs leading-relaxed text-bx-muted">{guide?.whenToUse}</p>
+                  {!simpleView && <p className="mt-1 max-w-3xl text-xs leading-relaxed text-bx-muted">{guide?.whenToUse}</p>}
                 </div>
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-bx-border bg-bx-surface-2 p-1.5" aria-label="Этапы подготовки документа">
+              {!simpleView && <div className="flex items-center gap-2 rounded-xl border border-bx-border bg-bx-surface-2 p-1.5" aria-label="Этапы подготовки документа">
                 {['1. Стороны', '2. Условия', '3. Проверка'].map((step, index) => <span key={step} className={`rounded-lg px-3 py-2 text-[10px] font-black ${progress >= [1, 50, 100][index] ? 'bg-blue-600 text-white' : 'text-bx-muted'}`}>{step}</span>)}
-              </div>
+              </div>}
             </div>
             <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_240px]">
               <label className="block text-[10px] font-black uppercase tracking-[0.1em] text-bx-muted">1. Подставить нашу компанию
@@ -597,24 +602,24 @@ export default function Templates() {
             </div>
           </header>
 
-          <DocumentWorkflowBridge current="templates" />
+          {!simpleView && <DocumentWorkflowBridge current="templates" />}
 
           <div className="grid items-start gap-5 xl:grid-cols-[minmax(420px,0.9fr)_minmax(560px,1.1fr)]">
             <div className="space-y-4">
-              <section className="rounded-[20px] border border-blue-500/20 bg-blue-500/[0.055] p-4">
+              {!simpleView && <section className="rounded-[20px] border border-blue-500/20 bg-blue-500/[0.055] p-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300">Что получится</p>
                 <p className="mt-1 text-xs font-bold leading-relaxed text-bx-text">{guide?.result}</p>
-              </section>
+              </section>}
               {fieldGroups.length ? fieldGroups.map((group, groupIndex) => {
                 const meta = FIELD_GROUP_META[group.id]
                 const groupMissing = group.vars.filter(variable => !(vals[variable.key] ?? '').trim()).length
                 return <section key={group.id} className="rounded-[20px] border border-bx-border bg-bx-surface p-4 shadow-sm">
-                  <div className="mb-4 flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300">Блок {groupIndex + 1}</p><h2 className="mt-0.5 text-sm font-black text-bx-text">{meta.title}</h2><p className="mt-0.5 text-[11px] text-bx-muted">{meta.description}</p></div><span className={`rounded-full border px-2.5 py-1 text-[9px] font-black ${groupMissing ? 'border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'}`}>{groupMissing ? `${groupMissing} не заполнено` : 'Готово'}</span></div>
+                  <div className="mb-4 flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300">Блок {groupIndex + 1}</p><h2 className="mt-0.5 text-sm font-black text-bx-text">{meta.title}</h2>{!simpleView && <p className="mt-0.5 text-[11px] text-bx-muted">{meta.description}</p>}</div><span className={`rounded-full border px-2.5 py-1 text-[9px] font-black ${groupMissing ? 'border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'}`}>{groupMissing ? `${groupMissing} не заполнено` : 'Готово'}</span></div>
                   <div className="grid gap-4 md:grid-cols-2">
                     {group.vars.map(v => <div key={v.key} className={v.type === 'textarea' ? 'md:col-span-2' : ''}>
                       <label htmlFor={`template-field-${v.key}`} className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.08em] text-bx-text">{v.label} <span className="text-amber-600" aria-label="обязательное поле">*</span></label>
-                      <InputField v={v} value={vals[v.key] ?? ''} onChange={val => handleSetVal(v.key, val)} />
-                      <p id={`template-field-${v.key}-hint`} className="mt-1.5 text-[10px] leading-relaxed text-bx-muted">{getFieldHint(v)}</p>
+                      <InputField v={v} value={vals[v.key] ?? ''} onChange={val => handleSetVal(v.key, val)} showHint={!simpleView} />
+                      {!simpleView && <p id={`template-field-${v.key}-hint`} className="mt-1.5 text-[10px] leading-relaxed text-bx-muted">{getFieldHint(v)}</p>}
                     </div>)}
                   </div>
                 </section>
@@ -628,7 +633,7 @@ export default function Templates() {
               </section>
               <section className="rounded-[20px] border border-bx-border bg-bx-surface p-4 shadow-sm">
                 <h2 className="text-sm font-black text-bx-text">Перед сохранением проверьте</h2>
-                <div className="mt-3 grid gap-2 sm:grid-cols-3">{guide?.checks.map((check, index) => <div key={check} className="flex gap-2 rounded-xl border border-bx-border bg-bx-surface-2 p-3 text-[10px] font-semibold leading-relaxed text-bx-text"><span className="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-blue-600 text-[9px] font-black text-white">{index + 1}</span>{check}</div>)}</div>
+                {!simpleView && <div className="mt-3 grid gap-2 sm:grid-cols-3">{guide?.checks.map((check, index) => <div key={check} className="flex gap-2 rounded-xl border border-bx-border bg-bx-surface-2 p-3 text-[10px] font-semibold leading-relaxed text-bx-text"><span className="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-blue-600 text-[9px] font-black text-white">{index + 1}</span>{check}</div>)}</div>}
                 {missingVars.length > 0 && <div role="alert" className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-[11px] font-bold text-amber-800 dark:text-amber-200"><Icon name="alert" className="mt-0.5 h-4 w-4 flex-shrink-0" />Нельзя выгрузить неполный бланк. Заполните ещё {missingVars.length}: {missingVars.slice(0, 3).map(v => v.label).join(', ')}{missingVars.length > 3 ? '…' : ''}</div>}
                 <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
                   <button type="button" disabled={savingDocument || missingVars.length > 0} onClick={handleSaveToDocuments} className="sm:col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-black text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-45"><Icon name="save" className="h-4 w-4" />{savingDocument ? 'Сохраняю…' : 'Сохранить в Документы'}</button>
@@ -658,11 +663,11 @@ export default function Templates() {
 
   return (
     <ResourceLayout sidebar={sidebar}>
-      <div className="space-y-6">
-        <ResourceHero eyebrow="Документ из реквизитов за несколько минут" title="Бланки, которые не приходится собирать заново" description="Выберите документ, подставьте свою компанию и контрагента, проверьте поля и выгрузите готовый результат. Личные шаблоны живут рядом со встроенными." icon="templates" stats={[{ value: allTemplates.length, label: 'шаблонов' }, { value: customTpls.length, label: 'создано вами' }, { value: filtered.length, label: search ? 'найдено' : 'в категории' }]} actions={<button type="button" onClick={() => setCreatingTpl(true)} className={primaryActionClass}><Icon name="plus" className="h-4 w-4" />Создать шаблон</button>} />
-        <DocumentWorkflowBridge current="templates" />
+      <div className={simpleView ? 'space-y-4' : 'space-y-6'}>
+        <DocumentViewModeSwitch current="templates" value={viewMode} onChange={setViewMode} actions={simpleView ? <button type="button" onClick={() => setCreatingTpl(true)} className={primaryActionClass}><Icon name="plus" className="h-4 w-4" />Создать</button> : undefined} />
+        {!simpleView && <><ResourceHero eyebrow="Документ из реквизитов за несколько минут" title="Бланки, которые не приходится собирать заново" description="Выберите документ, подставьте свою компанию и контрагента, проверьте поля и выгрузите готовый результат. Личные шаблоны живут рядом со встроенными." icon="templates" stats={[{ value: allTemplates.length, label: 'шаблонов' }, { value: customTpls.length, label: 'создано вами' }, { value: filtered.length, label: search ? 'найдено' : 'в категории' }]} actions={<button type="button" onClick={() => setCreatingTpl(true)} className={primaryActionClass}><Icon name="plus" className="h-4 w-4" />Создать шаблон</button>} /><DocumentWorkflowBridge current="templates" /></>}
         <section className="space-y-3.5">
-          <ResourceSectionTitle title={search.trim() ? `Результаты по запросу «${search.trim()}»` : category === 'Все' ? 'Все шаблоны' : category} subtitle="Откройте бланк, заполните реквизиты и проверьте предпросмотр перед выгрузкой" count={filtered.length} action={search.trim() ? <button type="button" onClick={() => setSearch('')} className={secondaryActionClass}>Очистить поиск</button> : undefined} />
+          <ResourceSectionTitle headingLevel="h2" title={search.trim() ? `Результаты по запросу «${search.trim()}»` : category === 'Все' ? 'Все шаблоны' : category} subtitle={simpleView ? undefined : 'Откройте бланк, заполните реквизиты и проверьте предпросмотр перед выгрузкой'} count={filtered.length} action={search.trim() ? <button type="button" onClick={() => setSearch('')} className={secondaryActionClass}>Очистить поиск</button> : undefined} />
           {filtered.length > 0 ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {filtered.map(t => {
@@ -670,11 +675,10 @@ export default function Templates() {
                 const isCustom = t.id.startsWith('custom-')
                 const cardGuide = getTemplateGuide(t)
                 return (
-                  <button type="button" key={t.id} onClick={() => handleSelectTemplate(t)} className="group flex min-h-[240px] cursor-pointer flex-col rounded-[20px] border border-bx-border bg-bx-surface p-4.5 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/[0.035] focus-visible:ring-2 focus-visible:ring-blue-500">
+                  <button type="button" key={t.id} onClick={() => handleSelectTemplate(t)} className={`group flex cursor-pointer flex-col rounded-[20px] border border-bx-border bg-bx-surface p-4.5 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/[0.035] focus-visible:ring-2 focus-visible:ring-blue-500 ${simpleView ? 'min-h-[178px]' : 'min-h-[240px]'}`}>
                     <div className="flex items-start justify-between gap-3"><span className={`grid h-10 w-10 place-items-center rounded-xl border ${cc.bg} ${cc.text} ${cc.border}`}><Icon name={isCustom ? 'file' : catMeta(t.category).icon} className="h-[18px] w-[18px]" /></span><span className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] ${cc.bg} ${cc.text} ${cc.border}`}>{t.category}</span></div>
-                    <h4 className="mt-4 text-[13px] font-black leading-snug text-bx-text transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-300">{t.title}</h4>
-                    <p className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-bx-muted">{cardGuide.whenToUse}</p>
-                    <div className="mt-3 rounded-xl border border-bx-border bg-bx-surface-2 p-2.5"><p className="text-[9px] font-black uppercase tracking-[0.1em] text-bx-muted">На выходе</p><p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-relaxed text-bx-text">{cardGuide.result}</p></div>
+                    <h3 className="mt-4 text-[13px] font-black leading-snug text-bx-text transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-300">{t.title}</h3>
+                    {!simpleView && <><p className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-bx-muted">{cardGuide.whenToUse}</p><div className="mt-3 rounded-xl border border-bx-border bg-bx-surface-2 p-2.5"><p className="text-[9px] font-black uppercase tracking-[0.1em] text-bx-muted">На выходе</p><p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-relaxed text-bx-text">{cardGuide.result}</p></div></>}
                     <div className="mt-auto flex items-center justify-between border-t border-bx-border pt-3 text-[10px] font-bold"><span className="text-bx-muted">{t.vars.length} полей</span><span className="flex items-center gap-1 text-blue-600 dark:text-blue-300">Заполнить <Icon name="arrowR" className="h-3.5 w-3.5" /></span></div>
                   </button>
                 )

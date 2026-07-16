@@ -55,12 +55,17 @@
   "53": "WidgetBoundary",
   "54": "onecProcess.ts",
   "55": "uiScale.ts",
+  "56": "Sidebar.tsx",
   "57": "Transliterate.tsx",
   "58": "EimzoDiag.tsx",
   "59": "PcCleaner.tsx",
+  "60": "currency.ts",
+  "61": "ecpParser.ts",
   "62": "ToolStub.tsx",
   "63": "vite-env.d.ts",
   "64": "PLAN_LIMITS",
+  "65": "DividendCalc.tsx",
   "66": "NotificationsWidget.tsx",
+  "67": "News.tsx",
   "70": "weather.ts"
 }
