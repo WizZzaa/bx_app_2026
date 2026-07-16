@@ -18,7 +18,6 @@ import {
   ResourceEmpty,
   ResourceHero,
   ResourceLayout,
-  ResourceNavItem,
   ResourceSidebar,
   primaryActionClass,
   secondaryActionClass,
