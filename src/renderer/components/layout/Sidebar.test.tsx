@@ -44,4 +44,9 @@ describe('Sidebar', () => {
     render(<MemoryRouter initialEntries={['/translator']}><Sidebar /></MemoryRouter>)
     expect(screen.getByRole('link', { name: 'Переводчик' }).getAttribute('href')).toBe('/translator')
   })
+
+  it('does not expose the retired HR section', () => {
+    render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
+    expect(screen.queryByRole('link', { name: 'Сотрудники' })).toBeNull()
+  })
 })

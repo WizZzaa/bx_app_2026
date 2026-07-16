@@ -14,7 +14,6 @@ import Planner from './pages/Planner';
 import Templates from './pages/Templates';
 import Ai from './pages/Ai';
 import Support from './pages/Support';
-import Hr from './pages/Hr';
 import Finance from './pages/Finance';
 import Currency from './pages/Currency';
 import Services from './pages/Services';
@@ -113,7 +112,7 @@ export default function App() {
                   <Route path="/knowledge" element={<Library />} />
                   <Route path="/templates" element={<Templates />} />
                   <Route path="/documents" element={<Documents />} />
-                  <Route path="/hr" element={<Hr />} />
+                  <Route path="/hr" element={<Navigate to="/settings" replace />} />
                   <Route path="/finance" element={<Finance />} />
                   <Route path="/finance/:id" element={<Finance />} />
                   <Route path="/currency" element={<Currency />} />

@@ -15,7 +15,6 @@ const COMMANDS: Cmd[] = [
   // Быстрые действия
   { id: 'a-task',   label: 'Новая задача',      icon: 'plus', to: '/planner',  group: 'Действие', keywords: 'добавить канбан доска' },
   { id: 'a-op',     label: 'Новая операция',    icon: 'plus', to: '/finance',  group: 'Действие', keywords: 'доход расход деньги' },
-  { id: 'a-emp',    label: 'Новый сотрудник',   icon: 'plus', to: '/hr',       group: 'Действие', keywords: 'кадры зарплата' },
   { id: 'a-ai',     label: 'Спросить AI',       icon: 'ai',   to: '/ai',       group: 'Действие', keywords: 'консультант вопрос налоги' },
   // Разделы
   { id: 'n-dash',   label: 'Дашборд',           icon: 'dashboard', to: '/',          group: 'Раздел', keywords: 'главная рабочий стол' },
@@ -27,7 +26,6 @@ const COMMANDS: Cmd[] = [
   { id: 'n-srv',    label: 'Сервисы',           icon: 'services',  to: '/services',  group: 'Раздел', keywords: 'госпорталы ссылки банки' },
   { id: 'n-news',   label: 'Новости',           icon: 'news',      to: '/news',      group: 'Раздел' },
   { id: 'n-tpl',    label: 'Шаблоны',           icon: 'templates', to: '/templates', group: 'Раздел', keywords: 'договор акт приказ' },
-  { id: 'n-hr',     label: 'Сотрудники',        icon: 'hr',        to: '/hr',        group: 'Раздел', keywords: 'кадры зарплата зп' },
   { id: 'n-fin',    label: 'Контроль оплат',    icon: 'finance',   to: '/finance',   group: 'Раздел', keywords: 'финансы дебиторка кредиторка оплата долги' },
   { id: 'n-ecp',    label: 'ЭЦП',               icon: 'ecp',       to: '/ecp',       group: 'Раздел', keywords: 'ключ подпись e-imzo' },
   { id: 'n-inn',    label: 'Проверка ИНН',      icon: 'search',    to: '/check-inn', group: 'Раздел' },

@@ -49,9 +49,8 @@ export default function Sidebar() {
       ],
     },
     {
-      label: 'Учёт и команда',
+      label: 'Учёт и документы',
       items: [
-        { to: '/hr', icon: 'hr', label: 'Сотрудники' },
         { to: '/counterparties', icon: 'users', label: 'Организации' },
         { to: '/documents', icon: 'note', label: 'Документы' },
         { to: '/templates', icon: 'templates', label: 'Шаблоны' },
