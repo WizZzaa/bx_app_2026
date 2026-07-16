@@ -12,6 +12,10 @@ import {
   secondaryActionClass,
 } from '../components/workspace/ResourceWorkspace'
 
+export function serviceItemKey(sectionId: string, index: number, title: string, url: string): string {
+  return `${sectionId}-${index}-${title}-${url}`
+}
+
 function openLink(url: string) {
   if (window.bx?.shell?.openExternal) window.bx.shell.openExternal(url)
   else window.open(url, '_blank', 'noopener,noreferrer')
@@ -105,10 +109,10 @@ export default function Services() {
           <section key={section.id} className="space-y-3.5" aria-label={section.title}>
             <ResourceSectionTitle title={section.title} subtitle="Откроется в безопасной внешней вкладке" count={section.items.length} />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-              {section.items.map(item => (
+              {section.items.map((item, index) => (
                 <button
                   type="button"
-                  key={`${section.id}-${item.url}`}
+                  key={serviceItemKey(section.id, index, item.title, item.url)}
                   onClick={() => openLink(item.url)}
                   className="group flex min-h-[184px] cursor-pointer flex-col rounded-[20px] border border-bx-border bg-bx-surface p-4.5 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/[0.035] focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
