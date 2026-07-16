@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { BxEvent, EventType, EventStatus, EventPriority, EventRecurrence, NewEvent } from './useEvents';
 import { COMPANY_ROLE_LABELS, type CompanyMember } from './useCompanyMembers';
 import { todayISO } from '../../lib/dates';
+import { EventActivityTimeline } from './EventActivityTimeline';
 
 interface Props {
   event?: BxEvent | null;
@@ -289,6 +290,8 @@ export default function EventModal({ event, defaultDate, defaultType, defaultEve
               )}
             </div>
           )}
+
+          {event && <EventActivityTimeline event={event} members={members} />}
         </div>
 
         {/* Footer */}

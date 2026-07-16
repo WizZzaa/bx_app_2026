@@ -35,10 +35,11 @@ export interface TaskNotificationRow {
   id: string
   event_id: string
   company_id: string
-  notification_type: 'assignment' | 'reassignment'
+  notification_type: 'assignment' | 'reassignment' | 'accepted' | 'status_changed' | 'due_date_changed'
   event_title: string
   company_name: string
   due_date: string | null
+  details?: string | null
   created_at: string
   read_at: string | null
 }
@@ -54,10 +55,24 @@ function formatDueDate(value: string | null): string {
 }
 
 export function buildTaskNotification(item: TaskNotificationRow): BxNotification {
+  const titleByType: Record<TaskNotificationRow['notification_type'], string> = {
+    assignment: 'Вам назначена задача',
+    reassignment: 'Задача переназначена вам',
+    accepted: 'Исполнитель принял задачу',
+    status_changed: 'Статус задачи изменён',
+    due_date_changed: 'Срок задачи изменён',
+  }
+  const detailByType: Record<TaskNotificationRow['notification_type'], string> = {
+    assignment: `срок ${formatDueDate(item.due_date)}`,
+    reassignment: `срок ${formatDueDate(item.due_date)}`,
+    accepted: 'исполнитель начал работу',
+    status_changed: `новый статус: ${item.details || 'обновлён'}`,
+    due_date_changed: `новый срок: ${formatDueDate(item.due_date)}`,
+  }
   return {
     id: item.id,
-    title: item.notification_type === 'assignment' ? 'Вам назначена задача' : 'Задача переназначена вам',
-    body: `${item.event_title}\n${item.company_name} · срок ${formatDueDate(item.due_date)}`,
+    title: titleByType[item.notification_type],
+    body: `${item.event_title}\n${item.company_name} · ${detailByType[item.notification_type]}`,
     target_type: 'all',
     created_at: item.created_at,
     read: Boolean(item.read_at),
@@ -146,7 +161,7 @@ export function useNotifications() {
         supabase.from('bx_global_notifications').select('*').order('created_at', { ascending: false }),
         supabase
           .from('bx_task_notifications')
-          .select('id, event_id, company_id, notification_type, event_title, company_name, due_date, created_at, read_at')
+          .select('id, event_id, company_id, notification_type, event_title, company_name, due_date, details, created_at, read_at')
           .order('created_at', { ascending: false })
           .limit(100),
         supabase.auth.getSession(),
