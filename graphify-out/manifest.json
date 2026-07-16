@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/renderer/lib/companyTeam.ts": {
-    "mtime": 1784196370.891792,
-    "ast_hash": "1fbf81955b3aff90c46d7f4258aa45ea",
+    "mtime": 1784232416.769565,
+    "ast_hash": "db83ef30beea3c741a60ce567ae0d79b",
     "semantic_hash": ""
   },
   "src/renderer/lib/dates.test.ts": {
@@ -625,8 +625,8 @@
     "semantic_hash": ""
   },
   "src/renderer/pages/Counterparties.tsx": {
-    "mtime": 1784225521.6928053,
-    "ast_hash": "5f31a18ab74aa4906c53092efa8c1335",
+    "mtime": 1784232389.5991857,
+    "ast_hash": "2a1c7bde200cf4f457c1f0a403d1fe04",
     "semantic_hash": ""
   },
   "src/renderer/pages/Currency.test.ts": {
@@ -1120,8 +1120,8 @@
     "semantic_hash": ""
   },
   "src/shared/version.ts": {
-    "mtime": 1784231522.1713724,
-    "ast_hash": "7a69767696bf06b9c215ccd3cdbca533",
+    "mtime": 1784232389.6026986,
+    "ast_hash": "463a78eab7f435531892307eeda0bf75",
     "semantic_hash": ""
   },
   "src/renderer/assets/widgets/horoscope.png": {
@@ -1157,6 +1157,16 @@
   "src/renderer/assets/widgets/weather_sunny.png": {
     "mtime": 1783867219.484221,
     "ast_hash": "49fe37a1eecec860ebbea419f82d0d3e",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/CompanyRoleGuide.test.tsx": {
+    "mtime": 1784232389.598704,
+    "ast_hash": "6f0bf3d5b4477a1676cd1e0a2837c734",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/CompanyRoleGuide.tsx": {
+    "mtime": 1784232396.262214,
+    "ast_hash": "0bb0710095e0493b1d6b1a8205b06fec",
     "semantic_hash": ""
   }
 }

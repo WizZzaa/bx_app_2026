@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `823edfe5`
+- Built from commit: `d18f89fe`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -102,14 +102,14 @@
 ## Surprising Connections (you probably didn't know these)
 - `CurrencyExportRow` --references--> `CurrencyRate`  [EXTRACTED]
   renderer/pages/Currency.tsx → shared/types.ts
-- `CommandPalette()` --indirect_call--> `c()`  [INFERRED]
-  renderer/components/CommandPalette.tsx → renderer/pages/planner/BoardKanban.tsx
-- `listProcessesWindows()` --references--> `ONEC_PROCESS_NAMES`  [EXTRACTED]
-  main/services/onecProcess.ts → shared/types.ts
-- `LoginScreen()` --references--> `CHANGELOG`  [EXTRACTED]
-  renderer/components/auth/LoginScreen.tsx → shared/version.ts
-- `TaskPanel()` --calls--> `useCompany()`  [EXTRACTED]
-  renderer/components/dashboard/TaskPanel.tsx → renderer/lib/CompanyContext.tsx
+- `CompanyMember` --references--> `CompanyRole`  [EXTRACTED]
+  renderer/pages/planner/useCompanyMembers.ts → src/renderer/lib/companyTeam.ts
+- `Counterparties()` --calls--> `useCompany()`  [EXTRACTED]
+  src/renderer/pages/Counterparties.tsx → renderer/lib/CompanyContext.tsx
+- `Counterparties()` --calls--> `useToast()`  [EXTRACTED]
+  src/renderer/pages/Counterparties.tsx → renderer/lib/ui/ToastContext.tsx
+- `CounterpartyDetail()` --calls--> `counterpartyHealth()`  [EXTRACTED]
+  src/renderer/pages/Counterparties.tsx → renderer/lib/organizationInsights.ts
 
 ## Import Cycles
 - None detected.
@@ -385,20 +385,20 @@ Cohesion: 0.50
 Nodes (4): DividendCalc(), fmt(), TREATIES, TREATY_LABELS
 
 ## Knowledge Gaps
-- **294 isolated node(s):** `gotLock`, `TrayState`, `FLAGS`, `DEFAULT_CODES`, `CbuItem` (+289 more)
+- **294 isolated node(s):** `ROLE_TONES`, `CompanyMemberStatus`, `CompanyRoleGuideItem`, `OrganizationView`, `EMPTY_COUNTERPARTY` (+289 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `todayISO()` connect `todayISO` to `Settings.tsx`, `CompanyContext.tsx`, `Templates.tsx`, `referenceRepo.ts`, `useEvents.ts`, `TrayView.tsx`, `Currency.tsx`, `Finance.tsx`, `TaxCalculator.tsx`, `Counterparties.tsx`, `CacheCleaner.tsx`, `Dashboard.tsx`, `EcpManager.tsx`, `DateCalc.tsx`, `Planner.tsx`, `BxEvent`, `DigestView.tsx`, `FocusView.tsx`, `NotificationsWidget.tsx`, `BoardKanban.tsx`?**
-  _High betweenness centrality (0.074) - this node is a cross-community bridge._
 - **Why does `supabase` connect `Planner.tsx` to `Settings.tsx`, `CompanyContext.tsx`, `Library.tsx`, `App.tsx`, `referenceRepo.ts`, `Translator.tsx`, `useEvents.ts`, `TrayView.tsx`, `Documents.tsx`, `CalendarPage.tsx`, `Finance.tsx`, `numToWords.ts`, `Services.tsx`, `Counterparties.tsx`, `Topbar.tsx`, `types.ts`, `syncQueue.ts`, `EventActivityTimeline.tsx`, `plan.tsx`, `TxModal.tsx`, `QuickNotes.tsx`?**
-  _High betweenness centrality (0.065) - this node is a cross-community bridge._
+  _High betweenness centrality (0.072) - this node is a cross-community bridge._
+- **Why does `todayISO()` connect `todayISO` to `Settings.tsx`, `CompanyContext.tsx`, `Templates.tsx`, `referenceRepo.ts`, `useEvents.ts`, `TrayView.tsx`, `Currency.tsx`, `Finance.tsx`, `TaxCalculator.tsx`, `Counterparties.tsx`, `CacheCleaner.tsx`, `Dashboard.tsx`, `EcpManager.tsx`, `DateCalc.tsx`, `Planner.tsx`, `BxEvent`, `DigestView.tsx`, `FocusView.tsx`, `NotificationsWidget.tsx`, `BoardKanban.tsx`?**
+  _High betweenness centrality (0.066) - this node is a cross-community bridge._
 - **Why does `useCompany()` connect `useCompany` to `Settings.tsx`, `CompanyContext.tsx`, `useToast`, `Templates.tsx`, `referenceRepo.ts`, `Planner.tsx`, `Translator.tsx`, `Documents.tsx`, `CalendarPage.tsx`, `Finance.tsx`, `numToWords.ts`, `TxModal.tsx`, `TaxCalculator.tsx`, `Topbar.tsx`, `Dashboard.tsx`?**
-  _High betweenness centrality (0.033) - this node is a cross-community bridge._
-- **What connects `gotLock`, `TrayState`, `FLAGS` to the rest of the system?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **What connects `ROLE_TONES`, `CompanyMemberStatus`, `CompanyRoleGuideItem` to the rest of the system?**
   _294 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Settings.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.05328005328005328 - nodes in this community are weakly interconnected._
