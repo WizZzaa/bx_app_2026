@@ -42,7 +42,7 @@ export default function Sidebar() {
     {
       label: 'Главное',
       items: [
-        { to: '/dashboard', icon: 'dashboard', label: 'Дашборд' },
+        { to: '/dashboard', icon: 'dashboard', label: 'Рабочий стол' },
         { to: '/planner', icon: 'planner', label: 'Планировщик' },
         { to: '/ai', icon: 'ai', label: 'AI-Консультант' },
         { to: '/news', icon: 'news', label: 'Новости' },
@@ -96,7 +96,7 @@ export default function Sidebar() {
           onClick={() => navigate('/dashboard')}
           className={`group flex min-h-11 min-w-0 items-center rounded-xl outline-none transition-colors hover:bg-blue-500/[0.07] focus-visible:ring-2 focus-visible:ring-blue-500 ${collapsed ? 'h-11 w-11 justify-center' : 'flex-1 gap-2.5 px-1.5 text-left'}`}
           title={collapsed ? 'BX · На главную' : undefined}
-          aria-label="BX — перейти на дашборд"
+          aria-label="BX — перейти на рабочий стол"
         >
           <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-[11px] font-black tracking-tight text-white shadow-lg shadow-blue-600/20">BX</span>
           {!collapsed && <span className="min-w-0"><span className="block text-sm font-black leading-tight text-bx-text">BX</span><span className="mt-0.5 block truncate text-[9px] font-semibold text-bx-muted">Помощник бухгалтера</span></span>}

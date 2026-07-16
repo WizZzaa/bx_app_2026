@@ -12,7 +12,7 @@ export interface SearchItem {
 
 // Статичные разделы и быстрые действия
 const staticItems: SearchItem[] = [
-  { title: 'Дашборд', subtitle: 'Рабочий стол', category: 'Раздел', route: '/' },
+  { title: 'Рабочий стол', subtitle: 'Главная сводка', category: 'Раздел', route: '/' },
   { title: 'Утилиты', subtitle: '1С, файлы, система, ЭЦП', category: 'Раздел', route: '/tools' },
   { title: 'Переводчик документов', subtitle: 'Узбекский, русский и английский', category: 'Раздел', route: '/translator' },
   { title: 'Очистка кэша 1С', subtitle: 'Утилиты', category: 'Действие', route: '/tools' },

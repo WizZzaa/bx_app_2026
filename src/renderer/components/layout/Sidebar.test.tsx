@@ -49,4 +49,10 @@ describe('Sidebar', () => {
     render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
     expect(screen.queryByRole('link', { name: 'Сотрудники' })).toBeNull()
   })
+
+  it('uses the accountant-friendly name for the home workspace', () => {
+    render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
+    expect(screen.getByRole('link', { name: 'Рабочий стол' })).toBeTruthy()
+    expect(screen.queryByText('Дашборд')).toBeNull()
+  })
 })

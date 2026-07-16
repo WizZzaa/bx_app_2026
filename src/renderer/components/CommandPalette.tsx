@@ -17,7 +17,7 @@ const COMMANDS: Cmd[] = [
   { id: 'a-op',     label: 'Новая операция',    icon: 'plus', to: '/finance',  group: 'Действие', keywords: 'доход расход деньги' },
   { id: 'a-ai',     label: 'Спросить AI',       icon: 'ai',   to: '/ai',       group: 'Действие', keywords: 'консультант вопрос налоги' },
   // Разделы
-  { id: 'n-dash',   label: 'Дашборд',           icon: 'dashboard', to: '/',          group: 'Раздел', keywords: 'главная рабочий стол' },
+  { id: 'n-dash',   label: 'Рабочий стол',      icon: 'dashboard', to: '/',          group: 'Раздел', keywords: 'главная обзор сводка' },
   { id: 'n-plan',   label: 'Планировщик',       icon: 'planner',   to: '/planner',   group: 'Раздел', keywords: 'задачи канбан календарь' },
   { id: 'n-calc',   label: 'Калькуляторы',      icon: 'calc',      to: '/calc',      group: 'Раздел', keywords: 'ндс ндфл пени' },
   { id: 'n-tools',  label: 'Утилиты',           icon: 'tools',     to: '/tools',     group: 'Раздел', keywords: 'инструменты 1с очистка' },
