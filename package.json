@@ -1,12 +1,14 @@
 {
   "name": "app",
   "productName": "BX Помощник Бухгалтера",
-  "version": "2.30.10",
+  "version": "2.31.1",
   "description": "BX — помощник бухгалтера Республики Узбекистан: планировщик, калькуляторы, справочники, AI-консультант",
   "main": ".vite/build/main.js",
   "private": true,
   "scripts": {
     "start": "electron-forge start",
+    "build": "npm run build:web",
+    "build:web": "vite build --config vite.renderer.config.mts",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",

@@ -21,9 +21,13 @@ const STORAGE_KEY = 'bx_sidebar_collapsed'
 
 function initialCollapsed() {
   if (typeof window === 'undefined') return false
+  // На компактном desktop/web-окне рабочая область важнее сохранённого
+  // предпочтения: две раскрытые панели включают «широкие» сетки в слишком
+  // узком контенте. Пользователь по-прежнему может развернуть меню вручную.
+  if (window.innerWidth < 1440) return true
   const stored = localStorage.getItem(STORAGE_KEY)
   if (stored !== null) return stored === 'true'
-  return window.innerWidth < 1180
+  return false
 }
 
 export default function Sidebar() {

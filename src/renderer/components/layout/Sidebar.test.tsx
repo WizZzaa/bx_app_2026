@@ -31,6 +31,16 @@ describe('Sidebar', () => {
     expect(screen.getByRole('link', { name: 'Планировщик' })).toBeTruthy()
   })
 
+  it('protects the working area on compact web and desktop windows', () => {
+    localStorage.setItem('bx_sidebar_collapsed', 'false')
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
+
+    render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
+
+    expect(screen.getByTestId('app-sidebar').getAttribute('data-collapsed')).toBe('true')
+    expect(screen.getByRole('button', { name: 'Развернуть боковую панель' })).toBeTruthy()
+  })
+
   it('keeps Documents and Templates next to each other in navigation', () => {
     render(<MemoryRouter initialEntries={['/documents']}><Sidebar /></MemoryRouter>)
 
