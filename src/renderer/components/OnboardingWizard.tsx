@@ -1,112 +1,125 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { usePlan } from '../lib/plan'
+import React, { useCallback, useEffect, useState } from 'react'
+import { useCompany } from '../lib/CompanyContext'
+import { supabase } from '../lib/db/supabase'
 
-// Онбординг первого запуска. Показывается один раз (флаг в localStorage).
-// Первые 10 минут решают, останется ли пользователь: коротко объясняем ценность,
-// анонсируем триал и уводим в ключевой раздел.
+type OnboardingState = 'not_started' | 'deferred' | 'completed'
 
-const ONBOARDING_KEY = 'bx_onboarding_v1'
-
-interface Step {
-  icon: string
-  title: string
-  desc: string
-  to?: string
+interface OnboardingProfile {
+  company_onboarding_state: OnboardingState
+  company_onboarding_remind_at: string | null
 }
 
-const STEPS: Step[] = [
-  {
-    icon: '🗓️',
-    title: 'Ни одного пропущенного отчёта',
-    desc: 'Планировщик с налоговым календарём РУз напомнит о каждом сроке сдачи и оплаты. Ведите задачи по всем своим компаниям в одном месте.',
-    to: '/planner',
-  },
-  {
-    icon: '🧮',
-    title: 'Расчёты — за секунды',
-    desc: 'Калькуляторы зарплаты, НДС, НДФЛ, ИНПС, отпускных и больничных считают по актуальным БРВ и МРОТ. Никаких формул в Excel вручную.',
-    to: '/calc',
-  },
-  {
-    icon: '🤖',
-    title: 'AI-консультант рядом',
-    desc: 'Задайте вопрос по НК РУз простым языком — AI ответит со ссылками на Lex.uz. А техподдержка поможет с 1С, E-Imzo и настройкой ПК.',
-    to: '/ai',
-  },
-]
+const LEGACY_KEY = 'bx_onboarding_v1'
+
+export function canShowReminder(remindAt: string | null, now = Date.now()) {
+  return !remindAt || new Date(remindAt).getTime() <= now
+}
 
 export default function OnboardingWizard() {
-  const navigate = useNavigate()
-  const { isTrial, trialDaysLeft, loading } = usePlan()
-  const [done, setDone] = useState(() => localStorage.getItem(ONBOARDING_KEY) === '1')
-  const [step, setStep] = useState(0)
+  const { companies, startCompanyCreation } = useCompany()
+  const [state, setState] = useState<OnboardingState | null>(null)
+  const [remindAt, setRemindAt] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  if (done || loading) return null
+  const saveState = useCallback(async (next: OnboardingState, companyId?: string) => {
+    setSaving(true)
+    try {
+      const { error } = await supabase.rpc('bx_set_company_onboarding_state', {
+        p_state: next,
+        p_company_id: companyId ?? null,
+      })
+      if (error) throw error
+      setState(next)
+      setRemindAt(next === 'deferred' ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null)
+      localStorage.setItem(LEGACY_KEY, '1')
+    } catch (error) {
+      console.error('[company-onboarding] unable to save progress:', error)
+    } finally {
+      setSaving(false)
+    }
+  }, [])
 
-  const finish = (to?: string) => {
-    localStorage.setItem(ONBOARDING_KEY, '1')
-    setDone(true)
-    if (to) navigate(to)
+  useEffect(() => {
+    let active = true
+    async function load() {
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData.user
+      if (!active) return
+      if (!user) {
+        setState('completed')
+        return
+      }
+      setUserId(user.id)
+      const { data, error } = await supabase
+        .from('bx_profiles')
+        .select('company_onboarding_state, company_onboarding_remind_at')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (!active) return
+      if (error || !data) {
+        setState('not_started')
+        return
+      }
+      const profile = data as OnboardingProfile
+      setState(profile.company_onboarding_state)
+      setRemindAt(profile.company_onboarding_remind_at)
+    }
+    void load()
+    return () => { active = false }
+  }, [])
+
+  useEffect(() => {
+    if (!userId || state === null || state === 'completed') return
+    const firstOwnedCompany = companies.find(company => company.user_id === userId)
+    if (firstOwnedCompany) void saveState('completed', firstOwnedCompany.id)
+  }, [companies, saveState, state, userId])
+
+  if (state === null || state === 'completed') return null
+
+  const openCompanyWizard = () => startCompanyCreation()
+  const showReminder = state === 'deferred' && canShowReminder(remindAt)
+
+  if (showReminder) {
+    return (
+      <aside className="fixed bottom-5 right-5 z-[55] w-[min(420px,calc(100vw-2.5rem))] rounded-2xl border border-blue-500/25 bg-bx-surface p-4 shadow-2xl">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-500/12 text-lg">🏢</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-black text-bx-text">Создайте первую компанию, когда будет удобно</p>
+            <p className="mt-1 text-xs leading-5 text-bx-muted">Это включит личный календарь обязательств, задачи и корректные права доступа для команды.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" onClick={openCompanyWizard} disabled={saving} className="min-h-10 rounded-xl bg-blue-600 px-4 text-xs font-black text-white disabled:opacity-50">Создать компанию</button>
+              <button type="button" onClick={() => void saveState('deferred')} disabled={saving} className="min-h-10 rounded-xl px-3 text-xs font-bold text-bx-muted hover:text-bx-text disabled:opacity-50">Напомнить завтра</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    )
   }
 
-  const isWelcome = step === 0
-  const current = STEPS[step]
-
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-xl animate-fade-in">
-      <div className="bg-bx-surface border border-bx-border-2 rounded-2xl w-[460px] shadow-2xl overflow-hidden">
-        <div className="bg-gradient-to-br from-blue-600/25 via-bx-surface to-transparent px-7 py-6 border-b border-bx-border text-center">
-          <div className="text-4xl mb-2">{current.icon}</div>
-          <h2 className="text-xl font-bold text-bx-text leading-snug">
-            {isWelcome ? 'Добро пожаловать в BX!' : current.title}
-          </h2>
-          {isWelcome && (
-            <p className="text-xs text-bx-muted mt-1">Ваше рабочее место бухгалтера Узбекистана</p>
-          )}
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-xl">
+      <section role="dialog" aria-modal="true" aria-labelledby="company-onboarding-title" className="w-full max-w-xl overflow-hidden rounded-3xl border border-bx-border bg-bx-surface shadow-2xl">
+        <header className="border-b border-bx-border bg-gradient-to-br from-blue-600/20 via-bx-surface to-transparent px-6 py-6">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">Первый шаг в BX</p>
+          <h2 id="company-onboarding-title" className="mt-2 text-2xl font-black text-bx-text">Сначала создадим вашу компанию</h2>
+          <p className="mt-2 max-w-lg text-sm leading-6 text-bx-muted">BX будет показывать сроки, задачи и документы только в контексте выбранной компании — так данные не смешиваются, а команда видит только разрешённое.</p>
+        </header>
+        <div className="grid gap-3 p-6 sm:grid-cols-3">
+          <Info icon="🗓️" title="Сроки по вашим данным" text="Календарь строится от даты начала работы в BX." />
+          <Info icon="✅" title="Только нужные правила" text="Вы выбираете налоговый режим и обязательства." />
+          <Info icon="👥" title="Команда без путаницы" text="Позже можно пригласить бухгалтера и назначать задачи." />
         </div>
-
-        <div className="px-7 py-5 space-y-4">
-          {isWelcome && isTrial && trialDaysLeft > 0 && (
-            <div className="rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-600/15 to-transparent px-4 py-3 text-center">
-              <p className="text-sm font-bold text-bx-text">🎁 Активирован Premium на {trialDaysLeft} дней</p>
-              <p className="text-[11px] text-bx-muted mt-0.5">Все возможности открыты — попробуйте безлимитный AI, мультикомпанию и контроль оплат.</p>
-            </div>
-          )}
-          <p className="text-sm text-bx-muted leading-relaxed text-center">{current.desc}</p>
-
-          <div className="flex items-center justify-center gap-1.5 pt-1">
-            {STEPS.map((_, i) => (
-              <span key={i} className={`h-1.5 rounded-full transition-all ${i === step ? 'w-5 bg-blue-500' : 'w-1.5 bg-bx-border-2'}`} />
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-2 px-7 py-4 border-t border-bx-border">
-          <button onClick={() => finish()} className="px-3 py-2 text-xs text-bx-muted hover:text-bx-text transition-colors">
-            Пропустить
-          </button>
-          <div className="flex items-center gap-2">
-            {step > 0 && (
-              <button onClick={() => setStep(step - 1)}
-                className="px-4 py-2 text-sm text-bx-muted hover:text-bx-text transition-colors">
-                Назад
-              </button>
-            )}
-            {step < STEPS.length - 1 ? (
-              <button onClick={() => setStep(step + 1)}
-                className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-semibold rounded-lg transition-all shadow-md shadow-blue-500/10 hover:scale-[1.02] active:scale-[0.98]">
-                Далее
-              </button>
-            ) : (
-              <button onClick={() => finish(current.to)}
-                className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-semibold rounded-lg transition-all shadow-md shadow-blue-500/10 hover:scale-[1.02] active:scale-[0.98]">
-                Начать работу
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+        <footer className="flex flex-col-reverse gap-2 border-t border-bx-border px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <button type="button" onClick={() => void saveState('deferred')} disabled={saving} className="min-h-11 px-2 text-xs font-bold text-bx-muted hover:text-bx-text disabled:opacity-50">Продолжить позже</button>
+          <button type="button" onClick={openCompanyWizard} disabled={saving} className="min-h-11 rounded-xl bg-blue-600 px-5 text-xs font-black text-white shadow-lg shadow-blue-500/20 disabled:opacity-50">Создать первую компанию</button>
+        </footer>
+      </section>
     </div>
   )
+}
+
+function Info({ icon, title, text }: { icon: string; title: string; text: string }) {
+  return <article className="rounded-2xl border border-bx-border bg-bx-bg p-4"><span className="text-lg">{icon}</span><h3 className="mt-3 text-xs font-black text-bx-text">{title}</h3><p className="mt-1.5 text-[11px] leading-5 text-bx-muted">{text}</p></article>
 }
