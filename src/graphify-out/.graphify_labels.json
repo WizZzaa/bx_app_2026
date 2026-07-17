@@ -65,16 +65,7 @@
   "63": "vite-env.d.ts",
   "64": "PLAN_LIMITS",
   "65": "pcClean.ts",
-  "66": "DocumentViewModeSwitch.tsx",
-  "67": "News.tsx",
   "68": "ToastContext.tsx",
-  "69": "PdfCompress.tsx",
-  "70": "settingsBackup.ts",
   "71": "Icon.tsx",
-  "72": "plan.tsx",
-  "73": "pcClean.ts",
-  "74": "QuickNotes.tsx",
-  "75": "onecBackupScheduler.ts",
-  "76": "EimzoDiag.tsx",
-  "77": "DividendCalc.tsx"
+  "76": "EimzoDiag.tsx"
 }

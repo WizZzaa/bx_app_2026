@@ -1,7 +1,7 @@
 {
   "src/main.ts": {
-    "mtime": 1783888544.1205575,
-    "ast_hash": "bbb8308130e77e6b16b90c4245cf4b20",
+    "mtime": 1784265751.253495,
+    "ast_hash": "8c64087ce6fade3deb4a864fe37aa852",
     "semantic_hash": ""
   },
   "src/main/ipc.ts": {
@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "src/preload.ts": {
-    "mtime": 1784236557.6840446,
-    "ast_hash": "7936a40033e0c77b539822b6b501dcfd",
+    "mtime": 1784265698.654725,
+    "ast_hash": "f15f611436ff1de44ef059a2fadc4b8d",
     "semantic_hash": ""
   },
   "src/renderer/App.tsx": {
@@ -130,8 +130,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/auth/LoginScreen.tsx": {
-    "mtime": 1784063463.0116026,
-    "ast_hash": "8244f5358c43a9364de363a83894ea58",
+    "mtime": 1784265698.6561437,
+    "ast_hash": "0b5dade4c09231d5a428172acac5d700",
     "semantic_hash": ""
   },
   "src/renderer/components/auth/PinScreen.tsx": {
@@ -465,8 +465,8 @@
     "semantic_hash": ""
   },
   "src/renderer/lib/onecApi.ts": {
-    "mtime": 1783888544.125072,
-    "ast_hash": "d22a48ebd0e7d7d8d20b6f6706e9cfc5",
+    "mtime": 1784265698.6553488,
+    "ast_hash": "731704fd5d865a75c8143ee11ec2854f",
     "semantic_hash": ""
   },
   "src/renderer/lib/operationsInsights.test.ts": {
@@ -1120,8 +1120,8 @@
     "semantic_hash": ""
   },
   "src/shared/version.ts": {
-    "mtime": 1784237476.2181628,
-    "ast_hash": "d56a18788abfab333ac9d83a0d2e07e5",
+    "mtime": 1784265795.5208876,
+    "ast_hash": "50b016085ab9780911ac1ebe3c8aecba",
     "semantic_hash": ""
   },
   "src/renderer/assets/widgets/horoscope.png": {
@@ -1242,6 +1242,16 @@
   "src/renderer/lib/workspaceModes.ts": {
     "mtime": 1784239162.3753636,
     "ast_hash": "c02afdda250f521614d9f600c5bc611e",
+    "semantic_hash": ""
+  },
+  "src/main/services/updatePolicy.test.ts": {
+    "mtime": 1784265855.889081,
+    "ast_hash": "7edd4280b53693863efb2c08b3040022",
+    "semantic_hash": ""
+  },
+  "src/main/services/updatePolicy.ts": {
+    "mtime": 1784265855.8885784,
+    "ast_hash": "8370cd17bc2af1a24524eacc504f918d",
     "semantic_hash": ""
   }
 }
