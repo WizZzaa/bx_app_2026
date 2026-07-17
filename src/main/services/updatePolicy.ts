@@ -1,7 +1,7 @@
 export const UPDATE_REPOSITORY = 'WizZzaa/bx_app_2026'
 export const UPDATE_HOST = 'https://update.electronjs.org'
 
-export type UpdateStatus = 'idle' | 'checking' | 'latest' | 'downloading' | 'ready' | 'error'
+export type UpdateStatus = 'idle' | 'checking' | 'latest' | 'downloading' | 'ready' | 'installing' | 'error'
 export type UpdateMode = 'automatic' | 'manual' | 'unsupported'
 
 export interface UpdateSnapshot {
@@ -10,6 +10,15 @@ export interface UpdateSnapshot {
   version: string
   availableVersion: string
   mode: UpdateMode
+  /** Exact progress is available for the manual downloader; Squirrel.Windows is indeterminate. */
+  progressPercent: number | null
+  downloadedBytes: number
+  totalBytes: number
+}
+
+export const calculateDownloadPercent = (downloadedBytes: number, totalBytes: number): number | null => {
+  if (!Number.isFinite(downloadedBytes) || !Number.isFinite(totalBytes) || totalBytes <= 0) return null
+  return Math.max(0, Math.min(100, Math.round((downloadedBytes / totalBytes) * 100)))
 }
 
 export const buildUpdateFeedUrl = (

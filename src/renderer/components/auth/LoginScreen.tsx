@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { APP_VERSION, CHANGELOG } from '../../../shared/version'
 import { applyTheme, normalizeTheme } from '../../lib/theme'
+import type { UpdateStatus } from '../../../main/services/updatePolicy'
 
 interface Props {
   onSignIn: (email: string, password: string) => Promise<string | null>
@@ -20,7 +21,9 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
   const [showResend, setShowResend] = useState(false)
   const [resending, setResending] = useState(false)
   const [showChangelog, setShowChangelog] = useState(false)
-  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'latest' | 'error' | 'downloading' | 'ready'>('idle')
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle')
+  const [updateProgress, setUpdateProgress] = useState<number | null>(null)
+  const [updateVersion, setUpdateVersion] = useState('')
 
   const latestEntry = CHANGELOG[0]
 
@@ -49,26 +52,22 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
     if (typeof window !== 'undefined' && window.bx && window.bx.updater) {
       // Запросить начальный статус
       window.bx.updater.getStatus().then((res) => {
-        if (res.status === 'ready') setUpdateStatus('ready')
-        else if (res.status === 'downloading') setUpdateStatus('downloading')
+        setUpdateStatus(res.status)
+        setUpdateProgress(res.progressPercent)
+        setUpdateVersion(res.availableVersion)
       })
 
       // Слушать обновления статуса в реальном времени
       const unsubscribe = window.bx.updater.onUpdateStatus((data) => {
-        if (data.status === 'ready') {
-          setUpdateStatus('ready')
-        } else if (data.status === 'downloading') {
-          setUpdateStatus('downloading')
-        } else if (data.status === 'checking') {
-          setUpdateStatus('checking')
-        } else if (data.status === 'latest') {
+        setUpdateStatus(data.status)
+        setUpdateProgress(data.progressPercent)
+        setUpdateVersion(data.availableVersion)
+        if (data.status === 'latest') {
           setUpdateStatus('latest')
           setTimeout(() => setUpdateStatus('idle'), 4000)
         } else if (data.status === 'error') {
           setUpdateStatus('error')
           setTimeout(() => setUpdateStatus('idle'), 4000)
-        } else if (data.status === 'idle') {
-          setUpdateStatus('idle')
         }
       })
 
@@ -149,6 +148,8 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
       setUpdateStatus('checking')
       try {
         const res = await window.bx.updater.checkForUpdates()
+        setUpdateProgress(res.progressPercent)
+        setUpdateVersion(res.availableVersion)
         if (res.status === 'ready') {
           setUpdateStatus('ready')
         } else if (res.status === 'downloading') {
@@ -191,6 +192,7 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
 
   const handleInstallUpdate = () => {
     if (typeof window !== 'undefined' && window.bx && window.bx.updater) {
+      setUpdateStatus('installing')
       window.bx.updater.installUpdate()
     }
   }
@@ -224,10 +226,16 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
 
         {/* Auto updater status banner */}
         {updateStatus === 'downloading' && (
-          <div className="mb-4 bg-blue-950/40 border border-blue-500/30 rounded-2xl p-4 flex items-center justify-between text-xs text-blue-300 bx-animate-fade">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
-              <span>Загрузка обновления в фоне…</span>
+          <div className="mb-4 rounded-2xl border border-blue-500/30 bg-blue-950/40 p-4 text-xs text-blue-300 bx-animate-fade">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="h-2 w-2 rounded-full bg-blue-400 animate-ping" />
+                <span>Обновление загружается в фоне…</span>
+              </div>
+              <span className="font-bold tabular-nums">{updateProgress === null ? 'идёт' : `${updateProgress}%`}</span>
+            </div>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-blue-950/80 ring-1 ring-blue-400/20">
+              <div className={`h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-300 transition-[width] duration-300 ${updateProgress === null ? 'w-1/3 animate-pulse' : ''}`} style={updateProgress === null ? undefined : { width: `${updateProgress}%` }} />
             </div>
           </div>
         )}
@@ -236,15 +244,22 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
           <div className="mb-4 bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between text-xs text-emerald-300 bx-animate-fade">
             <div>
               <p className="font-bold text-white mb-0.5">Обновление скачано!</p>
-              <p className="text-[10px] text-slate-400">Нажмите, чтобы установить новую версию</p>
+              <p className="text-[10px] text-slate-400">{updateVersion ? `Версия ${updateVersion} готова.` : 'Новая версия готова.'} BX сохранит работу и перезапустится.</p>
             </div>
             <button
               type="button"
               onClick={handleInstallUpdate}
               className="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-semibold px-3 py-1.5 rounded-lg transition-all"
             >
-              Установить
+              Перезапустить и установить
             </button>
+          </div>
+        )}
+
+        {updateStatus === 'installing' && (
+          <div role="status" className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/40 p-4 text-xs text-emerald-200 bx-animate-fade">
+            <div className="flex items-center gap-2.5"><span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" /><span className="font-bold">BX закрывается и запускает установку…</span></div>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-emerald-950/80"><div className="h-full w-full animate-pulse rounded-full bg-gradient-to-r from-emerald-500 to-lime-300" /></div>
           </div>
         )}
 
@@ -447,7 +462,7 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
           <button
             type="button"
             onClick={handleCheckUpdate}
-            disabled={updateStatus === 'checking'}
+            disabled={updateStatus === 'checking' || updateStatus === 'downloading' || updateStatus === 'installing'}
             className="text-[10px] text-slate-500 hover:text-blue-400 transition-colors font-medium flex items-center gap-1 disabled:opacity-50"
             tabIndex={0}
             aria-label="Проверить наличие обновлений"
@@ -468,6 +483,9 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
             {updateStatus === 'idle' && 'Обновления'}
             {updateStatus === 'checking' && 'Проверяю…'}
             {updateStatus === 'latest' && 'Актуальная версия'}
+            {updateStatus === 'downloading' && 'Загружается…'}
+            {updateStatus === 'ready' && 'Готово к установке'}
+            {updateStatus === 'installing' && 'Перезапуск…'}
             {updateStatus === 'error' && 'Ошибка проверки'}
           </button>
         </div>
