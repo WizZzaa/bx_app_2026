@@ -325,7 +325,7 @@ const loadTrayState = () => {
     const s = JSON.parse(fs.readFileSync(trayStateFile(), 'utf-8'))
     // До 2.30.4 окно было ниже и сохраняло координаты для высоты 420px.
     // Их нельзя переносить на новую высоту: кот окажется вне панели задач.
-    if (typeof s?.width === 'number' && typeof s?.height === 'number' && s.height === 560) trayState = { ...trayState, ...s }
+    if (typeof s?.width === 'number' && typeof s?.height === 'number' && s.width >= 430 && s.height >= 560) trayState = { ...trayState, ...s }
   } catch { /* default */ }
   trayPinned = trayState.pinned !== false
 }
@@ -369,12 +369,12 @@ const createTrayWindow = () => {
     height: trayState.height,
     minWidth: 430,
     minHeight: 560,
-    maxWidth: 430,
-    maxHeight: 560,
+    maxWidth: 760,
+    maxHeight: 860,
     show: true,
     frame: false,
     fullscreenable: false,
-    resizable: false,
+    resizable: true,
     skipTaskbar: true,
     alwaysOnTop: true,
     transparent: true,
@@ -405,6 +405,14 @@ const createTrayWindow = () => {
     trayState.x = x; trayState.y = y; trayState.custom = true
     if (moveTimer) clearTimeout(moveTimer)
     moveTimer = setTimeout(saveTrayState, 400)
+  })
+
+  trayWindow.on('resize', () => {
+    if (!trayWindow) return
+    const { width, height } = trayWindow.getBounds()
+    trayState.width = width; trayState.height = height
+    if (!trayState.custom) dockTrayWindow()
+    else saveTrayState()
   })
 
   // Питомец всегда остаётся на рабочем столе; меню внутри него закрывается
