@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "src/main/ipc.ts": {
-    "mtime": 1784236557.6831777,
-    "ast_hash": "1ad180ea501c8e2ccdb974c4d6ed377a",
+    "mtime": 1784297227.2828057,
+    "ast_hash": "0526e12fb9b86b6040ee56f0e8435de0",
     "semantic_hash": ""
   },
   "src/main/services/currency.ts": {
@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "src/preload.ts": {
-    "mtime": 1784266413.760815,
-    "ast_hash": "f15f611436ff1de44ef059a2fadc4b8d",
+    "mtime": 1784297227.2821705,
+    "ast_hash": "469da17eb761ab1bb62a7014ba13ca79",
     "semantic_hash": ""
   },
   "src/renderer/App.tsx": {
@@ -465,8 +465,8 @@
     "semantic_hash": ""
   },
   "src/renderer/lib/onecApi.ts": {
-    "mtime": 1784266413.7621002,
-    "ast_hash": "731704fd5d865a75c8143ee11ec2854f",
+    "mtime": 1784297227.2834673,
+    "ast_hash": "63d9bc39f55c069f73109ce9a9eab413",
     "semantic_hash": ""
   },
   "src/renderer/lib/operationsInsights.test.ts": {
@@ -710,8 +710,8 @@
     "semantic_hash": ""
   },
   "src/renderer/pages/Tools.tsx": {
-    "mtime": 1784235248.5494075,
-    "ast_hash": "0d3274db36786644b6ec6854dc4392e1",
+    "mtime": 1784297375.7089748,
+    "ast_hash": "7cb2c1c6f977d3b522c30b9afbb85b45",
     "semantic_hash": ""
   },
   "src/renderer/pages/Translator.tsx": {
@@ -1110,8 +1110,8 @@
     "semantic_hash": ""
   },
   "src/shared/ipc-channels.ts": {
-    "mtime": 1784236557.6822424,
-    "ast_hash": "b79ad0b8c4bceae00f544728bbac30ce",
+    "mtime": 1784297227.2814639,
+    "ast_hash": "04a3ab0757c0f1b29c61f8a98ba01671",
     "semantic_hash": ""
   },
   "src/shared/types.ts": {
@@ -1262,6 +1262,26 @@
   "src/renderer/pages/tools/pdfTools.regression.test.ts": {
     "mtime": 1784267240.7023165,
     "ast_hash": "ad6fbd3d81e3d9fd4156d081e321ec75",
+    "semantic_hash": ""
+  },
+  "src/main/services/siteSession.ts": {
+    "mtime": 1784297942.5655863,
+    "ast_hash": "1c11c39bc6d2f05a375a0392d09682db",
+    "semantic_hash": ""
+  },
+  "src/renderer/pages/tools/SiteSessionReset.tsx": {
+    "mtime": 1784297444.527907,
+    "ast_hash": "f3e54217c207b4a931a8013af930c6f5",
+    "semantic_hash": ""
+  },
+  "src/shared/siteSession.test.ts": {
+    "mtime": 1784297227.2797596,
+    "ast_hash": "355e88322cd1bc0cdbfb7fdf12f7e128",
+    "semantic_hash": ""
+  },
+  "src/shared/siteSession.ts": {
+    "mtime": 1784297227.2791636,
+    "ast_hash": "81cda802c6ec8530fde20fae2228329b",
     "semantic_hash": ""
   }
 }
