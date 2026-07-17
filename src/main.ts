@@ -1,43 +1,57 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, shell, net, Notification } from 'electron'
+import { app, autoUpdater, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, net, Notification } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs'
 import started from 'electron-squirrel-startup'
 import { registerIpcHandlers } from './main/ipc'
 import { initBackupScheduler } from './main/services/onecBackupScheduler'
+import {
+  buildUpdateFeedUrl,
+  isNewerVersion,
+  UPDATE_REPOSITORY,
+  type UpdateMode,
+  type UpdateSnapshot,
+  type UpdateStatus,
+} from './main/services/updatePolicy'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit()
 }
 
-// ── Автообновление: собственный загрузчик (работает без подписи) ─────────────
-// Нативный autoUpdater (Squirrel.Mac) требует подпись Apple Developer ID и на
-// неподписанной сборке даже не начинает скачивание. Поэтому качаем сами:
-// проверяем последний релиз на GitHub, скачиваем ассет под платформу в фоне,
-// показываем «готово», а по кнопке открываем файл для установки.
-let updateStatus: 'idle' | 'checking' | 'downloading' | 'ready' | 'error' = 'idle'
+// ── Обновления приложения ────────────────────────────────────────────────────
+// Windows использует нативный Squirrel autoUpdater: пакет скачивается в фоне и
+// применяется после подтверждённого перезапуска. Неподписанная macOS-сборка пока
+// сохраняет безопасный ручной fallback через GitHub Release.
+let updateStatus: UpdateStatus = 'idle'
 let updateError = ''
 let downloadedPath: string | null = null
+let availableVersion = ''
+const updateMode: UpdateMode = process.platform === 'win32'
+  ? 'automatic'
+  : process.platform === 'darwin'
+    ? 'manual'
+    : 'unsupported'
 
-const GH_REPO = 'WizZzaa/bx_app_2026'
+const updateSnapshot = (): UpdateSnapshot => ({
+  status: updateStatus,
+  error: updateError,
+  version: app.getVersion(),
+  availableVersion,
+  mode: updateMode,
+})
 
 const broadcastUpdateStatus = () => {
   BrowserWindow.getAllWindows().forEach(win => {
     try {
-      win.webContents.send('app:update-status', { status: updateStatus, error: updateError, version: app.getVersion() })
+      win.webContents.send('app:update-status', updateSnapshot())
     } catch { /* window might be destroyed */ }
   })
 }
 
-// Сравнение версий «a новее b» (semver x.y.z)
-const isNewerVersion = (a: string, b: string): boolean => {
-  const pa = a.split('.').map(n => parseInt(n, 10) || 0)
-  const pb = b.split('.').map(n => parseInt(n, 10) || 0)
-  for (let i = 0; i < 3; i++) {
-    if ((pa[i] || 0) > (pb[i] || 0)) return true
-    if ((pa[i] || 0) < (pb[i] || 0)) return false
-  }
-  return false
+const setUpdateStatus = (status: UpdateStatus, error = '') => {
+  updateStatus = status
+  updateError = error
+  broadcastUpdateStatus()
 }
 
 // Ассет релиза под текущую платформу+архитектуру (имя вида *-darwin-arm64-*.zip)
@@ -68,53 +82,110 @@ const downloadAsset = (url: string, name: string): Promise<string> =>
     request.end()
   })
 
-const checkForUpdatesAndDownload = async () => {
+const checkManualUpdate = async () => {
   if (!app.isPackaged) return
   if (updateStatus === 'checking' || updateStatus === 'downloading') return
   try {
-    updateStatus = 'checking'; broadcastUpdateStatus()
-    const res = await net.fetch(`https://api.github.com/repos/${GH_REPO}/releases/latest`, {
+    setUpdateStatus('checking')
+    const res = await net.fetch(`https://api.github.com/repos/${UPDATE_REPOSITORY}/releases/latest`, {
       headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'BX-Updater' },
     })
     const data = await res.json() as { tag_name?: string; assets?: Array<{ name: string; browser_download_url: string }> }
     const latest = String(data.tag_name || '').replace(/^v/, '')
     if (!latest || !isNewerVersion(latest, app.getVersion())) {
-      updateStatus = 'idle'; broadcastUpdateStatus(); return
+      setUpdateStatus('latest')
+      setTimeout(() => setUpdateStatus('idle'), 4000)
+      return
     }
+    availableVersion = latest
     const asset = pickAsset(data.assets || [])
-    if (!asset) { updateStatus = 'idle'; broadcastUpdateStatus(); return }
-    updateStatus = 'downloading'; broadcastUpdateStatus()
+    if (!asset) { setUpdateStatus('latest'); return }
+    setUpdateStatus('downloading')
     downloadedPath = await downloadAsset(asset.browser_download_url, asset.name)
-    updateStatus = 'ready'; broadcastUpdateStatus()
+    setUpdateStatus('ready')
   } catch (e) {
-    updateStatus = 'error'
-    updateError = (e as Error)?.message || 'Ошибка обновления'
-    broadcastUpdateStatus()
-    setTimeout(() => { updateStatus = 'idle'; updateError = ''; broadcastUpdateStatus() }, 8000)
+    setUpdateStatus('error', (e as Error)?.message || 'Ошибка обновления')
+    setTimeout(() => setUpdateStatus('idle'), 8000)
   }
 }
 
-const setupAutoUpdater = () => {
-  if (!app.isPackaged) return
-  // Проверяем и качаем при запуске и далее раз в час
-  setTimeout(() => { checkForUpdatesAndDownload() }, 5000)
-  setInterval(() => { checkForUpdatesAndDownload() }, 60 * 60 * 1000)
+const checkForUpdates = async () => {
+  if (!app.isPackaged || updateMode === 'unsupported') return updateSnapshot()
+  if (updateStatus === 'checking' || updateStatus === 'downloading') return updateSnapshot()
+
+  if (updateMode === 'automatic') {
+    setUpdateStatus('checking')
+    try {
+      await autoUpdater.checkForUpdates()
+    } catch (error) {
+      setUpdateStatus('error', (error as Error)?.message || 'Не удалось проверить обновления')
+    }
+    return updateSnapshot()
+  }
+
+  await checkManualUpdate()
+  return updateSnapshot()
 }
 
-// IPC: статус / ручная проверка+загрузка / открытие скачанного апдейта
+const setupAutoUpdater = () => {
+  if (!app.isPackaged || updateMode === 'unsupported') return
+
+  if (updateMode === 'automatic') {
+    autoUpdater.setFeedURL({
+      url: buildUpdateFeedUrl(app.getVersion()),
+      headers: { 'User-Agent': `BX/${app.getVersion()}` },
+    })
+    autoUpdater.on('checking-for-update', () => setUpdateStatus('checking'))
+    autoUpdater.on('update-available', () => setUpdateStatus('downloading'))
+    autoUpdater.on('update-not-available', () => {
+      setUpdateStatus('latest')
+      setTimeout(() => setUpdateStatus('idle'), 4000)
+    })
+    autoUpdater.on('update-downloaded', (_event, _notes, releaseName) => {
+      availableVersion = String(releaseName || '').replace(/^v/, '')
+      setUpdateStatus('ready')
+      try {
+        const notice = new Notification({
+          title: 'Обновление BX готово',
+          body: `Версия ${availableVersion || 'новая'} загружена. Нажмите, чтобы перезапустить BX и установить её.`,
+        })
+        notice.on('click', () => {
+          (app as any).isQuitting = true
+          autoUpdater.quitAndInstall()
+        })
+        notice.show()
+      } catch { /* notification is optional */ }
+    })
+    autoUpdater.on('before-quit-for-update', () => { (app as any).isQuitting = true })
+    autoUpdater.on('error', error => {
+      setUpdateStatus('error', error.message || 'Ошибка автоматического обновления')
+      setTimeout(() => setUpdateStatus('idle'), 8000)
+    })
+  }
+
+  // Squirrel удерживает файлы в первые секунды первого запуска, поэтому не
+  // проверяем обновление мгновенно. Далее проверяем один раз в час.
+  setTimeout(() => { void checkForUpdates() }, 15_000)
+  setInterval(() => { void checkForUpdates() }, 60 * 60 * 1000)
+}
+
+// IPC: статус / ручная проверка / установка уже загруженного обновления.
 ipcMain.handle('app:check-for-updates', async () => {
-  await checkForUpdatesAndDownload()
-  return { status: updateStatus, error: updateError, version: app.getVersion() }
+  return checkForUpdates()
 })
 
 ipcMain.handle('app:get-update-status', () => {
-  return { status: updateStatus, error: updateError, version: app.getVersion() }
+  return updateSnapshot()
 })
 
 ipcMain.handle('app:install-update', async () => {
-  if (updateStatus === 'ready' && downloadedPath) {
-    // Открываем скачанный архив (macOS распакует .app, Windows — установщик/архив)
-    // и подсвечиваем файл в проводнике, затем выходим для замены приложения.
+  if (updateStatus !== 'ready') return
+  if (updateMode === 'automatic') {
+    (app as any).isQuitting = true
+    autoUpdater.quitAndInstall()
+    return
+  }
+  if (downloadedPath) {
     try { await shell.openPath(downloadedPath) } catch { /* ignore */ }
     try { shell.showItemInFolder(downloadedPath) } catch { /* ignore */ }
     setTimeout(() => app.quit(), 1500)

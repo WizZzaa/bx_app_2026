@@ -48,19 +48,22 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
   React.useEffect(() => {
     if (typeof window !== 'undefined' && window.bx && window.bx.updater) {
       // Запросить начальный статус
-      window.bx.updater.getStatus().then((res: any) => {
+      window.bx.updater.getStatus().then((res) => {
         if (res.status === 'ready') setUpdateStatus('ready')
         else if (res.status === 'downloading') setUpdateStatus('downloading')
       })
 
       // Слушать обновления статуса в реальном времени
-      const unsubscribe = window.bx.updater.onUpdateStatus((data: any) => {
+      const unsubscribe = window.bx.updater.onUpdateStatus((data) => {
         if (data.status === 'ready') {
           setUpdateStatus('ready')
         } else if (data.status === 'downloading') {
           setUpdateStatus('downloading')
         } else if (data.status === 'checking') {
           setUpdateStatus('checking')
+        } else if (data.status === 'latest') {
+          setUpdateStatus('latest')
+          setTimeout(() => setUpdateStatus('idle'), 4000)
         } else if (data.status === 'error') {
           setUpdateStatus('error')
           setTimeout(() => setUpdateStatus('idle'), 4000)
@@ -150,6 +153,10 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
           setUpdateStatus('ready')
         } else if (res.status === 'downloading') {
           setUpdateStatus('downloading')
+        } else if (res.status === 'checking') {
+          setUpdateStatus('checking')
+        } else if (res.status === 'error') {
+          setUpdateStatus('error')
         } else {
           // Если запуск без упаковки или обновлений нет
           setUpdateStatus('latest')

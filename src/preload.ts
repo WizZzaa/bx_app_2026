@@ -16,6 +16,7 @@ import type { TempDirInfo, PcCleanResult } from './main/services/pcClean'
 import type { ParsedEcpInfo } from './main/services/ecpParser'
 import type { TraderInfo } from './main/services/innCheck'
 import type { NewsFeedItem } from './main/services/newsFeed'
+import type { UpdateSnapshot } from './main/services/updatePolicy'
 
 const api = {
   platform: process.platform,
@@ -79,13 +80,13 @@ const api = {
     set: (enabled: boolean): Promise<void> => ipcRenderer.invoke(IPC.AUTOSTART_SET, enabled)
   },
   updater: {
-    checkForUpdates: (): Promise<{ status: string; error: string; version: string }> =>
+    checkForUpdates: (): Promise<UpdateSnapshot> =>
       ipcRenderer.invoke('app:check-for-updates'),
-    getStatus: (): Promise<{ status: string; error: string; version: string }> =>
+    getStatus: (): Promise<UpdateSnapshot> =>
       ipcRenderer.invoke('app:get-update-status'),
     installUpdate: (): Promise<void> =>
       ipcRenderer.invoke('app:install-update'),
-    onUpdateStatus: (callback: (data: { status: string; error: string; version: string }) => void) => {
+    onUpdateStatus: (callback: (data: UpdateSnapshot) => void) => {
       const handler = (_event: any, data: any) => callback(data)
       ipcRenderer.on('app:update-status', handler)
       return () => ipcRenderer.removeListener('app:update-status', handler)
