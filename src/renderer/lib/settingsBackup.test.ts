@@ -26,6 +26,11 @@ describe('settings backup', () => {
     expect(backup.theme).toBe('lavender-light')
   })
 
+  it('accepts compact interface scales in a backup', () => {
+    const backup = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', fontScale: '75' }))
+    expect(backup.fontScale).toBe('75')
+  })
+
   it('migrates the retired light lime theme in an older backup', () => {
     const backup = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', theme: 'lime-light' }))
     expect(backup.theme).toBe('lavender-light')

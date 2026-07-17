@@ -124,15 +124,14 @@ export function buildTaxDeadlineEvents(
  * повторный запуск приложения не создают новые копии событий.
  */
 export async function syncTaxDeadlines(
-  userId: string,
+  _userId: string,
   companyId: string,
   horizonDays = TAX_HORIZON_DAYS,
 ): Promise<TaxDeadlineSyncResult> {
   const { data: company, error: companyError } = await supabase
     .from('bx_companies')
-    .select('regime, is_active, bx_start_date, enabled_obligation_rules, profile_status')
+    .select('user_id, regime, is_active, bx_start_date, enabled_obligation_rules, profile_status')
     .eq('id', companyId)
-    .eq('user_id', userId)
     .maybeSingle();
 
   if (companyError) throw companyError;
@@ -148,11 +147,12 @@ export async function syncTaxDeadlines(
 
   const from = todayISO();
   const to = addDaysISO(from, Math.max(0, horizonDays));
+  const ownerId = company.user_id;
   const candidates = buildTaxDeadlineEvents(companyId, {
     regime: company.regime,
     bxStartDate: company.bx_start_date,
     enabledObligationRules: company.enabled_obligation_rules ?? [],
-    assigneeId: userId,
+    assigneeId: ownerId,
   }, from, horizonDays);
   const { data: existing, error: existingError } = await supabase
     .from('bx_events')
@@ -182,7 +182,7 @@ export async function syncTaxDeadlines(
   if (missing.length > 0) {
     const { error: insertError } = await supabase
       .from('bx_events')
-      .upsert(missing.map(event => ({ ...event, user_id: userId })), {
+      .upsert(missing.map(event => ({ ...event, user_id: ownerId })), {
         onConflict: 'user_id,company_id,source_key',
         ignoreDuplicates: true,
       });

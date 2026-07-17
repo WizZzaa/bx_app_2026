@@ -8,6 +8,7 @@ describe('buildCompanyInsert', () => {
       inn: '123456789',
       regime: 'Налог с оборота',
       legal_form: 'ooo',
+      profile_details: {},
       registration_date: null,
       bx_start_date: '2026-07-17',
       is_vat_payer: false,

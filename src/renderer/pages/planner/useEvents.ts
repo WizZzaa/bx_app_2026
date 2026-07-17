@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/db/supabase';
 import { emitPlannerReload, subscribePlannerReload } from './plannerBus';
+import { createCanonicalEvent } from './eventRepository';
 
 export type EventType     = 'task' | 'tax_deadline' | 'reminder' | 'event';
 export type EventStatus   = 'todo' | 'in_progress' | 'review' | 'done';
@@ -85,22 +86,9 @@ export function useEvents(companyId?: string | null) {
   useEffect(() => subscribePlannerReload(load), [load]);
 
   const add = useCallback(async (input: NewEvent): Promise<BxEvent | null> => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-    const payload: Record<string, unknown> = { ...input, user_id: user.id };
-    if (payload.recurrence == null) delete payload.recurrence;
-    let { data, error } = await supabase.from('bx_events').insert(payload).select().single();
-    if (error && 'recurrence' in payload) {
-      console.warn('bx_events.recurrence недоступна, событие сохранено без повторения:', error.message);
-      delete payload.recurrence;
-      ({ data, error } = await supabase.from('bx_events').insert(payload).select().single());
-    }
-    if (error) { console.error(error); return null; }
-    
-    const createdEvent = data as BxEvent;
-
+    const createdEvent = await createCanonicalEvent(input);
+    if (!createdEvent) return null;
     await load();
-    emitPlannerReload();
     return createdEvent;
   }, [load]);
 

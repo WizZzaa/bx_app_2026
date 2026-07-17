@@ -27,7 +27,7 @@ export interface SettingsBackupSummary {
 const VALID_THEME = new Set(['dark', 'light', 'lime', 'lavender-light', 'lime-light'])
 const VALID_NOTIFY = new Set(['1', '3', '7', 'off'])
 const VALID_IDLE = new Set(['off', '5', '10', '30', '60'])
-const VALID_SCALE = new Set(['100', '110', '120', '130'])
+const VALID_SCALE = new Set(['75', '90', '100', '110', '120', '130'])
 
 export function parseSettingsBackup(text: string): SettingsBackupPayload {
   let value: unknown

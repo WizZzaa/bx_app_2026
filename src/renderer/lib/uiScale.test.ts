@@ -24,4 +24,13 @@ describe('uiScale', () => {
     applyFontScale('130')
     expect(document.documentElement.dataset.fontScale).toBe('130')
   })
+
+  it('supports the compact values used on smaller screens', () => {
+    saveFontScale('75')
+    expect(document.documentElement.dataset.fontScale).toBe('75')
+    expect(document.documentElement.style.getPropertyValue('--bx-font-scale')).toBe('0.75')
+    expect(document.documentElement.style.getPropertyValue('--bx-root-font-size')).toBe('12px')
+
+    expect(normalizeFontScale('90')).toBe('90')
+  })
 })

@@ -177,8 +177,9 @@ export default function Support() {
           <div ref={scrollRef} className="custom-scrollbar flex-1 space-y-4 overflow-y-auto bg-bx-bg/60 p-5 lg:p-6">
             {messages.map(message => (
               <div key={message.id} className={`max-w-[78%] ${message.author === 'user' ? 'ml-auto' : ''}`}>
-                <div className={`rounded-2xl px-4 py-3 text-[13px] leading-relaxed shadow-sm ${message.author === 'user' ? 'rounded-br-md bg-blue-600 text-white' : 'rounded-bl-md border border-bx-border bg-bx-surface text-bx-text'}`}>
+                <div className={`rounded-2xl px-4 py-3 text-[13px] leading-relaxed shadow-sm ${message.author === 'user' ? 'rounded-br-md bg-blue-600 text-white' : message.author === 'auto' ? 'rounded-bl-md border border-amber-500/25 bg-amber-500/[0.08] text-bx-text' : 'rounded-bl-md border border-bx-border bg-bx-surface text-bx-text'}`}>
                   {message.author === 'staff' && <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300"><Icon name="headset" className="h-3.5 w-3.5" />Специалист BX</p>}
+                  {message.author === 'auto' && <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black text-amber-700 dark:text-amber-300"><Icon name="bell" className="h-3.5 w-3.5" />Автоматическое сообщение BX</p>}
                   <p className="whitespace-pre-wrap">{message.body}</p>
                 </div>
                 <p className={`mt-1 text-[9px] text-bx-muted ${message.author === 'user' ? 'text-right' : ''}`}>{new Date(message.created_at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>

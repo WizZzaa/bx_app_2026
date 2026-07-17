@@ -6,7 +6,7 @@ import { syncTaxDeadlines } from '../pages/planner/taxSeeder';
 import { todayISO } from './dates';
 import CompanyProfileWizard, { type CompanyWizardInitial } from '../components/CompanyProfileWizard';
 import { useToast } from './ui/ToastContext';
-import type { Company, CompanyProfileForm } from './db/types';
+import type { Company, CompanyProfileForm, CompanyProfileRole } from './db/types';
 
 interface Ctx {
   companies: Company[];
@@ -36,7 +36,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   const toast = useToast();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [active, setActiveState] = useState<Company | null>(null);
-  const [wizard, setWizard] = useState<{ company?: Company; initial?: CompanyWizardInitial } | null>(null);
+  const [wizard, setWizard] = useState<{ company?: Company; initial?: CompanyWizardInitial; role: CompanyProfileRole | 'loading' } | null>(null);
   const [wizardBusy, setWizardBusy] = useState(false);
   const lastTaxHorizonSyncDay = useRef<string | null>(null);
 
@@ -122,21 +122,43 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   }, [active, reload, setActive]);
 
   const startCompanyCreation = useCallback((initial?: CompanyWizardInitial) => {
-    setWizard({ initial });
+    setWizard({ initial, role: 'owner' });
   }, []);
 
   const startCompanyEdit = useCallback((company?: Company) => {
     const target = company ?? active;
-    if (target) setWizard({ company: target });
-  }, [active]);
+    if (!target) return;
+    setWizard({ company: target, role: 'loading' });
+    void companiesRepo.role(target.id).then(role => {
+      setWizard(current => current?.company?.id === target.id
+        ? { ...current, role: role ?? 'viewer' }
+        : current);
+    }).catch(roleError => {
+      console.error('[CompanyProfileWizard] role lookup failed:', roleError);
+      setWizard(current => current?.company?.id === target.id
+        ? { ...current, role: 'viewer' }
+        : current);
+      toast.error('Не удалось проверить права на профиль компании');
+    });
+  }, [active, toast]);
 
   async function confirmCompanyProfile(profile: CompanyProfileForm) {
     if (!wizard) return;
     setWizardBusy(true);
     try {
-      const saved = wizard.company
-        ? await companiesRepo.update(wizard.company.id, profile)
-        : await companiesRepo.add(profile);
+      if (wizard.role === 'loading' || wizard.role === 'viewer') {
+        throw new Error('У вашей роли нет права менять профиль компании');
+      }
+      const result = wizard.company
+        ? await companiesRepo.saveProfile(wizard.company.id, profile, wizard.role)
+        : { kind: 'saved' as const, company: await companiesRepo.add(profile) };
+
+      if (result.kind === 'proposed') {
+        setWizard(null);
+        toast.info('Предложение отправлено владельцу и бухгалтеру');
+        return;
+      }
+      const saved = result.company;
 
       localStorage.setItem(ACTIVE_KEY, saved.id);
       setActiveState(saved);
@@ -174,6 +196,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           company={wizard.company}
           initial={wizard.initial}
           busy={wizardBusy}
+          role={wizard.role}
           onCancel={() => setWizard(null)}
           onConfirm={confirmCompanyProfile}
         />
