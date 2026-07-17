@@ -14,7 +14,7 @@ export interface ChangelogEntry {
 // Новые версии — сверху.
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '2.30.5',
+    version: '2.30.6',
     date: '2026-07-18',
     title: 'Читаемая веб-версия на любом рабочем экране',
     changes: [
