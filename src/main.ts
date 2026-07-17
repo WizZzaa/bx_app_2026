@@ -308,7 +308,11 @@ let tray: Tray | null = null
 // Закрепление трей-окна: когда true — окно не прячется при потере фокуса.
 let trayPinned = false
 
-const appAsset = (name: string) => path.join(app.getAppPath(), 'resources', name)
+const appAsset = (name: string) => {
+  const bundled = path.join(process.resourcesPath, 'resources', name)
+  const source = path.join(app.getAppPath(), 'resources', name)
+  return fs.existsSync(bundled) ? bundled : source
+}
 const loadAppIcon = () => nativeImage.createFromPath(appAsset('icon.png'))
 
 // Запоминаем размер И позицию трей-окна между запусками.
@@ -349,7 +353,7 @@ const dockTrayWindow = () => {
   const display = screen.getDisplayNearestPoint({ x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 })
   const { workArea } = display
   const x = workArea.x + workArea.width - bounds.width - 18
-  const y = workArea.y + workArea.height - bounds.height + 28
+  const y = workArea.y + workArea.height - bounds.height
   trayState = { ...trayState, x, y, custom: false, pinned: true }
   trayPinned = true
   suppressTrayMove = true

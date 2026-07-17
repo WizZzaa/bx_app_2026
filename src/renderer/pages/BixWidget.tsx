@@ -427,8 +427,6 @@ export default function BixWidget() {
   }
 
   const reminderText = reminder ? (settings.privateReminders ? 'Напоминание: есть задача на сегодня.' : `Напоминание: ${reminder.title}`) : idleJoke || (speechVisible ? message : null)
-  const pupilGaze = { transform: `translate(${pointer.x * .42}px, ${pointer.y * .42}px)` }
-
   return <main className={`bix-widget bix-state-${bixMode}${settings.reducedMotion ? ' bix-reduced-motion' : ''}`} onMouseDown={event => { if (event.target === event.currentTarget) setPanel(null) }}>
     {panel === 'menu' && <section className="bix-fan" aria-label="Действия Бикса">
       {ACTIONS.map((action, index) => <button key={action.id} className={`bix-action bix-action-${index}`} onClick={() => choose(action)}>
@@ -462,10 +460,6 @@ export default function BixWidget() {
     <button className="bix-character" onClick={toggleMenu} aria-label="Открыть действия Бикса">
       <span className="bix-drag" title="Перетащите Бикса за голову" />
       <img className="bix-mascot" src={mascotSource} alt="Бикс — питомец BX" style={gaze} draggable={false} />
-      <span className="bix-pupil bix-pupil-left" style={pupilGaze} /><span className="bix-pupil bix-pupil-right" style={pupilGaze} />
-      {equippedVisuals.has('glasses') && <span className="bix-accessory bix-accessory-glasses" />}
-      {equippedVisuals.has('bowtie') && <span className="bix-accessory bix-accessory-bowtie" />}
-      {equippedVisuals.has('halo') && <span className="bix-accessory bix-accessory-halo" />}
     </button>
     <div className="bix-pin-controls"><button onClick={() => void dockToTaskbar()} title="Прикрепить к панели задач">⌖</button><button onClick={() => void togglePinned()} title={pinned ? 'Открепить виджет' : 'Закрепить виджет'}>{pinned ? '📌' : '📍'}</button></div>
   </main>
