@@ -315,11 +315,13 @@ const loadAppIcon = () => nativeImage.createFromPath(appAsset('icon.png'))
 // custom=true — пользователь сам перетащил окно, тогда не «прыгаем» к трею.
 interface TrayState { width: number; height: number; x?: number; y?: number; custom?: boolean; pinned?: boolean }
 const trayStateFile = () => path.join(app.getPath('userData'), 'tray-window.json')
-let trayState: TrayState = { width: 430, height: 420, pinned: true }
+let trayState: TrayState = { width: 430, height: 560, pinned: true }
 const loadTrayState = () => {
   try {
     const s = JSON.parse(fs.readFileSync(trayStateFile(), 'utf-8'))
-    if (typeof s?.width === 'number' && typeof s?.height === 'number') trayState = { ...trayState, ...s }
+    // До 2.30.4 окно было ниже и сохраняло координаты для высоты 420px.
+    // Их нельзя переносить на новую высоту: кот окажется вне панели задач.
+    if (typeof s?.width === 'number' && typeof s?.height === 'number' && s.height === 560) trayState = { ...trayState, ...s }
   } catch { /* default */ }
   trayPinned = trayState.pinned !== false
 }
@@ -362,9 +364,9 @@ const createTrayWindow = () => {
     width: trayState.width,
     height: trayState.height,
     minWidth: 430,
-    minHeight: 420,
+    minHeight: 560,
     maxWidth: 430,
-    maxHeight: 420,
+    maxHeight: 560,
     show: true,
     frame: false,
     fullscreenable: false,

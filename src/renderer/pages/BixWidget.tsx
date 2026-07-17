@@ -7,9 +7,11 @@ import { todayISO } from '../lib/dates'
 import { uid } from '../lib/uid'
 import { supabase } from '../lib/db/supabase'
 import { emitPlannerReload } from './planner/plannerBus'
+import { buildTranslationPrompt, type TranslationLanguage } from '../lib/translator'
+import type { CacheScanResult, ProcessEntry } from '../../shared/types'
 
 type Panel = 'menu' | 'task' | 'note' | 'translator' | 'tools' | 'home' | 'settings' | 'intro' | null
-type BxWidgetWindow = Window & { bx?: { tray?: { openApp?: (route?: string) => Promise<void>; getPinned?: () => Promise<boolean>; setPinned?: (pinned: boolean) => Promise<boolean>; dockToTaskbar?: () => Promise<void> } } }
+type BxWidgetWindow = Window & { bx?: { tray?: { openApp?: (route?: string) => Promise<void>; getPinned?: () => Promise<boolean>; setPinned?: (pinned: boolean) => Promise<boolean>; dockToTaskbar?: () => Promise<void> }; onec?: { scanCache?: () => Promise<CacheScanResult>; cleanCache?: (paths: string[], backup?: boolean) => Promise<{ deletedPaths: string[]; failedPaths: Array<{ path: string }>; freedBytes: number }>; listProcesses?: () => Promise<ProcessEntry[]>; killProcesses?: (pids: number[]) => Promise<{ killed: number[]; failed: Array<{ pid: number }> }> } } }
 type BixState = { coins: number; needs: { food: number; mood: number; energy: number }; lastDailyClaim: string | null }
 type BixReminder = { id: string; title: string; date: string; type: string }
 type JokeFrequency = 'rare' | 'normal' | 'often'
@@ -17,6 +19,7 @@ type BixSettings = { jokesEnabled: boolean; jokeFrequency: JokeFrequency; quietH
 type BixCatalogItem = { sku: string; title: string; category: string; price: number; plan_required: string; visual_key: string }
 type BixInventoryItem = { sku: string; equipped: boolean }
 type BixCollection = { catalog: BixCatalogItem[]; inventory: BixInventoryItem[]; achievements: string[] }
+type BixActivity = 'idle' | 'thinking' | 'working' | 'success' | 'error'
 
 const BIX_STATE_KEY = 'bx_bix_state_v1'
 const BIX_SETTINGS_KEY = 'bx_bix_settings_v1'
@@ -76,7 +79,7 @@ const ACTIONS = [
   { id: 'task', label: 'Создать задачу', icon: '✓' },
   { id: 'note', label: 'Быстрая заметка', icon: '✎' },
   { id: 'tools', label: 'Утилиты', icon: '⌘' },
-  { id: 'translator', label: 'Переводчик', icon: '文', route: '/translator' },
+  { id: 'translator', label: 'Переводчик', icon: '文' },
 ]
 
 const TOOL_ACTIONS = [
@@ -105,6 +108,15 @@ export default function BixWidget() {
   const [collectionLoading, setCollectionLoading] = useState(false)
   const [introOpen, setIntroOpen] = useState(() => !localStorage.getItem(BIX_INTRO_KEY))
   const [pinned, setPinned] = useState(true)
+  const [translationText, setTranslationText] = useState('')
+  const [translationResult, setTranslationResult] = useState('')
+  const [translationDirection, setTranslationDirection] = useState<'ru-uz' | 'uz-ru'>('ru-uz')
+  const [translating, setTranslating] = useState(false)
+  const [activity, setActivity] = useState<BixActivity>('idle')
+  const [utilityBusy, setUtilityBusy] = useState(false)
+  const [cacheScan, setCacheScan] = useState<CacheScanResult | null>(null)
+  const [onecProcesses, setOnecProcesses] = useState<ProcessEntry[]>([])
+  const [utilityStatus, setUtilityStatus] = useState('')
 
   useEffect(() => {
     const html = document.documentElement
@@ -115,6 +127,12 @@ export default function BixWidget() {
   }, [])
 
   useEffect(() => { void (window as BxWidgetWindow).bx?.tray?.getPinned?.().then(setPinned) }, [])
+
+  useEffect(() => {
+    if (activity === 'idle') return
+    const timer = window.setTimeout(() => setActivity('idle'), activity === 'working' || activity === 'thinking' ? 8_000 : 3_000)
+    return () => window.clearTimeout(timer)
+  }, [activity])
 
   useEffect(() => {
     const onMove = (event: MouseEvent) => {
@@ -235,18 +253,68 @@ export default function BixWidget() {
     setPinned(value ?? next)
     setMessage(next ? 'Бикс закреплён и останется на месте.' : 'Теперь Бикса можно скрыть через значок BX в трее.')
   }
+  const translateInline = async () => {
+    if (!translationText.trim() || translating) return
+    setTranslating(true); setTranslationResult(''); setActivity('thinking')
+    const source: TranslationLanguage = translationDirection === 'ru-uz' ? 'ru' : 'uz-latn'
+    const target: TranslationLanguage = translationDirection === 'ru-uz' ? 'uz-latn' : 'ru'
+    try {
+      const prompt = buildTranslationPrompt({ source, target, mode: 'accounting', text: translationText, glossary: '', preserveStructure: true })
+      const { data, error } = await supabase.functions.invoke('ai-consultant', { body: { messages: [{ role: 'user', content: prompt }] } })
+      if (error) throw error
+      if (data?.error) throw new Error(data.message || data.error)
+      const result = String(data?.text || '').trim()
+      if (!result) throw new Error('Сервис вернул пустой перевод.')
+      setTranslationResult(result); setMessage('Перевод готов. Можно скопировать или открыть полный режим.'); setActivity('success')
+    } catch (error) { setTranslationResult(error instanceof Error ? `Не удалось перевести: ${error.message}` : 'Не удалось выполнить перевод.'); setActivity('error') }
+    finally { setTranslating(false) }
+  }
+  const copyTranslation = async () => { if (translationResult) await navigator.clipboard.writeText(translationResult); setMessage('Перевод скопирован.') }
+  const scanCacheFromWidget = async () => {
+    const onec = (window as BxWidgetWindow).bx?.onec
+    if (!onec?.scanCache) { openApp('/tools?tool=cache'); return }
+    setUtilityBusy(true); setActivity('working'); setUtilityStatus('Проверяю кэш 1С…')
+    try { const scan = await onec.scanCache(); setCacheScan(scan); setUtilityStatus(scan.platformSupported ? `Найдено: ${scan.entries.length} папок кэша.` : 'Эта операция доступна только в Windows.') ; setActivity('success') }
+    catch { setUtilityStatus('Не удалось проверить кэш.'); setActivity('error') }
+    finally { setUtilityBusy(false) }
+  }
+  const cleanCacheFromWidget = async () => {
+    const onec = (window as BxWidgetWindow).bx?.onec
+    if (!onec?.cleanCache || !cacheScan?.entries.length) return
+    setUtilityBusy(true); setActivity('working')
+    try { const result = await onec.cleanCache(cacheScan.entries.map(entry => entry.path), true); setUtilityStatus(`Готово: очищено ${result.deletedPaths.length} папок.`); setCacheScan(null); setActivity('success') }
+    catch { setUtilityStatus('Не удалось очистить кэш.'); setActivity('error') }
+    finally { setUtilityBusy(false) }
+  }
+  const scanProcessesFromWidget = async () => {
+    const onec = (window as BxWidgetWindow).bx?.onec
+    if (!onec?.listProcesses) { openApp('/tools?tool=killer'); return }
+    setUtilityBusy(true); setActivity('working')
+    try { const processes = await onec.listProcesses(); setOnecProcesses(processes); setUtilityStatus(processes.length ? `Найдено процессов 1С: ${processes.length}.` : 'Процессов 1С не найдено.'); setActivity('success') }
+    catch { setUtilityStatus('Не удалось получить список процессов.'); setActivity('error') }
+    finally { setUtilityBusy(false) }
+  }
+  const stopProcessesFromWidget = async () => {
+    const onec = (window as BxWidgetWindow).bx?.onec
+    if (!onec?.killProcesses || !onecProcesses.length) return
+    setUtilityBusy(true); setActivity('working')
+    try { const result = await onec.killProcesses(onecProcesses.map(process => process.pid)); setUtilityStatus(`Завершено процессов: ${result.killed.length}.`); setOnecProcesses([]); setActivity('success') }
+    catch { setUtilityStatus('Не удалось завершить процессы.'); setActivity('error') }
+    finally { setUtilityBusy(false) }
+  }
   const choose = (action: typeof ACTIONS[number]) => {
     if (action.route) { openApp(action.route); setPanel(null); return }
     setPanel(action.id as Panel)
   }
   const useCare = async (kind: 'food' | 'mood') => {
     if (bix.coins < 2) { setMessage('Сначала накопим ещё немного монет.'); return }
+    setActivity('working')
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       const { data, error } = await supabase.rpc('bx_use_bix_care', { p_item: kind === 'food' ? 'food' : 'toy' })
       if (!error && data) {
         setBix(stateFromRemote(data))
-        setMessage(kind === 'food' ? 'Мр-р. Спасибо за угощение!' : 'Поиграли — настроение на высоте!')
+        setMessage(kind === 'food' ? 'Мр-р. Спасибо за угощение!' : 'Поиграли — настроение на высоте!'); setActivity('success')
         return
       }
     }
@@ -257,7 +325,7 @@ export default function BixWidget() {
         ? { ...value.needs, food: Math.min(100, value.needs.food + 35) }
         : { ...value.needs, mood: Math.min(100, value.needs.mood + 25) },
     }))
-    setMessage(kind === 'food' ? 'Мр-р. Спасибо за угощение!' : 'Поиграли — настроение на высоте!')
+    setMessage(kind === 'food' ? 'Мр-р. Спасибо за угощение!' : 'Поиграли — настроение на высоте!'); setActivity('success')
   }
   const buyOrEquip = async (item: BixCatalogItem) => {
     if (collectionLoading) return
@@ -279,11 +347,11 @@ export default function BixWidget() {
     setMessage(owned ? `${item.title} теперь на Биксе.` : `${item.title} добавлен в гардероб.`)
   }
   const equippedVisuals = useMemo(() => new Set(collection.inventory.filter(item => item.equipped).map(item => collection.catalog.find(catalogItem => catalogItem.sku === item.sku)?.visual_key).filter(Boolean)), [collection])
-  const bixMode = reminder ? 'reminding' : panel ? 'engaged' : idleJoke ? 'joking' : bix.needs.energy < 25 ? 'sleepy' : bix.needs.food < 25 || bix.needs.mood < 25 ? 'concerned' : 'idle'
+  const bixMode = activity !== 'idle' ? activity : reminder ? 'reminding' : panel ? 'engaged' : idleJoke ? 'joking' : bix.needs.energy < 25 ? 'sleepy' : bix.needs.food < 25 || bix.needs.mood < 25 ? 'concerned' : 'idle'
   const saveDraft = async (kind: 'task' | 'note') => {
     const text = draft.trim()
     if (!text || saving) return
-    setSaving(true)
+    setSaving(true); setActivity('working')
     try {
       if (kind === 'task') {
         const task = await createCanonicalEvent({
@@ -298,26 +366,27 @@ export default function BixWidget() {
         localStorage.setItem(QUICK_NOTES_KEY, JSON.stringify([{ id: uid(), text, createdAt: new Date().toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }), pinned: false }, ...current]))
         setMessage('Заметка сохранена. Ничего не потеряем.')
       }
-      setDraft(''); setPanel(null)
+      setDraft(''); setPanel(null); setActivity('success')
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось сохранить. Попробуйте ещё раз.')
+      setMessage(error instanceof Error ? error.message : 'Не удалось сохранить. Попробуйте ещё раз.'); setActivity('error')
     } finally { setSaving(false) }
   }
   const finishReminder = async () => {
     if (!reminder) return
     const { error } = await supabase.from('bx_events').update({ status: 'done' }).eq('id', reminder.id)
-    if (error) { setMessage('Не удалось завершить задачу. Попробуйте ещё раз.'); return }
-    emitPlannerReload(); setMessage('Готово. Отличная работа!'); setReminder(null)
+    if (error) { setMessage('Не удалось завершить задачу. Попробуйте ещё раз.'); setActivity('error'); return }
+    emitPlannerReload(); setMessage('Готово. Отличная работа!'); setReminder(null); setActivity('success')
   }
   const snoozeReminder = async () => {
     if (!reminder) return
     const reminderAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
     const { error } = await supabase.from('bx_events').update({ reminder_at: reminderAt }).eq('id', reminder.id)
-    if (error) { setMessage('Не получилось отложить. Попробуйте ещё раз.'); return }
+    if (error) { setMessage('Не получилось отложить. Попробуйте ещё раз.'); setActivity('error'); return }
     emitPlannerReload(); setMessage('Хорошо, напомню через 15 минут.'); setReminder(null)
   }
 
   const reminderText = reminder ? (settings.privateReminders ? 'Напоминание: есть задача на сегодня.' : `Напоминание: ${reminder.title}`) : idleJoke || message
+  const pupilGaze = { transform: `translate(${pointer.x * .42}px, ${pointer.y * .42}px)` }
 
   return <main className={`bix-widget bix-state-${bixMode}${settings.reducedMotion ? ' bix-reduced-motion' : ''}`} onMouseDown={event => { if (event.target === event.currentTarget) setPanel(null) }}>
     {panel === 'menu' && <section className="bix-fan" aria-label="Действия Бикса">
@@ -336,8 +405,8 @@ export default function BixWidget() {
       <button className="bix-panel-close" onClick={() => setPanel(null)} aria-label="Закрыть">×</button>
       {panel === 'task' && <><small>БЫСТРАЯ ЗАДАЧА</small><h2>Что не забыть?</h2><textarea value={draft} onChange={e => setDraft(e.target.value)} placeholder="Например: сверить первичку" autoFocus /><button className="bix-primary" disabled={saving} onClick={() => void saveDraft('task')}>{saving ? 'Сохраняю…' : 'Добавить в план'}</button></>}
       {panel === 'note' && <><small>БЫСТРАЯ ЗАМЕТКА</small><h2>Запишу, не потеряем.</h2><textarea value={draft} onChange={e => setDraft(e.target.value)} placeholder="Введите заметку…" autoFocus /><button className="bix-primary" disabled={saving} onClick={() => void saveDraft('note')}>{saving ? 'Сохраняю…' : 'Сохранить'}</button></>}
-      {panel === 'translator' && <><small>ПЕРЕВОДЧИК</small><h2>Переведём без потери смысла.</h2><button className="bix-primary" onClick={() => openApp('/translator')}>Открыть переводчик</button></>}
-      {panel === 'tools' && <><small>УТИЛИТЫ BX</small><h2>Выберите операцию</h2><div className="bix-tools">{TOOL_ACTIONS.map(([label, route]) => <button key={label} onClick={() => { openApp(route); setPanel(null) }}>{label}<span>→</span></button>)}</div></>}
+      {panel === 'translator' && <><small>БЫСТРЫЙ ПЕРЕВОДЧИК</small><h2>RU ↔ UZ прямо здесь.</h2><div className="bix-translate-direction"><button className={translationDirection === 'ru-uz' ? 'active' : ''} onClick={() => setTranslationDirection('ru-uz')}>RU → UZ</button><button className={translationDirection === 'uz-ru' ? 'active' : ''} onClick={() => setTranslationDirection('uz-ru')}>UZ → RU</button></div><textarea value={translationText} onChange={event => setTranslationText(event.target.value)} placeholder="Вставьте короткий текст…" /><button className="bix-primary" disabled={!translationText.trim() || translating} onClick={() => void translateInline()}>{translating ? 'Перевожу…' : 'Перевести'}</button>{translationResult && <div className="bix-translation-result">{translationResult}</div>}<div className="bix-inline-actions">{translationResult && <button onClick={() => void copyTranslation()}>Копировать</button>}<button onClick={() => openApp('/translator')}>Полный переводчик ↗</button></div></>}
+      {panel === 'tools' && <><small>УТИЛИТЫ BX</small><h2>Быстрые действия здесь</h2><p className="bix-panel-hint">Кэш и процессы 1С можно проверить прямо в виджете. Остальное открывается в полном режиме.</p><div className="bix-quick-tools"><button disabled={utilityBusy} onClick={() => void scanCacheFromWidget()}>🧹 Проверить кэш 1С</button>{cacheScan?.entries.length ? <button disabled={utilityBusy} className="accent" onClick={() => void cleanCacheFromWidget()}>Очистить {cacheScan.entries.length} папок</button> : null}<button disabled={utilityBusy} onClick={() => void scanProcessesFromWidget()}>⚡ Процессы 1С</button>{onecProcesses.length ? <button disabled={utilityBusy} className="danger" onClick={() => void stopProcessesFromWidget()}>Завершить {onecProcesses.length} процессов</button> : null}</div>{utilityStatus && <p className="bix-utility-status">{utilityStatus}</p>}<div className="bix-tools">{TOOL_ACTIONS.slice(2).map(([label, route]) => <button key={label} onClick={() => { openApp(route); setPanel(null) }}><span>{label}</span><b>Полный режим ↗</b></button>)}</div></>}
       {panel === 'home' && <><div className="bix-home-head"><div><small>ДОМИК БИКСА · {plan}</small><h2>{bix.coins} <em>монет</em></h2></div><span className="bix-coin">●</span></div><div className="bix-needs">{[['Сытость', bix.needs.food], ['Настроение', bix.needs.mood], ['Энергия', bix.needs.energy]].map(([label, value]) => <label key={String(label)}><span>{label}</span><i><b style={{ width: `${value}%` }} /></i><strong>{value}%</strong></label>)}</div><div className="bix-care"><button onClick={() => void useCare('food')}>🥣<span>Корм</span><small>2 ●</small></button><button onClick={() => void useCare('mood')}>🧶<span>Игрушка</span><small>2 ●</small></button><button onClick={() => setPanel('settings')}>⚙<span>Настройки</span><small>виджет</small></button></div><div className="bix-wardrobe"><div><small>ГАРДЕРОБ</small><button onClick={() => void refreshCollection()} disabled={collectionLoading}>↻</button></div>{collection.catalog.length ? collection.catalog.map(item => { const owned = collection.inventory.find(entry => entry.sku === item.sku); const equipped = owned?.equipped; const locked = item.plan_required === 'standard' && plan === 'free' || item.plan_required === 'premium' && plan !== 'premium'; return <button key={item.sku} className={equipped ? 'equipped' : ''} disabled={locked || collectionLoading} onClick={() => void buyOrEquip(item)}><span>{item.title}</span><small>{locked ? `${item.plan_required}+` : equipped ? 'на Биксе' : owned ? 'надеть' : `${item.price} ●`}</small></button> }) : <p>Гардероб загрузится после входа в BX.</p>}</div></>}
       {panel === 'settings' && <><small>НАСТРОЙКИ БИКСА</small><h2>Тихо, бережно, по делу.</h2><div className="bix-settings"><label><span>Шутки</span><input type="checkbox" checked={settings.jokesEnabled} onChange={event => setSettings(value => ({ ...value, jokesEnabled: event.target.checked }))} /></label><label><span>Частота шуток</span><select value={settings.jokeFrequency} disabled={!settings.jokesEnabled} onChange={event => setSettings(value => ({ ...value, jokeFrequency: event.target.value as JokeFrequency }))}><option value="rare">реже — 15–20 мин</option><option value="normal">обычно — 10–15 мин</option><option value="often">чаще — 10–12 мин</option></select></label><label><span>Тихие часы</span><input type="checkbox" checked={settings.quietHours} onChange={event => setSettings(value => ({ ...value, quietHours: event.target.checked }))} /></label>{settings.quietHours && <label className="bix-setting-time"><span>Не беспокоить</span><input type="time" value={settings.quietFrom} onChange={event => setSettings(value => ({ ...value, quietFrom: event.target.value }))} /><b>—</b><input type="time" value={settings.quietTo} onChange={event => setSettings(value => ({ ...value, quietTo: event.target.value }))} /></label>}<label><span>Скрывать названия задач</span><input type="checkbox" checked={settings.privateReminders} onChange={event => setSettings(value => ({ ...value, privateReminders: event.target.checked }))} /></label><label><span>Уменьшить анимацию</span><input type="checkbox" checked={settings.reducedMotion} onChange={event => setSettings(value => ({ ...value, reducedMotion: event.target.checked }))} /></label></div><p className="bix-settings-note">Системный режим Windows «Не беспокоить» пока не считывается автоматически.</p></>}
     </section>}
@@ -351,6 +420,7 @@ export default function BixWidget() {
     <button className="bix-character" onClick={toggleMenu} aria-label="Открыть действия Бикса">
       <span className="bix-drag" title="Перетащите Бикса за голову" />
       <img className="bix-mascot" src={bixMascot} alt="Бикс — питомец BX" style={gaze} draggable={false} />
+      <span className="bix-pupil bix-pupil-left" style={pupilGaze} /><span className="bix-pupil bix-pupil-right" style={pupilGaze} />
       {equippedVisuals.has('glasses') && <span className="bix-accessory bix-accessory-glasses" />}
       {equippedVisuals.has('bowtie') && <span className="bix-accessory bix-accessory-bowtie" />}
       {equippedVisuals.has('halo') && <span className="bix-accessory bix-accessory-halo" />}
