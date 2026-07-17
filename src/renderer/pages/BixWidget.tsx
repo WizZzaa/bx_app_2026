@@ -552,6 +552,6 @@ export default function BixWidget() {
       <span className="bix-drag" title="Перетащите Бикса за голову" />
       <img className="bix-mascot bix-frame" src={currentBixFrame} alt={`Бикс: ${bixMode}`} style={animationState === 'idle' ? gaze : undefined} draggable={false} />
     </button>
-    <div className="bix-pin-controls"><button onClick={() => void dockToTaskbar()} title="Прикрепить к панели задач">⌖</button><button onClick={() => void togglePinned()} title={pinned ? 'Открепить виджет' : 'Закрепить виджет'}>{pinned ? '📌' : '📍'}</button></div>
+    <div className="bix-pin-controls" aria-label="Управление виджетом"><button onClick={() => void dockToTaskbar()} title="Прикрепить к панели задач">⌖</button><button onClick={() => void togglePinned()} title={pinned ? 'Открепить виджет' : 'Закрепить виджет'}>{pinned ? '📌' : '📍'}</button><button className="bix-move-control" title="Потяните, чтобы переместить Бикса" aria-label="Переместить Бикса">⠿</button></div>
   </main>
 }
