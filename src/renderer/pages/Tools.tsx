@@ -91,6 +91,8 @@ const TOOLS_VIEW_KEY = 'bx_tools_view'
 
 const Tools = () => {
   const [active, setActiveRaw] = useState(() => {
+    const requested = new URLSearchParams(window.location.hash.split('?')[1] || '').get('tool')
+    if (requested && TOOLS.some(t => t.id === requested)) return requested
     const last = localStorage.getItem(LAST_TOOL_KEY)
     return last && TOOLS.some(t => t.id === last) ? last : 'inncheck'
   })

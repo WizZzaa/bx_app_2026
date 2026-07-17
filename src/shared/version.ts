@@ -14,7 +14,7 @@ export interface ChangelogEntry {
 // Новые версии — сверху.
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '2.30.0',
+    version: '2.30.2',
     date: '2026-07-17',
     title: 'Роли и история профиля компании',
     changes: [

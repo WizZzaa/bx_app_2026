@@ -73,7 +73,7 @@ export default function App() {
     return (
       <CompanyProvider>
         <PlanProvider>
-          <div className="flex flex-col h-screen w-screen bg-bx-bg text-bx-text overflow-hidden font-sans">
+          <div className="flex flex-col h-screen w-screen bg-transparent text-bx-text overflow-visible font-sans">
             <Routes>
               <Route path="/tray" element={<BixWidget />} />
               <Route path="*" element={<Navigate to="/tray" replace />} />

@@ -25,7 +25,21 @@ type IdleLock = 'off' | '5' | '10' | '30' | '60'
 type TabType = 'overview' | 'workspace' | 'notifications' | 'security' | 'ai' | 'team' | 'data' | 'integrations' | 'billing' | 'about'
 type DashboardWidgets = { weather: boolean; currency: boolean; notifications: boolean; horoscope: boolean }
 type DataStats = { templates: number; counterparties: number; transactions: number; employees: number }
-const INITIAL_UPDATE: UpdateSnapshot = { status: 'idle', error: '', version: APP_VERSION, availableVersion: '', mode: 'unsupported' }
+const INITIAL_UPDATE: UpdateSnapshot = {
+  status: 'idle',
+  error: '',
+  version: APP_VERSION,
+  availableVersion: '',
+  mode: 'unsupported',
+  progressPercent: null,
+  downloadedBytes: 0,
+  totalBytes: 0,
+}
+
+const formatUpdateBytes = (value: number): string => {
+  if (!value) return '0 МБ'
+  return `${(value / (1024 * 1024)).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} МБ`
+}
 const DEFAULT_WIDGETS: DashboardWidgets = { weather: true, currency: true, notifications: true, horoscope: false }
 const THEME_CHOICES: Array<{ value: BxTheme; label: string; colors: string[] }> = [
   { value: 'light', label: 'Светлая', colors: ['#F4F5F7', '#FFFFFF', '#4F46E5', '#1E293B'] },
@@ -91,6 +105,7 @@ export default function Settings() {
   }
 
   const handleInstallUpdate = () => {
+    setUpdateInfo(current => ({ ...current, status: 'installing', error: '' }))
     void window.bx?.updater?.installUpdate()
   }
 
@@ -456,6 +471,7 @@ export default function Settings() {
     latest: 'Установлена актуальная версия',
     downloading: 'Обновление загружается…',
     ready: updateInfo.availableVersion ? `Версия ${updateInfo.availableVersion} готова` : 'Обновление готово',
+    installing: 'BX перезапускается и запускает установку…',
     error: updateInfo.error || 'Не удалось проверить обновления',
   }
 
@@ -596,12 +612,45 @@ export default function Settings() {
                 <h3 className="mt-5 text-xl font-black">Помощник бухгалтера Республики Узбекистан</h3>
                 <p className="mt-3 max-w-2xl text-sm leading-relaxed text-bx-muted">BX объединяет планирование, документы, расчёты, знания и ИИ в одном спокойном рабочем контуре. Цель — убирать рутину, не прятать важные действия и оставлять контроль за специалистом.</p>
                 <div className="mt-6 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-bx-bg p-4"><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Версия</p><p className="mt-1 font-mono text-sm font-black">{APP_VERSION}</p></div><div className="rounded-2xl bg-bx-bg p-4"><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Год</p><p className="mt-1 text-sm font-black">2026</p></div></div>
-                <div className={`mt-4 rounded-2xl border p-4 ${updateInfo.status === 'error' ? 'border-rose-500/30 bg-rose-500/[0.07]' : updateInfo.status === 'ready' ? 'border-emerald-500/30 bg-emerald-500/[0.07]' : 'border-bx-border bg-bx-bg'}`}>
+                <div className={`mt-4 rounded-2xl border p-4 ${updateInfo.status === 'error' ? 'border-rose-500/30 bg-rose-500/[0.07]' : updateInfo.status === 'ready' || updateInfo.status === 'installing' ? 'border-emerald-500/30 bg-emerald-500/[0.07]' : 'border-bx-border bg-bx-bg'}`}>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div><p className="text-xs font-black text-bx-text">Обновления BX</p><p role="status" className="mt-1 text-[10px] leading-relaxed text-bx-muted">{updateStatusLabel[updateInfo.status]}</p></div>
-                    {updateInfo.status === 'ready' ? <button type="button" onClick={handleInstallUpdate} className={`${button} bg-emerald-600 text-white hover:bg-emerald-500`}><span className="inline-flex items-center gap-2"><Icon name="download" className="h-4 w-4" />Установить</span></button> : <button type="button" onClick={handleCheckForUpdates} disabled={updateInfo.status === 'checking' || updateInfo.status === 'downloading'} className={`${button} border border-bx-border bg-bx-surface text-bx-text hover:border-blue-500/40 disabled:cursor-wait disabled:opacity-50`}><span className="inline-flex items-center gap-2"><Icon name="recycle" className={`h-4 w-4 ${updateInfo.status === 'checking' ? 'animate-spin' : ''}`} />Проверить обновления</span></button>}
+                    {updateInfo.status === 'ready' ? (
+                      <button type="button" onClick={handleInstallUpdate} className={`${button} bg-emerald-600 px-5 text-white hover:bg-emerald-500`}>
+                        <span className="inline-flex items-center gap-2"><Icon name="recycle" className="h-4 w-4" />{updateInfo.mode === 'automatic' ? 'Перезапустить и установить' : 'Открыть установщик'}</span>
+                      </button>
+                    ) : (
+                      <button type="button" onClick={handleCheckForUpdates} disabled={updateInfo.status === 'checking' || updateInfo.status === 'downloading' || updateInfo.status === 'installing'} className={`${button} border border-bx-border bg-bx-surface text-bx-text hover:border-blue-500/40 disabled:cursor-wait disabled:opacity-50`}>
+                        <span className="inline-flex items-center gap-2"><Icon name="recycle" className={`h-4 w-4 ${updateInfo.status === 'checking' || updateInfo.status === 'installing' ? 'animate-spin' : ''}`} />{updateInfo.status === 'installing' ? 'Запускаю…' : 'Проверить обновления'}</span>
+                      </button>
+                    )}
                   </div>
-                  <p className="mt-3 text-[9px] leading-relaxed text-bx-muted">Windows устанавливает обновление после подтверждённого перезапуска. На macOS BX скачивает подходящий файл релиза и открывает его для установки.</p>
+                  {(updateInfo.status === 'downloading' || updateInfo.status === 'ready' || updateInfo.status === 'installing') && (
+                    <div className="mt-4" aria-label="Ход загрузки обновления">
+                      <div className="mb-2 flex items-center justify-between gap-3 text-[9px] font-bold text-bx-muted">
+                        <span>{updateInfo.status === 'downloading' ? 'Загрузка пакета' : updateInfo.status === 'ready' ? 'Пакет загружен' : 'Запуск установки'}</span>
+                        <span className="tabular-nums">
+                          {updateInfo.progressPercent !== null
+                            ? `${updateInfo.progressPercent}%${updateInfo.totalBytes ? ` · ${formatUpdateBytes(updateInfo.downloadedBytes)} из ${formatUpdateBytes(updateInfo.totalBytes)}` : ''}`
+                            : 'загрузка идёт'}
+                        </span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-bx-surface-2 ring-1 ring-inset ring-bx-border">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-[width] duration-300 ${updateInfo.progressPercent === null ? 'w-1/3 animate-pulse' : ''}`}
+                          style={updateInfo.progressPercent === null ? undefined : { width: `${updateInfo.progressPercent}%` }}
+                        />
+                      </div>
+                      {updateInfo.status === 'ready' && <p className="mt-2 text-[9px] font-semibold text-emerald-700 dark:text-emerald-300">Можно продолжить работу и установить позже — данные уже сохранены.</p>}
+                    </div>
+                  )}
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[8px] font-black uppercase tracking-wide text-bx-muted">
+                    {['Проверка', 'Загрузка', 'Установка'].map((label, index) => {
+                      const activeStep = updateInfo.status === 'checking' ? 0 : updateInfo.status === 'downloading' ? 1 : updateInfo.status === 'ready' || updateInfo.status === 'installing' ? 2 : -1
+                      return <span key={label} className={`rounded-lg px-2 py-1.5 ${index <= activeStep ? 'bg-blue-500/10 text-blue-700 dark:text-blue-300' : 'bg-bx-surface-2'}`}>{index + 1}. {label}</span>
+                    })}
+                  </div>
+                  <p className="mt-3 text-[9px] leading-relaxed text-bx-muted">Windows загружает пакет через системный Squirrel: он сообщает начало и завершение, но не передаёт точный процент. После загрузки BX установит обновление только по вашей кнопке. На macOS отображаются реальный процент и размер файла.</p>
                 </div>
               </section>
               <section className={`${card} h-fit p-5`}><h3 className="text-sm font-black">Нужна помощь?</h3><p className="mt-2 text-xs leading-relaxed text-bx-muted">Опишите проблему в разделе поддержки или напишите технической команде.</p><button type="button" onClick={() => navigate('/support')} className={`${button} mt-4 w-full bg-blue-600 text-white`}><span className="inline-flex items-center gap-2"><Icon name="headset" className="h-4 w-4" />Открыть поддержку</span></button><button type="button" onClick={() => openExternalUrl('https://t.me/tech_support_bx')} className={`${button} mt-2 w-full border border-bx-border bg-bx-surface-2`}><span className="inline-flex items-center gap-2"><Icon name="send" className="h-4 w-4" />Telegram поддержки</span></button><p className="mt-4 text-center font-mono text-xs font-bold text-bx-muted">+998 90 916 04 44</p></section>

@@ -9,7 +9,7 @@ import { supabase } from '../lib/db/supabase'
 import { emitPlannerReload } from './planner/plannerBus'
 
 type Panel = 'menu' | 'task' | 'note' | 'translator' | 'tools' | 'home' | 'settings' | 'intro' | null
-type BxWidgetWindow = Window & { bx?: { tray?: { openApp?: (route?: string) => Promise<void> } } }
+type BxWidgetWindow = Window & { bx?: { tray?: { openApp?: (route?: string) => Promise<void>; getPinned?: () => Promise<boolean>; setPinned?: (pinned: boolean) => Promise<boolean>; dockToTaskbar?: () => Promise<void> } } }
 type BixState = { coins: number; needs: { food: number; mood: number; energy: number }; lastDailyClaim: string | null }
 type BixReminder = { id: string; title: string; date: string; type: string }
 type JokeFrequency = 'rare' | 'normal' | 'often'
@@ -80,12 +80,12 @@ const ACTIONS = [
 ]
 
 const TOOL_ACTIONS = [
-  ['Очистить кэш 1С', '/tools'],
-  ['Процессы 1С', '/tools'],
-  ['Резервная копия базы', '/tools'],
-  ['Проверить E‑Imzo', '/tools'],
-  ['Проверить госсайты и банки', '/services'],
-  ['Проверить ActiveX', '/tools'],
+  ['Очистить кэш 1С', '/tools?tool=cache'],
+  ['Процессы 1С', '/tools?tool=killer'],
+  ['Резервная копия базы', '/tools?tool=backup'],
+  ['Проверить E‑Imzo', '/tools?tool=eimzo'],
+  ['Проверить госсайты и банки', '/tools?tool=network'],
+  ['Проверить ActiveX', '/tools?tool=activex'],
 ]
 
 const openApp = (route: string) => (window as BxWidgetWindow).bx?.tray?.openApp?.(route)
@@ -104,6 +104,17 @@ export default function BixWidget() {
   const [collection, setCollection] = useState<BixCollection>(EMPTY_COLLECTION)
   const [collectionLoading, setCollectionLoading] = useState(false)
   const [introOpen, setIntroOpen] = useState(() => !localStorage.getItem(BIX_INTRO_KEY))
+  const [pinned, setPinned] = useState(true)
+
+  useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+    const root = document.getElementById('root')
+    html.classList.add('bix-widget-window'); body.classList.add('bix-widget-window'); root?.classList.add('bix-widget-window')
+    return () => { html.classList.remove('bix-widget-window'); body.classList.remove('bix-widget-window'); root?.classList.remove('bix-widget-window') }
+  }, [])
+
+  useEffect(() => { void (window as BxWidgetWindow).bx?.tray?.getPinned?.().then(setPinned) }, [])
 
   useEffect(() => {
     const onMove = (event: MouseEvent) => {
@@ -211,6 +222,18 @@ export default function BixWidget() {
     localStorage.setItem(BIX_INTRO_KEY, '1')
     setIntroOpen(false)
     setMessage('Я Бикс. Буду бережно напоминать о важном и помогать с рутиной.')
+  }
+  const dockToTaskbar = async () => {
+    await (window as BxWidgetWindow).bx?.tray?.dockToTaskbar?.()
+    const nextPinned = await (window as BxWidgetWindow).bx?.tray?.setPinned?.(true)
+    setPinned(nextPinned !== false)
+    setMessage('Закрепил Бикса над панелью задач. Лапки — на своём месте!')
+  }
+  const togglePinned = async () => {
+    const next = !pinned
+    const value = await (window as BxWidgetWindow).bx?.tray?.setPinned?.(next)
+    setPinned(value ?? next)
+    setMessage(next ? 'Бикс закреплён и останется на месте.' : 'Теперь Бикса можно скрыть через значок BX в трее.')
   }
   const choose = (action: typeof ACTIONS[number]) => {
     if (action.route) { openApp(action.route); setPanel(null); return }
@@ -332,5 +355,6 @@ export default function BixWidget() {
       {equippedVisuals.has('bowtie') && <span className="bix-accessory bix-accessory-bowtie" />}
       {equippedVisuals.has('halo') && <span className="bix-accessory bix-accessory-halo" />}
     </button>
+    <div className="bix-pin-controls"><button onClick={() => void dockToTaskbar()} title="Прикрепить к панели задач">⌖</button><button onClick={() => void togglePinned()} title={pinned ? 'Открепить виджет' : 'Закрепить виджет'}>{pinned ? '📌' : '📍'}</button></div>
   </main>
 }
