@@ -5,12 +5,12 @@
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1379 nodes · 3281 edges · 62 communities (59 shown, 3 thin omitted)
+- 1379 nodes · 3280 edges · 62 communities (59 shown, 3 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 26 edges (avg confidence: 0.7)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2bed9a42`
+- Built from commit: `2b4c9fd9`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -339,7 +339,7 @@ Cohesion: 0.12
 Nodes (7): DocumentViewMode, DocumentViewModeSwitch(), DocumentViewModeSwitchProps, DocumentWorkspace, STEPS, IconName, PATHS
 
 ## Knowledge Gaps
-- **306 isolated node(s):** `MenuItem`, `MenuSection`, `NotifyDays`, `IdleLock`, `TabType` (+301 more)
+- **306 isolated node(s):** `Tool`, `READY_TOOLS`, `PROPOSAL_TOOLS`, `GROUPS`, `ACCENT` (+301 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -347,12 +347,12 @@ Nodes (7): DocumentViewMode, DocumentViewModeSwitch(), DocumentViewModeSwitchPro
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `todayISO()` connect `pcClean.ts` to `EcpManager.tsx`, `CompanyContext.tsx`, `Topbar.tsx`, `DateCalc.tsx`, `BoardKanban.tsx`, `Templates.tsx`, `referenceRepo.ts`, `todayISO`, `Planner.tsx`, `useEvents.ts`, `TrayView.tsx`, `DigestView.tsx`, `Currency.tsx`, `Finance.tsx`, `ListView.tsx`, `errorReporter.ts`, `Dashboard.tsx`, `currency.ts`?**
-  _High betweenness centrality (0.071) - this node is a cross-community bridge._
+  _High betweenness centrality (0.070) - this node is a cross-community bridge._
 - **Why does `supabase` connect `widgetsApi.ts` to `CompanyContext.tsx`, `useToast`, `Library.tsx`, `supabase.ts`, `Settings.tsx`, `referenceRepo.ts`, `Planner.tsx`, `useEvents.ts`, `Translator.tsx`, `TrayView.tsx`, `Finance.tsx`, `numToWords.ts`, `errorReporter.ts`, `WidgetBoundary`, `Counterparties.tsx`, `currency.ts`, `types.ts`, `syncQueue.ts`?**
   _High betweenness centrality (0.069) - this node is a cross-community bridge._
 - **Why does `useCompany()` connect `Topbar.tsx` to `useCompany`, `CompanyContext.tsx`, `Topbar.tsx`, `useToast`, `Templates.tsx`, `Planner.tsx`, `Translator.tsx`, `Finance.tsx`, `numToWords.ts`, `errorReporter.ts`, `CalendarView.tsx`, `Counterparties.tsx`, `Dashboard.tsx`?**
-  _High betweenness centrality (0.031) - this node is a cross-community bridge._
-- **What connects `MenuItem`, `MenuSection`, `NotifyDays` to the rest of the system?**
+  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+- **What connects `Tool`, `READY_TOOLS`, `PROPOSAL_TOOLS` to the rest of the system?**
   _306 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Settings.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.14736842105263157 - nodes in this community are weakly interconnected._
