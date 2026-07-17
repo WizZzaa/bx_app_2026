@@ -6,6 +6,7 @@ import { registerIpcHandlers } from './main/ipc'
 import { initBackupScheduler } from './main/services/onecBackupScheduler'
 import {
   buildUpdateFeedUrl,
+  calculateDownloadPercent,
   isNewerVersion,
   UPDATE_REPOSITORY,
   type UpdateMode,
@@ -26,6 +27,9 @@ let updateStatus: UpdateStatus = 'idle'
 let updateError = ''
 let downloadedPath: string | null = null
 let availableVersion = ''
+let updateProgressPercent: number | null = null
+let updateDownloadedBytes = 0
+let updateTotalBytes = 0
 const updateMode: UpdateMode = process.platform === 'win32'
   ? 'automatic'
   : process.platform === 'darwin'
@@ -38,6 +42,9 @@ const updateSnapshot = (): UpdateSnapshot => ({
   version: app.getVersion(),
   availableVersion,
   mode: updateMode,
+  progressPercent: updateProgressPercent,
+  downloadedBytes: updateDownloadedBytes,
+  totalBytes: updateTotalBytes,
 })
 
 const broadcastUpdateStatus = () => {
@@ -54,6 +61,23 @@ const setUpdateStatus = (status: UpdateStatus, error = '') => {
   broadcastUpdateStatus()
 }
 
+const resetUpdateProgress = () => {
+  updateProgressPercent = null
+  updateDownloadedBytes = 0
+  updateTotalBytes = 0
+}
+
+const setDownloadProgress = (downloadedBytes: number, totalBytes: number) => {
+  const nextPercent = calculateDownloadPercent(downloadedBytes, totalBytes)
+  const changed = nextPercent !== updateProgressPercent
+    || downloadedBytes - updateDownloadedBytes >= 512 * 1024
+    || totalBytes !== updateTotalBytes
+  updateProgressPercent = nextPercent
+  updateDownloadedBytes = downloadedBytes
+  updateTotalBytes = totalBytes
+  if (changed) broadcastUpdateStatus()
+}
+
 // Ассет релиза под текущую платформу+архитектуру (имя вида *-darwin-arm64-*.zip)
 const pickAsset = (assets: Array<{ name: string; browser_download_url: string }>) => {
   const plat = process.platform === 'darwin' ? 'darwin' : 'win32'
@@ -64,7 +88,11 @@ const pickAsset = (assets: Array<{ name: string; browser_download_url: string }>
 }
 
 // Скачивание ассета в «Загрузки» (net сам следует редиректам GitHub→CDN)
-const downloadAsset = (url: string, name: string): Promise<string> =>
+const downloadAsset = (
+  url: string,
+  name: string,
+  onProgress: (downloadedBytes: number, totalBytes: number) => void,
+): Promise<string> =>
   new Promise((resolve, reject) => {
     const dest = path.join(app.getPath('downloads'), name)
     const file = fs.createWriteStream(dest)
@@ -74,7 +102,13 @@ const downloadAsset = (url: string, name: string): Promise<string> =>
         file.close(); fs.rm(dest, () => { /* ignore */ })
         reject(new Error(`HTTP ${response.statusCode}`)); return
       }
-      response.on('data', (chunk: Buffer) => { file.write(chunk) })
+      const totalBytes = Number(response.headers['content-length']?.[0] || 0)
+      let downloadedBytes = 0
+      response.on('data', (chunk: Buffer) => {
+        downloadedBytes += chunk.length
+        file.write(chunk)
+        onProgress(downloadedBytes, totalBytes)
+      })
       response.on('end', () => { file.end(() => resolve(dest)) })
       response.on('error', (e) => { file.close(); reject(e) })
     })
@@ -84,8 +118,9 @@ const downloadAsset = (url: string, name: string): Promise<string> =>
 
 const checkManualUpdate = async () => {
   if (!app.isPackaged) return
-  if (updateStatus === 'checking' || updateStatus === 'downloading') return
+  if (updateStatus === 'checking' || updateStatus === 'downloading' || updateStatus === 'installing') return
   try {
+    resetUpdateProgress()
     setUpdateStatus('checking')
     const res = await net.fetch(`https://api.github.com/repos/${UPDATE_REPOSITORY}/releases/latest`, {
       headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'BX-Updater' },
@@ -101,7 +136,8 @@ const checkManualUpdate = async () => {
     const asset = pickAsset(data.assets || [])
     if (!asset) { setUpdateStatus('latest'); return }
     setUpdateStatus('downloading')
-    downloadedPath = await downloadAsset(asset.browser_download_url, asset.name)
+    downloadedPath = await downloadAsset(asset.browser_download_url, asset.name, setDownloadProgress)
+    updateProgressPercent = 100
     setUpdateStatus('ready')
   } catch (e) {
     setUpdateStatus('error', (e as Error)?.message || 'Ошибка обновления')
@@ -111,9 +147,10 @@ const checkManualUpdate = async () => {
 
 const checkForUpdates = async () => {
   if (!app.isPackaged || updateMode === 'unsupported') return updateSnapshot()
-  if (updateStatus === 'checking' || updateStatus === 'downloading') return updateSnapshot()
+  if (updateStatus === 'checking' || updateStatus === 'downloading' || updateStatus === 'installing') return updateSnapshot()
 
   if (updateMode === 'automatic') {
+    resetUpdateProgress()
     setUpdateStatus('checking')
     try {
       await autoUpdater.checkForUpdates()
@@ -136,13 +173,17 @@ const setupAutoUpdater = () => {
       headers: { 'User-Agent': `BX/${app.getVersion()}` },
     })
     autoUpdater.on('checking-for-update', () => setUpdateStatus('checking'))
-    autoUpdater.on('update-available', () => setUpdateStatus('downloading'))
+    autoUpdater.on('update-available', () => {
+      resetUpdateProgress()
+      setUpdateStatus('downloading')
+    })
     autoUpdater.on('update-not-available', () => {
       setUpdateStatus('latest')
       setTimeout(() => setUpdateStatus('idle'), 4000)
     })
     autoUpdater.on('update-downloaded', (_event, _notes, releaseName) => {
       availableVersion = String(releaseName || '').replace(/^v/, '')
+      updateProgressPercent = 100
       setUpdateStatus('ready')
       try {
         const notice = new Notification({
@@ -150,8 +191,9 @@ const setupAutoUpdater = () => {
           body: `Версия ${availableVersion || 'новая'} загружена. Нажмите, чтобы перезапустить BX и установить её.`,
         })
         notice.on('click', () => {
-          (app as any).isQuitting = true
-          autoUpdater.quitAndInstall()
+          setUpdateStatus('installing')
+          ;(app as any).isQuitting = true
+          setTimeout(() => autoUpdater.quitAndInstall(), 350)
         })
         notice.show()
       } catch { /* notification is optional */ }
@@ -180,15 +222,21 @@ ipcMain.handle('app:get-update-status', () => {
 
 ipcMain.handle('app:install-update', async () => {
   if (updateStatus !== 'ready') return
+  setUpdateStatus('installing')
   if (updateMode === 'automatic') {
     (app as any).isQuitting = true
-    autoUpdater.quitAndInstall()
+    setTimeout(() => autoUpdater.quitAndInstall(), 350)
     return
   }
   if (downloadedPath) {
-    try { await shell.openPath(downloadedPath) } catch { /* ignore */ }
-    try { shell.showItemInFolder(downloadedPath) } catch { /* ignore */ }
-    setTimeout(() => app.quit(), 1500)
+    try {
+      const openError = await shell.openPath(downloadedPath)
+      if (openError) throw new Error(openError)
+      try { shell.showItemInFolder(downloadedPath) } catch { /* ignore */ }
+      setTimeout(() => app.quit(), 1500)
+    } catch (error) {
+      setUpdateStatus('error', (error as Error)?.message || 'Не удалось открыть установщик')
+    }
   }
 })
 

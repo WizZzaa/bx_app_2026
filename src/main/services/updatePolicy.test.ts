@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildUpdateFeedUrl, isNewerVersion } from './updatePolicy'
+import { buildUpdateFeedUrl, calculateDownloadPercent, isNewerVersion } from './updatePolicy'
 
 describe('desktop update policy', () => {
   it('builds the update.electronjs.org feed for the installed build', () => {
@@ -13,5 +13,11 @@ describe('desktop update policy', () => {
     expect(isNewerVersion('2.30.0', '2.29.9')).toBe(true)
     expect(isNewerVersion('2.29.0', '2.29.0')).toBe(false)
     expect(isNewerVersion('2.28.9', '2.29.0')).toBe(false)
+  })
+
+  it('reports honest download progress and keeps an unknown total indeterminate', () => {
+    expect(calculateDownloadPercent(50, 100)).toBe(50)
+    expect(calculateDownloadPercent(150, 100)).toBe(100)
+    expect(calculateDownloadPercent(10, 0)).toBeNull()
   })
 })
