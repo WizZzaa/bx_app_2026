@@ -15,14 +15,15 @@ applyFontScale(currentFontScale());
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Не найден корневой элемент приложения');
 const root = createRoot(rootElement);
+// Окно Бикса — самостоятельный прозрачный слой. Оно не должно наследовать
+// экран входа или фон основного приложения, иначе Windows покажет чёрный прямоугольник.
+const isBixWidget = window.location.hash.startsWith('#/tray');
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
       <HashRouter>
         <ToastProvider>
-          <AuthGate>
-            <App />
-          </AuthGate>
+          {isBixWidget ? <App /> : <AuthGate><App /></AuthGate>}
         </ToastProvider>
       </HashRouter>
     </ErrorBoundary>

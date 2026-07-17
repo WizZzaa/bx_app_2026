@@ -18,7 +18,7 @@ export default function CurrencyWidget() {
   return (
     <section className="relative overflow-hidden rounded-[26px] border border-blue-500/15 bg-gradient-to-r from-blue-600/[0.08] via-bx-surface to-cyan-500/[0.06] p-4 shadow-sm sm:p-5" aria-label="Курсы валют">
       <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-blue-500/10 blur-3xl" />
-      <div className="relative grid items-center gap-4 xl:grid-cols-[220px_minmax(0,1fr)_150px]">
+      <div className="relative grid items-center gap-4 2xl:grid-cols-[220px_minmax(0,1fr)_150px]">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20"><Icon name="exchange" className="h-5 w-5" /></span>
           <div><p className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-blue-600 dark:text-blue-400">Центральный банк РУз</p><h2 className="mt-1 text-base font-black text-bx-text">Курсы валют</h2><p className="mt-0.5 text-[10px] text-bx-muted">{rates?.[0]?.date || 'Актуальные значения'}</p></div>

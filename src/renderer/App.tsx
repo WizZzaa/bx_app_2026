@@ -22,7 +22,7 @@ import NewsDetail from './pages/NewsDetail';
 import Settings from './pages/Settings';
 import Counterparties from './pages/Counterparties';
 import Placeholder from './pages/Placeholder';
-import TrayView from './pages/TrayView';
+import BixWidget from './pages/BixWidget';
 import Documents from './pages/Documents';
 import Translator from './pages/Translator';
 import { applyTheme, currentTheme } from './lib/theme';
@@ -73,9 +73,9 @@ export default function App() {
     return (
       <CompanyProvider>
         <PlanProvider>
-          <div className="flex flex-col h-screen w-screen bg-bx-bg text-bx-text overflow-hidden font-sans">
+          <div className="flex flex-col h-screen w-screen bg-transparent text-bx-text overflow-visible font-sans">
             <Routes>
-              <Route path="/tray" element={<TrayView />} />
+              <Route path="/tray" element={<BixWidget />} />
               <Route path="*" element={<Navigate to="/tray" replace />} />
             </Routes>
           </div>

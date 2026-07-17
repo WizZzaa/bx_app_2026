@@ -1,4 +1,4 @@
-import { app, autoUpdater, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, net, Notification } from 'electron'
+import { app, autoUpdater, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, net, Notification, screen } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs'
 import started from 'electron-squirrel-startup'
@@ -191,7 +191,9 @@ const setupAutoUpdater = () => {
           body: `Версия ${availableVersion || 'новая'} загружена. Нажмите, чтобы перезапустить BX и установить её.`,
         })
         notice.on('click', () => {
-          setUpdateStatus('installing')
+          updateStatus = 'installing'
+          updateError = ''
+          broadcastUpdateStatus()
           ;(app as any).isQuitting = true
           setTimeout(() => autoUpdater.quitAndInstall(), 350)
         })
@@ -244,8 +246,16 @@ ipcMain.handle('app:install-update', async () => {
 // Закреплённое окно не прячется по blur и остаётся поверх окон.
 ipcMain.handle('tray:set-pinned', (_e, pinned: boolean) => {
   trayPinned = !!pinned
+  trayState.pinned = trayPinned
+  saveTrayState()
   trayWindow?.setAlwaysOnTop(true)
   return trayPinned
+})
+
+ipcMain.handle('tray:get-pinned', () => trayPinned)
+
+ipcMain.handle('tray:dock-to-taskbar', () => {
+  dockTrayWindow()
 })
 
 // Открыть главное окно приложения (опц. на конкретном разделе) из трей-виджета.
@@ -254,7 +264,7 @@ ipcMain.handle('tray:open-app', (_e, route?: string) => {
   if (mainWindow.isMinimized()) mainWindow.restore()
   mainWindow.show()
   mainWindow.focus()
-  if (route) mainWindow.webContents.send('tray:navigate', route)
+  if (route) navigateMainWindow(route)
   if (!trayPinned) trayWindow?.hide()
 })
 
@@ -303,14 +313,17 @@ const loadAppIcon = () => nativeImage.createFromPath(appAsset('icon.png'))
 
 // Запоминаем размер И позицию трей-окна между запусками.
 // custom=true — пользователь сам перетащил окно, тогда не «прыгаем» к трею.
-interface TrayState { width: number; height: number; x?: number; y?: number; custom?: boolean }
+interface TrayState { width: number; height: number; x?: number; y?: number; custom?: boolean; pinned?: boolean }
 const trayStateFile = () => path.join(app.getPath('userData'), 'tray-window.json')
-let trayState: TrayState = { width: 380, height: 560 }
+let trayState: TrayState = { width: 430, height: 560, pinned: true }
 const loadTrayState = () => {
   try {
     const s = JSON.parse(fs.readFileSync(trayStateFile(), 'utf-8'))
-    if (typeof s?.width === 'number' && typeof s?.height === 'number') trayState = s
+    // До 2.30.4 окно было ниже и сохраняло координаты для высоты 420px.
+    // Их нельзя переносить на новую высоту: кот окажется вне панели задач.
+    if (typeof s?.width === 'number' && typeof s?.height === 'number' && s.height === 560) trayState = { ...trayState, ...s }
   } catch { /* default */ }
+  trayPinned = trayState.pinned !== false
 }
 const saveTrayState = () => {
   try { fs.writeFileSync(trayStateFile(), JSON.stringify(trayState)) } catch { /* ignore */ }
@@ -318,21 +331,51 @@ const saveTrayState = () => {
 // Флаг: подавляем сохранение позиции при программном перемещении (к трею)
 let suppressTrayMove = false
 
+const navigateMainWindow = (route: string) => {
+  if (!mainWindow) return
+  const hash = route.startsWith('/') ? route : `/${route}`
+  const applyRoute = () => {
+    // IPC-сообщение могло прийти до React listener. Изменение hash работает
+    // и при холодном старте, и в уже открытом окне.
+    void mainWindow?.webContents.executeJavaScript(`window.location.hash = ${JSON.stringify(hash)}`).catch(() => undefined)
+  }
+  if (mainWindow.webContents.isLoadingMainFrame()) mainWindow.webContents.once('did-finish-load', applyRoute)
+  else applyRoute()
+}
+
+const dockTrayWindow = () => {
+  if (!trayWindow) return
+  const bounds = trayWindow.getBounds()
+  const display = screen.getDisplayNearestPoint({ x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 })
+  const { workArea } = display
+  const x = workArea.x + workArea.width - bounds.width - 18
+  const y = workArea.y + workArea.height - bounds.height + 28
+  trayState = { ...trayState, x, y, custom: false, pinned: true }
+  trayPinned = true
+  suppressTrayMove = true
+  trayWindow.setPosition(x, y, false)
+  setTimeout(() => { suppressTrayMove = false }, 150)
+  saveTrayState()
+}
+
 const createTrayWindow = () => {
   loadTrayState()
   trayWindow = new BrowserWindow({
     width: trayState.width,
     height: trayState.height,
-    minWidth: 320,
-    minHeight: 400,
-    maxWidth: 680,
-    maxHeight: 960,
-    show: false,
+    minWidth: 430,
+    minHeight: 560,
+    maxWidth: 430,
+    maxHeight: 560,
+    show: true,
     frame: false,
     fullscreenable: false,
-    resizable: true,
+    resizable: false,
     skipTaskbar: true,
     alwaysOnTop: true,
+    transparent: true,
+    backgroundColor: '#00000000',
+    hasShadow: false,
     icon: loadAppIcon(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -350,17 +393,7 @@ const createTrayWindow = () => {
     )
   }
 
-  // Сохраняем размер при изменении (с debounce)
-  let saveTimer: ReturnType<typeof setTimeout> | null = null
-  trayWindow.on('resize', () => {
-    if (!trayWindow) return
-    const [w, h] = trayWindow.getSize()
-    trayState.width = w; trayState.height = h
-    if (saveTimer) clearTimeout(saveTimer)
-    saveTimer = setTimeout(saveTrayState, 400)
-  })
-
-  // Пользователь перетащил окно за ручку → запоминаем позицию как «свою»
+  // Пользователь перетащил Бикса → запоминаем позицию как «свою».
   let moveTimer: ReturnType<typeof setTimeout> | null = null
   trayWindow.on('move', () => {
     if (!trayWindow || suppressTrayMove) return
@@ -370,9 +403,15 @@ const createTrayWindow = () => {
     moveTimer = setTimeout(saveTrayState, 400)
   })
 
-  trayWindow.on('blur', () => {
-    if (!trayPinned) trayWindow?.hide()
-  })
+  // Питомец всегда остаётся на рабочем столе; меню внутри него закрывается
+  // на стороне renderer, поэтому окно не скрываем по blur.
+
+  // Для первого запуска сажаем Бикса над нижней панелью задач. workArea
+  // оканчивается ровно перед taskbar на Windows, поэтому позиция корректна
+  // при разных масштабах и на нескольких мониторах.
+  if (!trayState.custom) {
+    dockTrayWindow()
+  }
 }
 
 const toggleTrayWindow = () => {
