@@ -1,3 +1,5 @@
+import { todayISO } from '../lib/dates'
+
 export interface TemplateVar {
   key: string;
   label: string;
@@ -37,7 +39,7 @@ export const TEMPLATES: DocTemplate[] = [
     description: 'Купля-продажа товаров между юридическими лицами',
     vars: [
       { key: 'contract_num', label: 'Номер договора', type: 'text', placeholder: '01/2026' },
-      { key: 'contract_date', label: 'Дата договора', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'contract_date', label: 'Дата договора', type: 'date', default: todayISO() },
       { key: 'city', label: 'Город', type: 'text', placeholder: 'Ташкент', default: 'Ташкент' },
       { key: 'seller_name', label: 'Продавец — наименование', type: 'text', placeholder: 'ООО "Компания"' },
       { key: 'seller_tin', label: 'ИНН продавца', type: 'text', placeholder: '123456789' },
@@ -126,7 +128,7 @@ ___________________ / {{seller_rep}} /      ___________________ / {{buyer_rep}} 
     description: 'Оказание услуг (консультационных, бухгалтерских, IT и др.)',
     vars: [
       { key: 'contract_num', label: 'Номер договора', type: 'text', placeholder: '02/2026' },
-      { key: 'contract_date', label: 'Дата договора', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'contract_date', label: 'Дата договора', type: 'date', default: todayISO() },
       { key: 'city', label: 'Город', type: 'text', default: 'Ташкент' },
       { key: 'provider_name', label: 'Исполнитель — наименование', type: 'text', placeholder: 'ООО "Сервис"' },
       { key: 'provider_tin', label: 'ИНН исполнителя', type: 'text', placeholder: '111222333' },
@@ -199,7 +201,7 @@ ___________________ / {{provider_rep}} /    ___________________ / {{client_rep}}
     description: 'Аренда нежилого помещения (офис, склад, торговая площадь)',
     vars: [
       { key: 'contract_num', label: 'Номер договора', type: 'text', placeholder: '03/2026' },
-      { key: 'contract_date', label: 'Дата договора', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'contract_date', label: 'Дата договора', type: 'date', default: todayISO() },
       { key: 'city', label: 'Город', type: 'text', default: 'Ташкент' },
       { key: 'landlord_name', label: 'Арендодатель — наименование', type: 'text', placeholder: 'ООО "Владелец"' },
       { key: 'landlord_tin', label: 'ИНН арендодателя', type: 'text', placeholder: '111000111' },
@@ -271,7 +273,7 @@ ___________________ / {{landlord_rep}} /    ___________________ / {{tenant_rep}}
     description: 'Предоставление займа между юридическими лицами',
     vars: [
       { key: 'contract_num', label: 'Номер договора', type: 'text', placeholder: '04/2026' },
-      { key: 'contract_date', label: 'Дата договора', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'contract_date', label: 'Дата договора', type: 'date', default: todayISO() },
       { key: 'city', label: 'Город', type: 'text', default: 'Ташкент' },
       { key: 'lender_name', label: 'Займодавец — наименование', type: 'text', placeholder: 'ООО "Кредитор"' },
       { key: 'lender_tin', label: 'ИНН займодавца', type: 'text', placeholder: '100200300' },
@@ -337,7 +339,7 @@ ___________________ / {{lender_rep}} /      ___________________ / {{borrower_rep
     description: 'Акт приёмки выполненных работ / оказанных услуг',
     vars: [
       { key: 'act_num', label: 'Номер акта', type: 'text', placeholder: '15' },
-      { key: 'act_date', label: 'Дата акта', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'act_date', label: 'Дата акта', type: 'date', default: todayISO() },
       { key: 'contract_num', label: 'Номер договора', type: 'text', placeholder: '02/2026' },
       { key: 'contract_date', label: 'Дата договора', type: 'date' },
       { key: 'provider_name', label: 'Исполнитель', type: 'text', placeholder: 'ООО "Сервис"' },
@@ -395,7 +397,7 @@ ___________________ / {{provider_rep}} /    ___________________ / {{client_rep}}
     description: 'Счёт-заявка на оплату товаров или услуг',
     vars: [
       { key: 'invoice_num', label: 'Номер счёта', type: 'text', placeholder: '25' },
-      { key: 'invoice_date', label: 'Дата счёта', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'invoice_date', label: 'Дата счёта', type: 'date', default: todayISO() },
       { key: 'seller_name', label: 'Поставщик', type: 'text', placeholder: 'ООО "Продавец"' },
       { key: 'seller_tin', label: 'ИНН поставщика', type: 'text', placeholder: '123456789' },
       { key: 'seller_bank', label: 'Банк поставщика', type: 'text', placeholder: 'АКБ "Ипотека-банк"' },
@@ -447,7 +449,7 @@ ___________________ / {{provider_rep}} /    ___________________ / {{client_rep}}
     description: 'Акт сверки взаимных расчётов между двумя организациями',
     vars: [
       { key: 'period_start', label: 'Период — начало', type: 'date' },
-      { key: 'period_end', label: 'Период — конец', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'period_end', label: 'Период — конец', type: 'date', default: todayISO() },
       { key: 'org1_name', label: 'Организация 1', type: 'text', placeholder: 'ООО "Альфа"' },
       { key: 'org1_tin', label: 'ИНН организации 1', type: 'text', placeholder: '111222333' },
       { key: 'org1_rep', label: 'ФИО представителя орг. 1', type: 'text', placeholder: 'Алиев А.А.' },
@@ -504,7 +506,7 @@ ___________________ / {{org1_rep}} /        ___________________ / {{org2_rep}} /
     description: 'Приказ о зачислении сотрудника в штат',
     vars: [
       { key: 'order_num', label: 'Номер приказа', type: 'text', placeholder: '1-К' },
-      { key: 'order_date', label: 'Дата приказа', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'order_date', label: 'Дата приказа', type: 'date', default: todayISO() },
       { key: 'company_name', label: 'Наименование организации', type: 'text', placeholder: 'ООО "Компания"' },
       { key: 'emp_name', label: 'ФИО сотрудника', type: 'text', placeholder: 'Иванов Иван Иванович' },
       { key: 'position', label: 'Должность', type: 'text', placeholder: 'Бухгалтер' },
@@ -546,7 +548,7 @@ ___________________ / {{org1_rep}} /        ___________________ / {{org2_rep}} /
     description: 'Приказ о расторжении трудового договора',
     vars: [
       { key: 'order_num', label: 'Номер приказа', type: 'text', placeholder: '5-К' },
-      { key: 'order_date', label: 'Дата приказа', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'order_date', label: 'Дата приказа', type: 'date', default: todayISO() },
       { key: 'company_name', label: 'Наименование организации', type: 'text', placeholder: 'ООО "Компания"' },
       { key: 'emp_name', label: 'ФИО сотрудника', type: 'text', placeholder: 'Иванов Иван Иванович' },
       { key: 'position', label: 'Должность', type: 'text', placeholder: 'Бухгалтер' },
@@ -591,7 +593,7 @@ ___________________ / {{org1_rep}} /        ___________________ / {{org2_rep}} /
     description: 'Приказ о предоставлении ежегодного или иного отпуска',
     vars: [
       { key: 'order_num', label: 'Номер приказа', type: 'text', placeholder: '8-К' },
-      { key: 'order_date', label: 'Дата приказа', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'order_date', label: 'Дата приказа', type: 'date', default: todayISO() },
       { key: 'company_name', label: 'Наименование организации', type: 'text', placeholder: 'ООО "Компания"' },
       { key: 'emp_name', label: 'ФИО сотрудника', type: 'text', placeholder: 'Иванов Иван Иванович' },
       { key: 'position', label: 'Должность', type: 'text', placeholder: 'Бухгалтер' },
@@ -631,7 +633,7 @@ ___________________ / {{org1_rep}} /        ___________________ / {{org2_rep}} /
     description: 'Приказ о направлении в служебную командировку',
     vars: [
       { key: 'order_num', label: 'Номер приказа', type: 'text', placeholder: '3-К' },
-      { key: 'order_date', label: 'Дата приказа', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'order_date', label: 'Дата приказа', type: 'date', default: todayISO() },
       { key: 'company_name', label: 'Наименование организации', type: 'text', placeholder: 'ООО "Компания"' },
       { key: 'emp_name', label: 'ФИО сотрудника', type: 'text', placeholder: 'Иванов Иван Иванович' },
       { key: 'position', label: 'Должность', type: 'text', placeholder: 'Бухгалтер' },
@@ -678,7 +680,7 @@ ___________________ / {{org1_rep}} /        ___________________ / {{org2_rep}} /
     title: 'Доверенность',
     description: 'Доверенность на представление интересов организации',
     vars: [
-      { key: 'poa_date', label: 'Дата выдачи', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'poa_date', label: 'Дата выдачи', type: 'date', default: todayISO() },
       { key: 'city', label: 'Город', type: 'text', default: 'Ташкент' },
       { key: 'company_name', label: 'Наименование организации', type: 'text', placeholder: 'ООО "Компания"' },
       { key: 'company_tin', label: 'ИНН организации', type: 'text', placeholder: '123456789' },
@@ -718,7 +720,7 @@ ___________________ / {{org1_rep}} /        ___________________ / {{org2_rep}} /
     description: 'Коммерческий инвойс для внешнеэкономических операций',
     vars: [
       { key: 'invoice_num', label: 'Номер инвойса', type: 'text', placeholder: 'INV-2026-001' },
-      { key: 'invoice_date', label: 'Дата инвойса', type: 'date', default: new Date().toISOString().slice(0,10) },
+      { key: 'invoice_date', label: 'Дата инвойса', type: 'date', default: todayISO() },
       { key: 'contract_num', label: 'Номер контракта', type: 'text', placeholder: 'CONTRACT-2026-01' },
       { key: 'seller_name', label: 'Seller (продавец)', type: 'text', placeholder: 'LLC "Company", Uzbekistan' },
       { key: 'seller_tin', label: 'TIN / VAT number', type: 'text', placeholder: '123456789' },

@@ -1,68 +1,53 @@
-import React, { useEffect, useState } from 'react';
-import { widgetsApi } from '../../lib/widgetsApi';
-import CurrencyHistory from './CurrencyHistory';
-import type { CurrencyRate } from '../../../shared/types';
+import React, { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import type { CurrencyRate } from '../../../shared/types'
+import Icon from '../../lib/ui/Icon'
+import { widgetsApi } from '../../lib/widgetsApi'
 
 export default function CurrencyWidget() {
-  const [rates, setRates] = useState<CurrencyRate[] | null>(null);
-  const [error, setError] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const navigate = useNavigate()
+  const [rates, setRates] = useState<CurrencyRate[] | null>(null)
+  const [error, setError] = useState(false)
 
-  const date = rates?.[0]?.date ?? new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
-
-  useEffect(() => {
-    let alive = true;
-    widgetsApi.getRates()
-      .then(d => { if (alive) setRates(d); })
-      .catch(() => { if (alive) setError(true); });
-    return () => { alive = false; };
-  }, []);
+  const load = useCallback(() => {
+    setError(false)
+    widgetsApi.getRates().then(setRates).catch(() => setError(true))
+  }, [])
+  useEffect(load, [load])
 
   return (
-    <>
-      <div className="rounded-xl border border-bx-border bg-bx-surface p-4 h-full">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-medium text-bx-text">💱 Курсы валют</h2>
-          <span className="text-[11px] text-bx-muted">ЦБ РУз · {date}</span>
+    <section className="relative overflow-hidden rounded-[26px] border border-blue-500/15 bg-gradient-to-r from-blue-600/[0.08] via-bx-surface to-cyan-500/[0.06] p-4 shadow-sm sm:p-5" aria-label="Курсы валют">
+      <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="relative grid items-center gap-4 xl:grid-cols-[220px_minmax(0,1fr)_150px]">
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20"><Icon name="exchange" className="h-5 w-5" /></span>
+          <div><p className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-blue-600 dark:text-blue-400">Центральный банк РУз</p><h2 className="mt-1 text-base font-black text-bx-text">Курсы валют</h2><p className="mt-0.5 text-[10px] text-bx-muted">{rates?.[0]?.date || 'Актуальные значения'}</p></div>
         </div>
 
         {error ? (
-          <div className="text-sm text-bx-muted text-center py-6">Нет данных о курсах</div>
+          <button onClick={load} className="rounded-xl border border-dashed border-bx-border py-4 text-xs font-bold text-bx-muted hover:text-bx-text">Не удалось загрузить · Повторить</button>
         ) : !rates ? (
-          <div className="text-sm text-bx-muted text-center py-6">Загрузка…</div>
+          <div className="h-16 animate-pulse rounded-xl bg-bx-bg" />
         ) : (
-          <div className="space-y-1.5">
-            {rates.map(r => {
-              const up = r.diff >= 0;
-              return (
-                <div key={r.code} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-bx-bg">
-                  <span className="text-lg">{r.flag}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm text-bx-text font-medium">{r.code}</div>
-                    <div className="text-[10px] text-bx-muted truncate">{r.name}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-bx-text font-mono">
-                      {r.value.toLocaleString('ru-RU', { minimumFractionDigits: 1 })}
-                    </div>
-                    <div className={`text-[10px] font-mono ${up ? 'text-green-400' : 'text-red-400'}`}>
-                      {up ? '▲' : '▼'} {Math.abs(r.diff).toFixed(1)}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            <button
-              onClick={() => setHistoryOpen(true)}
-              className="w-full text-[11px] text-blue-400 hover:text-blue-300 transition-colors pt-1.5 flex items-center justify-center gap-1"
-            >
-              История курсов →
-            </button>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {rates.map(rate => <RateCard key={rate.code} rate={rate} />)}
           </div>
         )}
-      </div>
 
-      {historyOpen && <CurrencyHistory onClose={() => setHistoryOpen(false)} />}
-    </>
-  );
+        <button onClick={() => navigate('/currency')} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-bx-border bg-bx-surface px-4 text-xs font-extrabold text-bx-text transition-colors hover:border-blue-500/40 hover:text-blue-600 dark:hover:text-blue-400">
+          Все курсы <Icon name="arrowR" className="h-4 w-4" />
+        </button>
+      </div>
+    </section>
+  )
+}
+
+function RateCard({ rate }: { rate: CurrencyRate }) {
+  const up = rate.diff >= 0
+  return (
+    <div className="flex min-h-16 items-center gap-3 rounded-xl border border-bx-border/70 bg-bx-surface/90 px-3 py-2">
+      <span className="grid h-9 w-9 place-items-center rounded-lg bg-bx-bg text-[10px] font-black tracking-wide text-bx-text">{rate.code}</span>
+      <div className="min-w-0"><p className="text-sm font-black tabular-nums text-bx-text">{rate.value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}</p><p className={`mt-0.5 flex items-center gap-1 text-[9px] font-bold tabular-nums ${up ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}><Icon name="trending" className={`h-3 w-3 ${up ? '' : 'rotate-90'}`} />{up ? '+' : '−'}{Math.abs(rate.diff).toFixed(2)}</p></div>
+    </div>
+  )
 }

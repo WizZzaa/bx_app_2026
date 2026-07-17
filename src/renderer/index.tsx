@@ -6,11 +6,15 @@ import AuthGate from './components/auth/AuthGate';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './lib/ui/ToastContext';
 import { installGlobalErrorReporting } from './lib/errorReporter';
+import { applyFontScale, currentFontScale } from './lib/uiScale';
 import './styles/globals.css';
 
 installGlobalErrorReporting();
+applyFontScale(currentFontScale());
 
-const root = createRoot(document.getElementById('root')!);
+const rootElement = document.getElementById('root');
+if (!rootElement) throw new Error('Не найден корневой элемент приложения');
+const root = createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <ErrorBoundary>

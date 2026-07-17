@@ -1,151 +1,203 @@
 import { supabase } from '../../lib/db/supabase';
 import { taxDeadlines } from '../../data/taxCalendar';
 import type { NewEvent } from './useEvents';
-import { todayISO } from '../../lib/dates';
+import { todayISO, toLocalISO } from '../../lib/dates';
+import type { TaxDeadline } from '../../data/taxCalendar';
 
-function getSeedingKey(companyId: string | null, year: number): string {
-  return `bx_tax_seeded_${companyId || 'null'}_${year}`;
+const TAX_CALENDAR_YEAR = 2026;
+export const TAX_HORIZON_DAYS = 60;
+
+type CompanyRegime = string;
+
+export interface CompanyTaxProfile {
+  regime: CompanyRegime;
+  bxStartDate: string;
+  enabledObligationRules: string[];
+  assigneeId?: string | null;
 }
 
-export function isYearSeeded(companyId: string | null, year: number): boolean {
-  return localStorage.getItem(getSeedingKey(companyId, year)) === 'true';
+export interface TaxDeadlineRuleOption {
+  id: string;
+  title: string;
+  taxType: string;
+  kind: TaxDeadline['kind'];
+  regime: string;
+  dates: string[];
+  defaultSelected: boolean;
 }
 
-function markYearSeeded(companyId: string | null, year: number) {
-  localStorage.setItem(getSeedingKey(companyId, year), 'true');
+export interface TaxDeadlineSyncResult {
+  added: number;
+  removed: number;
 }
 
-export function clearSeedingCache(companyId: string | null, year: number) {
-  localStorage.removeItem(getSeedingKey(companyId, year));
+function addDaysISO(base: string, days: number): string {
+  const [year, month, day] = base.split('-').map(Number);
+  return toLocalISO(new Date(year, month - 1, day + days));
 }
 
-/** 
- * Засеять налоговые дедлайны для указанного года, пользователя и компании.
- * Если force = true, то сначала удаляются старые засеянные дедлайны за этот год.
+function datesForDeadline(deadline: TaxDeadline, from: string, to: string, notBefore: string): string[] {
+  const months = deadline.month === null
+    ? Array.from({ length: 12 }, (_, index) => index + 1)
+    : [deadline.month];
+
+  return months
+    .map(month => `${TAX_CALENDAR_YEAR}-${String(month).padStart(2, '0')}-${String(deadline.day).padStart(2, '0')}`)
+    .filter(date => date >= from && date >= notBefore && date <= to);
+}
+
+export function buildTaxDeadlineRuleOptions(
+  companyRegime: CompanyRegime,
+  bxStartDate: string,
+  from = todayISO(),
+  horizonDays = TAX_HORIZON_DAYS,
+): TaxDeadlineRuleOption[] {
+  const to = addDaysISO(from, Math.max(0, horizonDays));
+  const notBefore = bxStartDate > from ? bxStartDate : from;
+
+  return taxDeadlines
+    .filter(deadline => deadline.verified)
+    .filter(deadline => deadline.regime === 'все' || deadline.regime === companyRegime)
+    .map(deadline => ({
+      id: deadline.id,
+      title: deadline.title,
+      taxType: deadline.taxType,
+      kind: deadline.kind,
+      regime: deadline.regime,
+      dates: datesForDeadline(deadline, from, to, notBefore),
+      // Общие правила часто условны. Их владелец выбирает вручную.
+      defaultSelected: deadline.regime !== 'все',
+    }))
+    .filter(rule => rule.dates.length > 0);
+}
+
+/**
+ * Строит только подтверждённые обязательства внутри скользящего горизонта.
+ * Прошлые даты не создаются и никогда автоматически не отмечаются выполненными.
  */
-export async function seedTaxDeadlines(
-  year: number, 
-  userId: string, 
-  companyId: string | null, 
-  force = false
-): Promise<number> {
-  const isSeeded = isYearSeeded(companyId, year);
-  
-  if (isSeeded && !force) {
-    return 0;
-  }
-
-  // Если принудительный пересид — сначала удаляем старые засеянные дедлайны
-  if (force) {
-    try {
-      // 1. Сначала удаляем карточки, привязанные к засеянным событиям
-      const { data: oldEvents } = await supabase
-        .from('bx_events')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('source', 'seeded')
-        .or(companyId ? `company_id.eq.${companyId}` : 'company_id.is.null');
-
-      if (oldEvents && oldEvents.length > 0) {
-        const oldEventIds = oldEvents.map(e => e.id);
-        
-        // Удаляем привязанные карточки
-        await supabase
-          .from('bx_cards')
-          .delete()
-          .in('event_id', oldEventIds);
-          
-        // Удаляем сами события
-        await supabase
-          .from('bx_events')
-          .delete()
-          .in('id', oldEventIds);
-      }
-    } catch (err) {
-      console.error('Error clearing old seeded deadlines:', err);
-    }
-  }
-
+export function buildTaxDeadlineEvents(
+  companyId: string,
+  profile: CompanyTaxProfile,
+  from = todayISO(),
+  horizonDays = TAX_HORIZON_DAYS,
+): NewEvent[] {
+  const to = addDaysISO(from, Math.max(0, horizonDays));
+  const notBefore = profile.bxStartDate > from ? profile.bxStartDate : from;
+  const enabledRules = new Set(profile.enabledObligationRules);
   const events: NewEvent[] = [];
-  const todayStr = todayISO();
 
-  for (const dl of taxDeadlines) {
-    const months = dl.month !== null ? [dl.month] : [1,2,3,4,5,6,7,8,9,10,11,12];
-    for (const m of months) {
-      const day = String(dl.day).padStart(2,'0');
-      const mon = String(m).padStart(2,'0');
-      const dateStr = `${year}-${mon}-${day}`;
-      
-      // Прошедшие дедлайны помечаем done
-      const isPast = dateStr < todayStr;
-      
+  for (const deadline of taxDeadlines) {
+    if (!deadline.verified) continue;
+    if (!enabledRules.has(deadline.id)) continue;
+    if (deadline.regime !== 'все' && deadline.regime !== profile.regime) continue;
+
+    for (const date of datesForDeadline(deadline, from, to, notBefore)) {
+
       events.push({
         company_id: companyId,
         type: 'tax_deadline',
-        title: dl.title,
-        date: dateStr,
-        due_date: dateStr,
-        status: isPast ? 'done' : 'todo',
-        priority: dl.kind === 'payment' ? 'high' : 'normal',
-        tags: [dl.taxType],
-        tax_type: dl.taxType,
-        kind: dl.kind,
-        regime: dl.regime,
-        note: dl.note ?? null,
+        title: deadline.title,
+        date,
+        due_date: date,
+        status: 'todo',
+        priority: deadline.kind === 'payment' || deadline.kind === 'both' ? 'high' : 'normal',
+        tags: [deadline.taxType],
+        tax_type: deadline.taxType,
+        kind: deadline.kind,
+        regime: deadline.regime,
+        note: deadline.note ?? null,
         source: 'seeded',
+        source_key: `tax:${deadline.id}:${date}`,
         reminder_at: null,
+        recurrence: null,
+        assignee_id: profile.assigneeId ?? null,
       });
     }
   }
 
-  if (events.length === 0) return 0;
+  return events;
+}
 
-  // Вставляем дедлайны
-  const { data: insertedEvents, error } = await supabase
-    .from('bx_events')
-    .insert(events.map(e => ({ ...e, user_id: userId })))
-    .select();
+/**
+ * Продлевает 60-дневный горизонт для одной активной компании.
+ * Проверка выполняется по данным Supabase, поэтому очистка localStorage или
+ * повторный запуск приложения не создают новые копии событий.
+ */
+export async function syncTaxDeadlines(
+  userId: string,
+  companyId: string,
+  horizonDays = TAX_HORIZON_DAYS,
+): Promise<TaxDeadlineSyncResult> {
+  const { data: company, error: companyError } = await supabase
+    .from('bx_companies')
+    .select('regime, is_active, bx_start_date, enabled_obligation_rules, profile_status')
+    .eq('id', companyId)
+    .eq('user_id', userId)
+    .maybeSingle();
 
-  if (!error && insertedEvents) {
-    markYearSeeded(companyId, year);
-
-    // Создаем Kanban-карточки на доске "Отчётность и платежи" или дефолтной доске
-    try {
-      const { data: boards } = await supabase
-        .from('bx_boards')
-        .select('*')
-        .or(companyId ? `company_id.eq.${companyId}` : 'company_id.is.null');
-
-      const targetBoard = boards?.find(b => b.name === 'Отчётность и платежи') 
-        || boards?.find(b => b.is_default) 
-        || boards?.[0];
-
-      if (targetBoard && targetBoard.columns && targetBoard.columns.length > 0) {
-        const firstColId = targetBoard.columns[0].id;
-        const cardsToInsert = insertedEvents.map((e: any, idx: number) => ({
-          user_id: userId,
-          board_id: targetBoard.id,
-          column_id: firstColId,
-          title: e.title,
-          description: e.note || null,
-          priority: e.priority || 'normal',
-          labels: e.tags || null,
-          checklist: [],
-          due_date: e.due_date || null,
-          event_id: e.id,
-          position: idx + 1
-        }));
-
-        const { error: cardError } = await supabase.from('bx_cards').insert(cardsToInsert);
-        if (cardError) console.error('Error seeding card deadlines:', cardError);
-      }
-    } catch (e) {
-      console.error('Failed to create synced Kanban cards for seeded deadlines:', e);
-    }
-
-    return events.length;
+  if (companyError) throw companyError;
+  if (
+    !company?.is_active
+    || !company.regime
+    || !company.bx_start_date
+    || company.profile_status !== 'confirmed'
+  ) {
+    console.warn('Tax deadlines skipped: company profile is inactive, incomplete, or not confirmed');
+    return { added: 0, removed: 0 };
   }
-  
-  console.error('Tax seed error:', error);
-  return 0;
+
+  const from = todayISO();
+  const to = addDaysISO(from, Math.max(0, horizonDays));
+  const candidates = buildTaxDeadlineEvents(companyId, {
+    regime: company.regime,
+    bxStartDate: company.bx_start_date,
+    enabledObligationRules: company.enabled_obligation_rules ?? [],
+    assigneeId: userId,
+  }, from, horizonDays);
+  const { data: existing, error: existingError } = await supabase
+    .from('bx_events')
+    .select('id, source_key, status')
+    .eq('company_id', companyId)
+    .eq('source', 'seeded')
+    .gte('date', from)
+    .lte('date', to);
+
+  if (existingError) throw existingError;
+
+  const candidateKeys = new Set(candidates.map(event => event.source_key).filter(Boolean));
+  const existingKeys = new Set((existing ?? []).map(event => event.source_key).filter(Boolean));
+  const obsoleteIds = (existing ?? [])
+    .filter(event => event.status !== 'done' && event.source_key && !candidateKeys.has(event.source_key))
+    .map(event => event.id);
+  const missing = candidates.filter(event => event.source_key && !existingKeys.has(event.source_key));
+
+  if (obsoleteIds.length > 0) {
+    const { error: deleteError } = await supabase
+      .from('bx_events')
+      .delete()
+      .in('id', obsoleteIds);
+    if (deleteError) throw deleteError;
+  }
+
+  if (missing.length > 0) {
+    const { error: insertError } = await supabase
+      .from('bx_events')
+      .upsert(missing.map(event => ({ ...event, user_id: userId })), {
+        onConflict: 'user_id,company_id,source_key',
+        ignoreDuplicates: true,
+      });
+
+    if (insertError) throw insertError;
+  }
+
+  return { added: missing.length, removed: obsoleteIds.length };
+}
+
+export async function seedTaxDeadlines(
+  userId: string,
+  companyId: string,
+  horizonDays = TAX_HORIZON_DAYS,
+): Promise<number> {
+  const result = await syncTaxDeadlines(userId, companyId, horizonDays);
+  return result.added;
 }

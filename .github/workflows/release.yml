@@ -1,34 +1,31 @@
 name: Release
 
 # Сборка и публикация дистрибутивов при пуше тега вида v2.0.0.
-# Каждая платформа собирает свои артефакты (electron-forge makers
-# сами фильтруются по платформе) и публикует их в один GitHub Release.
+# Windows-релиз собирается на Windows runner: Squirrel создаёт Setup.exe,
+# RELEASES и .nupkg, необходимые для фонового обновления установленной программы.
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
-  publish:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+  quality:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
-
-      - name: Install Linux packaging tools
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y rpm fakeroot
 
       - name: Install dependencies
         run: npm ci
@@ -36,7 +33,21 @@ jobs:
       - name: Quality gate
         run: npm run typecheck && npm run lint && npm test
 
-      - name: Build & publish
+  publish-windows:
+    needs: quality
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build & publish Windows desktop release
         run: npm run publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

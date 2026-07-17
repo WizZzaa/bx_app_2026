@@ -193,7 +193,7 @@ function renderBody(body: string, q: string): React.ReactNode[] {
 
     // 11. Normal paragraph
     nodes.push(
-      <p key={key++} className="text-xs text-bx-text leading-[1.7] my-2 text-justify">
+      <p key={key++} className="my-2 text-[13px] leading-[1.75] text-bx-text">
         {inline(line, q)}
       </p>
     );
@@ -250,7 +250,8 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
   }
 
   function scrollToHeading(t: string) {
-    document.getElementById('h-' + slug(t))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    document.getElementById('h-' + slug(t))?.scrollIntoView({ behavior, block: 'start' });
     setActiveHeading(t);
   }
 
@@ -288,13 +289,13 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
   }
 
   return (
-    <div className="flex max-w-5xl mx-auto items-start">
-      <article className="flex-1 min-w-0 px-8 py-6">
+    <div className="bx-reading-container flex items-start gap-5">
+      <article className="min-w-0 flex-1 rounded-[24px] border border-bx-border bg-bx-surface p-6 shadow-sm lg:p-8">
         {/* Navigation path */}
-        <div className="flex items-center gap-1.5 text-[10px] text-bx-muted mb-4 font-semibold">
-          <button onClick={onBack} className="hover:text-bx-text transition-colors">База знаний</button>
+        <div className="mb-5 flex items-center gap-1.5 text-[10px] font-semibold text-bx-muted">
+          <button onClick={onBack} className="min-h-8 rounded-lg px-2 transition-colors hover:bg-bx-bg hover:text-bx-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">База знаний</button>
           <Icon name="arrowR" className="w-2.5 h-2.5" />
-          <button onClick={() => onCategory(article.category)} className="hover:text-bx-text transition-colors">{article.category}</button>
+          <button onClick={() => onCategory(article.category)} className="min-h-8 rounded-lg px-2 transition-colors hover:bg-bx-bg hover:text-bx-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">{article.category}</button>
         </div>
 
         {/* Action Header */}
@@ -312,7 +313,7 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
           <div className="ml-auto flex gap-1.5">
             <button 
               onClick={handleExportPDF} 
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-bx-surface hover:bg-bx-surface-2 text-bx-text font-bold transition-all border border-bx-border cursor-pointer"
+              className="flex min-h-10 cursor-pointer items-center gap-1.5 rounded-xl border border-bx-border bg-bx-bg px-3 font-bold text-bx-text transition-colors hover:bg-bx-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-bx-muted"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
               PDF
@@ -322,7 +323,7 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all font-bold border cursor-pointer ${
                 copied 
                   ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
-                  : 'bg-bx-surface hover:bg-bx-surface-2 text-bx-text border-bx-border'
+                  : 'bg-bx-bg hover:bg-bx-surface-2 text-bx-text border-bx-border'
               }`}
             >
               <Icon name={copied ? 'check' : 'copy'} className="w-3 h-3" />
@@ -341,7 +342,7 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
 
         {/* Content Box */}
         <div id="article-content-to-export">
-          <h2 className="text-xl font-bold text-bx-text leading-tight mb-2">{article.title}</h2>
+          <h2 className="mb-2 text-2xl font-black leading-tight tracking-[-0.025em] text-bx-text">{article.title}</h2>
           <div className="text-[10px] text-bx-muted mb-6 border-b border-bx-border/40 pb-3">
             Категория: <span className="text-bx-text font-semibold">{article.category}</span> · Сверено: {article.updated}
           </div>
@@ -395,8 +396,8 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
 
       {/* Floating Table of Contents */}
       {toc.length > 1 && (
-        <aside className="w-56 flex-shrink-0 py-6 pr-6 hidden lg:block sticky top-0 max-h-[85vh] overflow-y-auto custom-scrollbar">
-          <div className="pl-4 border-l border-bx-border">
+        <aside className="custom-scrollbar sticky top-0 hidden max-h-[85vh] w-60 flex-shrink-0 overflow-y-auto rounded-[20px] border border-bx-border bg-bx-surface p-4 shadow-sm lg:block">
+          <div className="border-l border-bx-border pl-4">
             <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Содержание статьи</p>
             <nav className="space-y-2">
               {toc.map(t => (

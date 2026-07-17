@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { validateInn } from '../lib/validation'
 import { isElectron } from '../lib/onecApi'
 import { useCompany } from '../lib/CompanyContext'
@@ -13,43 +13,9 @@ interface CheckResult {
   region: string;
   registeredAt: string;
   riskClass?: string;
-  demo?: boolean;
 }
 
 type State = 'idle' | 'loading' | 'result' | 'error';
-
-// Демо-данные для браузерного превью (в Electron можно будет обращаться к API my.soliq.uz)
-const DEMO_RESULTS: Record<string, CheckResult> = {
-  '301845942': {
-    inn: '301845942',
-    name: 'ООО "DEMO COMPANY"',
-    status: 'active',
-    vatPayer: true,
-    regime: 'Общеустановленная система (ОСН)',
-    region: 'г. Ташкент',
-    registeredAt: '2018-03-15',
-    riskClass: 'Низкий',
-  },
-  '200000001': {
-    inn: '200000001',
-    name: 'ИП Иванов Иван Иванович',
-    status: 'active',
-    vatPayer: false,
-    regime: 'Единый налоговый платёж (ЕНП)',
-    region: 'Самаркандская обл.',
-    registeredAt: '2021-06-01',
-    riskClass: 'Низкий',
-  },
-  '100000099': {
-    inn: '100000099',
-    name: 'ООО "ЛИКВИД ТЕСТ"',
-    status: 'liquidated',
-    vatPayer: false,
-    regime: '—',
-    region: 'Ташкентская обл.',
-    registeredAt: '2010-01-10',
-  },
-};
 
 function statusLabel(s: CheckResult['status']) {
   if (s === 'active') return { text: 'Действует', cls: 'bg-emerald-500/10 text-emerald-400' };
@@ -70,7 +36,7 @@ export default function InnCheck() {
   })
   const [errorMsg, setErrorMsg] = useState('')
 
-  const { addCompany, companies } = useCompany()
+  const { startCompanyCreation, companies } = useCompany()
   const toast = useToast()
 
   const addToHistory = (r: CheckResult) => {
@@ -99,10 +65,10 @@ export default function InnCheck() {
     }
 
     // Реальный API my.soliq.uz: в Electron — через main-процесс (без CORS),
-    // в браузере — прямой fetch (упадёт на CORS → демо-данные)
+    // в браузере — прямой fetch, если сервер разрешает запрос.
     try {
-      const data = isElectron
-        ? await window.bx!.inn.check(q)
+      const data = isElectron && window.bx
+        ? await window.bx.inn.check(q)
         : await fetch(`https://my.soliq.uz/roaming-dark-api/api/v1/einvoice/get-trader?tin=${q}`, {
             headers: { 'Content-Type': 'application/json' },
           }).then(res => (res.ok ? res.json() : null))
@@ -121,18 +87,10 @@ export default function InnCheck() {
         setState('result')
         return
       }
-    } catch {
-      // Недоступно (или CORS в браузере) — используем демо
-    }
-
-    // Демо-данные
-    if (DEMO_RESULTS[q]) {
-      const r = DEMO_RESULTS[q]
-      setResult(r)
-      addToHistory(r)
-      setState('result')
-    } else {
       setErrorMsg('Контрагент не найден. Проверьте ИНН и попробуйте снова.')
+      setState('error')
+    } catch {
+      setErrorMsg('Сервис my.soliq.uz сейчас недоступен. Попробуйте позже или откройте проверку в desktop-версии BX.')
       setState('error')
     }
   }
@@ -206,17 +164,15 @@ export default function InnCheck() {
                 </span>
               ) : (
                 <button
-                  onClick={async () => {
-                    try {
-                      await addCompany({
-                        name: result.name,
-                        inn: result.inn,
-                        regime: result.regime,
-                      })
-                      toast.success('Организация добавлена в список компаний!')
-                    } catch (e: any) {
-                      toast.error(e.message || 'Ошибка добавления')
-                    }
+                  onClick={() => {
+                    startCompanyCreation({
+                      name: result.name,
+                      inn: result.inn,
+                      regime: result.vatPayer ? 'ОСН' : 'Налог с оборота',
+                      is_vat_payer: result.vatPayer,
+                      registration_date: result.registeredAt !== '—' ? result.registeredAt : undefined,
+                    })
+                    toast.info('Проверьте профиль и подтвердите обязательства')
                   }}
                   className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors"
                 >

@@ -1,196 +1,145 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { getSectionsSync, refreshServices } from '../lib/db/servicesRepo';
-import type { ServiceItem, ServiceSection } from '../data/services';
+import React, { useEffect, useMemo, useState } from 'react'
+import { getSectionsSync, refreshServices } from '../lib/db/servicesRepo'
+import type { ServiceSection } from '../data/services'
+import Icon from '../lib/ui/Icon'
+import {
+  ResourceEmpty,
+  ResourceHero,
+  ResourceLayout,
+  ResourceNavItem,
+  ResourceSectionTitle,
+  ResourceSidebar,
+  secondaryActionClass,
+} from '../components/workspace/ResourceWorkspace'
+
+export function serviceItemKey(sectionId: string, index: number, title: string, url: string): string {
+  return `${sectionId}-${index}-${title}-${url}`
+}
 
 function openLink(url: string) {
-  if (typeof window !== 'undefined' && (window as any).bx?.shell?.openExternal) {
-    (window as any).bx.shell.openExternal(url);
-  } else {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
+  if (window.bx?.shell?.openExternal) window.bx.shell.openExternal(url)
+  else window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+function sectionIcon(section: ServiceSection) {
+  const value = `${section.id} ${section.title}`.toLowerCase()
+  if (value.includes('налог') || value.includes('гос')) return 'government'
+  if (value.includes('банк') || value.includes('финанс')) return 'finance'
+  if (value.includes('эдо') || value.includes('подпис')) return 'shield'
+  if (value.includes('учёт') || value.includes('бух')) return 'book'
+  return 'globe'
 }
 
 export default function Services() {
-  const [sections, setSections] = useState<ServiceSection[]>(() => getSectionsSync());
-  const [search, setSearch] = useState('');
-  const [activeSecId, setActiveSecId] = useState<string>('all');
+  const [sections, setSections] = useState<ServiceSection[]>(() => getSectionsSync())
+  const [search, setSearch] = useState('')
+  const [activeSecId, setActiveSecId] = useState('all')
+  const [refreshing, setRefreshing] = useState(false)
 
-  // Подтягивание облачных сервисов
-  useEffect(() => { 
-    refreshServices().then(setSections).catch(() => { /* Offline fallback */ }); 
-  }, []);
+  useEffect(() => {
+    let active = true
+    refreshServices().then(value => { if (active) setSections(value) }).catch(() => { /* локальный каталог остаётся доступным */ })
+    return () => { active = false }
+  }, [])
 
-  const q = search.toLowerCase().trim();
+  const total = useMemo(() => sections.reduce((sum, section) => sum + section.items.length, 0), [sections])
+  const q = search.toLowerCase().trim()
+  const filteredSections = useMemo(() => sections
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => !q || [item.title, item.desc, item.tag].some(value => value?.toLowerCase().includes(q))),
+    }))
+    .filter(section => section.items.length > 0 && (activeSecId === 'all' || section.id === activeSecId)), [sections, q, activeSecId])
 
-  // Отфильтрованные секции и элементы
-  const filteredSections = useMemo(() => {
-    return sections
-      .map(section => ({
-        ...section,
-        items: section.items.filter(item => 
-          !q || 
-          item.title.toLowerCase().includes(q) || 
-          item.desc.toLowerCase().includes(q) || 
-          item.tag?.toLowerCase().includes(q)
-        )
-      }))
-      .filter(s => s.items.length > 0 && (activeSecId === 'all' || s.id === activeSecId));
-  }, [sections, q, activeSecId]);
+  const visibleCount = filteredSections.reduce((sum, section) => sum + section.items.length, 0)
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    try { setSections(await refreshServices()) } catch { /* сохраняем локальный fallback */ }
+    finally { setRefreshing(false) }
+  }
+
+  const reset = () => { setSearch(''); setActiveSecId('all') }
+
+  const sidebar = (
+    <ResourceSidebar
+      icon="services"
+      title="Сервисы"
+      subtitle={`${total} проверяемых рабочих ресурсов`}
+      search={search}
+      searchPlaceholder="Найти портал или услугу"
+      onSearch={setSearch}
+      onClear={() => setSearch('')}
+      label="Категории"
+      footer={(
+        <div className="flex items-start gap-2.5 rounded-xl bg-bx-bg px-3 py-3 text-[10px] leading-relaxed text-bx-muted">
+          <Icon name="shield" className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-300" />
+          Ссылки открываются во внешнем браузере. Перед вводом данных проверяйте домен.
+        </div>
+      )}
+    >
+      <ResourceNavItem icon="globe" label="Все ресурсы" count={total} active={activeSecId === 'all'} onClick={() => setActiveSecId('all')} />
+      {sections.map(section => (
+        <ResourceNavItem key={section.id} icon={sectionIcon(section)} label={section.title} count={section.items.length} active={activeSecId === section.id} onClick={() => setActiveSecId(section.id)} />
+      ))}
+    </ResourceSidebar>
+  )
 
   return (
-    <div className="flex-1 flex overflow-hidden bg-bx-bg text-bx-text font-sans">
-      
-      {/* Левая панель: Категории сервисов и Поиск */}
-      <aside className="w-68 flex-shrink-0 border-r border-bx-border flex flex-col bg-bx-surface/10 backdrop-blur-md">
-        {/* Поиск */}
-        <div className="px-4 pt-4 pb-2 flex-shrink-0">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bx-muted">🔍</span>
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Поиск по сервисам..."
-              className="w-full bg-bx-surface-2 text-bx-text placeholder-bx-muted pl-9 pr-3 py-2 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/50 text-xs transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* Заголовок разделов */}
-        <div className="px-3 pb-2 flex-shrink-0 border-b border-bx-border/40 flex items-center justify-between">
-          <span className="text-[10px] font-bold text-bx-muted uppercase tracking-wider">Категории услуг</span>
-          {search.trim() && (
-            <button 
-              onClick={() => setSearch('')}
-              className="text-[10px] text-blue-500 hover:underline font-semibold"
-            >
-              Сбросить
+    <ResourceLayout sidebar={sidebar}>
+      <div className="space-y-6">
+        <ResourceHero
+          eyebrow="Проверенный рабочий контур"
+          title="Официальные сервисы — без поиска по закладкам"
+          description="Единый каталог государственных порталов, банковских инструментов, ЭДО и бухгалтерских ресурсов Узбекистана. Выберите задачу — BX откроет нужный официальный сайт."
+          icon="services"
+          stats={[
+            { value: total, label: 'ресурсов' },
+            { value: sections.length, label: 'категорий' },
+            { value: visibleCount, label: 'показано сейчас' },
+          ]}
+          actions={(
+            <button type="button" onClick={handleRefresh} disabled={refreshing} className={secondaryActionClass}>
+              <Icon name="recycle" className={`h-4 w-4 ${refreshing ? 'animate-spin motion-reduce:animate-none' : ''}`} />
+              {refreshing ? 'Обновляем…' : 'Обновить каталог'}
             </button>
           )}
-        </div>
+        />
 
-        {/* Список разделов */}
-        <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1.5 custom-scrollbar">
-          <button
-            onClick={() => { setActiveSecId('all'); }}
-            className={`w-full flex items-center justify-between px-2.5 py-2.5 rounded-xl text-left transition-all cursor-pointer border ${
-              activeSecId === 'all' 
-                ? 'bg-blue-600/10 border-blue-500/10 text-blue-500 font-extrabold shadow-sm shadow-blue-500/5' 
-                : 'hover:bg-bx-surface/20 border-transparent text-bx-text'
-            }`}
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="text-sm flex-shrink-0">🌐</span>
-              <span className="text-xs truncate font-semibold">Все разделы</span>
-            </div>
-            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-              activeSecId === 'all' ? 'bg-blue-500/20 text-blue-500' : 'bg-bx-surface-2 text-bx-muted'
-            }`}>
-              {sections.reduce((acc, s) => acc + s.items.length, 0)}
-            </span>
-          </button>
-
-          {sections.map(s => {
-            const count = s.items.length;
-            const isSel = activeSecId === s.id;
-            return (
-              <button
-                key={s.id}
-                onClick={() => { setActiveSecId(s.id); }}
-                className={`w-full flex items-center justify-between px-2.5 py-2.5 rounded-xl text-left transition-all cursor-pointer border ${
-                  isSel 
-                    ? 'bg-blue-600/10 border-blue-500/10 text-blue-500 font-extrabold shadow-sm shadow-blue-500/5' 
-                    : 'hover:bg-bx-surface/20 border-transparent text-bx-text'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="text-sm flex-shrink-0">📁</span>
-                  <span className="text-xs truncate font-semibold">{s.title}</span>
-                </div>
-                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                  isSel ? 'bg-blue-500/20 text-blue-500' : 'bg-bx-surface-2 text-bx-muted'
-                }`}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </nav>
-      </aside>
-
-      {/* Правая панель: Сетка карточек сервисов */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8 custom-scrollbar">
-        {/* Шапка навигатора */}
-        <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 shadow-sm">
-          <h1 className="text-sm font-extrabold text-bx-text tracking-wide uppercase flex items-center gap-2">
-            🌐 Полезные сервисы РУз
-          </h1>
-          <p className="text-[11px] text-bx-muted mt-1 leading-relaxed">
-            Быстрый интерактивный каталог официальных электронных ресурсов и госуслуг Республики Узбекистан
-          </p>
-        </div>
-
-        {filteredSections.map(section => (
-          <section key={section.id} className="space-y-4">
-            <h2 className="text-xs font-black text-bx-text uppercase tracking-widest border-b border-bx-border pb-2 flex items-center gap-2">
-              <span className="w-1.5 h-3 bg-blue-500 rounded-full" />
-              {section.title}
-              <span className="text-[10px] font-mono text-bx-muted bg-bx-surface-2 px-1.5 py-0.5 rounded-full">
-                {section.items.length}
-              </span>
-            </h2>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-              {section.items.map((item, idx) => (
+        {filteredSections.length > 0 ? filteredSections.map(section => (
+          <section key={section.id} className="space-y-3.5" aria-label={section.title}>
+            <ResourceSectionTitle title={section.title} subtitle="Откроется в безопасной внешней вкладке" count={section.items.length} />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {section.items.map((item, index) => (
                 <button
-                  key={idx}
+                  type="button"
+                  key={serviceItemKey(section.id, index, item.title, item.url)}
                   onClick={() => openLink(item.url)}
-                  className="text-left bg-bx-surface hover:border-blue-500/40 border border-bx-border rounded-2xl p-4.5 flex flex-col justify-between min-h-[140px] transition-all hover:shadow-md group active:scale-[0.98] cursor-pointer"
+                  className="group flex min-h-[184px] cursor-pointer flex-col rounded-[20px] border border-bx-border bg-bx-surface p-4.5 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/[0.035] focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
-                  <div className="space-y-3 w-full">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="w-9 h-9 rounded-xl bg-bx-surface-2 border border-bx-border flex items-center justify-center text-lg flex-shrink-0 shadow-inner">
-                        {item.icon || '🔗'}
-                      </span>
-                      {item.tag && (
-                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/10">
-                          {item.tag}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-extrabold text-bx-text group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug truncate">
-                        {item.title}
-                      </h4>
-                      <p className="text-[10px] text-bx-muted leading-relaxed mt-1 line-clamp-2">
-                        {item.desc}
-                      </p>
-                    </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="grid h-10 w-10 place-items-center rounded-xl border border-bx-border bg-bx-bg text-blue-600 dark:text-blue-300">
+                      <Icon name={sectionIcon(section)} className="h-[18px] w-[18px]" />
+                    </span>
+                    {item.tag && <span className="rounded-full bg-blue-500/10 px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-blue-700 dark:text-blue-300">{item.tag}</span>}
                   </div>
-                  <div className="border-t border-bx-border/50 pt-2.5 mt-3 w-full text-[10px] text-bx-muted font-bold flex justify-between items-center">
-                    <span className="truncate max-w-[120px] font-mono text-[9px] opacity-80">{item.url.replace(/^https?:\/\/(www\.)?/, '')}</span>
-                    <span className="text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform">Перейти ↗</span>
+                  <h4 className="mt-4 text-sm font-black leading-snug text-bx-text transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-300">{item.title}</h4>
+                  <p className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-bx-muted">{item.desc}</p>
+                  <div className="mt-auto flex items-center justify-between gap-3 border-t border-bx-border pt-3 text-[10px] font-bold">
+                    <span className="min-w-0 truncate text-bx-muted">{item.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
+                    <span className="flex flex-shrink-0 items-center gap-1 text-blue-600 dark:text-blue-300">Открыть <Icon name="external" className="h-3.5 w-3.5" /></span>
                   </div>
                 </button>
               ))}
             </div>
           </section>
-        ))}
-
-        {filteredSections.length === 0 && (
-          <div className="text-center py-20 bg-bx-surface border border-bx-border border-dashed rounded-2xl">
-            <span className="text-3xl block mb-2">🔍</span>
-            <p className="text-xs font-bold">Сервисов не найдено</p>
-            <p className="text-[10px] text-bx-muted mt-1">Попробуйте изменить поисковый запрос или выбрать другой раздел</p>
-            <button 
-              onClick={() => { setSearch(''); setActiveSecId('all'); }}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-bold mt-2 cursor-pointer"
-            >
-              Сбросить фильтры
-            </button>
-          </div>
+        )) : (
+          <ResourceEmpty
+            title="Сервисы не найдены"
+            description="Измените запрос или вернитесь ко всему каталогу — возможно, нужный портал находится в другой категории."
+            action={<button type="button" onClick={reset} className={secondaryActionClass}>Сбросить фильтры</button>}
+          />
         )}
       </div>
-    </div>
-  );
+    </ResourceLayout>
+  )
 }

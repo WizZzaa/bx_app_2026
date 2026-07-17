@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/db/supabase';
 import { emitPlannerReload, subscribePlannerReload } from './plannerBus';
 
@@ -24,81 +24,59 @@ export interface BxEvent {
   regime: string | null;
   note: string | null;
   source: 'manual' | 'tax' | 'seeded';
+  source_key?: string | null;
   reminder_at: string | null;
   recurrence?: EventRecurrence; // требует колонку bx_events.recurrence
+  assignee_id: string | null;
   created_at: string;
 }
 
 export type NewEvent = Omit<BxEvent, 'id' | 'user_id' | 'created_at'>;
 
-const CACHE_KEY = 'bx_events_cache_v1';
+export const EVENTS_PAGE_SIZE = 1000;
 
-function readCache(): BxEvent[] {
-  try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '[]'); } catch { return []; }
-}
-function writeCache(rows: BxEvent[]) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify(rows));
-}
-
-// Синк событие→карточка: правка события переносится на связанную карточку
-// (статус → колонка, а также срок и заголовок).
-async function syncLinkedCard(
-  eventId: string,
-  patch: { status?: EventStatus; due_date?: string | null; date?: string; title?: string }
-) {
-  try {
-    const { data: card } = await supabase
-      .from('bx_cards')
-      .select('id, board_id')
-      .eq('event_id', eventId)
-      .eq('archived', false)
-      .maybeSingle();
-    if (!card) return;
-
-    const cardPatch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    if (patch.due_date !== undefined) cardPatch.due_date = patch.due_date;
-    else if (patch.date !== undefined) cardPatch.due_date = patch.date;
-    if (patch.title !== undefined) cardPatch.title = patch.title;
-
-    if (patch.status !== undefined) {
-      const { data: board } = await supabase
-        .from('bx_boards')
-        .select('columns')
-        .eq('id', card.board_id)
-        .maybeSingle();
-      const cols = (board?.columns as any[]) ?? [];
-      if (cols.length) {
-        const targetCol = patch.status === 'done' ? cols[cols.length - 1] : cols[0];
-        if (targetCol) cardPatch.column_id = targetCol.id;
-      }
-    }
-
-    if (Object.keys(cardPatch).length > 1) {
-      await supabase.from('bx_cards').update(cardPatch).eq('id', card.id);
-    }
-  } catch {
-    // карточка не найдена / нет связи — не критично
+export async function collectEventPages<T>(
+  fetchPage: (from: number, to: number) => Promise<T[]>,
+  pageSize = EVENTS_PAGE_SIZE,
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const page = await fetchPage(from, from + pageSize - 1);
+    rows.push(...page);
+    if (page.length < pageSize) return rows;
   }
 }
 
 export function useEvents(companyId?: string | null) {
-  const [events, setEvents] = useState<BxEvent[]>(readCache);
+  const [events, setEvents] = useState<BxEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const loadVersion = useRef(0);
 
   const load = useCallback(async () => {
+    const version = ++loadVersion.current;
     setLoading(true);
+    setError(null);
     try {
-      let q = supabase.from('bx_events').select('*').order('date', { ascending: true });
-      if (companyId) q = q.eq('company_id', companyId);
-      const { data, error } = await q;
-      if (error) throw error;
-      const rows = (data ?? []) as BxEvent[];
-      writeCache(rows);
-      setEvents(rows);
-    } catch {
-      setEvents(readCache());
+      const rows = await collectEventPages<BxEvent>(async (from, to) => {
+        let query = supabase
+          .from('bx_events')
+          .select('*')
+          .order('date', { ascending: true })
+          .order('created_at', { ascending: true })
+          .order('id', { ascending: true });
+        if (companyId) query = query.eq('company_id', companyId);
+        const { data, error: pageError } = await query.range(from, to);
+        if (pageError) throw pageError;
+        return (data ?? []) as BxEvent[];
+      });
+      if (version === loadVersion.current) setEvents(rows);
+    } catch (loadError) {
+      const message = loadError instanceof Error ? loadError.message : 'Не удалось загрузить события';
+      console.error('[useEvents] load failed:', message);
+      if (version === loadVersion.current) setError(message);
     } finally {
-      setLoading(false);
+      if (version === loadVersion.current) setLoading(false);
     }
   }, [companyId]);
 
@@ -121,101 +99,36 @@ export function useEvents(companyId?: string | null) {
     
     const createdEvent = data as BxEvent;
 
-    // 3. Автоматически создаем карточку на доске Kanban для синхронизации
-    try {
-      let board: any = null;
-      if (createdEvent.company_id) {
-        const { data: companyBoards } = await supabase
-          .from('bx_boards')
-          .select('*')
-          .eq('company_id', createdEvent.company_id)
-          .order('position', { ascending: true });
-        if (companyBoards && companyBoards.length > 0) {
-          board = companyBoards.find(b => b.is_default) || companyBoards[0];
-        }
-      }
-
-      if (!board) {
-        const { data: globalBoards } = await supabase
-          .from('bx_boards')
-          .select('*')
-          .is('company_id', null)
-          .order('position', { ascending: true });
-        if (globalBoards && globalBoards.length > 0) {
-          board = globalBoards.find(b => b.is_default) || globalBoards[0];
-        }
-      }
-
-      if (board && board.columns && board.columns.length > 0) {
-        const firstColId = board.columns[0].id;
-        const { data: existingCards } = await supabase
-          .from('bx_cards')
-          .select('position')
-          .eq('board_id', board.id)
-          .eq('column_id', firstColId);
-
-        const maxPos = (existingCards ?? []).reduce((m, c) => Math.max(m, c.position), 0);
-
-        const cardRow = {
-          user_id: user.id,
-          board_id: board.id,
-          column_id: firstColId,
-          title: createdEvent.title,
-          description: createdEvent.note || null,
-          priority: createdEvent.priority || 'normal',
-          labels: createdEvent.tags || [],
-          checklist: [],
-          due_date: createdEvent.due_date || createdEvent.date || null,
-          position: maxPos + 1,
-          event_id: createdEvent.id
-        };
-
-        await supabase.from('bx_cards').insert(cardRow);
-      }
-    } catch (e) {
-      console.warn('Failed to auto-create Kanban card for event:', e);
-    }
-
     await load();
     emitPlannerReload();
     return createdEvent;
   }, [load]);
 
-  const update = useCallback(async (id: string, patch: Partial<Omit<BxEvent, 'id' | 'user_id' | 'created_at'>>) => {
+  const update = useCallback(async (id: string, patch: Partial<Omit<BxEvent, 'id' | 'user_id' | 'created_at'>>): Promise<boolean> => {
     const { error } = await supabase.from('bx_events').update(patch).eq('id', id);
-    if (error) { console.error(error); return; }
+    if (error) { console.error(error); return false; }
     
-    if (patch.status !== undefined || patch.due_date !== undefined || patch.date !== undefined || patch.title !== undefined) {
-      await syncLinkedCard(id, patch);
-    }
-
     setEvents(prev => {
-      const next = prev.map(e => e.id === id ? { ...e, ...patch } : e);
-      writeCache(next);
-      return next;
+      return prev.map(e => e.id === id ? { ...e, ...patch } : e);
     });
 
     emitPlannerReload();
+    return true;
   }, []);
 
-  const remove = useCallback(async (id: string) => {
-    // Сначала сбрасываем ссылку на удаляемое событие в карточках
-    await supabase.from('bx_cards').update({ event_id: null, updated_at: new Date().toISOString() }).eq('event_id', id);
-
+  const remove = useCallback(async (id: string): Promise<boolean> => {
     const { error } = await supabase.from('bx_events').delete().eq('id', id);
-    if (error) { console.error(error); return; }
-    setEvents(prev => { const next = prev.filter(e => e.id !== id); writeCache(next); return next; });
+    if (error) { console.error(error); return false; }
+    setEvents(prev => prev.filter(e => e.id !== id));
 
     emitPlannerReload();
+    return true;
   }, []);
 
   const bulkRemove = useCallback(async (ids: string[]) => {
-    // Сначала сбрасываем ссылку на удаляемые события в карточках
-    await supabase.from('bx_cards').update({ event_id: null, updated_at: new Date().toISOString() }).in('event_id', ids);
-
     const { error } = await supabase.from('bx_events').delete().in('id', ids);
     if (error) { console.error(error); return; }
-    setEvents(prev => { const next = prev.filter(e => !ids.includes(e.id)); writeCache(next); return next; });
+    setEvents(prev => prev.filter(e => !ids.includes(e.id)));
 
     emitPlannerReload();
   }, []);
@@ -226,5 +139,5 @@ export function useEvents(companyId?: string | null) {
     await update(id, { status: next });
   }, [update]);
 
-  return { events, loading, reload: load, add, update, remove, bulkRemove, cycleStatus };
+  return { events, loading, error, reload: load, add, update, remove, bulkRemove, cycleStatus };
 }

@@ -93,3 +93,9 @@ out/
 
 # claude-flow runtime session data
 .claude-flow/
+
+# Local QA evidence and reports
+.gstack/
+
+# Timestamped Graphify safety backups (canonical graph remains tracked)
+src/graphify-out/20??-??-??/

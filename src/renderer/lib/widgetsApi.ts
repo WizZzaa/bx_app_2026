@@ -1,4 +1,4 @@
-import type { WeatherData, CurrencyRate } from '../../shared/types';
+import type { WeatherData, CurrencyRate, BankExchangeRate } from '../../shared/types';
 
 // Доступ к window.bx (расширяем тип из onecApi.ts через отдельную декларацию)
 interface WidgetBridge {
@@ -6,6 +6,7 @@ interface WidgetBridge {
     getWeather(): Promise<WeatherData>;
     getRates(codes?: string[]): Promise<CurrencyRate[]>;
     getRateOnDate(code: string, date: string): Promise<CurrencyRate | null>;
+    getBankRates(codes?: string[]): Promise<BankExchangeRate[]>;
   };
 }
 
@@ -15,7 +16,7 @@ async function fetchRateOnDateDirect(code: string, date: string): Promise<Curren
   const d = await r.json();
   const i = d[0];
   if (!i) return null;
-  return { code: i.Ccy, name: i.CcyNm_RU, flag: FLAGS[i.Ccy] ?? '🏳️', value: parseFloat(i.Rate), diff: parseFloat(i.Diff) || 0, date: i.Date };
+  return { code: i.Ccy, name: i.CcyNm_RU, flag: FLAGS[i.Ccy] ?? '', value: parseFloat(i.Rate), diff: parseFloat(i.Diff) || 0, date: i.Date };
 }
 
 function bridge(): WidgetBridge | undefined {
@@ -23,6 +24,10 @@ function bridge(): WidgetBridge | undefined {
 }
 
 const FLAGS: Record<string, string> = { USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' };
+
+function mapRate(i: { Ccy: string; CcyNm_RU: string; Rate: string; Diff: string; Date: string }): CurrencyRate {
+  return { code: i.Ccy, name: i.CcyNm_RU, flag: FLAGS[i.Ccy] ?? '', value: parseFloat(i.Rate), diff: parseFloat(i.Diff) || 0, date: i.Date };
+}
 
 // --- Прямой fetch (для браузерного preview, где нет Electron) ---
 type Condition = 'sunny' | 'partly_cloudy' | 'cloudy' | 'rainy' | 'storm' | 'snow' | 'fog'
@@ -69,10 +74,7 @@ async function fetchRatesDirect(codes: string[]): Promise<CurrencyRate[]> {
   const wanted = new Set(codes);
   return d
     .filter((i: { Ccy: string }) => wanted.has(i.Ccy))
-    .map((i: { Ccy: string; CcyNm_RU: string; Rate: string; Diff: string; Date: string }) => ({
-      code: i.Ccy, name: i.CcyNm_RU, flag: FLAGS[i.Ccy] ?? '🏳️',
-      value: parseFloat(i.Rate), diff: parseFloat(i.Diff) || 0, date: i.Date,
-    }))
+    .map(mapRate)
     .sort((a: CurrencyRate, b: CurrencyRate) => codes.indexOf(a.code) - codes.indexOf(b.code));
 }
 
@@ -91,5 +93,26 @@ export const widgetsApi = {
     const b = bridge();
     if (b?.widgets) return b.widgets.getRateOnDate(code, date);
     return fetchRateOnDateDirect(code, date);
+  },
+  async getRatesOnDate(codes: string[], date: string): Promise<CurrencyRate[]> {
+    const b = bridge();
+    if (b?.widgets) {
+      const widgets = b.widgets;
+      const rates = await Promise.all(codes.map(code => widgets.getRateOnDate(code, date)));
+      return rates.filter((rate): rate is CurrencyRate => Boolean(rate));
+    }
+    const response = await fetch(`https://cbu.uz/ru/arkhiv-kursov-valyut/json/all/${date}/`);
+    if (!response.ok) throw new Error(`CBU ${response.status}`);
+    const data = await response.json();
+    const wanted = new Set(codes);
+    return data.filter((item: { Ccy: string }) => wanted.has(item.Ccy)).map(mapRate)
+      .sort((a: CurrencyRate, b: CurrencyRate) => codes.indexOf(a.code) - codes.indexOf(b.code));
+  },
+  async getBankRates(codes = ['USD', 'EUR', 'RUB']): Promise<BankExchangeRate[]> {
+    const b = bridge();
+    if (b?.widgets) return b.widgets.getBankRates(codes);
+    const response = await fetch(`/__bx/bank-rates?codes=${encodeURIComponent(codes.join(','))}`);
+    if (!response.ok) throw new Error(`Bank rates ${response.status}`);
+    return response.json();
   },
 };

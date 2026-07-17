@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { paymentCodes } from '../../data/reference/finance';
 import type { Indicator, TaxRate } from '../../data/reference/types';
 import { loadIndicators, loadTaxes } from '../../lib/db/referenceRepo';
+import Icon from '../../lib/ui/Icon';
 
 function fmtSum(n: number) {
   return n.toLocaleString('ru-RU');
@@ -15,29 +16,29 @@ function IndicatorCard({ ind }: { ind: Indicator }) {
   const [open, setOpen] = useState(false);
   const current = ind.history[0];
   return (
-    <div className="rounded-xl border border-bx-border bg-bx-surface p-4">
+    <div className="rounded-[18px] border border-bx-border bg-bx-bg p-4.5">
       <div className="flex items-start justify-between">
         <div>
-          <div className="text-xs text-bx-muted">{ind.shortName}</div>
-          <div className="text-2xl font-bold text-bx-text mt-0.5">
+          <div className="text-[10px] font-black uppercase tracking-[0.12em] text-bx-muted">{ind.shortName}</div>
+          <div className="mt-1 text-2xl font-black tracking-tight text-bx-text tabular-nums">
             {fmtSum(current.value)} <span className="text-sm font-normal text-bx-muted">{ind.unit}</span>
           </div>
           <div className="text-[11px] text-bx-muted mt-1">с {fmtDate(current.from)}</div>
         </div>
         {ind.meta.verified ? (
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400"
+          <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[9px] font-black text-emerald-700 dark:text-emerald-300"
             title={`Сверено ${ind.meta.updatedAt}${ind.meta.source ? ` · ${ind.meta.source}` : ''}`}>
-            ✓ сверено {ind.meta.updatedAt?.slice(5).split('-').reverse().join('.')}
+            <Icon name="check" className="h-3 w-3" />сверено {ind.meta.updatedAt?.slice(5).split('-').reverse().join('.')}
           </span>
         ) : (
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400" title="Значение требует сверки с официальным источником">
-            ⚠ не проверено
+          <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-1 text-[9px] font-black text-amber-700 dark:text-amber-300" title="Значение требует сверки с официальным источником">
+            <Icon name="alert" className="h-3 w-3" />не проверено
           </span>
         )}
       </div>
       {ind.hint && <p className="text-[11px] text-bx-muted mt-2 leading-snug">{ind.hint}</p>}
 
-      <button onClick={() => setOpen(o => !o)} className="text-[11px] text-blue-400 hover:text-blue-300 mt-2 transition-colors">
+      <button onClick={() => setOpen(o => !o)} className="mt-2 min-h-8 rounded-lg px-2 text-[11px] font-bold text-blue-600 transition-colors hover:bg-blue-500/10 dark:text-blue-300">
         {open ? 'Скрыть историю' : 'История значений →'}
       </button>
       {open && (
@@ -46,8 +47,8 @@ function IndicatorCard({ ind }: { ind: Indicator }) {
             <div key={i} className="flex items-center justify-between gap-2 text-[11px]" title={h.basis}>
               <span className="text-bx-muted flex-shrink-0">с {fmtDate(h.from)}</span>
               {(h.verified ?? !(h.basis?.includes('требует проверки') ?? true))
-                ? <span className="text-emerald-500/60 text-[9px]">✓</span>
-                : <span className="text-amber-500/60 text-[9px]">⚠</span>}
+                ? <Icon name="check" className="h-3 w-3 text-emerald-500" />
+                : <Icon name="alert" className="h-3 w-3 text-amber-500" />}
               <span className="text-bx-text font-mono ml-auto">{fmtSum(h.value)} {ind.unit}</span>
             </div>
           ))}
@@ -85,7 +86,7 @@ export default function FinanceTab() {
 
       {/* Показатели */}
       <section>
-        <h2 className="text-sm font-medium text-bx-muted mb-3">Ключевые показатели</h2>
+        <h2 className="mb-3 text-sm font-black text-bx-text">Ключевые показатели</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {indicators.map(ind => <IndicatorCard key={ind.key} ind={ind} />)}
         </div>
@@ -93,7 +94,7 @@ export default function FinanceTab() {
 
       {/* Ставки налогов */}
       <section>
-        <h2 className="text-sm font-medium text-bx-muted mb-3">Ставки налогов</h2>
+        <h2 className="mb-3 text-sm font-black text-bx-text">Ставки налогов</h2>
         <div className="rounded-xl border border-bx-border bg-bx-surface overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -120,10 +121,10 @@ export default function FinanceTab() {
 
       {/* Коды платежей */}
       <section>
-        <h2 className="text-sm font-medium text-bx-muted mb-3">Коды платежей (КБК)</h2>
+        <h2 className="mb-3 text-sm font-black text-bx-text">Коды платежей (КБК)</h2>
         <div className="rounded-xl border border-bx-border bg-bx-surface p-4">
-          <p className="text-xs text-amber-400 mb-3">
-            ⚠ Раздел требует наполнения реальными кодами бюджетной классификации и казначейскими счетами.
+          <p className="mb-3 flex items-start gap-2 rounded-xl bg-amber-500/[0.07] px-3 py-2.5 text-xs text-amber-800 dark:text-amber-300">
+            <Icon name="alert" className="mt-0.5 h-4 w-4 flex-shrink-0" />Раздел требует наполнения реальными кодами бюджетной классификации и казначейскими счетами.
           </p>
           <div className="space-y-1.5">
             {paymentCodes.map((p, i) => (

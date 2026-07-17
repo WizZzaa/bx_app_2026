@@ -4,6 +4,10 @@
 
 :root {
   --sidebar-width: 220px;
+  --bx-font-scale: 1;
+  --bx-root-font-size: 16px;
+  --bx-content-max: 1600px;
+  --bx-reading-max: 1180px;
   color-scheme: dark;
 
   /* Дизайн-токены BX (семантические — единый источник цветов/радиусов).
@@ -28,6 +32,26 @@
   --bx-text-rgb: 248 250 252;
   --bx-muted-rgb: 203 213 225;
   --bx-accent-rgb: 59 130 246;
+}
+
+html {
+  font-size: var(--bx-root-font-size);
+}
+
+.bx-page-container {
+  width: 100%;
+  max-width: var(--bx-content-max);
+  margin-inline: auto;
+}
+
+.bx-reading-container {
+  width: 100%;
+  max-width: var(--bx-reading-max);
+  margin-inline: auto;
+}
+
+@media (max-width: 1366px) {
+  :root { --bx-content-max: 1280px; }
 }
 
 .light {

@@ -32,6 +32,26 @@ export interface MonthNorms {
   hours36_6: number     // 6-дневная 36-часовая
 }
 
+export const UZ_PRODUCTION_CALENDAR_YEAR = 2026
+
+export const UZ_PRODUCTION_CALENDAR_2026_SOURCES = [
+  {
+    shortLabel: 'УП-257',
+    label: 'Дополнительные нерабочие дни и переносы в 2026 году',
+    url: 'https://president.uz/ru/lists/view/8832',
+  },
+  {
+    shortLabel: 'Рамазан хайит',
+    label: 'Постановление о праздновании Рамазан хайита 20 марта 2026 года',
+    url: 'https://president.uz/ru/lists/view/9019',
+  },
+  {
+    shortLabel: 'Курбан хайит',
+    label: 'Постановление о праздновании Курбан хайита 27 мая 2026 года',
+    url: 'https://president.uz/ru/lists/view/9233',
+  },
+] as const
+
 // ─── Праздничные и особые дни 2026 ────────────────────────────────────────────
 
 export const SPECIAL_DAYS_2026: SpecialDay[] = [
@@ -121,8 +141,15 @@ export const UZ_HOLIDAYS: { month: number; day: number; name: string }[] =
 
 /** Возвращает SpecialDay для конкретной даты, если есть. */
 export const getSpecialDay = (d: Date): SpecialDay | null => {
+  if (d.getFullYear() !== UZ_PRODUCTION_CALENDAR_YEAR) return null
   const key = `${d.getMonth() + 1}-${d.getDate()}`
   return _specialDayMap.get(key) ?? null
+}
+
+/** Особые дни конкретного месяца. Данные не экстраполируются за пределы проверенного 2026 года. */
+export const specialDaysForMonth = (year: number, month0: number): SpecialDay[] => {
+  if (year !== UZ_PRODUCTION_CALENDAR_YEAR) return []
+  return SPECIAL_DAYS_2026.filter(day => day.month === month0 + 1)
 }
 
 /** Название праздника (обратная совместимость). */
@@ -217,6 +244,7 @@ export const workdayStats = (year: number, month0: number): { total: number; lef
 }
 
 /** Нормы рабочего времени для месяца (1-based). Null если нет данных. */
-export const getMonthNorms = (month1: number): MonthNorms | null => {
+export const getMonthNorms = (month1: number, year = UZ_PRODUCTION_CALENDAR_YEAR): MonthNorms | null => {
+  if (year !== UZ_PRODUCTION_CALENDAR_YEAR) return null
   return MONTH_NORMS_2026.find(n => n.month === month1) ?? null
 }

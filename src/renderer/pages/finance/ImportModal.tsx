@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import type { ParsedTransaction } from '../../lib/bankStatementParser'
+import Icon from '../../lib/ui/Icon'
 
 interface ImportModalProps {
   isOpen: boolean
@@ -15,10 +16,10 @@ function fmt(n: number): string {
 export default function ImportModal({ isOpen, onClose, transactions, onSave }: ImportModalProps) {
   const [selectedIndices, setSelectedIndices] = useState<number[]>([])
   const [items, setItems] = useState<ParsedTransaction[]>([])
-  const [categories, setCategories] = useState<string[]>([
+  const categories = [
     'Аренда', 'Зарплата', 'Налоги', 'Услуги связи', 'Хозяйственные расходы', 
     'Оборудование', 'Маркетинг', 'Поступление от клиента', 'Прочее'
-  ])
+  ]
   const [itemCategories, setItemCategories] = useState<{ [key: number]: string }>({})
   const [saving, setSaving] = useState(false)
 
@@ -96,18 +97,17 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-bx-surface border border-bx-border rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+      <div role="dialog" aria-modal="true" aria-labelledby="statement-import-title" className="bg-bx-surface border border-bx-border rounded-[24px] w-full max-w-5xl max-h-[88vh] flex flex-col overflow-hidden shadow-2xl">
         {/* Шапка */}
         <div className="px-6 py-4 border-b border-bx-border flex items-center justify-between">
           <div>
-            <h3 className="text-base font-semibold text-bx-text">Импорт банковской выписки</h3>
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Предварительная проверка</p>
+            <h3 id="statement-import-title" className="mt-1 text-base font-black text-bx-text">Импорт банковской выписки</h3>
             <p className="text-xs text-bx-muted mt-0.5">
               Найдено операций: {items.length}. Выбрано для импорта: {selectedIndices.length}
             </p>
           </div>
-          <button onClick={onClose} className="text-bx-muted hover:text-bx-text transition-colors">
-            ✕
-          </button>
+          <button type="button" aria-label="Закрыть импорт" onClick={onClose} className="grid h-11 w-11 place-items-center rounded-xl text-bx-muted transition-colors hover:bg-bx-surface-2 hover:text-bx-text"><Icon name="crossSmall" className="h-4 w-4" /></button>
         </div>
 
         {/* Список транзакций */}
@@ -154,7 +154,7 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
                         <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
                           tx.type === 'income' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'
                         }`}>
-                          {tx.type === 'income' ? 'Доход' : 'Расход'}
+                          {tx.type === 'income' ? 'Нам поступило' : 'Мы оплатили'}
                         </span>
                       </td>
                       <td className="py-3 px-3 max-w-xs truncate" title={tx.description}>
@@ -199,6 +199,7 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
           </div>
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={onClose}
               disabled={saving}
               className="px-4 py-2 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-medium rounded-lg hover:bg-bx-surface-2 transition-colors"
@@ -206,6 +207,7 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
               Отмена
             </button>
             <button
+              type="button"
               onClick={handleSaveClick}
               disabled={selectedIndices.length === 0 || saving}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-bx-surface-2 disabled:text-bx-muted text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"

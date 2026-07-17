@@ -5,6 +5,7 @@ import type {
   KillResult,
   BackupResult,
 } from '../../shared/types';
+import type { UpdateSnapshot } from '../../main/services/updatePolicy'
 
 interface BxBridge {
   platform: string;
@@ -65,10 +66,10 @@ interface BxBridge {
     set(enabled: boolean): Promise<void>
   }
   updater?: {
-    checkForUpdates(): Promise<{ status: string; error: string; version: string }>
-    getStatus(): Promise<{ status: string; error: string; version: string }>
+    checkForUpdates(): Promise<UpdateSnapshot>
+    getStatus(): Promise<UpdateSnapshot>
     installUpdate(): Promise<void>
-    onUpdateStatus(callback: (data: { status: string; error: string; version: string }) => void): () => void
+    onUpdateStatus(callback: (data: UpdateSnapshot) => void): () => void
   }
   tray?: {
     setPinned(pinned: boolean): Promise<boolean>

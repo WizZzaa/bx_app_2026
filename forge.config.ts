@@ -21,8 +21,16 @@ const config: ForgeConfig = {
   },
   rebuildConfig: {},
   makers: [
-    ...(process.platform === 'win32' ? [new MakerSquirrel({})] : []),
-    new MakerZIP({}, ['darwin', 'win32']),
+    ...(process.platform === 'win32' ? [new MakerSquirrel({
+      // `app` — прежний Squirrel package id. Его нельзя менять без отдельной
+      // миграции: от него зависит цепочка обновлений уже установленных версий.
+      name: 'app',
+      setupExe: 'BX-win32-x64-Setup.exe',
+      noMsi: true,
+    })] : []),
+    // Windows ZIP больше не публикуем: старый загрузчик однозначно выберет
+    // Setup.exe-мост, а новый autoUpdater работает через RELEASES + .nupkg.
+    new MakerZIP({}, ['darwin']),
     new MakerRpm({}),
     new MakerDeb({}),
   ],

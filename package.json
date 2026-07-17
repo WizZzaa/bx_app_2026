@@ -1,7 +1,7 @@
 {
   "name": "app",
   "productName": "BX Помощник Бухгалтера",
-  "version": "2.10.6",
+  "version": "2.29.0",
   "description": "BX — помощник бухгалтера Республики Узбекистан: планировщик, калькуляторы, справочники, AI-консультант",
   "main": ".vite/build/main.js",
   "private": true,
@@ -25,6 +25,11 @@
     "email": "chernikov.dev@gmail.com"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WizZzaa/bx_app_2026.git"
+  },
+  "homepage": "https://github.com/WizZzaa/bx_app_2026",
   "devDependencies": {
     "@electron-forge/cli": "^7.11.2",
     "@electron-forge/maker-deb": "^7.11.2",

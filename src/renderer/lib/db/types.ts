@@ -3,6 +3,33 @@
 export type TaskStatus = 'todo' | 'in_progress' | 'done';
 export type TaskPriority = 'low' | 'normal' | 'high';
 
+export type CompanyLegalForm = 'ooo' | 'ip' | 'self_employed' | 'other';
+export type CompanyProfileStatus = 'draft' | 'confirmed';
+export type CompanyLanguage = 'ru' | 'uz';
+export type CompanyNotificationChannel = 'in_app' | 'desktop';
+
+export interface CompanyProfileInput {
+  name: string;
+  inn?: string | null;
+  regime: string;
+  legal_form: CompanyLegalForm;
+  registration_date: string | null;
+  bx_start_date: string;
+  is_vat_payer: boolean;
+  work_weekdays: number[];
+  notification_channels: CompanyNotificationChannel[];
+  preferred_language: CompanyLanguage;
+  enabled_obligation_rules: string[];
+  profile_status: CompanyProfileStatus;
+  profile_confirmed_at: string | null;
+  profile_version: number;
+}
+
+export type CompanyProfileForm = Omit<
+  CompanyProfileInput,
+  'profile_status' | 'profile_confirmed_at' | 'profile_version'
+>;
+
 export interface Company {
   id: string;
   user_id: string;
@@ -11,6 +38,17 @@ export interface Company {
   regime: string | null;     // 'ОСН' | 'Налог с оборота' | ...
   color: string | null;      // hex для метки
   is_active: boolean;
+  legal_form: CompanyLegalForm | null;
+  registration_date: string | null;
+  bx_start_date: string | null;
+  is_vat_payer: boolean;
+  work_weekdays: number[];
+  notification_channels: CompanyNotificationChannel[];
+  preferred_language: CompanyLanguage;
+  enabled_obligation_rules: string[];
+  profile_status: CompanyProfileStatus;
+  profile_confirmed_at: string | null;
+  profile_version: number;
   created_at: string;
 }
 

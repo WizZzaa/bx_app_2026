@@ -69,6 +69,7 @@ export const useTickets = () => {
   const createTicket = useCallback(async (
     subject: string,
     body: string,
+    category?: string,
     contactName?: string,
     contactPhone?: string,
     companyName?: string,
@@ -83,6 +84,7 @@ export const useTickets = () => {
       .insert({
         user_id: user.id,
         subject,
+        category: category || null,
         contact_name: contactName || null,
         contact_phone: contactPhone || null,
         company_name: companyName || null,

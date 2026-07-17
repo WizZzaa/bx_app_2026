@@ -10,11 +10,13 @@ import type {
   BackupResult,
   WeatherData,
   CurrencyRate,
+  BankExchangeRate,
 } from './shared/types';
 import type { TempDirInfo, PcCleanResult } from './main/services/pcClean'
 import type { ParsedEcpInfo } from './main/services/ecpParser'
 import type { TraderInfo } from './main/services/innCheck'
 import type { NewsFeedItem } from './main/services/newsFeed'
+import type { UpdateSnapshot } from './main/services/updatePolicy'
 
 const api = {
   platform: process.platform,
@@ -34,7 +36,9 @@ const api = {
     getWeather: (): Promise<WeatherData> => ipcRenderer.invoke(IPC.WEATHER_GET),
     getRates: (codes?: string[]): Promise<CurrencyRate[]> => ipcRenderer.invoke(IPC.CURRENCY_GET, codes),
     getRateOnDate: (code: string, date: string): Promise<CurrencyRate | null> =>
-      ipcRenderer.invoke(IPC.CURRENCY_ON_DATE, code, date)
+      ipcRenderer.invoke(IPC.CURRENCY_ON_DATE, code, date),
+    getBankRates: (codes?: string[]): Promise<BankExchangeRate[]> =>
+      ipcRenderer.invoke(IPC.CURRENCY_BANKS_GET, codes)
   },
   pc: {
     scan: (): Promise<TempDirInfo[]> => ipcRenderer.invoke(IPC.PC_SCAN),
@@ -76,13 +80,13 @@ const api = {
     set: (enabled: boolean): Promise<void> => ipcRenderer.invoke(IPC.AUTOSTART_SET, enabled)
   },
   updater: {
-    checkForUpdates: (): Promise<{ status: string; error: string; version: string }> =>
+    checkForUpdates: (): Promise<UpdateSnapshot> =>
       ipcRenderer.invoke('app:check-for-updates'),
-    getStatus: (): Promise<{ status: string; error: string; version: string }> =>
+    getStatus: (): Promise<UpdateSnapshot> =>
       ipcRenderer.invoke('app:get-update-status'),
     installUpdate: (): Promise<void> =>
       ipcRenderer.invoke('app:install-update'),
-    onUpdateStatus: (callback: (data: { status: string; error: string; version: string }) => void) => {
+    onUpdateStatus: (callback: (data: UpdateSnapshot) => void) => {
       const handler = (_event: any, data: any) => callback(data)
       ipcRenderer.on('app:update-status', handler)
       return () => ipcRenderer.removeListener('app:update-status', handler)
@@ -108,4 +112,3 @@ const api = {
 contextBridge.exposeInMainWorld('bx', api)
 
 export type BxApi = typeof api
-

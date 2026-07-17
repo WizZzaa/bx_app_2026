@@ -1,16 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/db/supabase';
-
-interface NewsItem {
-  id: string;
-  title: string;
-  source: string;
-  date: string;
-  url: string;
-  tag: string;
-  tagColor: string;
-  points: string[];
-}
+import Icon from '../lib/ui/Icon';
+import { LEGISLATION_NEWS, type NewsItem } from '../data/newsItems';
 
 const NEWS_SOURCES = [
   { name: 'ГНК РУз', url: 'https://soliq.uz/news' },
@@ -20,88 +12,16 @@ const NEWS_SOURCES = [
   { name: 'ЦБ РУз', url: 'https://cbu.uz/press-center/' },
 ];
 
-const STATIC_LEGISLATION_NEWS: NewsItem[] = [
-  {
-    id: '1',
-    title: 'Изменения по НДС на 2026 год',
-    source: 'ст. 258 Налогового Кодекса РУз',
-    date: '2026-01-01',
-    url: 'https://soliq.uz',
-    tag: 'Налоги',
-    tagColor: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-    points: [
-      'Ставка НДС сохраняется на уровне 12% на весь 2026 год.',
-      'Для зачета НДС требуется обязательное наличие электронных односторонних актов и счетов-фактур.',
-      'Усилен контроль цепочек поставок через фискальные модули ГНК.'
-    ]
-  },
-  {
-    id: '2',
-    title: 'Ставки МРОТ и БРВ в Узбекистане',
-    source: 'Указ Президента РУз',
-    date: '2025-08-01',
-    url: 'https://lex.uz',
-    tag: 'Ставки',
-    tagColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-    points: [
-      'МРОТ (Минимальный размер оплаты труда) равен 1 271 000 сум в месяц.',
-      'БРВ (Базовая расчетная величина) составляет 412 000 сум.',
-      'Все расчеты налогов, штрафов, госпошлин и патентов в 2026 году привязаны к БРВ 412 000 сум.'
-    ]
-  },
-  {
-    id: '3',
-    title: 'Декларация по налогу на прибыль',
-    source: 'ГНК / ст. 337 НК РУз',
-    date: '2026-01-15',
-    url: 'https://my.soliq.uz',
-    tag: 'Отчетность',
-    tagColor: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
-    points: [
-      'Базовая ставка налога на прибыль составляет 15%.',
-      'Для резидентов IT Park сохраняется льготная ставка налога 7.5%.',
-      'Срок подачи годовой декларации за прошедший период — не позднее 1 марта 2026 года.'
-    ]
-  },
-  {
-    id: '4',
-    title: 'Порядок работы с ЭЦП E-Imzo',
-    source: 'e-imzo.uz / Единый реестр',
-    date: '2026-02-01',
-    url: 'https://e-imzo.uz',
-    tag: 'ЭЦП',
-    tagColor: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
-    points: [
-      'Срок действия выпускаемых ключей ЭЦП для юридических лиц и ИП составляет 2 года.',
-      'Продление возможно полностью онлайн через OneID на портале my.gov.uz с проверкой Face-ID.',
-      'Локальный плагин E-Imzo версии 4.x является обязательным для авторизации на госпорталах.'
-    ]
-  },
-  {
-    id: '5',
-    title: 'Удержание НДФЛ и ИНПС',
-    source: 'НК РУз ст. 366 / ст. 403',
-    date: '2026-01-01',
-    url: 'https://lex.uz',
-    tag: 'Налоги',
-    tagColor: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-    points: [
-      'Ставка НДФЛ для резидентов сохраняется плоской — 12%.',
-      'Размер обязательного социального налога для юридических лиц — 12%.',
-      'Обязательные взносы на ИНПС (накопительную пенсию) удерживаются в размере 0.1% от фонда оплаты труда.'
-    ]
-  }
-];
-
 function openLink(url: string) {
-  if (typeof window !== 'undefined' && (window as any).bx?.shell?.openExternal) {
-    (window as any).bx.shell.openExternal(url);
+  if (typeof window !== 'undefined' && window.bx?.shell?.openExternal) {
+    window.bx.shell.openExternal(url);
   } else {
     window.open(url, '_blank', 'noopener,noreferrer');
   }
 }
 
 export default function News() {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<string>('Все');
   const [brvValue, setBrvValue] = useState('412 000');
   const [mrotValue, setMrotValue] = useState('1 271 000');
@@ -150,162 +70,161 @@ export default function News() {
   const categories = ['Все', 'Налоги', 'Ставки', 'Отчетность', 'ЭЦП'];
 
   const filteredNews = useMemo(() => {
-    if (filter === 'Все') return STATIC_LEGISLATION_NEWS;
-    return STATIC_LEGISLATION_NEWS.filter(n => n.tag === filter);
+    if (filter === 'Все') return LEGISLATION_NEWS;
+    return LEGISLATION_NEWS.filter(n => n.tag === filter);
   }, [filter]);
 
+  const askAiAbout = (item: NewsItem) => navigate('/ai', {
+    state: {
+      prompt: `Объясни простыми словами, как изменение «${item.title}» влияет на бухгалтера и компанию. Проверь применимость, риски и действия. Данные новости:\n${item.points.map(point => `- ${point}`).join('\n')}\nИсточник: ${item.source}`,
+    },
+  });
+
+  const createTaskFromNews = (item: NewsItem) => navigate('/planner', {
+    state: {
+      newTask: {
+        title: `Проверить изменение: ${item.title}`,
+        note: `Источник: ${item.source}\nСсылка: ${item.url}\n\n${item.points.map((point, index) => `${index + 1}. ${point}`).join('\n')}`,
+      },
+    },
+  });
+
   return (
-    <div className="flex-1 flex overflow-hidden bg-bx-bg font-sans text-bx-text">
-      
-      {/* Левый Сайдбар источников */}
-      <aside className="w-64 flex-shrink-0 border-r border-bx-border bg-bx-surface-2/65 dark:bg-bx-surface flex flex-col justify-between overflow-hidden">
-        <div className="p-5 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-          <div>
-            <h2 className="text-xs font-black text-bx-text uppercase tracking-wider px-1">Фильтр по темам</h2>
-            <nav className="space-y-1.5 mt-3">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setFilter(cat)}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between border cursor-pointer ${
-                    filter === cat
-                      ? 'bg-blue-600 text-white border-transparent shadow-sm'
-                      : 'text-bx-muted hover:bg-bx-surface/80 hover:text-bx-text border-transparent'
-                  }`}
-                >
-                  <span>{cat === 'Все' ? '📚 Все темы' : `▫️ ${cat}`}</span>
-                  <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full ${
-                    filter === cat ? 'bg-white/20 text-white' : 'bg-bx-surface border border-bx-border text-bx-muted'
-                  }`}>
-                    {cat === 'Все' 
-                      ? STATIC_LEGISLATION_NEWS.length
-                      : STATIC_LEGISLATION_NEWS.filter(n => n.tag === cat).length
-                    }
-                  </span>
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          <div>
-            <h2 className="text-xs font-black text-bx-text uppercase tracking-wider px-1">Ссылки на ведомства</h2>
-            <div className="space-y-2 mt-3">
-              {NEWS_SOURCES.map(source => (
-                <button
-                  key={source.url}
-                  onClick={() => openLink(source.url)}
-                  className="w-full flex items-center justify-between p-3 bg-bx-surface border border-bx-border hover:border-blue-500/20 rounded-xl text-left transition-all hover:bg-bx-surface-2 cursor-pointer shadow-sm"
-                >
-                  <span className="text-xs font-bold text-bx-text">{source.name}</span>
-                  <span className="text-[10px] text-blue-500 font-bold">Открыть ↗</span>
-                </button>
-              ))}
+    <main className="custom-scrollbar flex-1 overflow-y-auto bg-bx-bg px-5 py-5 text-bx-text sm:px-6">
+      <div className="bx-page-container space-y-5">
+        <header className="relative overflow-hidden rounded-[28px] border border-bx-border bg-bx-surface p-6 shadow-sm sm:p-7">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-blue-500/[0.08] blur-3xl" />
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-3xl">
+              <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500/10">
+                  <Icon name="news" className="h-5 w-5" />
+                </span>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em]">Проверяемые изменения для бухгалтера</p>
+              </div>
+              <h1 className="mt-4 text-2xl font-black tracking-tight text-bx-text sm:text-3xl">Законодательство без информационного шума</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-bx-muted">Ключевые показатели, суть изменений и рабочие действия: открыть официальный источник, разобрать влияние с AI или поставить проверку в план.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => navigate('/ai')} className="flex min-h-11 items-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/10 px-4 text-xs font-bold text-violet-700 transition-colors hover:bg-violet-500/15 dark:text-violet-300">
+                <Icon name="ai" className="h-4 w-4" />
+                Спросить AI
+              </button>
+              <button onClick={() => navigate('/planner')} className="flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition-colors hover:bg-blue-500">
+                <Icon name="planner" className="h-4 w-4" />
+                План работ
+              </button>
             </div>
           </div>
-        </div>
+        </header>
 
-        <div className="p-4 border-t border-bx-border bg-bx-surface-2/20 text-center">
-          <p className="text-[9.5px] text-bx-muted leading-relaxed font-semibold">
-            Показатели сверены с Налоговым Кодексом Республики Узбекистан на 2026 г.
-          </p>
-        </div>
-      </aside>
-
-      {/* Правая панель: Сетка и Хронология по пунктам */}
-      <main className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-        
-        {/* Шапка новостей */}
-        <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-0.5">
-            <h1 className="text-base font-extrabold text-bx-text uppercase tracking-wider flex items-center gap-2">
-              ⚖️ Изменения законодательства
-            </h1>
-            <p className="text-xs text-bx-muted">Ключевые макропоказатели и понятная лента изменений для бухгалтера по пунктам</p>
-          </div>
-        </div>
-
-        {/* Горизонтальный ряд текущих ставок */}
         {filter === 'Все' && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-bx-surface border border-bx-border rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-              <span className="text-[9px] font-bold text-bx-muted uppercase tracking-wider">БРВ (Базовая величина)</span>
-              <p className="text-lg font-black text-slate-900 dark:text-white mt-1.5 leading-none">{brvValue} <span className="text-[10px] text-bx-muted font-bold">сум</span></p>
-            </div>
-            <div className="bg-bx-surface border border-bx-border rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-              <span className="text-[9px] font-bold text-bx-muted uppercase tracking-wider">МРОТ (Мин. оплата труда)</span>
-              <p className="text-lg font-black text-slate-900 dark:text-white mt-1.5 leading-none">{mrotValue} <span className="text-[10px] text-bx-muted font-bold">сум</span></p>
-            </div>
-            <div className="bg-bx-surface border border-bx-border rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-              <span className="text-[9px] font-bold text-bx-muted uppercase tracking-wider">НДС ставка</span>
-              <p className="text-lg font-black text-blue-600 dark:text-blue-400 mt-1.5 leading-none">{ndsValue}</p>
-            </div>
-            <div className="bg-bx-surface border border-bx-border rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-              <span className="text-[9px] font-bold text-bx-muted uppercase tracking-wider">Ставка Центробанка</span>
-              <p className="text-lg font-black text-amber-600 dark:text-amber-500 mt-1.5 leading-none">{refiValue}</p>
-            </div>
-          </div>
+          <section aria-label="Ключевые показатели" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[
+              { label: 'БРВ', hint: 'Базовая величина', value: brvValue, unit: 'сум', tone: 'text-blue-600 dark:text-blue-400' },
+              { label: 'МРОТ', hint: 'Минимальная оплата', value: mrotValue, unit: 'сум', tone: 'text-emerald-600 dark:text-emerald-400' },
+              { label: 'НДС', hint: 'Базовая ставка', value: ndsValue, unit: '', tone: 'text-violet-600 dark:text-violet-400' },
+              { label: 'Ставка ЦБ', hint: 'Основная ставка', value: refiValue, unit: '', tone: 'text-amber-600 dark:text-amber-400' },
+            ].map(indicator => (
+              <div key={indicator.label} className="rounded-2xl border border-bx-border bg-bx-surface p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-bx-muted">{indicator.label}</span>
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" title="Актуальное значение" />
+                </div>
+                <p className={`mt-3 text-xl font-black tabular-nums ${indicator.tone}`}>{indicator.value} <span className="text-[10px] font-bold text-bx-muted">{indicator.unit}</span></p>
+                <p className="mt-1 text-[10px] font-medium text-bx-muted">{indicator.hint}</p>
+              </div>
+            ))}
+          </section>
         )}
 
-        {/* Сетка изменений — адаптивная, как в Шаблонах документов */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4 items-stretch">
-          {filteredNews.map(item => (
-            <div
+        <section className="rounded-2xl border border-bx-border bg-bx-surface p-3 shadow-sm">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+            <div className="flex flex-wrap gap-2" aria-label="Фильтр новостей">
+              {categories.map(category => {
+                const count = category === 'Все' ? LEGISLATION_NEWS.length : LEGISLATION_NEWS.filter(item => item.tag === category).length;
+                return (
+                  <button key={category} onClick={() => setFilter(category)} aria-pressed={filter === category} className={`flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs font-bold transition-colors ${filter === category ? 'border-blue-600 bg-blue-600 text-white' : 'border-bx-border bg-bx-bg text-bx-muted hover:text-bx-text'}`}>
+                    {category}
+                    <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${filter === category ? 'bg-white/20' : 'bg-bx-surface-2'}`}>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap gap-1.5 xl:ml-auto" aria-label="Официальные источники">
+              {NEWS_SOURCES.map(source => (
+                <button key={source.url} onClick={() => openLink(source.url)} className="flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[10px] font-bold text-bx-muted transition-colors hover:bg-bx-surface-2 hover:text-blue-600 dark:hover:text-blue-400">
+                  {source.name}
+                  <Icon name="arrowR" className="h-3 w-3" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section aria-label="Лента изменений" className="grid items-stretch gap-4 xl:grid-cols-2">
+          {filteredNews.map((item, itemIndex) => (
+            <article
               key={item.id}
-              className="bg-bx-surface border border-bx-border rounded-2xl p-5 shadow-sm flex flex-col gap-4 hover:shadow-md hover:border-blue-500/30 transition-all relative overflow-hidden group h-full"
+              className={`group relative flex h-full flex-col overflow-hidden rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm transition-colors hover:border-blue-500/30 sm:p-6 ${itemIndex === 0 && filter === 'Все' ? 'xl:col-span-2' : ''}`}
             >
-              {/* Header карточки */}
-              <div className="flex items-center justify-between gap-3 flex-wrap border-b border-bx-border/60 pb-3">
-                <div className="flex items-center gap-3">
-                  <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${item.tagColor}`}>
-                    {item.tag}
-                  </span>
-                  <h3 className="text-xs font-black text-bx-text uppercase tracking-wide group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {item.title}
-                  </h3>
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-bx-border pb-4">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`rounded-lg border px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] ${item.tagColor}`}>{item.tag}</span>
+                    {itemIndex === 0 && filter === 'Все' && <span className="rounded-lg bg-violet-500/10 px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-violet-700 dark:text-violet-300">Главное</span>}
+                  </div>
+                  <h2 className="mt-3 text-lg font-black leading-tight tracking-tight text-bx-text transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400 sm:text-xl">{item.title}</h2>
                 </div>
-                <div className="flex items-center gap-3 text-[10px] text-bx-muted font-mono font-bold">
-                  <span>Источник: {item.source}</span>
-                  <span>·</span>
-                  <span>{new Date(item.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                <div className="text-right text-[10px] font-semibold leading-relaxed text-bx-muted">
+                  <span className="block">{new Date(item.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                  <span className="block">Источник: {item.source}</span>
                 </div>
               </div>
 
-              {/* Маркированный список ПО ПУНКТАМ */}
-              <div className="space-y-2.5">
-                {item.points.map((pt, index) => (
-                  <div key={index} className="flex gap-2.5 items-start">
-                    <span className="w-5 h-5 rounded-lg bg-bx-surface-2 border border-bx-border text-bx-text text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-inner">
+              <div className={`mt-5 grid gap-3 ${itemIndex === 0 && filter === 'Все' ? 'lg:grid-cols-3' : ''}`}>
+                {item.points.map((point, index) => (
+                  <div key={index} className="flex items-start gap-3 rounded-xl border border-bx-border/70 bg-bx-bg p-3">
+                    <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-lg bg-blue-500/10 text-[10px] font-black text-blue-600 dark:text-blue-400">
                       {index + 1}
                     </span>
-                    <p className="text-xs text-bx-muted leading-relaxed font-semibold">
-                      {pt}
-                    </p>
+                    <p className="text-xs font-medium leading-relaxed text-bx-muted">{point}</p>
                   </div>
                 ))}
               </div>
 
-              {/* Ссылка на источник */}
-              <div className="pt-2 mt-auto flex justify-end">
-                <button
-                  onClick={() => openLink(item.url)}
-                  className="px-3.5 py-1.5 bg-bx-surface-2 hover:bg-bx-surface border border-bx-border text-bx-text hover:text-blue-600 text-[10px] font-bold rounded-xl transition-all cursor-pointer shadow-sm"
-                >
-                  Читать официальный документ ↗
+              <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
+                <button onClick={() => navigate(`/news/${item.id}`)} className="flex min-h-10 items-center gap-2 rounded-xl bg-blue-600 px-3 text-[10px] font-extrabold text-white transition-colors hover:bg-blue-500">
+                  <Icon name="news" className="h-3.5 w-3.5" />
+                  Читать материал
+                </button>
+                <button onClick={() => askAiAbout(item)} className="flex min-h-10 items-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/10 px-3 text-[10px] font-bold text-violet-700 transition-colors hover:bg-violet-500/15 dark:text-violet-300">
+                  <Icon name="ai" className="h-3.5 w-3.5" />
+                  Разобрать с AI
+                </button>
+                <button onClick={() => createTaskFromNews(item)} className="flex min-h-10 items-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/5 px-3 text-[10px] font-bold text-blue-600 transition-colors hover:bg-blue-500/10 dark:text-blue-400">
+                  <Icon name="planner" className="h-3.5 w-3.5" />
+                  В план работ
+                </button>
+                <button onClick={() => openLink(item.url)} className="flex min-h-10 items-center gap-2 rounded-xl px-3 text-[10px] font-bold text-bx-muted transition-colors hover:bg-bx-surface-2 hover:text-bx-text xl:ml-auto">
+                  Официальный источник
+                  <Icon name="arrowR" className="h-3.5 w-3.5" />
                 </button>
               </div>
-            </div>
+            </article>
           ))}
 
           {filteredNews.length === 0 && (
-            <div className="col-span-full text-center py-20 bg-bx-surface border border-bx-border border-dashed rounded-2xl text-bx-muted">
-              <span className="text-3xl block mb-2">📅</span>
-              <p className="text-xs font-bold">Изменений в выбранном разделе пока нет</p>
-              <p className="text-[10px] mt-1">Попробуйте выбрать другую тему в меню слева</p>
+            <div className="col-span-full rounded-3xl border border-dashed border-bx-border bg-bx-surface py-16 text-center text-bx-muted">
+              <Icon name="news" className="mx-auto h-7 w-7" />
+              <p className="mt-3 text-sm font-bold text-bx-text">Изменений в выбранном разделе пока нет</p>
+              <p className="mt-1 text-xs">Выберите другую тему.</p>
             </div>
           )}
-        </div>
+        </section>
 
-      </main>
-    </div>
+        <p className="pb-4 text-center text-[10px] font-medium leading-relaxed text-bx-muted">Показатели и формулировки требуют проверки по официальным источникам перед принятием решения.</p>
+      </div>
+    </main>
   );
 }

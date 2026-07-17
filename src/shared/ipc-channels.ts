@@ -17,6 +17,7 @@ export const IPC = {
   WEATHER_GET: 'widget:weather:get',
   CURRENCY_GET: 'widget:currency:get',
   CURRENCY_ON_DATE: 'widget:currency:onDate',
+  CURRENCY_BANKS_GET: 'widget:currency:banks:get',
   // PC Cleaner
   PC_SCAN: 'pc:scan',
   PC_CLEAN: 'pc:clean',
@@ -49,4 +50,3 @@ export const IPC = {
   WIN_CLOSE: 'win:close',
   WIN_IS_MAXIMIZED: 'win:isMaximized'
 } as const
-
