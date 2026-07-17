@@ -16,7 +16,7 @@ import type { CacheScanResult, ProcessEntry } from '../../shared/types'
 type Panel = 'menu' | 'ai' | 'task' | 'note' | 'translator' | 'tools' | 'home' | 'wardrobe' | 'settings' | 'intro' | null
 type BxWidgetWindow = Window & { bx?: { tray?: { openApp?: (route?: string) => Promise<void>; getPinned?: () => Promise<boolean>; setPinned?: (pinned: boolean) => Promise<boolean>; dockToTaskbar?: () => Promise<void>; resizeWidget?: (width: number, height: number) => Promise<void>; showNotification?: (title: string, body: string, route?: string) => Promise<boolean> }; onec?: { scanCache?: () => Promise<CacheScanResult>; cleanCache?: (paths: string[], backup?: boolean) => Promise<{ deletedPaths: string[]; failedPaths: Array<{ path: string }>; freedBytes: number }>; listProcesses?: () => Promise<ProcessEntry[]>; killProcesses?: (pids: number[]) => Promise<{ killed: number[]; failed: Array<{ pid: number }> }> } } }
 type BixState = { coins: number; needs: { food: number; mood: number; energy: number }; lastDailyClaim: string | null }
-type BixReminder = { id: string; title: string; date: string; type: string }
+type BixReminder = { id: string; title: string; date: string; type: string; reminder_at?: string | null }
 type JokeFrequency = 'rare' | 'normal' | 'often'
 type BixSettings = { jokesEnabled: boolean; jokeFrequency: JokeFrequency; quietHours: boolean; quietFrom: string; quietTo: string; privateReminders: boolean; notificationsEnabled?: boolean; reducedMotion: boolean }
 type BixCatalogItem = { sku: string; title: string; category: string; price: number; plan_required: string; visual_key: string }
@@ -256,18 +256,21 @@ export default function BixWidget() {
       if (!user) return
       const { data } = await supabase
         .from('bx_events')
-        .select('id, title, date, type')
+        .select('id, title, date, type, reminder_at')
         .eq('user_id', user.id)
         .in('type', ['task', 'tax_deadline'])
         .neq('status', 'done')
         .lte('date', todayISO())
         .order('date', { ascending: true })
-        .limit(1)
-      const next = data?.[0] as BixReminder | undefined
+        .limit(20)
+      // Задача с заданным временем не должна тревожить с утра: показываем её
+      // только когда действительно наступил reminder_at. Для задач без времени
+      // сохраняем привычное напоминание в день срока.
+      const next = data?.find(item => !item.reminder_at || Date.parse(item.reminder_at) <= Date.now()) as BixReminder | undefined
       setReminder(next ?? null)
     }
     void refreshReminder()
-    const timer = window.setInterval(() => void refreshReminder(), 5 * 60 * 1000)
+    const timer = window.setInterval(() => void refreshReminder(), 60 * 1000)
     return () => window.clearInterval(timer)
   }, [])
 
