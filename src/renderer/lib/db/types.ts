@@ -3,16 +3,44 @@
 export type TaskStatus = 'todo' | 'in_progress' | 'done';
 export type TaskPriority = 'low' | 'normal' | 'high';
 
-export type CompanyLegalForm = 'ooo' | 'ip' | 'self_employed' | 'other';
+export type CompanyLegalForm =
+  | 'ooo'
+  | 'ip'
+  | 'joint_venture'
+  | 'family_enterprise'
+  | 'farm'
+  | 'private_enterprise'
+  | 'jsc'
+  | 'self_employed'
+  | 'other';
 export type CompanyProfileStatus = 'draft' | 'confirmed';
 export type CompanyLanguage = 'ru' | 'uz';
 export type CompanyNotificationChannel = 'in_app' | 'desktop';
+
+export interface CompanyProfileDetails {
+  owner_name?: string;
+  director_name?: string;
+  legal_address?: string;
+  activity_address?: string;
+  bank_name?: string;
+  mfo?: string;
+  bank_account?: string;
+  foreign_partner_country?: string;
+  foreign_share_percent?: string;
+  share_type?: 'ordinary' | 'preferred' | '';
+  farm_region?: string;
+  farm_area_hectares?: string;
+  farm_specialization?: string;
+  seasonal?: boolean;
+  custom_legal_form?: string;
+}
 
 export interface CompanyProfileInput {
   name: string;
   inn?: string | null;
   regime: string;
   legal_form: CompanyLegalForm;
+  profile_details: CompanyProfileDetails;
   registration_date: string | null;
   bx_start_date: string;
   is_vat_payer: boolean;
@@ -39,6 +67,7 @@ export interface Company {
   color: string | null;      // hex для метки
   is_active: boolean;
   legal_form: CompanyLegalForm | null;
+  profile_details: CompanyProfileDetails;
   registration_date: string | null;
   bx_start_date: string | null;
   is_vat_payer: boolean;

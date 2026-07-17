@@ -11,6 +11,7 @@ export function buildCompanyInsert(input: CompanyProfileForm & { color?: string 
     regime: input.regime,
     color: input.color ?? null,
     legal_form: input.legal_form,
+    profile_details: input.profile_details,
     registration_date: input.registration_date,
     bx_start_date: input.bx_start_date,
     is_vat_payer: input.is_vat_payer,
