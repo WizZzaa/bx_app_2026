@@ -21,6 +21,8 @@
   --bx-text: #f8fafc;        /* основной текст (светлее) */
   --bx-muted: #cbd5e1;       /* приглушённый текст (сделали заметно светлее для читаемости) */
   --bx-accent: #3b82f6;      /* акцент (blue-500) */
+  --bx-on-accent: #ffffff;   /* основной текст/иконки поверх акцента */
+  --bx-on-accent-muted: #f1f5f9; /* вторичная подпись поверх акцента */
   --bx-sidebar-text: #ffffff; /* цвет текста неактивных пунктов сайдбара */
   --bx-radius: 0.75rem;
 
@@ -32,6 +34,8 @@
   --bx-text-rgb: 248 250 252;
   --bx-muted-rgb: 203 213 225;
   --bx-accent-rgb: 59 130 246;
+  --bx-on-accent-rgb: 255 255 255;
+  --bx-on-accent-muted-rgb: 241 245 249;
 
   /* Стандартная Tailwind blue-палитра как переменные: тема может заменить
      основной акцент сразу во всём приложении. */
@@ -78,6 +82,8 @@ html {
   --bx-text: #1e293b;        /* slate-800 — нейтральный тёмный, без индиго */
   --bx-muted: #64748b;       /* slate-500 — нейтральный приглушённый */
   --bx-accent: #4f46e5;      /* индиго-акцент (кнопки/ссылки) */
+  --bx-on-accent: #ffffff;
+  --bx-on-accent-muted: #f1f5f9;
   --bx-sidebar-text: #333333; /* чистый тёмно-серый без цветных отливов */
 
   --bx-bg-rgb: 244 245 247;
@@ -88,6 +94,8 @@ html {
   --bx-text-rgb: 30 41 59;
   --bx-muted-rgb: 100 116 139;
   --bx-accent-rgb: 79 70 229;
+  --bx-on-accent-rgb: 255 255 255;
+  --bx-on-accent-muted-rgb: 241 245 249;
 }
 
 /* Третья тема по палитре пользователя: #111111 / #FFFFFF / #B7F500 / #333333. */
@@ -101,6 +109,8 @@ html {
   --bx-text: #ffffff;
   --bx-muted: #b8b8b8;
   --bx-accent: #b7f500;
+  --bx-on-accent: #111111;
+  --bx-on-accent-muted: #344500;
   --bx-sidebar-text: #ffffff;
 
   --bx-bg-rgb: 17 17 17;
@@ -111,6 +121,8 @@ html {
   --bx-text-rgb: 255 255 255;
   --bx-muted-rgb: 184 184 184;
   --bx-accent-rgb: 183 245 0;
+  --bx-on-accent-rgb: 17 17 17;
+  --bx-on-accent-muted-rgb: 52 69 0;
 
   --bx-blue-50-rgb: 247 255 230;
   --bx-blue-100-rgb: 239 255 204;
@@ -137,6 +149,8 @@ html {
   --bx-text: #17131f;
   --bx-muted: #625d69;
   --bx-accent: #75639a;
+  --bx-on-accent: #ffffff;
+  --bx-on-accent-muted: #f1f5f9;
   --bx-sidebar-text: #17131f;
 
   --bx-bg-rgb: 247 245 242;
@@ -147,6 +161,8 @@ html {
   --bx-text-rgb: 23 19 31;
   --bx-muted-rgb: 98 93 105;
   --bx-accent-rgb: 117 99 154;
+  --bx-on-accent-rgb: 255 255 255;
+  --bx-on-accent-muted-rgb: 241 245 249;
 
   --bx-blue-50-rgb: 247 245 250;
   --bx-blue-100-rgb: 240 236 245;
@@ -165,7 +181,7 @@ html {
 .lime .bg-blue-500.text-white,
 .lime .bg-blue-600.text-white,
 .lime .bg-blue-700.text-white {
-  color: #111111;
+  color: var(--bx-on-accent);
 }
 
 /* Анимации */

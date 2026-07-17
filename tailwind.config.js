@@ -41,6 +41,8 @@ module.exports = {
           text: 'rgb(var(--bx-text-rgb) / <alpha-value>)',
           muted: 'rgb(var(--bx-muted-rgb) / <alpha-value>)',
           accent: 'rgb(var(--bx-accent-rgb) / <alpha-value>)',
+          'on-accent': 'rgb(var(--bx-on-accent-rgb) / <alpha-value>)',
+          'on-accent-muted': 'rgb(var(--bx-on-accent-muted-rgb) / <alpha-value>)',
         },
       },
     },

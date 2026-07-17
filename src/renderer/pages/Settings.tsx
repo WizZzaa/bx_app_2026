@@ -426,16 +426,16 @@ export default function Settings() {
       <aside className="flex w-[292px] flex-shrink-0 flex-col border-r border-bx-border bg-bx-surface-2/55">
         <div className="border-b border-bx-border px-5 py-5">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20"><Icon name="settings" className="h-5 w-5" /></span>
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-bx-on-accent shadow-lg shadow-blue-600/20"><Icon name="settings" className="h-5 w-5" /></span>
             <div><h1 className="text-sm font-black">Настройки BX</h1><p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-bx-muted">Control center · v{APP_VERSION}</p></div>
           </div>
         </div>
         <nav className="custom-scrollbar flex-1 space-y-1 overflow-y-auto p-3" aria-label="Разделы настроек">
           {navItems.map(item => (
             <button key={item.id} type="button" onClick={() => setActiveTab(item.id)} aria-current={activeTab === item.id ? 'page' : undefined}
-              className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${activeTab === item.id ? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/15' : 'border-transparent text-bx-muted hover:border-bx-border hover:bg-bx-surface hover:text-bx-text'}`}>
-              <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${activeTab === item.id ? 'bg-white/15' : 'border border-bx-border bg-bx-surface'}`}><Icon name={item.icon} className="h-4 w-4" /></span>
-              <span className="min-w-0"><span className="block text-xs font-black">{item.label}</span><span className={`mt-0.5 block truncate text-[10px] ${activeTab === item.id ? 'text-white/75' : 'text-bx-muted'}`}>{item.desc}</span></span>
+              className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${activeTab === item.id ? 'border-blue-600 bg-blue-600 text-bx-on-accent shadow-md shadow-blue-600/15' : 'border-transparent text-bx-muted hover:border-bx-border hover:bg-bx-surface hover:text-bx-text'}`}>
+              <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${activeTab === item.id ? 'bg-bx-on-accent/10 text-bx-on-accent' : 'border border-bx-border bg-bx-surface'}`}><Icon name={item.icon} className="h-4 w-4" /></span>
+              <span className="min-w-0"><span className="block text-xs font-black">{item.label}</span><span className={`mt-0.5 block truncate text-[10px] font-semibold ${activeTab === item.id ? 'text-bx-on-accent-muted' : 'text-bx-muted'}`}>{item.desc}</span></span>
             </button>
           ))}
         </nav>
