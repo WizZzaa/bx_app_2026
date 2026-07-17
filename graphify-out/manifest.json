@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/layout/Topbar.tsx": {
-    "mtime": 1784295352.2844305,
-    "ast_hash": "879764ab8b08441bf3c40ef39778e770",
+    "mtime": 1784296414.3996515,
+    "ast_hash": "7560a4f3218b8b334fa56c56100c2123",
     "semantic_hash": ""
   },
   "src/renderer/components/ui/Button.tsx": {
@@ -495,13 +495,13 @@
     "semantic_hash": ""
   },
   "src/renderer/lib/settingsBackup.test.ts": {
-    "mtime": 1784295352.2866597,
-    "ast_hash": "789d85b5caa0c3d4d3058efee6de95a2",
+    "mtime": 1784296414.400127,
+    "ast_hash": "33829108efb7525527b478d86696c9f3",
     "semantic_hash": ""
   },
   "src/renderer/lib/settingsBackup.ts": {
-    "mtime": 1784295352.2853944,
-    "ast_hash": "8775a76ea156825c171d49ff5fb5757c",
+    "mtime": 1784296414.3998377,
+    "ast_hash": "fb6daf51d7bc78f480139d81835d897f",
     "semantic_hash": ""
   },
   "src/renderer/lib/templateGuidance.test.ts": {
@@ -515,8 +515,8 @@
     "semantic_hash": ""
   },
   "src/renderer/lib/theme.ts": {
-    "mtime": 1784295352.280732,
-    "ast_hash": "9a1a8e588fa203416b9df3995d8070e1",
+    "mtime": 1784296454.8542705,
+    "ast_hash": "72d23c8743b9886767881a07795acfaa",
     "semantic_hash": ""
   },
   "src/renderer/lib/translator.test.ts": {
@@ -695,8 +695,8 @@
     "semantic_hash": ""
   },
   "src/renderer/pages/Settings.tsx": {
-    "mtime": 1784295646.3858743,
-    "ast_hash": "4f856383ca0cb1979e1127524513efa7",
+    "mtime": 1784296522.0078921,
+    "ast_hash": "ca06154b50518f8bbbd0b707a1a2e9c5",
     "semantic_hash": ""
   },
   "src/renderer/pages/Support.tsx": {
@@ -1255,8 +1255,8 @@
     "semantic_hash": ""
   },
   "src/renderer/lib/theme.test.ts": {
-    "mtime": 1784295352.287733,
-    "ast_hash": "1c821aa1f1cdc958fae1266a97fed9e4",
+    "mtime": 1784296454.8547375,
+    "ast_hash": "a6604126b1aea86858acbed5b32ae943",
     "semantic_hash": ""
   },
   "src/renderer/pages/tools/pdfTools.regression.test.ts": {

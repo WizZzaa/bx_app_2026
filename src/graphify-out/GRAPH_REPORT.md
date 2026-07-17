@@ -1,7 +1,7 @@
 # Graph Report - src  (2026-07-17)
 
 ## Corpus Check
-- 246 files · ~321,195 words
+- 246 files · ~321,369 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e571f077`
+- Built from commit: `ffea061c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -379,7 +379,7 @@ Cohesion: 0.20
 Nodes (4): DocumentWorkspace, STEPS, IconName, PATHS
 
 ## Knowledge Gaps
-- **302 isolated node(s):** `Props`, `NotifyDays`, `IdleLock`, `TabType`, `DashboardWidgets` (+297 more)
+- **302 isolated node(s):** `NotifyDays`, `IdleLock`, `TabType`, `DashboardWidgets`, `DataStats` (+297 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -387,12 +387,12 @@ Nodes (4): DocumentWorkspace, STEPS, IconName, PATHS
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `supabase` connect `Finance.tsx` to `CompanyContext.tsx`, `useToast`, `Library.tsx`, `ipc.ts`, `referenceRepo.ts`, `widgetsApi.ts`, `Translator.tsx`, `useEvents.ts`, `TrayView.tsx`, `CalendarPage.tsx`, `numToWords.ts`, `errorReporter.ts`, `types.ts`, `syncQueue.ts`, `Topbar.tsx`, `supabase.ts`, `Settings.tsx`, `CurrencyHistory.tsx`, `Planner.tsx`, `pcClean.ts`?**
-  _High betweenness centrality (0.075) - this node is a cross-community bridge._
+  _High betweenness centrality (0.074) - this node is a cross-community bridge._
 - **Why does `todayISO()` connect `todayISO` to `EcpManager.tsx`, `Topbar.tsx`, `Templates.tsx`, `ipc.ts`, `referenceRepo.ts`, `widgetsApi.ts`, `Planner.tsx`, `useEvents.ts`, `TrayView.tsx`, `DigestView.tsx`, `Currency.tsx`, `Finance.tsx`, `ListView.tsx`, `FocusView.tsx`, `CalendarView.tsx`, `Dashboard.tsx`, `currency.ts`?**
-  _High betweenness centrality (0.061) - this node is a cross-community bridge._
+  _High betweenness centrality (0.060) - this node is a cross-community bridge._
 - **Why does `useToast()` connect `ToastContext.tsx` to `Calc.tsx`, `Topbar.tsx`, `useToast`, `Library.tsx`, `Templates.tsx`, `ipc.ts`, `Planner.tsx`, `BxEvent`, `Translator.tsx`, `Finance.tsx`, `numToWords.ts`, `WidgetBoundary`, `types.ts`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
-- **What connects `Props`, `NotifyDays`, `IdleLock` to the rest of the system?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **What connects `NotifyDays`, `IdleLock`, `TabType` to the rest of the system?**
   _302 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Settings.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.14736842105263157 - nodes in this community are weakly interconnected._
