@@ -12,6 +12,8 @@ import { signFile, verifySig, pickFileToSign, pickSigFile } from './services/ecp
 import { readBackupConfig, writeBackupConfig } from './services/onecBackupScheduler'
 import { fetchTrader } from './services/innCheck'
 import { fetchNewsFeed } from './services/newsFeed'
+import { openSiteSession, resetSiteSession } from './services/siteSession'
+import type { SiteResetMode } from '../shared/siteSession'
 
 export function registerIpcHandlers() {
   // --- Cache ---
@@ -39,6 +41,12 @@ export function registerIpcHandlers() {
   ipcMain.handle(IPC.PC_SCAN, () => scanPcTemp())
   ipcMain.handle(IPC.PC_CLEAN, (_e, ids: string[]) => cleanPcTemp(ids))
   ipcMain.handle(IPC.PC_CHECK_BROWSERS, (_e, ids: string[]) => checkRunningBrowsers(ids))
+
+  // --- Isolated web-service window ---
+  ipcMain.handle(IPC.SITE_SESSION_OPEN, (event, url: string) =>
+    openSiteSession(url, BrowserWindow.fromWebContents(event.sender)))
+  ipcMain.handle(IPC.SITE_SESSION_RESET, (event, url: string, mode: SiteResetMode) =>
+    resetSiteSession(url, mode, BrowserWindow.fromWebContents(event.sender)))
 
   // --- ECP / E-Imzo ---
   ipcMain.handle(IPC.ECP_PICK_PFX, () => pickPfxFile())

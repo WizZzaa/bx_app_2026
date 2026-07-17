@@ -17,6 +17,7 @@ import type { ParsedEcpInfo } from './main/services/ecpParser'
 import type { TraderInfo } from './main/services/innCheck'
 import type { NewsFeedItem } from './main/services/newsFeed'
 import type { UpdateSnapshot } from './main/services/updatePolicy'
+import type { SiteResetMode, SiteSessionResult } from './shared/siteSession'
 
 const api = {
   platform: process.platform,
@@ -44,6 +45,11 @@ const api = {
     scan: (): Promise<TempDirInfo[]> => ipcRenderer.invoke(IPC.PC_SCAN),
     clean: (ids: string[]): Promise<PcCleanResult> => ipcRenderer.invoke(IPC.PC_CLEAN, ids),
     checkBrowsers: (ids: string[]): Promise<string[]> => ipcRenderer.invoke(IPC.PC_CHECK_BROWSERS, ids)
+  },
+  siteSession: {
+    open: (url: string): Promise<SiteSessionResult> => ipcRenderer.invoke(IPC.SITE_SESSION_OPEN, url),
+    reset: (url: string, mode: SiteResetMode): Promise<SiteSessionResult> =>
+      ipcRenderer.invoke(IPC.SITE_SESSION_RESET, url, mode)
   },
   ecp: {
     pickPfx: (): Promise<string | null> => ipcRenderer.invoke(IPC.ECP_PICK_PFX),
