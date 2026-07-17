@@ -2,9 +2,14 @@ name: Sync web application
 
 on:
   workflow_run:
-    workflows: [CI]
+    workflows: [Release]
     types: [completed]
   workflow_dispatch:
+    inputs:
+      app_ref:
+        description: Release tag or commit to publish (empty = latest release tag)
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -18,14 +23,42 @@ jobs:
     name: Update app in busines_bx
     if: >-
       (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.head_branch == 'master') ||
+       github.event.workflow_run.conclusion == 'success') ||
       github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    env:
-      APP_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
     steps:
+      - name: Check out release history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve published release commit
+        id: release
+        env:
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+          MANUAL_REF: ${{ inputs.app_ref }}
+        run: |
+          ref="${RELEASE_SHA:-$MANUAL_REF}"
+          if [ -z "$ref" ]; then
+            ref=$(git tag --list 'v*' --sort=-version:refname | head -n 1)
+          fi
+          if [ -z "$ref" ]; then
+            echo "No release tag was found" >&2
+            exit 1
+          fi
+
+          app_sha=$(git rev-list -n 1 "$ref")
+          if [[ ! "$app_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Unable to resolve release ref: $ref" >&2
+            exit 1
+          fi
+
+          app_version=$(git show "$app_sha:package.json" | jq -r '.version')
+          echo "app_sha=$app_sha" >> "$GITHUB_OUTPUT"
+          echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
+          echo "Publishing BX $app_version from $ref ($app_sha)"
+
       - name: Configure restricted deploy key
         env:
           DEPLOY_KEY: ${{ secrets.BX_PARENT_DEPLOY_KEY }}
@@ -41,6 +74,9 @@ jobs:
           ssh-keyscan -H github.com >> "$HOME/.ssh/known_hosts"
 
       - name: Advance web repository app pointer
+        env:
+          APP_SHA: ${{ steps.release.outputs.app_sha }}
+          APP_VERSION: ${{ steps.release.outputs.app_version }}
         run: |
           if [[ ! "$APP_SHA" =~ ^[0-9a-f]{40}$ ]]; then
             echo "Invalid app commit: $APP_SHA" >&2
@@ -59,5 +95,5 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: sync app ${APP_SHA:0:7}"
+          git commit -m "chore: publish app v$APP_VERSION (${APP_SHA:0:7})"
           git push origin HEAD:master
