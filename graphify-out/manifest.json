@@ -630,13 +630,13 @@
     "semantic_hash": ""
   },
   "src/renderer/pages/Currency.test.ts": {
-    "mtime": 1784236627.1727173,
-    "ast_hash": "3bd5ce40880b525ba8a9ec05546c9d92",
+    "mtime": 1784302644.7414153,
+    "ast_hash": "3e96ecd6fd6ecb975ebe7e5402d0d336",
     "semantic_hash": ""
   },
   "src/renderer/pages/Currency.tsx": {
-    "mtime": 1784236993.5777779,
-    "ast_hash": "03291657cdd2685f79bdde19c263ddc5",
+    "mtime": 1784302993.7480364,
+    "ast_hash": "8d71fada5ffae0ef54b508178bfb8534",
     "semantic_hash": ""
   },
   "src/renderer/pages/Dashboard.tsx": {
@@ -1120,8 +1120,8 @@
     "semantic_hash": ""
   },
   "src/shared/version.ts": {
-    "mtime": 1784266413.7653842,
-    "ast_hash": "50b016085ab9780911ac1ebe3c8aecba",
+    "mtime": 1784302645.1950936,
+    "ast_hash": "5aece46f6ed5189c3c3bc9efc0fade64",
     "semantic_hash": ""
   },
   "src/renderer/assets/widgets/horoscope.png": {
