@@ -24,7 +24,7 @@ export interface SettingsBackupSummary {
   counterparties: number
 }
 
-const VALID_THEME = new Set(['dark', 'light', 'lime'])
+const VALID_THEME = new Set(['dark', 'light', 'lime', 'lime-light'])
 const VALID_NOTIFY = new Set(['1', '3', '7', 'off'])
 const VALID_IDLE = new Set(['off', '5', '10', '30', '60'])
 const VALID_SCALE = new Set(['100', '110', '120', '130'])

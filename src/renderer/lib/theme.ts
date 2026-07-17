@@ -1,10 +1,10 @@
 // Единая точка применения темы.
-// Классы .light и .lime включают свои CSS-переменные (globals.css),
+// Классы .light, .lime и .lime-light включают свои CSS-переменные (globals.css),
 // класс .dark управляет Tailwind dark:-вариантами (darkMode: 'class').
 // Лаймовая тема остаётся тёмной по контрастной модели, поэтому получает
 // одновременно классы .dark и .lime.
 
-export const BX_THEMES = ['light', 'dark', 'lime'] as const
+export const BX_THEMES = ['light', 'dark', 'lime', 'lime-light'] as const
 export type BxTheme = typeof BX_THEMES[number]
 export const THEME_KEY = 'bx_theme'
 
@@ -14,9 +14,10 @@ export function normalizeTheme(value: unknown): BxTheme {
 
 export function applyTheme(theme: BxTheme): void {
   const root = document.documentElement
-  root.classList.toggle('light', theme === 'light')
-  root.classList.toggle('dark', theme !== 'light')
+  root.classList.toggle('light', theme === 'light' || theme === 'lime-light')
+  root.classList.toggle('dark', theme === 'dark' || theme === 'lime')
   root.classList.toggle('lime', theme === 'lime')
+  root.classList.toggle('lime-light', theme === 'lime-light')
   root.dataset.theme = theme
 }
 

@@ -23,9 +23,18 @@ describe('application themes', () => {
     expect(currentTheme()).toBe('dark')
   })
 
-  it('cycles through all three themes', () => {
+  it('cycles through all four themes', () => {
     expect(nextTheme('light')).toBe('dark')
     expect(nextTheme('dark')).toBe('lime')
-    expect(nextTheme('lime')).toBe('light')
+    expect(nextTheme('lime')).toBe('lime-light')
+    expect(nextTheme('lime-light')).toBe('light')
+  })
+
+  it('applies the light lime palette without dark variants', () => {
+    applyTheme('lime-light')
+    expect(document.documentElement.classList.contains('lime-light')).toBe(true)
+    expect(document.documentElement.classList.contains('light')).toBe(true)
+    expect(document.documentElement.classList.contains('dark')).toBe(false)
+    expect(document.documentElement.classList.contains('lime')).toBe(false)
   })
 })

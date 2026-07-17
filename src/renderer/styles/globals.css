@@ -125,10 +125,49 @@ html {
   --bx-blue-950-rgb: 40 54 0;
 }
 
+/* Светлая пара к графитовой лаймовой теме: тёплый рабочий фон,
+   белые поверхности и тот же фирменный акцент #B7F500. */
+.lime-light {
+  color-scheme: light;
+  --bx-bg: #f7f5ef;
+  --bx-surface: #ffffff;
+  --bx-surface-2: #eeece6;
+  --bx-border: #d8d5cc;
+  --bx-border-2: #c7c3b9;
+  --bx-text: #111111;
+  --bx-muted: #62645d;
+  --bx-accent: #b7f500;
+  --bx-sidebar-text: #111111;
+
+  --bx-bg-rgb: 247 245 239;
+  --bx-surface-rgb: 255 255 255;
+  --bx-surface-2-rgb: 238 236 230;
+  --bx-border-rgb: 216 213 204;
+  --bx-border-2-rgb: 199 195 185;
+  --bx-text-rgb: 17 17 17;
+  --bx-muted-rgb: 98 100 93;
+  --bx-accent-rgb: 183 245 0;
+
+  --bx-blue-50-rgb: 247 255 230;
+  --bx-blue-100-rgb: 239 255 204;
+  --bx-blue-200-rgb: 225 255 153;
+  --bx-blue-300-rgb: 211 255 92;
+  --bx-blue-400-rgb: 200 255 61;
+  --bx-blue-500-rgb: 194 255 36;
+  --bx-blue-600-rgb: 183 245 0;
+  --bx-blue-700-rgb: 113 151 0;
+  --bx-blue-800-rgb: 78 105 0;
+  --bx-blue-900-rgb: 56 75 0;
+  --bx-blue-950-rgb: 35 47 0;
+}
+
 /* На ярком лаймовом CTA белый текст недостаточно контрастен. */
 .lime .bg-blue-500.text-white,
 .lime .bg-blue-600.text-white,
-.lime .bg-blue-700.text-white {
+.lime .bg-blue-700.text-white,
+.lime-light .bg-blue-500.text-white,
+.lime-light .bg-blue-600.text-white,
+.lime-light .bg-blue-700.text-white {
   color: #111111;
 }
 
