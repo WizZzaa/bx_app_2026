@@ -44,7 +44,7 @@ const READY_TOOLS: Tool[] = [
   { id: 'translit',  icon: 'languages', label: 'Транслитерация',        group: 'Текст и проверки', desc: 'Узбек кирилл ↔ латиница (2019)', component: <Transliterate /> },
   { id: 'bankcheck', icon: 'building',  label: 'Проверка счёта и МФО',  group: 'Текст и проверки', desc: 'Р/с 20 цифр + банк по МФО', component: <BankCheck /> },
   // Система
-  { id: 'ecp',       icon: 'key',      label: 'Менеджер ЭЦП',  group: 'Система', desc: 'Мониторинг ключей и статуса E-Imzo', component: <EcpManager /> },
+  { id: 'ecp',       icon: 'ecp',      label: 'Менеджер ЭЦП',  group: 'Система', desc: 'Мониторинг ключей и статуса E-Imzo', component: <EcpManager /> },
   { id: 'activex',   icon: 'settings', label: 'Настройка ActiveX', group: 'Система', desc: 'Авто-настройка IE для банк-клиентов РУз', component: <ActiveXConfigurator /> },
   { id: 'pccleaner', icon: 'monitor',  label: 'Очистка ПК',    group: 'Система', desc: 'TEMP Windows + кэши браузеров', component: <PcCleaner /> },
   { id: 'site-reset', icon: 'globe', label: 'Сброс веб-сервиса', group: 'Система', desc: 'Очистить кэш только выбранного сайта', component: <SiteSessionReset /> },
