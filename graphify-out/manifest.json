@@ -635,8 +635,8 @@
     "semantic_hash": ""
   },
   "src/renderer/pages/Currency.tsx": {
-    "mtime": 1784302993.7480364,
-    "ast_hash": "8d71fada5ffae0ef54b508178bfb8534",
+    "mtime": 1784303945.4314394,
+    "ast_hash": "3afccfaca951b7078ab535f9892d790c",
     "semantic_hash": ""
   },
   "src/renderer/pages/Dashboard.tsx": {
@@ -1115,13 +1115,13 @@
     "semantic_hash": ""
   },
   "src/shared/types.ts": {
-    "mtime": 1784236557.6812751,
-    "ast_hash": "5d17c62bec35e971f93d944030a84464",
+    "mtime": 1784303533.04333,
+    "ast_hash": "2be354aa4deb1dcf37cb87d15e62baa2",
     "semantic_hash": ""
   },
   "src/shared/version.ts": {
-    "mtime": 1784302645.1950936,
-    "ast_hash": "5aece46f6ed5189c3c3bc9efc0fade64",
+    "mtime": 1784303770.7653136,
+    "ast_hash": "305b992bc529b1165da3f04c6c8c7562",
     "semantic_hash": ""
   },
   "src/renderer/assets/widgets/horoscope.png": {
@@ -1282,6 +1282,16 @@
   "src/shared/siteSession.ts": {
     "mtime": 1784297227.2791636,
     "ast_hash": "81cda802c6ec8530fde20fae2228329b",
+    "semantic_hash": ""
+  },
+  "src/renderer/lib/bankDirectory.test.ts": {
+    "mtime": 1784303533.0454824,
+    "ast_hash": "8491b30901a99d8d1d72ee124855aac4",
+    "semantic_hash": ""
+  },
+  "src/renderer/lib/bankDirectory.ts": {
+    "mtime": 1784303533.045357,
+    "ast_hash": "3b5f047b07154f182a06a5a0780ebaf7",
     "semantic_hash": ""
   }
 }
