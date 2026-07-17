@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="surface" x1="150" y1="120" x2="870" y2="910" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#242424"/>
+      <stop offset="1" stop-color="#111111"/>
+    </linearGradient>
+    <linearGradient id="lime" x1="620" y1="260" x2="810" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C8FF3D"/>
+      <stop offset="1" stop-color="#9BE600"/>
+    </linearGradient>
+  </defs>
+  <rect x="48" y="48" width="928" height="928" rx="228" fill="url(#surface)"/>
+  <rect x="49.5" y="49.5" width="925" height="925" rx="226.5" fill="none" stroke="#FFFFFF" stroke-opacity=".12" stroke-width="3"/>
+  <circle cx="824" cy="200" r="58" fill="#B7F500"/>
+  <path fill="#FFFFFF" d="M232 270h238c91 0 154 52 154 132 0 48-24 88-65 111 55 21 86 66 86 126 0 86-68 145-167 145H232V270Zm126 105v94h96c29 0 47-18 47-47 0-30-19-47-51-47h-92Zm0 195v109h108c35 0 55-20 55-54 0-35-21-55-58-55H358Z"/>
+  <path fill="url(#lime)" d="M570 270h142l84 139 83-139h139L869 508l155 276H883l-91-162-94 162H557l159-274-146-240Z" transform="translate(-64 0)"/>
+</svg>

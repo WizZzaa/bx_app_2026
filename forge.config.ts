@@ -18,6 +18,7 @@ const config: ForgeConfig = {
   ],
   packagerConfig: {
     asar: true,
+    icon: 'resources/icon',
   },
   rebuildConfig: {},
   makers: [
@@ -26,6 +27,7 @@ const config: ForgeConfig = {
       // миграции: от него зависит цепочка обновлений уже установленных версий.
       name: 'app',
       setupExe: 'BX-win32-x64-Setup.exe',
+      setupIcon: 'resources/icon.ico',
       noMsi: true,
     })] : []),
     // Windows ZIP больше не публикуем: старый загрузчик однозначно выберет

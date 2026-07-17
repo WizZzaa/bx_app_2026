@@ -15,6 +15,7 @@ import { todayISO } from '../lib/dates'
 import { parseSettingsBackup, settingsBackupSummary, type SettingsBackupPayload } from '../lib/settingsBackup'
 import { useCompany } from '../lib/CompanyContext'
 import { useNavigate } from 'react-router-dom'
+import type { UpdateSnapshot } from '../../main/services/updatePolicy'
 
 const NOTIFY_KEY = 'bx_notify_days'
 const IDLE_LOCK_KEY = 'bx_idle_lock'
@@ -24,6 +25,7 @@ type IdleLock = 'off' | '5' | '10' | '30' | '60'
 type TabType = 'overview' | 'workspace' | 'notifications' | 'security' | 'ai' | 'team' | 'data' | 'integrations' | 'billing' | 'about'
 type DashboardWidgets = { weather: boolean; currency: boolean; notifications: boolean; horoscope: boolean }
 type DataStats = { templates: number; counterparties: number; transactions: number; employees: number }
+const INITIAL_UPDATE: UpdateSnapshot = { status: 'idle', error: '', version: APP_VERSION, availableVersion: '', mode: 'unsupported' }
 const DEFAULT_WIDGETS: DashboardWidgets = { weather: true, currency: true, notifications: true, horoscope: false }
 const THEME_CHOICES: Array<{ value: BxTheme; label: string; colors: string[] }> = [
   { value: 'light', label: 'Светлая', colors: ['#F4F5F7', '#FFFFFF', '#4F46E5', '#1E293B'] },
@@ -62,6 +64,7 @@ export default function Settings() {
   const [dataStats, setDataStats] = useState<DataStats>({ templates: 0, counterparties: 0, transactions: 0, employees: 0 })
   const [pendingImport, setPendingImport] = useState<SettingsBackupPayload | null>(null)
   const [confirmAction, setConfirmAction] = useState<'reset-pin' | 'clear-cache' | 'sign-out' | null>(null)
+  const [updateInfo, setUpdateInfo] = useState<UpdateSnapshot>(INITIAL_UPDATE)
 
   function openExternalUrl(url: string) {
     const bridge = window as Window & { bx?: { openExternal?: (target: string) => void } }
@@ -71,6 +74,24 @@ export default function Settings() {
   const handleToggleAutostart = async (val: boolean) => {
     setAutostartEnabled(val)
     if (window.bx?.autostart?.set) await window.bx.autostart.set(val)
+  }
+
+  const handleCheckForUpdates = async () => {
+    const updater = window.bx?.updater
+    if (!updater) {
+      toast.error('Проверка обновлений доступна в установленной версии BX')
+      return
+    }
+    setUpdateInfo(current => ({ ...current, status: 'checking', error: '' }))
+    try {
+      setUpdateInfo(await updater.checkForUpdates())
+    } catch {
+      setUpdateInfo(current => ({ ...current, status: 'error', error: 'Не удалось проверить обновления' }))
+    }
+  }
+
+  const handleInstallUpdate = () => {
+    void window.bx?.updater?.installUpdate()
   }
 
   const handleRedeemPromo = async () => {
@@ -195,6 +216,15 @@ export default function Settings() {
     Promise.all([db.templates.count(), db.counterparties.count(), db.transactions.count(), db.employees.count()])
       .then(([templates, counterparties, transactions, employees]) => setDataStats({ templates, counterparties, transactions, employees }))
       .catch(() => undefined)
+  }, [])
+
+  useEffect(() => {
+    const updater = window.bx?.updater
+    if (!updater) return undefined
+    let active = true
+    updater.getStatus().then(snapshot => { if (active) setUpdateInfo(snapshot) }).catch(() => undefined)
+    const unsubscribe = updater.onUpdateStatus(snapshot => { if (active) setUpdateInfo(snapshot) })
+    return () => { active = false; unsubscribe() }
   }, [])
 
   function saveNotify(v: NotifyDays) {
@@ -420,6 +450,14 @@ export default function Settings() {
   const currentHeader = sectionTitle[activeTab]
   const securityScore = pinEnabled ? (idleLock === 'off' ? 75 : 100) : 35
   const backupSummary = pendingImport ? settingsBackupSummary(pendingImport) : null
+  const updateStatusLabel: Record<UpdateSnapshot['status'], string> = {
+    idle: 'Готово к проверке',
+    checking: 'Проверяем релизы…',
+    latest: 'Установлена актуальная версия',
+    downloading: 'Обновление загружается…',
+    ready: updateInfo.availableVersion ? `Версия ${updateInfo.availableVersion} готова` : 'Обновление готово',
+    error: updateInfo.error || 'Не удалось проверить обновления',
+  }
 
   return (
     <div className="flex flex-1 overflow-hidden bg-bx-bg text-bx-text">
@@ -552,7 +590,22 @@ export default function Settings() {
           )}
 
           {activeTab === 'about' && (
-            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]"><section className={`${card} p-6`}><span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-lg font-black text-white">BX</span><h3 className="mt-5 text-xl font-black">Помощник бухгалтера Республики Узбекистан</h3><p className="mt-3 max-w-2xl text-sm leading-relaxed text-bx-muted">BX объединяет планирование, документы, расчёты, знания и ИИ в одном спокойном рабочем контуре. Цель — убирать рутину, не прятать важные действия и оставлять контроль за специалистом.</p><div className="mt-6 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-bx-bg p-4"><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Версия</p><p className="mt-1 font-mono text-sm font-black">{APP_VERSION}</p></div><div className="rounded-2xl bg-bx-bg p-4"><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Год</p><p className="mt-1 text-sm font-black">2026</p></div></div></section><section className={`${card} h-fit p-5`}><h3 className="text-sm font-black">Нужна помощь?</h3><p className="mt-2 text-xs leading-relaxed text-bx-muted">Опишите проблему в разделе поддержки или напишите технической команде.</p><button type="button" onClick={() => navigate('/support')} className={`${button} mt-4 w-full bg-blue-600 text-white`}><span className="inline-flex items-center gap-2"><Icon name="headset" className="h-4 w-4" />Открыть поддержку</span></button><button type="button" onClick={() => openExternalUrl('https://t.me/tech_support_bx')} className={`${button} mt-2 w-full border border-bx-border bg-bx-surface-2`}><span className="inline-flex items-center gap-2"><Icon name="send" className="h-4 w-4" />Telegram поддержки</span></button><p className="mt-4 text-center font-mono text-xs font-bold text-bx-muted">+998 90 916 04 44</p></section></div>
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+              <section className={`${card} p-6`}>
+                <img src="./icon.png" alt="Иконка BX" className="h-16 w-16 rounded-2xl shadow-lg" />
+                <h3 className="mt-5 text-xl font-black">Помощник бухгалтера Республики Узбекистан</h3>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-bx-muted">BX объединяет планирование, документы, расчёты, знания и ИИ в одном спокойном рабочем контуре. Цель — убирать рутину, не прятать важные действия и оставлять контроль за специалистом.</p>
+                <div className="mt-6 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-bx-bg p-4"><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Версия</p><p className="mt-1 font-mono text-sm font-black">{APP_VERSION}</p></div><div className="rounded-2xl bg-bx-bg p-4"><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Год</p><p className="mt-1 text-sm font-black">2026</p></div></div>
+                <div className={`mt-4 rounded-2xl border p-4 ${updateInfo.status === 'error' ? 'border-rose-500/30 bg-rose-500/[0.07]' : updateInfo.status === 'ready' ? 'border-emerald-500/30 bg-emerald-500/[0.07]' : 'border-bx-border bg-bx-bg'}`}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div><p className="text-xs font-black text-bx-text">Обновления BX</p><p role="status" className="mt-1 text-[10px] leading-relaxed text-bx-muted">{updateStatusLabel[updateInfo.status]}</p></div>
+                    {updateInfo.status === 'ready' ? <button type="button" onClick={handleInstallUpdate} className={`${button} bg-emerald-600 text-white hover:bg-emerald-500`}><span className="inline-flex items-center gap-2"><Icon name="download" className="h-4 w-4" />Установить</span></button> : <button type="button" onClick={handleCheckForUpdates} disabled={updateInfo.status === 'checking' || updateInfo.status === 'downloading'} className={`${button} border border-bx-border bg-bx-surface text-bx-text hover:border-blue-500/40 disabled:cursor-wait disabled:opacity-50`}><span className="inline-flex items-center gap-2"><Icon name="recycle" className={`h-4 w-4 ${updateInfo.status === 'checking' ? 'animate-spin' : ''}`} />Проверить обновления</span></button>}
+                  </div>
+                  <p className="mt-3 text-[9px] leading-relaxed text-bx-muted">Windows устанавливает обновление после подтверждённого перезапуска. На macOS BX скачивает подходящий файл релиза и открывает его для установки.</p>
+                </div>
+              </section>
+              <section className={`${card} h-fit p-5`}><h3 className="text-sm font-black">Нужна помощь?</h3><p className="mt-2 text-xs leading-relaxed text-bx-muted">Опишите проблему в разделе поддержки или напишите технической команде.</p><button type="button" onClick={() => navigate('/support')} className={`${button} mt-4 w-full bg-blue-600 text-white`}><span className="inline-flex items-center gap-2"><Icon name="headset" className="h-4 w-4" />Открыть поддержку</span></button><button type="button" onClick={() => openExternalUrl('https://t.me/tech_support_bx')} className={`${button} mt-2 w-full border border-bx-border bg-bx-surface-2`}><span className="inline-flex items-center gap-2"><Icon name="send" className="h-4 w-4" />Telegram поддержки</span></button><p className="mt-4 text-center font-mono text-xs font-bold text-bx-muted">+998 90 916 04 44</p></section>
+            </div>
           )}
         </div>
       </main>

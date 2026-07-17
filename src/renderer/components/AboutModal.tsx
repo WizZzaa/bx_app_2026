@@ -21,7 +21,7 @@ export default function AboutModal({ open, onClose }: Props) {
       >
         {/* Header */}
         <div className="flex items-center gap-4 px-6 py-5 border-b border-bx-border bg-bx-surface-2/30">
-          <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center font-extrabold text-white text-sm shadow-md">BX</div>
+          <img src="./icon.png" alt="Иконка BX" className="h-11 w-11 rounded-xl shadow-md" />
           <div className="flex-1 min-w-0">
             <div className="text-sm font-extrabold text-bx-text leading-tight">BX — Помощник Бухгалтера</div>
             <div className="text-[11px] text-bx-muted mt-1">Версия {APP_VERSION} · Для бухгалтеров Узбекистана</div>

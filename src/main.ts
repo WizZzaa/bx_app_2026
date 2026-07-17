@@ -250,6 +250,9 @@ let tray: Tray | null = null
 // Закрепление трей-окна: когда true — окно не прячется при потере фокуса.
 let trayPinned = false
 
+const appAsset = (name: string) => path.join(app.getAppPath(), 'resources', name)
+const loadAppIcon = () => nativeImage.createFromPath(appAsset('icon.png'))
+
 // Запоминаем размер И позицию трей-окна между запусками.
 // custom=true — пользователь сам перетащил окно, тогда не «прыгаем» к трею.
 interface TrayState { width: number; height: number; x?: number; y?: number; custom?: boolean }
@@ -282,6 +285,7 @@ const createTrayWindow = () => {
     resizable: true,
     skipTaskbar: true,
     alwaysOnTop: true,
+    icon: loadAppIcon(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -361,7 +365,7 @@ const toggleTrayWindow = () => {
 }
 
 const createTray = () => {
-  const icon = nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAANElEQVR42mNk+M9QDwOsoRiEUcoGBgYGBhphwAAMmAY0YBoEID4aICyMhogQhhmkPADt/gP9Nn6GZAAAAABJRU5ErkJggg==')
+  const icon = nativeImage.createFromPath(appAsset(process.platform === 'darwin' ? 'tray-64.png' : 'tray-32.png'))
   tray = new Tray(icon)
   
   const contextMenu = Menu.buildFromTemplate([
@@ -403,6 +407,7 @@ const createWindow = () => {
     minHeight: 680,
     frame: false,
     backgroundColor: '#0f1117',
+    icon: loadAppIcon(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -454,6 +459,7 @@ app.on('ready', () => {
   registerIpcHandlers()
   initBackupScheduler()
   setupAutoUpdater()
+  if (process.platform === 'darwin') app.dock?.setIcon(loadAppIcon())
   createWindow()
   createTrayWindow()
   createTray()
