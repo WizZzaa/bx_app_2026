@@ -7,7 +7,7 @@ import { useCompany } from '../lib/CompanyContext'
 import { useToast } from '../lib/ui/ToastContext'
 import { exportTransactionsToExcel } from '../lib/excelExport'
 import { parseBankStatement, type ParsedTransaction } from '../lib/bankStatementParser'
-import { supabase } from '../lib/db/supabase'
+import { createCanonicalEvent } from './planner/eventRepository'
 import { daysFromNowISO, todayISO } from '../lib/dates'
 import { usePlan } from '../lib/plan'
 import Icon from '../lib/ui/Icon'
@@ -104,20 +104,15 @@ export default function Finance() {
   }
 
   async function createReminder(transaction: BxTransaction) {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { toast.error('Для напоминания нужно войти в BX'); return }
     const amount = formatMoney(transactionUzs(transaction))
     const who = transaction.counterparty || 'контрагент'
     const title = transaction.type === 'income' ? `Получить оплату: ${who} — ${amount} сум` : `Оплатить: ${who} — ${amount} сум`
     const date = daysFromNowISO(1)
-    const { error } = await supabase.from('bx_events').insert({
-      user_id: user.id, company_id: transaction.company_id, type: 'reminder', title, date, due_date: date,
+    const reminder = await createCanonicalEvent({
+      company_id: transaction.company_id, type: 'reminder', title, date, due_date: date,
       status: 'todo', priority: 'high', source: 'manual', note: `Создано из Контроля оплат ${today}`,
     })
-    if (error) { toast.error('Не удалось создать напоминание'); return }
-    const channel = new BroadcastChannel('bx-events-sync')
-    channel.postMessage('reload')
-    channel.close()
+    if (!reminder) { toast.error('Не удалось создать напоминание'); return }
     toast.success('Напоминание на завтра добавлено в Планировщик')
   }
 

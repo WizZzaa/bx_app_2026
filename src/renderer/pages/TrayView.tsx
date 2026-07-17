@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { supabase } from '../lib/db/supabase'
+import { createCanonicalEvent } from './planner/eventRepository'
 import { usePlan } from '../lib/plan'
 import type { CurrencyRate } from '../../shared/types'
 import { getHoroscope } from '../lib/horoscope'
@@ -99,21 +100,16 @@ export default function TrayView() {
     if (!title || addingTask) return
     setAddingTask(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setAddingTask(false); return }
       const activeCompanyId = localStorage.getItem('bx_active_company') || null
-      const { error } = await supabase.from('bx_events').insert({
-        user_id: user.id, company_id: activeCompanyId, type: 'task', title,
+      const task = await createCanonicalEvent({
+        company_id: activeCompanyId, type: 'task', title,
         date: todayISO(), due_date: null, status: 'todo', priority: 'normal',
         tags: null, tax_type: null, kind: null, regime: null, note: null,
         source: 'manual', reminder_at: null,
       })
-      if (error) throw error
+      if (!task) throw new Error('Не удалось создать задачу')
       setNewTask(''); setTaskAdded(true); setTimeout(() => setTaskAdded(false), 1600)
       await reloadDeadlines()
-      const bc = new BroadcastChannel('bx-events-sync')
-      bc.postMessage('reload')
-      bc.close()
     } catch (err) { console.error('addTask:', err) } finally { setAddingTask(false) }
   }
 

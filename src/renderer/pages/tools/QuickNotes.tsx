@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { uid } from '../../lib/uid';
-import { supabase } from '../../lib/db/supabase';
-import { emitPlannerReload } from '../planner/plannerBus';
+import { createCanonicalEvent } from '../planner/eventRepository';
 import { useToast } from '../../lib/ui/ToastContext';
 
 const STORAGE_KEY = 'bx_quick_notes';
@@ -105,13 +104,7 @@ export default function QuickNotes() {
     }
     setSendingCalendar(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Пользователь не авторизован');
-
-      const newEvent = {
-        id: uid(),
-        user_id: user.id,
-        company_id: null,
+      const newEvent = await createCanonicalEvent({
         type: 'task',
         title: noteText.split('\n')[0].slice(0, 100) || 'Задача из заметок',
         date: selectedDate,
@@ -120,15 +113,11 @@ export default function QuickNotes() {
         priority: 'normal',
         note: noteText,
         source: 'manual',
-        created_at: new Date().toISOString()
-      };
-
-      const { error } = await supabase.from('bx_events').insert(newEvent);
-      if (error) throw error;
+      });
+      if (!newEvent) throw new Error('Не удалось создать задачу');
 
       toast.success('Задача добавлена в планировщик');
       setCalendarModalId(null);
-      emitPlannerReload();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Не удалось добавить задачу');
     } finally {
