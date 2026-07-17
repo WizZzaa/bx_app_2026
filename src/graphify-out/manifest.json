@@ -1,7 +1,7 @@
 {
   "main.ts": {
-    "mtime": 1784266413.7574065,
-    "ast_hash": "8c64087ce6fade3deb4a864fe37aa852",
+    "mtime": 1784305169.9885125,
+    "ast_hash": "aae9ddf7020c2805129b6940cfd6ddc9",
     "semantic_hash": ""
   },
   "main/ipc.ts": {
@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "renderer/components/AboutModal.tsx": {
-    "mtime": 1783978445.3618915,
-    "ast_hash": "7931ec3fc015ca89d8a04a81284f9ad9",
+    "mtime": 1784305127.8547359,
+    "ast_hash": "c43cd57234e47103b0acb57a418870b0",
     "semantic_hash": ""
   },
   "renderer/components/CommandPalette.tsx": {
@@ -695,8 +695,8 @@
     "semantic_hash": ""
   },
   "renderer/pages/Settings.tsx": {
-    "mtime": 1784298260.9469948,
-    "ast_hash": "5454187fd71c0ceaff43b036ecbc47fb",
+    "mtime": 1784305086.1485033,
+    "ast_hash": "e186844014c5a760ed8b8ea86558b265",
     "semantic_hash": ""
   },
   "renderer/pages/Support.tsx": {
@@ -1120,8 +1120,8 @@
     "semantic_hash": ""
   },
   "shared/version.ts": {
-    "mtime": 1784303770.7653136,
-    "ast_hash": "305b992bc529b1165da3f04c6c8c7562",
+    "mtime": 1784305127.8540785,
+    "ast_hash": "e0f8765f208d0013bbfeeeebe1bbd04e",
     "semantic_hash": ""
   },
   "renderer/assets/widgets/horoscope.png": {
