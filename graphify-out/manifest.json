@@ -175,13 +175,13 @@
     "semantic_hash": ""
   },
   "src/renderer/components/layout/Sidebar.test.tsx": {
-    "mtime": 1784231522.16572,
-    "ast_hash": "0bccfbfcbdd5062e8e17d6c043c73ed8",
+    "mtime": 1784298260.94744,
+    "ast_hash": "790a5735724dd312a010385a1d07825b",
     "semantic_hash": ""
   },
   "src/renderer/components/layout/Sidebar.tsx": {
-    "mtime": 1784231522.1651566,
-    "ast_hash": "af119df61b1e1141e74137dea5135833",
+    "mtime": 1784298260.9460034,
+    "ast_hash": "b8e844f901a46691bbe8dc470c6b3bf2",
     "semantic_hash": ""
   },
   "src/renderer/components/layout/Titlebar.tsx": {
@@ -695,8 +695,8 @@
     "semantic_hash": ""
   },
   "src/renderer/pages/Settings.tsx": {
-    "mtime": 1784296522.0078921,
-    "ast_hash": "ca06154b50518f8bbbd0b707a1a2e9c5",
+    "mtime": 1784298260.9469948,
+    "ast_hash": "5454187fd71c0ceaff43b036ecbc47fb",
     "semantic_hash": ""
   },
   "src/renderer/pages/Support.tsx": {
