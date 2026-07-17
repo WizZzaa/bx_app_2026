@@ -24,6 +24,16 @@ type BixInventoryItem = { sku: string; equipped: boolean }
 type BixCollection = { catalog: BixCatalogItem[]; inventory: BixInventoryItem[]; achievements: string[] }
 type BixActivity = 'idle' | 'thinking' | 'working' | 'success' | 'error'
 type WidgetTranslation = { id: string; source: string; result: string; plain?: string; direction: 'ru-uz' | 'uz-ru'; createdAt: string }
+type BixAnimationState = 'idle' | 'thinking' | 'working' | 'success' | 'error' | 'sleep'
+
+const bixFrames = {
+  idle: Object.values(import.meta.glob('../assets/mascot/frames/idle/*.png', { eager: true, import: 'default', query: '?url' })).sort() as string[],
+  thinking: Object.values(import.meta.glob('../assets/mascot/frames/thinking/*.png', { eager: true, import: 'default', query: '?url' })).sort() as string[],
+  working: Object.values(import.meta.glob('../assets/mascot/frames/working/*.png', { eager: true, import: 'default', query: '?url' })).sort() as string[],
+  success: Object.values(import.meta.glob('../assets/mascot/frames/success/*.png', { eager: true, import: 'default', query: '?url' })).sort() as string[],
+  error: Object.values(import.meta.glob('../assets/mascot/frames/error/*.png', { eager: true, import: 'default', query: '?url' })).sort() as string[],
+  sleep: Object.values(import.meta.glob('../assets/mascot/frames/sleep/*.png', { eager: true, import: 'default', query: '?url' })).sort() as string[],
+} satisfies Record<BixAnimationState, string[]>
 
 const BIX_STATE_KEY = 'bx_bix_state_v1'
 const BIX_SETTINGS_KEY = 'bx_bix_settings_v1'
@@ -137,6 +147,7 @@ export default function BixWidget() {
   const [widgetChatId, setWidgetChatId] = useState<string | null>(null)
   const [aiMessages, setAiMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([])
   const [reportingAi, setReportingAi] = useState(false)
+  const [animationFrame, setAnimationFrame] = useState(0)
 
   useEffect(() => {
     const html = document.documentElement
@@ -452,6 +463,14 @@ export default function BixWidget() {
   const equippedVisuals = useMemo(() => new Set(collection.inventory.filter(item => item.equipped).map(item => collection.catalog.find(catalogItem => catalogItem.sku === item.sku)?.visual_key).filter(Boolean)), [collection])
   const mascotSource = equippedVisuals.has('business') ? bixBusinessMascot : equippedVisuals.has('analyst') ? bixAnalystMascot : equippedVisuals.has('night') ? bixNightMascot : bixMascot
   const bixMode = activity !== 'idle' ? activity : reminder ? 'reminding' : panel ? 'engaged' : idleJoke ? 'joking' : bix.needs.energy < 25 ? 'sleepy' : bix.needs.food < 25 || bix.needs.mood < 25 ? 'concerned' : 'idle'
+  const animationState: BixAnimationState = bixMode === 'sleepy' ? 'sleep' : bixMode === 'concerned' ? 'error' : bixMode === 'thinking' || bixMode === 'working' || bixMode === 'success' || bixMode === 'error' ? bixMode : 'idle'
+  const currentBixFrame = bixFrames[animationState][animationFrame % bixFrames[animationState].length] || mascotSource
+  useEffect(() => {
+    setAnimationFrame(0)
+    if (settings.reducedMotion) return
+    const timer = window.setInterval(() => setAnimationFrame(frame => (frame + 1) % bixFrames[animationState].length), 135)
+    return () => window.clearInterval(timer)
+  }, [animationState, settings.reducedMotion])
   const saveDraft = async (kind: 'task' | 'note') => {
     const text = draft.trim()
     if (!text || saving) return
@@ -531,7 +550,7 @@ export default function BixWidget() {
     </div>}
     <button className="bix-character" onClick={toggleMenu} aria-label="Открыть действия Бикса">
       <span className="bix-drag" title="Перетащите Бикса за голову" />
-      <img className="bix-mascot" src={mascotSource} alt="Бикс — питомец BX" style={gaze} draggable={false} />
+      <img className="bix-mascot bix-frame" src={currentBixFrame} alt={`Бикс: ${bixMode}`} style={animationState === 'idle' ? gaze : undefined} draggable={false} />
     </button>
     <div className="bix-pin-controls"><button onClick={() => void dockToTaskbar()} title="Прикрепить к панели задач">⌖</button><button onClick={() => void togglePinned()} title={pinned ? 'Открепить виджет' : 'Закрепить виджет'}>{pinned ? '📌' : '📍'}</button></div>
   </main>
