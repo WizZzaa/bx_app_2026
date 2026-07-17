@@ -1,4 +1,4 @@
-import { app, autoUpdater, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, net, Notification } from 'electron'
+import { app, autoUpdater, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, net, Notification, screen } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs'
 import started from 'electron-squirrel-startup'
@@ -257,7 +257,7 @@ const loadAppIcon = () => nativeImage.createFromPath(appAsset('icon.png'))
 // custom=true — пользователь сам перетащил окно, тогда не «прыгаем» к трею.
 interface TrayState { width: number; height: number; x?: number; y?: number; custom?: boolean }
 const trayStateFile = () => path.join(app.getPath('userData'), 'tray-window.json')
-let trayState: TrayState = { width: 380, height: 560 }
+let trayState: TrayState = { width: 430, height: 420 }
 const loadTrayState = () => {
   try {
     const s = JSON.parse(fs.readFileSync(trayStateFile(), 'utf-8'))
@@ -275,16 +275,19 @@ const createTrayWindow = () => {
   trayWindow = new BrowserWindow({
     width: trayState.width,
     height: trayState.height,
-    minWidth: 320,
-    minHeight: 400,
-    maxWidth: 680,
-    maxHeight: 960,
-    show: false,
+    minWidth: 430,
+    minHeight: 420,
+    maxWidth: 430,
+    maxHeight: 420,
+    show: true,
     frame: false,
     fullscreenable: false,
-    resizable: true,
+    resizable: false,
     skipTaskbar: true,
     alwaysOnTop: true,
+    transparent: true,
+    backgroundColor: '#00000000',
+    hasShadow: false,
     icon: loadAppIcon(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -302,17 +305,7 @@ const createTrayWindow = () => {
     )
   }
 
-  // Сохраняем размер при изменении (с debounce)
-  let saveTimer: ReturnType<typeof setTimeout> | null = null
-  trayWindow.on('resize', () => {
-    if (!trayWindow) return
-    const [w, h] = trayWindow.getSize()
-    trayState.width = w; trayState.height = h
-    if (saveTimer) clearTimeout(saveTimer)
-    saveTimer = setTimeout(saveTrayState, 400)
-  })
-
-  // Пользователь перетащил окно за ручку → запоминаем позицию как «свою»
+  // Пользователь перетащил Бикса → запоминаем позицию как «свою».
   let moveTimer: ReturnType<typeof setTimeout> | null = null
   trayWindow.on('move', () => {
     if (!trayWindow || suppressTrayMove) return
@@ -322,9 +315,21 @@ const createTrayWindow = () => {
     moveTimer = setTimeout(saveTrayState, 400)
   })
 
-  trayWindow.on('blur', () => {
-    if (!trayPinned) trayWindow?.hide()
-  })
+  // Питомец всегда остаётся на рабочем столе; меню внутри него закрывается
+  // на стороне renderer, поэтому окно не скрываем по blur.
+
+  // Для первого запуска сажаем Бикса над нижней панелью задач. workArea
+  // оканчивается ровно перед taskbar на Windows, поэтому позиция корректна
+  // при разных масштабах и на нескольких мониторах.
+  if (!trayState.custom) {
+    const workArea = screen.getPrimaryDisplay().workArea
+    const [width, height] = trayWindow.getSize()
+    const x = workArea.x + workArea.width - width - 18
+    const y = workArea.y + workArea.height - height + 28
+    suppressTrayMove = true
+    trayWindow.setPosition(x, y, false)
+    setTimeout(() => { suppressTrayMove = false }, 150)
+  }
 }
 
 const toggleTrayWindow = () => {
