@@ -21,8 +21,13 @@ describe('settings backup', () => {
     expect(backup.theme).toBe('lime')
   })
 
-  it('accepts the light lime theme in a backup', () => {
+  it('accepts the light lavender theme in a backup', () => {
+    const backup = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', theme: 'lavender-light' }))
+    expect(backup.theme).toBe('lavender-light')
+  })
+
+  it('migrates the retired light lime theme in an older backup', () => {
     const backup = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', theme: 'lime-light' }))
-    expect(backup.theme).toBe('lime-light')
+    expect(backup.theme).toBe('lavender-light')
   })
 })

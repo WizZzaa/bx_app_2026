@@ -125,49 +125,46 @@ html {
   --bx-blue-950-rgb: 40 54 0;
 }
 
-/* Светлая пара к графитовой лаймовой теме: тёплый рабочий фон,
-   белые поверхности и тот же фирменный акцент #B7F500. */
-.lime-light {
+/* Светлая лавандовая тема: тёплый рабочий фон, белые поверхности
+   и насыщенный акцент, который сохраняет контраст с белым текстом. */
+.lavender-light {
   color-scheme: light;
-  --bx-bg: #f7f5ef;
+  --bx-bg: #f7f5f2;
   --bx-surface: #ffffff;
-  --bx-surface-2: #eeece6;
-  --bx-border: #d8d5cc;
-  --bx-border-2: #c7c3b9;
-  --bx-text: #111111;
-  --bx-muted: #62645d;
-  --bx-accent: #b7f500;
-  --bx-sidebar-text: #111111;
+  --bx-surface-2: #f0edf5;
+  --bx-border: #d9d3e3;
+  --bx-border-2: #beb4cf;
+  --bx-text: #17131f;
+  --bx-muted: #625d69;
+  --bx-accent: #75639a;
+  --bx-sidebar-text: #17131f;
 
-  --bx-bg-rgb: 247 245 239;
+  --bx-bg-rgb: 247 245 242;
   --bx-surface-rgb: 255 255 255;
-  --bx-surface-2-rgb: 238 236 230;
-  --bx-border-rgb: 216 213 204;
-  --bx-border-2-rgb: 199 195 185;
-  --bx-text-rgb: 17 17 17;
-  --bx-muted-rgb: 98 100 93;
-  --bx-accent-rgb: 183 245 0;
+  --bx-surface-2-rgb: 240 237 245;
+  --bx-border-rgb: 217 211 227;
+  --bx-border-2-rgb: 190 180 207;
+  --bx-text-rgb: 23 19 31;
+  --bx-muted-rgb: 98 93 105;
+  --bx-accent-rgb: 117 99 154;
 
-  --bx-blue-50-rgb: 247 255 230;
-  --bx-blue-100-rgb: 239 255 204;
-  --bx-blue-200-rgb: 225 255 153;
-  --bx-blue-300-rgb: 211 255 92;
-  --bx-blue-400-rgb: 200 255 61;
-  --bx-blue-500-rgb: 194 255 36;
-  --bx-blue-600-rgb: 183 245 0;
-  --bx-blue-700-rgb: 113 151 0;
-  --bx-blue-800-rgb: 78 105 0;
-  --bx-blue-900-rgb: 56 75 0;
-  --bx-blue-950-rgb: 35 47 0;
+  --bx-blue-50-rgb: 247 245 250;
+  --bx-blue-100-rgb: 240 236 245;
+  --bx-blue-200-rgb: 225 217 234;
+  --bx-blue-300-rgb: 201 189 216;
+  --bx-blue-400-rgb: 157 140 182;
+  --bx-blue-500-rgb: 117 99 154;
+  --bx-blue-600-rgb: 117 99 154;
+  --bx-blue-700-rgb: 98 79 133;
+  --bx-blue-800-rgb: 80 63 110;
+  --bx-blue-900-rgb: 63 49 88;
+  --bx-blue-950-rgb: 39 29 55;
 }
 
 /* На ярком лаймовом CTA белый текст недостаточно контрастен. */
 .lime .bg-blue-500.text-white,
 .lime .bg-blue-600.text-white,
-.lime .bg-blue-700.text-white,
-.lime-light .bg-blue-500.text-white,
-.lime-light .bg-blue-600.text-white,
-.lime-light .bg-blue-700.text-white {
+.lime .bg-blue-700.text-white {
   color: #111111;
 }
 

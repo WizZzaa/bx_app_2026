@@ -26,15 +26,21 @@ describe('application themes', () => {
   it('cycles through all four themes', () => {
     expect(nextTheme('light')).toBe('dark')
     expect(nextTheme('dark')).toBe('lime')
-    expect(nextTheme('lime')).toBe('lime-light')
-    expect(nextTheme('lime-light')).toBe('light')
+    expect(nextTheme('lime')).toBe('lavender-light')
+    expect(nextTheme('lavender-light')).toBe('light')
   })
 
-  it('applies the light lime palette without dark variants', () => {
-    applyTheme('lime-light')
-    expect(document.documentElement.classList.contains('lime-light')).toBe(true)
+  it('applies the light lavender palette without dark variants', () => {
+    applyTheme('lavender-light')
+    expect(document.documentElement.classList.contains('lavender-light')).toBe(true)
     expect(document.documentElement.classList.contains('light')).toBe(true)
     expect(document.documentElement.classList.contains('dark')).toBe(false)
     expect(document.documentElement.classList.contains('lime')).toBe(false)
+  })
+
+  it('migrates the retired light lime theme to light lavender', () => {
+    localStorage.setItem(THEME_KEY, 'lime-light')
+    expect(currentTheme()).toBe('lavender-light')
+    expect(localStorage.getItem(THEME_KEY)).toBe('lavender-light')
   })
 })

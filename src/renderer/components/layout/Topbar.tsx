@@ -220,7 +220,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
         <button
           onClick={handleToggleTheme}
           className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted transition-colors cursor-pointer"
-          title={theme === 'light' ? 'Следующая тема: тёмная' : theme === 'dark' ? 'Следующая тема: графит и лайм' : theme === 'lime' ? 'Следующая тема: светлая и лайм' : 'Следующая тема: светлая'}
+          title={theme === 'light' ? 'Следующая тема: тёмная' : theme === 'dark' ? 'Следующая тема: графит и лайм' : theme === 'lime' ? 'Следующая тема: светлая и лаванда' : 'Следующая тема: светлая'}
           aria-label="Сменить тему оформления"
         >
           {theme === 'dark' ? (
