@@ -81,6 +81,30 @@ export interface Company {
   created_at: string;
 }
 
+export type CompanyProfileRole = 'owner' | 'accountant' | 'assistant' | 'viewer';
+
+export interface CompanyProfileActivity {
+  id: string;
+  company_id: string;
+  actor_id: string | null;
+  action: 'profile_changed' | 'proposal_accepted' | 'proposal_rejected';
+  before_state: Record<string, unknown>;
+  after_state: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface CompanyProfileProposal {
+  id: string;
+  company_id: string;
+  proposer_id: string;
+  proposed_state: CompanyProfileForm;
+  note: string | null;
+  status: 'pending' | 'accepted' | 'rejected';
+  decided_by: string | null;
+  decided_at: string | null;
+  created_at: string;
+}
+
 export interface Task {
   id: string;
   user_id: string;

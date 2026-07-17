@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { todayISO } from '../lib/dates';
-import type { Company, CompanyLegalForm, CompanyProfileDetails, CompanyProfileForm } from '../lib/db/types';
+import type { Company, CompanyLegalForm, CompanyProfileDetails, CompanyProfileForm, CompanyProfileRole } from '../lib/db/types';
 import {
   buildTaxDeadlineEvents,
   buildTaxDeadlineRuleOptions,
@@ -13,6 +13,7 @@ interface Props {
   company?: Company | null;
   initial?: CompanyWizardInitial;
   busy?: boolean;
+  role?: CompanyProfileRole | 'loading';
   onCancel: () => void;
   onConfirm: (profile: CompanyProfileForm) => Promise<void>;
 }
@@ -74,7 +75,7 @@ function initialProfile(company?: Company | null, initial?: CompanyWizardInitial
   };
 }
 
-export default function CompanyProfileWizard({ company, initial, busy = false, onCancel, onConfirm }: Props) {
+export default function CompanyProfileWizard({ company, initial, busy = false, role = 'owner', onCancel, onConfirm }: Props) {
   const [step, setStep] = useState(0);
   const [error, setError] = useState('');
   const [profile, setProfile] = useState<CompanyProfileForm>(() => initialProfile(company, initial));
@@ -91,6 +92,15 @@ export default function CompanyProfileWizard({ company, initial, busy = false, o
     }),
     [company?.id, profile.bx_start_date, profile.enabled_obligation_rules, profile.regime],
   );
+  const calendarChange = useMemo(() => {
+    const before = new Set(company?.enabled_obligation_rules ?? []);
+    const after = new Set(profile.enabled_obligation_rules);
+    return {
+      added: [...after].filter(id => !before.has(id)),
+      removed: [...before].filter(id => !after.has(id)),
+      unchanged: [...after].filter(id => before.has(id)),
+    };
+  }, [company?.enabled_obligation_rules, profile.enabled_obligation_rules]);
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
@@ -300,6 +310,12 @@ export default function CompanyProfileWizard({ company, initial, busy = false, o
                 </div>
                 <button type="button" onClick={() => setField('enabled_obligation_rules', [])} className="text-[11px] text-bx-muted hover:text-bx-text">Снять всё</button>
               </div>
+              {company && <div className="grid gap-2 rounded-2xl border border-blue-500/25 bg-blue-500/[0.06] p-4 sm:grid-cols-3">
+                <div><p className="text-[9px] font-extrabold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Добавится</p><p className="mt-1 text-lg font-black tabular-nums text-bx-text">{calendarChange.added.length}</p></div>
+                <div><p className="text-[9px] font-extrabold uppercase tracking-wide text-amber-700 dark:text-amber-300">Перестанет предлагаться</p><p className="mt-1 text-lg font-black tabular-nums text-bx-text">{calendarChange.removed.length}</p></div>
+                <div><p className="text-[9px] font-extrabold uppercase tracking-wide text-blue-700 dark:text-blue-300">Останется</p><p className="mt-1 text-lg font-black tabular-nums text-bx-text">{calendarChange.unchanged.length}</p></div>
+                <p className="sm:col-span-3 text-[10px] leading-relaxed text-bx-muted">После подтверждения обновятся только будущие системные обязательства. Ручные задачи и выполненная история не удаляются.</p>
+              </div>}
               <div className="space-y-2">
                 {ruleOptions.map(rule => {
                   const checked = profile.enabled_obligation_rules.includes(rule.id);
@@ -320,6 +336,9 @@ export default function CompanyProfileWizard({ company, initial, busy = false, o
 
           {step === 3 && (
             <div className="space-y-5">
+              {company && <div className={`rounded-2xl border px-4 py-3 text-xs ${role === 'assistant' ? 'border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300' : role === 'viewer' ? 'border-bx-border bg-bx-bg text-bx-muted' : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'}`}>
+                {role === 'loading' ? 'Проверяем ваши права…' : role === 'assistant' ? 'Вы работаете как помощник: изменения уйдут владельцу и бухгалтеру на подтверждение.' : role === 'viewer' ? 'Роль наблюдателя позволяет просматривать профиль, но не изменять его.' : role === 'accountant' ? 'Вы работаете как бухгалтер и можете применить изменения профиля.' : 'Вы работаете как владелец и можете применить изменения профиля.'}
+              </div>}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {[
                   ['Компания', profile.name],
@@ -356,8 +375,8 @@ export default function CompanyProfileWizard({ company, initial, busy = false, o
           {step < 3 ? (
             <button onClick={next} className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black">Продолжить</button>
           ) : (
-            <button onClick={confirm} disabled={busy} className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black disabled:opacity-50">
-              {busy ? 'Сохраняем…' : company ? 'Подтвердить изменения' : 'Создать компанию и календарь'}
+            <button onClick={confirm} disabled={busy || role === 'loading' || role === 'viewer'} className="min-h-11 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black disabled:cursor-not-allowed disabled:opacity-50">
+              {busy ? 'Сохраняем…' : role === 'loading' ? 'Проверяем права…' : role === 'viewer' ? 'Только просмотр' : company && role === 'assistant' ? 'Отправить предложение' : company ? 'Подтвердить изменения' : 'Создать компанию и календарь'}
             </button>
           )}
         </div>
