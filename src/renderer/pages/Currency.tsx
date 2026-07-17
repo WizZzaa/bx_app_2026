@@ -54,6 +54,10 @@ export function findBestBankRates(rates: BankExchangeRate[], code: string) {
   }
 }
 
+export function filterBankRates(rates: BankExchangeRate[], selectedBankIds: string[]) {
+  return selectedBankIds.length ? rates.filter(rate => selectedBankIds.includes(rate.bankId)) : rates
+}
+
 function localISO(date: Date) { const y = date.getFullYear(); const m = String(date.getMonth() + 1).padStart(2, '0'); const d = String(date.getDate()).padStart(2, '0'); return `${y}-${m}-${d}` }
 function daysAgo(days: number) { const date = new Date(); date.setDate(date.getDate() - days); return localISO(date) }
 
@@ -85,6 +89,7 @@ export default function Currency() {
   const [bankRates, setBankRates] = useState<BankExchangeRate[]>([])
   const [bankLoading, setBankLoading] = useState(true)
   const [bankError, setBankError] = useState('')
+  const [selectedBankIds, setSelectedBankIds] = useState<string[]>([])
   const bankRequestId = useRef(0)
 
   const load = useCallback(() => {
@@ -119,8 +124,14 @@ export default function Currency() {
   const rateMap = useMemo(() => Object.fromEntries(rates.map(rate => [rate.code, rate.value])), [rates])
   const converterCodes = useMemo(() => ['UZS', ...selectedCodes] as CurrencyCode[], [selectedCodes])
   const converted = convertCurrency(Number(amount.replace(',', '.')), from, to, rateMap)
-  const bankComparison = useMemo(() => findBestBankRates(bankRates, bankCode), [bankRates, bankCode])
-  const visibleBankRates = useMemo(() => bankRates.filter(rate => rate.code === bankCode), [bankRates, bankCode])
+  const availableBanks = useMemo(() => Array.from(new Map(bankRates.map(rate => [rate.bankId, rate.bankName])).entries()).map(([id, name]) => ({ id, name })), [bankRates])
+  const filteredBankRates = useMemo(() => filterBankRates(bankRates, selectedBankIds), [bankRates, selectedBankIds])
+  const bankComparison = useMemo(() => findBestBankRates(filteredBankRates, bankCode), [filteredBankRates, bankCode])
+  const visibleBankRates = useMemo(() => filteredBankRates.filter(rate => rate.code === bankCode), [filteredBankRates, bankCode])
+
+  const toggleBank = (bankId: string) => {
+    setSelectedBankIds(current => current.includes(bankId) ? current.filter(id => id !== bankId) : [...current, bankId])
+  }
 
   const toggleExtra = (code: string) => {
     const next = extraCodes.includes(code) ? extraCodes.filter(item => item !== code) : [...extraCodes, code]
@@ -181,11 +192,12 @@ export default function Currency() {
             </div>
           </div>
           <div className="p-5">
+            {!bankLoading && !bankError && availableBanks.length > 0 && <div className="mb-4 rounded-2xl border border-bx-border bg-bx-bg p-3"><div className="flex flex-col gap-3 lg:flex-row lg:items-center"><div className="min-w-36"><p className="text-[9px] font-black uppercase tracking-[0.12em] text-bx-muted">Показывать банки</p><p className="mt-1 text-[9px] text-bx-muted">Можно выбрать несколько</p></div><div className="flex flex-1 flex-wrap gap-2" role="group" aria-label="Фильтр банков"><button onClick={() => setSelectedBankIds([])} aria-pressed={selectedBankIds.length === 0} className={`min-h-11 rounded-xl border px-3 text-[10px] font-black transition-colors ${selectedBankIds.length === 0 ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-bx-border bg-bx-surface text-bx-muted hover:border-emerald-500/30 hover:text-bx-text'}`}>Все банки</button>{availableBanks.map(bank => { const selected = selectedBankIds.includes(bank.id); return <button key={bank.id} onClick={() => toggleBank(bank.id)} aria-pressed={selected} className={`min-h-11 rounded-xl border px-3 text-[10px] font-black transition-colors ${selected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-bx-border bg-bx-surface text-bx-muted hover:border-emerald-500/30 hover:text-bx-text'}`}>{bank.name}</button> })}</div>{selectedBankIds.length > 0 && <button onClick={() => setSelectedBankIds([])} className="min-h-11 self-start rounded-xl px-3 text-[10px] font-bold text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300 lg:self-center">Сбросить</button>}</div></div>}
             {bankLoading ? <div className="grid gap-3 md:grid-cols-3">{Array.from({ length: 3 }).map((_, index) => <div key={index} className="h-36 animate-pulse rounded-2xl bg-bx-bg" />)}</div> : bankError ? <div className="rounded-2xl border border-dashed border-amber-500/30 bg-amber-500/[0.08] p-5"><p role="alert" className="text-xs font-bold text-amber-800 dark:text-amber-200">{bankError}</p><button onClick={loadBankRates} className="mt-3 min-h-10 rounded-xl bg-amber-600 px-4 text-[10px] font-black text-white">Повторить</button></div> : visibleBankRates.length ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{visibleBankRates.map(rate => {
               const bestBuy = bankComparison.bestBuy?.bankId === rate.bankId
               const bestSell = bankComparison.bestSell?.bankId === rate.bankId
               return <article key={`${rate.bankId}-${rate.code}`} className={`rounded-2xl border p-4 ${bestBuy || bestSell ? 'border-emerald-500/30 bg-emerald-500/[0.045]' : 'border-bx-border bg-bx-bg'}`}><div className="flex items-start justify-between gap-3"><div><h3 className="text-sm font-black text-bx-text">{rate.bankName}</h3><p className="mt-1 text-[9px] text-bx-muted">{rate.updatedAt ? `Обновлено: ${formatBankUpdatedAt(rate.updatedAt)}` : 'Получено с официальной страницы'}</p></div><a href={rate.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-bx-border bg-bx-surface px-2.5 text-[9px] font-bold text-blue-600 dark:text-blue-300">Источник <Icon name="external" className="h-3 w-3" /></a></div><div className="mt-4 grid grid-cols-2 gap-2"><BankValue label="Банк покупает" value={rate.buy} highlighted={bestBuy} badge="Лучший курс" /><BankValue label="Банк продаёт" value={rate.sell} highlighted={bestSell} badge="Самая низкая цена" /></div><p className="mt-3 text-[9px] text-bx-muted">Разница покупки и продажи: <b className="tabular-nums text-bx-text">{formatRate(rate.sell - rate.buy)} сум</b></p></article>
-            })}</div> : <p className="rounded-2xl border border-dashed border-bx-border py-8 text-center text-xs text-bx-muted">Для {bankCode} банки пока не опубликовали сравнимые курсы.</p>}
+            })}</div> : <div className="rounded-2xl border border-dashed border-bx-border px-4 py-8 text-center"><p className="text-xs font-bold text-bx-text">Для {bankCode} по выбранным банкам нет сравнимых курсов.</p><p className="mt-1 text-[10px] text-bx-muted">Выберите другие банки или верните фильтр «Все банки».</p>{selectedBankIds.length > 0 && <button onClick={() => setSelectedBankIds([])} className="mt-3 min-h-10 rounded-xl bg-emerald-600 px-4 text-[10px] font-black text-white">Показать все банки</button>}</div>}
           </div>
         </section>
 
