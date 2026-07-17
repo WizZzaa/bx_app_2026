@@ -265,6 +265,29 @@ ipcMain.handle('tray:resize-widget', (_e, requestedWidth: number, requestedHeigh
   resizeTrayWindow(requestedWidth, requestedHeight)
 })
 
+// Нативные Windows-уведомления для напоминаний Бикса. Рендерер не получает
+// прямой доступ к Electron Notification, поэтому отправляет только текст.
+ipcMain.handle('tray:show-notification', (_e, title: string, body: string, route = '/planner') => {
+  if (!Notification.isSupported()) return false
+  try {
+    const notice = new Notification({
+      title: String(title || 'BX').slice(0, 120),
+      body: String(body || '').slice(0, 500),
+    })
+    notice.on('click', () => {
+      if (!mainWindow) return
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.show()
+      mainWindow.focus()
+      navigateMainWindow(route)
+    })
+    notice.show()
+    return true
+  } catch {
+    return false
+  }
+})
+
 // Открыть главное окно приложения (опц. на конкретном разделе) из трей-виджета.
 ipcMain.handle('tray:open-app', (_e, route?: string) => {
   if (!mainWindow) return
