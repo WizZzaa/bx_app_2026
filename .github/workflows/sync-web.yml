@@ -1,0 +1,63 @@
+name: Sync web application
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-web-application
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Update app in busines_bx
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'master') ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      APP_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+    steps:
+      - name: Configure restricted deploy key
+        env:
+          DEPLOY_KEY: ${{ secrets.BX_PARENT_DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "BX_PARENT_DEPLOY_KEY is not configured" >&2
+            exit 1
+          fi
+
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/bx_parent"
+          chmod 600 "$HOME/.ssh/bx_parent"
+          ssh-keyscan -H github.com >> "$HOME/.ssh/known_hosts"
+
+      - name: Advance web repository app pointer
+        run: |
+          if [[ ! "$APP_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Invalid app commit: $APP_SHA" >&2
+            exit 1
+          fi
+
+          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/bx_parent -o IdentitiesOnly=yes"
+          git clone --depth 1 git@github.com:WizZzaa/busines_bx.git parent
+          cd parent
+
+          git update-index --cacheinfo "160000,$APP_SHA,app"
+          if git diff --cached --quiet; then
+            echo "Web repository already points to $APP_SHA"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: sync app ${APP_SHA:0:7}"
+          git push origin HEAD:master
