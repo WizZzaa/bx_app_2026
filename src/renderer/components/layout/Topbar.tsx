@@ -6,7 +6,7 @@ import Icon from '../../lib/ui/Icon'
 import { getSyncQueue, syncOfflineData } from '../../lib/db/syncQueue'
 import { db } from '../../lib/db/localDb'
 import ConflictModal from '../ConflictModal'
-import { applyTheme } from '../../lib/theme'
+import { applyTheme, currentTheme, nextTheme, THEME_KEY, type BxTheme } from '../../lib/theme'
 import { useNotifications, type BxNotification } from '../../lib/useNotifications'
 
 export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
@@ -22,7 +22,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
   const [notifOpen, setNotifOpen] = useState(false)
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications()
   
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem('bx_theme') as 'dark' | 'light') || 'dark')
+  const [theme, setTheme] = useState<BxTheme>(() => currentTheme())
   
   const navigate = useNavigate()
   const boxRef = useRef<HTMLDivElement>(null)
@@ -30,18 +30,17 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
 
   useEffect(() => {
     const handleStorageChange = () => {
-      const t = (localStorage.getItem('bx_theme') as 'dark' | 'light') || 'dark'
-      setTheme(t)
+      setTheme(currentTheme())
     }
     window.addEventListener('storage', handleStorageChange)
     return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
   const handleToggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark'
-    setTheme(nextTheme)
-    localStorage.setItem('bx_theme', nextTheme)
-    applyTheme(nextTheme)
+    const next = nextTheme(theme)
+    setTheme(next)
+    localStorage.setItem(THEME_KEY, next)
+    applyTheme(next)
     window.dispatchEvent(new Event('storage'))
   }
 
@@ -221,12 +220,17 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
         <button
           onClick={handleToggleTheme}
           className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted transition-colors cursor-pointer"
-          title={theme === 'dark' ? 'Светлая тема' : 'Темная тема'}
+          title={theme === 'light' ? 'Следующая тема: тёмная' : theme === 'dark' ? 'Следующая тема: графит и лайм' : theme === 'lime' ? 'Следующая тема: светлая и лаванда' : 'Следующая тема: светлая'}
+          aria-label="Сменить тему оформления"
         >
           {theme === 'dark' ? (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          ) : (
+          ) : theme === 'light' ? (
             <Icon name="sun" className="w-4 h-4" />
+          ) : theme === 'lime' ? (
+            <span aria-hidden="true" className="h-3.5 w-3.5 rounded-full bg-bx-accent shadow-[0_0_0_3px_rgb(var(--bx-accent-rgb)/0.14)]" />
+          ) : (
+            <span aria-hidden="true" className="h-3.5 w-3.5 rounded-full border border-bx-text/20 bg-bx-accent shadow-[0_0_0_3px_rgb(var(--bx-accent-rgb)/0.14)]" />
           )}
         </button>
 

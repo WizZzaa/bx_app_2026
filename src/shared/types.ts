@@ -61,12 +61,23 @@ export interface CurrencyRate {
 }
 
 export interface BankExchangeRate {
-  bankId: 'ipak-yuli' | 'aloqabank' | 'trustbank';
+  bankId: string;
   bankName: string;
   sourceUrl: string;
+  logoUrl?: string | null;
   updatedAt: string | null;
   code: string;
   buy: number;
   sell: number;
   centralBank: number | null;
+}
+
+export interface BankDirectoryEntry {
+  bankId: string;
+  name: string;
+  sourceUrl: string;
+  logoUrl: string | null;
+  isActive: boolean;
+  integrationStatus: 'connected' | 'planned';
+  sortOrder: number;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCurrencyCsv, convertCurrency, enumerateDates, findBestBankRates } from './Currency'
+import { buildCurrencyCsv, convertCurrency, enumerateDates, filterBankRates, findBestBankRates } from './Currency'
 import type { BankExchangeRate } from '../../shared/types'
 
 const rates = { USD: 12_500, EUR: 14_000, RUB: 160 }
@@ -34,14 +34,24 @@ describe('currency archive helpers', () => {
 })
 
 describe('bank exchange comparison', () => {
+  const rows: BankExchangeRate[] = [
+    { bankId: 'ipak-yuli', bankName: 'Ipak', sourceUrl: 'https://example.com/1', updatedAt: null, code: 'USD', buy: 12040, sell: 12140, centralBank: null },
+    { bankId: 'aloqabank', bankName: 'Aloqa', sourceUrl: 'https://example.com/2', updatedAt: null, code: 'USD', buy: 12060, sell: 12130, centralBank: null },
+    { bankId: 'trustbank', bankName: 'Trust', sourceUrl: 'https://example.com/3', updatedAt: null, code: 'USD', buy: 12050, sell: 12120, centralBank: null },
+  ]
+
   it('chooses the highest bank purchase and the lowest bank sale independently', () => {
-    const rows: BankExchangeRate[] = [
-      { bankId: 'ipak-yuli', bankName: 'Ipak', sourceUrl: 'https://example.com/1', updatedAt: null, code: 'USD', buy: 12040, sell: 12140, centralBank: null },
-      { bankId: 'aloqabank', bankName: 'Aloqa', sourceUrl: 'https://example.com/2', updatedAt: null, code: 'USD', buy: 12060, sell: 12130, centralBank: null },
-      { bankId: 'trustbank', bankName: 'Trust', sourceUrl: 'https://example.com/3', updatedAt: null, code: 'USD', buy: 12050, sell: 12120, centralBank: null },
-    ]
     const result = findBestBankRates(rows, 'USD')
     expect(result.bestBuy?.bankId).toBe('aloqabank')
+    expect(result.bestSell?.bankId).toBe('trustbank')
+  })
+
+  it('filters the comparison by one or several selected banks', () => {
+    expect(filterBankRates(rows, []).map(row => row.bankId)).toEqual(['ipak-yuli', 'aloqabank', 'trustbank'])
+    expect(filterBankRates(rows, ['ipak-yuli', 'trustbank']).map(row => row.bankId)).toEqual(['ipak-yuli', 'trustbank'])
+
+    const result = findBestBankRates(filterBankRates(rows, ['ipak-yuli', 'trustbank']), 'USD')
+    expect(result.bestBuy?.bankId).toBe('trustbank')
     expect(result.bestSell?.bankId).toBe('trustbank')
   })
 })

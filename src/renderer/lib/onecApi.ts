@@ -6,6 +6,7 @@ import type {
   BackupResult,
 } from '../../shared/types';
 import type { UpdateSnapshot } from '../../main/services/updatePolicy'
+import type { SiteResetMode, SiteSessionResult } from '../../shared/siteSession'
 
 interface BxBridge {
   platform: string;
@@ -29,6 +30,10 @@ interface BxBridge {
     scan(): Promise<any[]>
     clean(ids: string[]): Promise<any>
     checkBrowsers(ids: string[]): Promise<string[]>
+  }
+  siteSession: {
+    open(url: string): Promise<SiteSessionResult>
+    reset(url: string, mode: SiteResetMode): Promise<SiteSessionResult>
   }
   ecp: {
     pickPfx(): Promise<string | null>

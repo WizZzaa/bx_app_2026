@@ -6,7 +6,7 @@ import { db } from '../lib/db/localDb'
 import { usePlan } from '../lib/plan'
 import { useToast } from '../lib/ui/ToastContext'
 import { loadEcpKeys, saveEcpKeys } from '../lib/ecpStorage'
-import { applyTheme } from '../lib/theme'
+import { applyTheme, currentTheme, THEME_KEY, type BxTheme } from '../lib/theme'
 import { CompanyTeamPanel } from '../components/CompanyTeamPanel'
 import { currentFontScale, FONT_SCALE_OPTIONS, saveFontScale, type FontScale } from '../lib/uiScale'
 import Icon from '../lib/ui/Icon'
@@ -15,8 +15,8 @@ import { todayISO } from '../lib/dates'
 import { parseSettingsBackup, settingsBackupSummary, type SettingsBackupPayload } from '../lib/settingsBackup'
 import { useCompany } from '../lib/CompanyContext'
 import { useNavigate } from 'react-router-dom'
+import type { UpdateSnapshot } from '../../main/services/updatePolicy'
 
-const THEME_KEY = 'bx_theme'
 const NOTIFY_KEY = 'bx_notify_days'
 const IDLE_LOCK_KEY = 'bx_idle_lock'
 
@@ -25,7 +25,14 @@ type IdleLock = 'off' | '5' | '10' | '30' | '60'
 type TabType = 'overview' | 'workspace' | 'notifications' | 'security' | 'ai' | 'team' | 'data' | 'integrations' | 'billing' | 'about'
 type DashboardWidgets = { weather: boolean; currency: boolean; notifications: boolean; horoscope: boolean }
 type DataStats = { templates: number; counterparties: number; transactions: number; employees: number }
+const INITIAL_UPDATE: UpdateSnapshot = { status: 'idle', error: '', version: APP_VERSION, availableVersion: '', mode: 'unsupported' }
 const DEFAULT_WIDGETS: DashboardWidgets = { weather: true, currency: true, notifications: true, horoscope: false }
+const THEME_CHOICES: Array<{ value: BxTheme; label: string; colors: string[] }> = [
+  { value: 'light', label: 'Светлая', colors: ['#F4F5F7', '#FFFFFF', '#4F46E5', '#1E293B'] },
+  { value: 'dark', label: 'Тёмная', colors: ['#0F1117', '#141820', '#3B82F6', '#F8FAFC'] },
+  { value: 'lime', label: 'Графит + лайм', colors: ['#111111', '#FFFFFF', '#B7F500', '#333333'] },
+  { value: 'lavender-light', label: 'Светлая + лаванда', colors: ['#F7F5F2', '#FFFFFF', '#75639A', '#17131F'] },
+]
 
 export default function Settings() {
   const { plan, isPro, isTrial, trialDaysLeft, planExpiresAt, referralCode, refresh: refreshPlan } = usePlan()
@@ -41,7 +48,7 @@ export default function Settings() {
   const [userId, setUserId] = useState('')
   const [notifyDays, setNotifyDays] = useState<NotifyDays>('3')
   const [signingOut, setSigningOut] = useState(false)
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+  const [theme, setTheme] = useState<BxTheme>(() => currentTheme())
   const [showHoroscope, setShowHoroscope] = useState(false)
   const [payMethod, setPayMethod] = useState<'card' | 'invoice'>('card')
   const [autostartEnabled, setAutostartEnabled] = useState(false)
@@ -57,6 +64,7 @@ export default function Settings() {
   const [dataStats, setDataStats] = useState<DataStats>({ templates: 0, counterparties: 0, transactions: 0, employees: 0 })
   const [pendingImport, setPendingImport] = useState<SettingsBackupPayload | null>(null)
   const [confirmAction, setConfirmAction] = useState<'reset-pin' | 'clear-cache' | 'sign-out' | null>(null)
+  const [updateInfo, setUpdateInfo] = useState<UpdateSnapshot>(INITIAL_UPDATE)
 
   function openExternalUrl(url: string) {
     const bridge = window as Window & { bx?: { openExternal?: (target: string) => void } }
@@ -66,6 +74,24 @@ export default function Settings() {
   const handleToggleAutostart = async (val: boolean) => {
     setAutostartEnabled(val)
     if (window.bx?.autostart?.set) await window.bx.autostart.set(val)
+  }
+
+  const handleCheckForUpdates = async () => {
+    const updater = window.bx?.updater
+    if (!updater) {
+      toast.error('Проверка обновлений доступна в установленной версии BX')
+      return
+    }
+    setUpdateInfo(current => ({ ...current, status: 'checking', error: '' }))
+    try {
+      setUpdateInfo(await updater.checkForUpdates())
+    } catch {
+      setUpdateInfo(current => ({ ...current, status: 'error', error: 'Не удалось проверить обновления' }))
+    }
+  }
+
+  const handleInstallUpdate = () => {
+    void window.bx?.updater?.installUpdate()
   }
 
   const handleRedeemPromo = async () => {
@@ -174,8 +200,7 @@ export default function Settings() {
     if (savedIdle) setIdleLock(savedIdle)
     setPinEnabledState(isPinEnabled())
 
-    const savedTheme = localStorage.getItem(THEME_KEY) as 'dark' | 'light'
-    if (savedTheme) setTheme(savedTheme)
+    setTheme(currentTheme())
     setFontScale(currentFontScale())
 
     if (window.bx?.autostart?.get) window.bx.autostart.get().then(setAutostartEnabled)
@@ -193,6 +218,15 @@ export default function Settings() {
       .catch(() => undefined)
   }, [])
 
+  useEffect(() => {
+    const updater = window.bx?.updater
+    if (!updater) return undefined
+    let active = true
+    updater.getStatus().then(snapshot => { if (active) setUpdateInfo(snapshot) }).catch(() => undefined)
+    const unsubscribe = updater.onUpdateStatus(snapshot => { if (active) setUpdateInfo(snapshot) })
+    return () => { active = false; unsubscribe() }
+  }, [])
+
   function saveNotify(v: NotifyDays) {
     setNotifyDays(v)
     localStorage.setItem(NOTIFY_KEY, v)
@@ -203,7 +237,7 @@ export default function Settings() {
     localStorage.setItem(IDLE_LOCK_KEY, v)
   }
 
-  function saveTheme(t: 'dark' | 'light') {
+  function saveTheme(t: BxTheme) {
     setTheme(t)
     localStorage.setItem(THEME_KEY, t)
     applyTheme(t)
@@ -389,14 +423,14 @@ export default function Settings() {
     about: { eyebrow: 'BX', title: 'О программе', description: 'Версия, поддержка и принципы продукта.' },
   }
 
-  function SettingRow({ icon, label, desc, children }: { icon: string; label: string; desc?: string; children: React.ReactNode }) {
+  function SettingRow({ icon, label, desc, children, wide = false }: { icon: string; label: string; desc?: string; children: React.ReactNode; wide?: boolean }) {
     return (
-      <div className="flex flex-col gap-3 border-b border-bx-border/70 px-5 py-4 last:border-0 sm:flex-row sm:items-center sm:justify-between">
+      <div className={`flex flex-col gap-3 border-b border-bx-border/70 px-5 py-4 last:border-0 ${wide ? '' : 'sm:flex-row sm:items-center sm:justify-between'}`}>
         <div className="flex min-w-0 items-start gap-3">
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-bx-border bg-bx-surface-2 text-bx-muted"><Icon name={icon} className="h-4 w-4" /></span>
           <div><p className="text-sm font-bold text-bx-text">{label}</p>{desc && <p className="mt-1 max-w-2xl text-xs leading-relaxed text-bx-muted">{desc}</p>}</div>
         </div>
-        <div className="flex-shrink-0 pl-12 sm:pl-0">{children}</div>
+        <div className={`${wide ? 'w-full pl-12' : 'flex-shrink-0 pl-12 sm:pl-0'}`}>{children}</div>
       </div>
     )
   }
@@ -416,22 +450,30 @@ export default function Settings() {
   const currentHeader = sectionTitle[activeTab]
   const securityScore = pinEnabled ? (idleLock === 'off' ? 75 : 100) : 35
   const backupSummary = pendingImport ? settingsBackupSummary(pendingImport) : null
+  const updateStatusLabel: Record<UpdateSnapshot['status'], string> = {
+    idle: 'Готово к проверке',
+    checking: 'Проверяем релизы…',
+    latest: 'Установлена актуальная версия',
+    downloading: 'Обновление загружается…',
+    ready: updateInfo.availableVersion ? `Версия ${updateInfo.availableVersion} готова` : 'Обновление готово',
+    error: updateInfo.error || 'Не удалось проверить обновления',
+  }
 
   return (
     <div className="flex flex-1 overflow-hidden bg-bx-bg text-bx-text">
       <aside className="flex w-[292px] flex-shrink-0 flex-col border-r border-bx-border bg-bx-surface-2/55">
         <div className="border-b border-bx-border px-5 py-5">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20"><Icon name="settings" className="h-5 w-5" /></span>
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-bx-on-accent shadow-lg shadow-blue-600/20"><Icon name="settings" className="h-5 w-5" /></span>
             <div><h1 className="text-sm font-black">Настройки BX</h1><p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-bx-muted">Control center · v{APP_VERSION}</p></div>
           </div>
         </div>
         <nav className="custom-scrollbar flex-1 space-y-1 overflow-y-auto p-3" aria-label="Разделы настроек">
           {navItems.map(item => (
             <button key={item.id} type="button" onClick={() => setActiveTab(item.id)} aria-current={activeTab === item.id ? 'page' : undefined}
-              className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${activeTab === item.id ? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/15' : 'border-transparent text-bx-muted hover:border-bx-border hover:bg-bx-surface hover:text-bx-text'}`}>
-              <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${activeTab === item.id ? 'bg-white/15' : 'border border-bx-border bg-bx-surface'}`}><Icon name={item.icon} className="h-4 w-4" /></span>
-              <span className="min-w-0"><span className="block text-xs font-black">{item.label}</span><span className={`mt-0.5 block truncate text-[10px] ${activeTab === item.id ? 'text-white/75' : 'text-bx-muted'}`}>{item.desc}</span></span>
+              className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${activeTab === item.id ? 'border-blue-600 bg-blue-600 text-bx-on-accent shadow-md shadow-blue-600/15' : 'border-transparent text-bx-muted hover:border-bx-border hover:bg-bx-surface hover:text-bx-text'}`}>
+              <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${activeTab === item.id ? 'bg-bx-on-accent/10 text-bx-on-accent' : 'border border-bx-border bg-bx-surface'}`}><Icon name={item.icon} className="h-4 w-4" /></span>
+              <span className="min-w-0"><span className="block text-xs font-black">{item.label}</span><span className={`mt-0.5 block truncate text-[10px] font-semibold ${activeTab === item.id ? 'text-bx-on-accent-muted' : 'text-bx-muted'}`}>{item.desc}</span></span>
             </button>
           ))}
         </nav>
@@ -487,7 +529,7 @@ export default function Settings() {
           {activeTab === 'workspace' && (
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
               <section className={card}>
-                <SettingRow icon="sun" label="Тема оформления" desc="Светлая для дневной работы или тёмная для кабинета и слабого освещения."><div className="flex rounded-xl border border-bx-border bg-bx-bg p-1">{(['light', 'dark'] as const).map(value => <button key={value} type="button" onClick={() => saveTheme(value)} className={`${button} min-w-24 ${theme === value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}>{value === 'light' ? 'Светлая' : 'Тёмная'}</button>)}</div></SettingRow>
+                <SettingRow wide icon="sun" label="Тема оформления" desc="Четыре готовых режима: классические светлый и тёмный, графитовый с лаймом и спокойный светлый с лавандой."><div className="grid grid-cols-1 gap-1.5 rounded-xl border border-bx-border bg-bx-bg p-1 sm:grid-cols-2 2xl:grid-cols-4" role="group" aria-label="Тема оформления">{THEME_CHOICES.map(option => <button key={option.value} type="button" onClick={() => saveTheme(option.value)} aria-pressed={theme === option.value} className={`${button} min-w-0 px-3 ${theme === option.value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}><span className="flex items-center justify-center gap-1" aria-hidden="true">{option.colors.map(color => <span key={color} className="h-2.5 w-2.5 rounded-full border border-black/10" style={{ backgroundColor: color }} />)}</span><span className="mt-1 block whitespace-nowrap text-[10px]">{option.label}</span></button>)}</div></SettingRow>
                 <SettingRow icon="monitor" label="Масштаб интерфейса" desc="Увеличивает текст, кнопки и интервалы во всём приложении без перезапуска."><div className="grid grid-cols-4 gap-1 rounded-xl border border-bx-border bg-bx-bg p-1" role="group" aria-label="Масштаб интерфейса">{FONT_SCALE_OPTIONS.map(option => <button key={option.value} type="button" onClick={() => changeFontScale(option.value)} aria-pressed={fontScale === option.value} className={`${button} min-w-14 px-2 ${fontScale === option.value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}>{option.hint}</button>)}</div></SettingRow>
                 <SettingRow icon="dashboard" label="Погода на рабочем столе" desc="Показывать краткий прогноз рядом с рабочей сводкой."><Toggle checked={widgets.weather} onChange={() => toggleWidget('weather')} label="Показывать погоду" /></SettingRow>
                 <SettingRow icon="exchange" label="Курсы валют" desc="Показывать основные курсы ЦБ РУз на рабочем столе."><Toggle checked={widgets.currency} onChange={() => toggleWidget('currency')} label="Показывать курсы валют" /></SettingRow>
@@ -548,7 +590,22 @@ export default function Settings() {
           )}
 
           {activeTab === 'about' && (
-            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]"><section className={`${card} p-6`}><span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-lg font-black text-white">BX</span><h3 className="mt-5 text-xl font-black">Помощник бухгалтера Республики Узбекистан</h3><p className="mt-3 max-w-2xl text-sm leading-relaxed text-bx-muted">BX объединяет планирование, документы, расчёты, знания и ИИ в одном спокойном рабочем контуре. Цель — убирать рутину, не прятать важные действия и оставлять контроль за специалистом.</p><div className="mt-6 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-bx-bg p-4"><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Версия</p><p className="mt-1 font-mono text-sm font-black">{APP_VERSION}</p></div><div className="rounded-2xl bg-bx-bg p-4"><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Год</p><p className="mt-1 text-sm font-black">2026</p></div></div></section><section className={`${card} h-fit p-5`}><h3 className="text-sm font-black">Нужна помощь?</h3><p className="mt-2 text-xs leading-relaxed text-bx-muted">Опишите проблему в разделе поддержки или напишите технической команде.</p><button type="button" onClick={() => navigate('/support')} className={`${button} mt-4 w-full bg-blue-600 text-white`}><span className="inline-flex items-center gap-2"><Icon name="headset" className="h-4 w-4" />Открыть поддержку</span></button><button type="button" onClick={() => openExternalUrl('https://t.me/tech_support_bx')} className={`${button} mt-2 w-full border border-bx-border bg-bx-surface-2`}><span className="inline-flex items-center gap-2"><Icon name="send" className="h-4 w-4" />Telegram поддержки</span></button><p className="mt-4 text-center font-mono text-xs font-bold text-bx-muted">+998 90 916 04 44</p></section></div>
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+              <section className={`${card} p-6`}>
+                <img src="./icon.png" alt="Иконка BX" className="h-16 w-16 rounded-2xl shadow-lg" />
+                <h3 className="mt-5 text-xl font-black">Помощник бухгалтера Республики Узбекистан</h3>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-bx-muted">BX объединяет планирование, документы, расчёты, знания и ИИ в одном спокойном рабочем контуре. Цель — убирать рутину, не прятать важные действия и оставлять контроль за специалистом.</p>
+                <div className="mt-6 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-bx-bg p-4"><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Версия</p><p className="mt-1 font-mono text-sm font-black">{APP_VERSION}</p></div><div className="rounded-2xl bg-bx-bg p-4"><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Год</p><p className="mt-1 text-sm font-black">2026</p></div></div>
+                <div className={`mt-4 rounded-2xl border p-4 ${updateInfo.status === 'error' ? 'border-rose-500/30 bg-rose-500/[0.07]' : updateInfo.status === 'ready' ? 'border-emerald-500/30 bg-emerald-500/[0.07]' : 'border-bx-border bg-bx-bg'}`}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div><p className="text-xs font-black text-bx-text">Обновления BX</p><p role="status" className="mt-1 text-[10px] leading-relaxed text-bx-muted">{updateStatusLabel[updateInfo.status]}</p></div>
+                    {updateInfo.status === 'ready' ? <button type="button" onClick={handleInstallUpdate} className={`${button} bg-emerald-600 text-white hover:bg-emerald-500`}><span className="inline-flex items-center gap-2"><Icon name="download" className="h-4 w-4" />Установить</span></button> : <button type="button" onClick={handleCheckForUpdates} disabled={updateInfo.status === 'checking' || updateInfo.status === 'downloading'} className={`${button} border border-bx-border bg-bx-surface text-bx-text hover:border-blue-500/40 disabled:cursor-wait disabled:opacity-50`}><span className="inline-flex items-center gap-2"><Icon name="recycle" className={`h-4 w-4 ${updateInfo.status === 'checking' ? 'animate-spin' : ''}`} />Проверить обновления</span></button>}
+                  </div>
+                  <p className="mt-3 text-[9px] leading-relaxed text-bx-muted">Windows устанавливает обновление после подтверждённого перезапуска. На macOS BX скачивает подходящий файл релиза и открывает его для установки.</p>
+                </div>
+              </section>
+              <section className={`${card} h-fit p-5`}><h3 className="text-sm font-black">Нужна помощь?</h3><p className="mt-2 text-xs leading-relaxed text-bx-muted">Опишите проблему в разделе поддержки или напишите технической команде.</p><button type="button" onClick={() => navigate('/support')} className={`${button} mt-4 w-full bg-blue-600 text-white`}><span className="inline-flex items-center gap-2"><Icon name="headset" className="h-4 w-4" />Открыть поддержку</span></button><button type="button" onClick={() => openExternalUrl('https://t.me/tech_support_bx')} className={`${button} mt-2 w-full border border-bx-border bg-bx-surface-2`}><span className="inline-flex items-center gap-2"><Icon name="send" className="h-4 w-4" />Telegram поддержки</span></button><p className="mt-4 text-center font-mono text-xs font-bold text-bx-muted">+998 90 916 04 44</p></section>
+            </div>
           )}
         </div>
       </main>

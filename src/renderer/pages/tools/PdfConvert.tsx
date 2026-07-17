@@ -2,16 +2,36 @@ import React, { useState, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import * as XLSX from 'xlsx';
 
-/* eslint-disable @typescript-eslint/ban-ts-comment, import/no-unresolved */
-// @ts-ignore
-import PDFWorker from 'pdfjs-dist/build/pdf.worker.mjs?worker&inline';
-/* eslint-enable @typescript-eslint/ban-ts-comment, import/no-unresolved */
+// eslint-disable-next-line import/no-unresolved
+import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
-// Set PDF.js worker port using inline worker to avoid CDN/CORS issues
-try {
-  pdfjsLib.GlobalWorkerOptions.workerPort = new PDFWorker();
-} catch (e) {
-  console.error('Failed to set PDF.js workerPort:', e);
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+
+type PdfTextItem = { str: string; transform: number[] };
+
+export function groupPdfTextItems(items: PdfTextItem[]): string[] {
+  const rowsMap = new Map<number, PdfTextItem[]>();
+  items.forEach((item) => {
+    const y = Math.round(item.transform[5]);
+    const key = Array.from(rowsMap.keys()).find((existingY) => Math.abs(existingY - y) <= 4) ?? y;
+    const row = rowsMap.get(key) ?? [];
+    row.push(item);
+    rowsMap.set(key, row);
+  });
+
+  return Array.from(rowsMap.keys())
+    .sort((a, b) => b - a)
+    .map((y) => (rowsMap.get(y) ?? [])
+      .sort((a, b) => a.transform[4] - b.transform[4])
+      .map((item) => item.str)
+      .join('\t'));
+}
+
+const HTML_ENTITIES: Record<string, string> = {
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
+};
+export function escapeDocumentHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => HTML_ENTITIES[character] ?? character);
 }
 
 export default function PdfConvert() {
@@ -50,51 +70,22 @@ export default function PdfConvert() {
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
       const pagesTextList: string[][] = [];
+      let extractedCharacters = 0;
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         setStatus(`Анализ структуры страницы ${pageNum} из ${pdf.numPages}...`);
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
-        const items = textContent.items as any[];
-
-        // Group text segments by Y coordinate
-        // In PDFs, text items on the same horizontal line share similar Y coordinate (item.transform[5])
-        const rowsMap = new Map<number, any[]>();
-        items.forEach(item => {
-          // Round Y coordinate to group items on same line
-          const y = Math.round(item.transform[5]);
-          
-          // Check if there is already a row within 4 points difference (to accommodate font size variances)
-          let key = y;
-          for (const existingY of rowsMap.keys()) {
-            if (Math.abs(existingY - y) <= 4) {
-              key = existingY;
-              break;
-            }
-          }
-
-          if (!rowsMap.has(key)) {
-            rowsMap.set(key, []);
-          }
-          rowsMap.get(key)!.push(item);
-        });
-
-        // Sort Y coordinates descending (PDF coordinate system starts from bottom-left)
-        const sortedY = Array.from(rowsMap.keys()).sort((a, b) => b - a);
-        const pageRows: string[] = [];
-
-        sortedY.forEach(y => {
-          const rowItems = rowsMap.get(y)!;
-          // Sort X coordinates ascending (left to right)
-          rowItems.sort((a, b) => a.transform[4] - b.transform[4]);
-          
-          // Join strings with tab to preserve column borders
-          const rowText = rowItems.map(item => item.str).join('\t');
-          pageRows.push(rowText);
-        });
+        const items = textContent.items.filter((item) => 'str' in item) as PdfTextItem[];
+        const pageRows = groupPdfTextItems(items);
+        extractedCharacters += pageRows.join('').trim().length;
 
         pagesTextList.push(pageRows);
         setProgress(Math.round((pageNum / pdf.numPages) * 100));
+      }
+
+      if (extractedCharacters === 0) {
+        throw new Error('В PDF нет текстового слоя — это скан. Откройте «Распознавание текста (OCR)».');
       }
 
       parsedPagesRef.current = pagesTextList;
@@ -136,7 +127,7 @@ export default function PdfConvert() {
           <head><meta charset="utf-8"></head>
           <body style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5;">
             ${parsedPagesRef.current.map(pageRows => 
-              pageRows.map(row => `<p>${row.replace(/\t/g, ' &nbsp; &nbsp; ')}</p>`).join('')
+              pageRows.map(row => `<p>${escapeDocumentHtml(row).replace(/\t/g, ' &nbsp; &nbsp; ')}</p>`).join('')
             ).join('<hr style="border:1px dashed #ccc;"/>')}
           </body>
         </html>
@@ -144,11 +135,13 @@ export default function PdfConvert() {
 
       const blob = new Blob([htmlContent], { type: 'application/msword' });
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
+      const downloadUrl = URL.createObjectURL(blob);
+      link.href = downloadUrl;
       link.download = `${baseName}_converted.doc`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
     }
   };
 

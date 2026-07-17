@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { BankExchangeRate, CurrencyRate } from '../../shared/types'
+import { applyBankDirectory, DEFAULT_BANK_DIRECTORY, loadBankDirectory } from '../lib/bankDirectory'
 import { todayISO } from '../lib/dates'
 import Icon from '../lib/ui/Icon'
 import { widgetsApi } from '../lib/widgetsApi'
@@ -54,6 +55,10 @@ export function findBestBankRates(rates: BankExchangeRate[], code: string) {
   }
 }
 
+export function filterBankRates(rates: BankExchangeRate[], selectedBankIds: string[]) {
+  return selectedBankIds.length ? rates.filter(rate => selectedBankIds.includes(rate.bankId)) : rates
+}
+
 function localISO(date: Date) { const y = date.getFullYear(); const m = String(date.getMonth() + 1).padStart(2, '0'); const d = String(date.getDate()).padStart(2, '0'); return `${y}-${m}-${d}` }
 function daysAgo(days: number) { const date = new Date(); date.setDate(date.getDate() - days); return localISO(date) }
 
@@ -83,8 +88,10 @@ export default function Currency() {
   const [exportSuccess, setExportSuccess] = useState(false)
   const [bankCode, setBankCode] = useState<ForeignCode>('USD')
   const [bankRates, setBankRates] = useState<BankExchangeRate[]>([])
+  const [bankDirectory, setBankDirectory] = useState(DEFAULT_BANK_DIRECTORY)
   const [bankLoading, setBankLoading] = useState(true)
   const [bankError, setBankError] = useState('')
+  const [selectedBankIds, setSelectedBankIds] = useState<string[]>([])
   const bankRequestId = useRef(0)
 
   const load = useCallback(() => {
@@ -106,6 +113,7 @@ export default function Currency() {
       .finally(() => { if (requestId === bankRequestId.current) setBankLoading(false) })
   }, [selectedCodes])
   useEffect(loadBankRates, [loadBankRates])
+  useEffect(() => { loadBankDirectory().then(setBankDirectory).catch(() => setBankDirectory(DEFAULT_BANK_DIRECTORY)) }, [])
 
   useEffect(() => {
     let active = true
@@ -119,8 +127,15 @@ export default function Currency() {
   const rateMap = useMemo(() => Object.fromEntries(rates.map(rate => [rate.code, rate.value])), [rates])
   const converterCodes = useMemo(() => ['UZS', ...selectedCodes] as CurrencyCode[], [selectedCodes])
   const converted = convertCurrency(Number(amount.replace(',', '.')), from, to, rateMap)
-  const bankComparison = useMemo(() => findBestBankRates(bankRates, bankCode), [bankRates, bankCode])
-  const visibleBankRates = useMemo(() => bankRates.filter(rate => rate.code === bankCode), [bankRates, bankCode])
+  const managedBankRates = useMemo(() => applyBankDirectory(bankRates, bankDirectory), [bankRates, bankDirectory])
+  const availableBanks = useMemo(() => Array.from(new Map(managedBankRates.map(rate => [rate.bankId, { id: rate.bankId, name: rate.bankName, logoUrl: rate.logoUrl }])).values()), [managedBankRates])
+  const filteredBankRates = useMemo(() => filterBankRates(managedBankRates, selectedBankIds), [managedBankRates, selectedBankIds])
+  const bankComparison = useMemo(() => findBestBankRates(filteredBankRates, bankCode), [filteredBankRates, bankCode])
+  const visibleBankRates = useMemo(() => filteredBankRates.filter(rate => rate.code === bankCode), [filteredBankRates, bankCode])
+
+  const toggleBank = (bankId: string) => {
+    setSelectedBankIds(current => current.includes(bankId) ? current.filter(id => id !== bankId) : [...current, bankId])
+  }
 
   const toggleExtra = (code: string) => {
     const next = extraCodes.includes(code) ? extraCodes.filter(item => item !== code) : [...extraCodes, code]
@@ -181,11 +196,13 @@ export default function Currency() {
             </div>
           </div>
           <div className="p-5">
+            {!bankLoading && !bankError && availableBanks.length > 0 && <div className="mb-4 rounded-2xl border border-bx-border bg-bx-bg p-3"><div className="flex flex-col gap-3 lg:flex-row lg:items-center"><div className="min-w-36"><p className="text-[9px] font-black uppercase tracking-[0.12em] text-bx-muted">Показывать банки</p><p className="mt-1 text-[9px] text-bx-muted">Можно выбрать несколько</p></div><div className="flex flex-1 flex-wrap gap-2" role="group" aria-label="Фильтр банков"><button onClick={() => setSelectedBankIds([])} aria-pressed={selectedBankIds.length === 0} className={`min-h-11 rounded-xl border px-3 text-[10px] font-black transition-colors ${selectedBankIds.length === 0 ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-bx-border bg-bx-surface text-bx-muted hover:border-emerald-500/30 hover:text-bx-text'}`}>Все банки</button>{availableBanks.map(bank => { const selected = selectedBankIds.includes(bank.id); return <button key={bank.id} onClick={() => toggleBank(bank.id)} aria-pressed={selected} className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-[10px] font-black transition-colors ${selected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-bx-border bg-bx-surface text-bx-muted hover:border-emerald-500/30 hover:text-bx-text'}`}><BankLogo name={bank.name} logoUrl={bank.logoUrl} size="sm" />{bank.name}</button> })}</div>{selectedBankIds.length > 0 && <button onClick={() => setSelectedBankIds([])} className="min-h-11 self-start rounded-xl px-3 text-[10px] font-bold text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300 lg:self-center">Сбросить</button>}</div></div>}
             {bankLoading ? <div className="grid gap-3 md:grid-cols-3">{Array.from({ length: 3 }).map((_, index) => <div key={index} className="h-36 animate-pulse rounded-2xl bg-bx-bg" />)}</div> : bankError ? <div className="rounded-2xl border border-dashed border-amber-500/30 bg-amber-500/[0.08] p-5"><p role="alert" className="text-xs font-bold text-amber-800 dark:text-amber-200">{bankError}</p><button onClick={loadBankRates} className="mt-3 min-h-10 rounded-xl bg-amber-600 px-4 text-[10px] font-black text-white">Повторить</button></div> : visibleBankRates.length ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{visibleBankRates.map(rate => {
               const bestBuy = bankComparison.bestBuy?.bankId === rate.bankId
               const bestSell = bankComparison.bestSell?.bankId === rate.bankId
-              return <article key={`${rate.bankId}-${rate.code}`} className={`rounded-2xl border p-4 ${bestBuy || bestSell ? 'border-emerald-500/30 bg-emerald-500/[0.045]' : 'border-bx-border bg-bx-bg'}`}><div className="flex items-start justify-between gap-3"><div><h3 className="text-sm font-black text-bx-text">{rate.bankName}</h3><p className="mt-1 text-[9px] text-bx-muted">{rate.updatedAt ? `Обновлено: ${formatBankUpdatedAt(rate.updatedAt)}` : 'Получено с официальной страницы'}</p></div><a href={rate.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-bx-border bg-bx-surface px-2.5 text-[9px] font-bold text-blue-600 dark:text-blue-300">Источник <Icon name="external" className="h-3 w-3" /></a></div><div className="mt-4 grid grid-cols-2 gap-2"><BankValue label="Банк покупает" value={rate.buy} highlighted={bestBuy} badge="Лучший курс" /><BankValue label="Банк продаёт" value={rate.sell} highlighted={bestSell} badge="Самая низкая цена" /></div><p className="mt-3 text-[9px] text-bx-muted">Разница покупки и продажи: <b className="tabular-nums text-bx-text">{formatRate(rate.sell - rate.buy)} сум</b></p></article>
-            })}</div> : <p className="rounded-2xl border border-dashed border-bx-border py-8 text-center text-xs text-bx-muted">Для {bankCode} банки пока не опубликовали сравнимые курсы.</p>}
+              const bestLabel = bestBuy && bestSell ? 'Лучший по покупке и продаже' : bestBuy ? 'Лучшая покупка' : bestSell ? 'Лучшая продажа' : ''
+              return <article key={`${rate.bankId}-${rate.code}`} className={`relative overflow-hidden rounded-2xl border p-4 transition-colors ${bestBuy || bestSell ? 'border-emerald-500/50 bg-emerald-500/[0.07] shadow-sm ring-1 ring-emerald-500/15' : 'border-bx-border bg-bx-bg'}`}>{(bestBuy || bestSell) && <span className="absolute inset-y-0 left-0 w-1 bg-emerald-500" aria-hidden="true" />}<div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><BankLogo name={rate.bankName} logoUrl={rate.logoUrl} /><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate text-sm font-black text-bx-text">{rate.bankName}</h3>{bestLabel && <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-[8px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{bestLabel}</span>}</div><p className="mt-1 text-[9px] text-bx-muted">{rate.updatedAt ? `Обновлено: ${formatBankUpdatedAt(rate.updatedAt)}` : 'Получено с официальной страницы'}</p></div></div><a href={rate.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg border border-bx-border bg-bx-surface px-2.5 text-[9px] font-bold text-blue-600 dark:text-blue-300">Источник <Icon name="external" className="h-3 w-3" /></a></div><div className="mt-4 grid grid-cols-2 gap-2"><BankValue label="Банк покупает" value={rate.buy} highlighted={bestBuy} badge="Лучший курс" /><BankValue label="Банк продаёт" value={rate.sell} highlighted={bestSell} badge="Самая низкая цена" /></div><p className="mt-3 text-[9px] text-bx-muted">Разница покупки и продажи: <b className="tabular-nums text-bx-text">{formatRate(rate.sell - rate.buy)} сум</b></p></article>
+            })}</div> : <div className="rounded-2xl border border-dashed border-bx-border px-4 py-8 text-center"><p className="text-xs font-bold text-bx-text">Для {bankCode} по выбранным банкам нет сравнимых курсов.</p><p className="mt-1 text-[10px] text-bx-muted">Выберите другие банки или верните фильтр «Все банки».</p>{selectedBankIds.length > 0 && <button onClick={() => setSelectedBankIds([])} className="mt-3 min-h-10 rounded-xl bg-emerald-600 px-4 text-[10px] font-black text-white">Показать все банки</button>}</div>}
           </div>
         </section>
 
@@ -221,6 +238,7 @@ export default function Currency() {
 function downloadCsv(content: string, filename: string) { const url = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8' })); const link = document.createElement('a'); link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url) }
 function formatRate(value: number) { return value.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) }
 function formatBankUpdatedAt(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }
+function BankLogo({ name, logoUrl, size = 'md' }: { name: string; logoUrl?: string | null; size?: 'sm' | 'md' }) { const box = size === 'sm' ? 'h-6 w-6 rounded-lg text-[8px]' : 'h-11 w-11 rounded-xl text-[10px]'; const initials = name.split(/\s+/).map(word => word[0]).join('').slice(0, 2).toUpperCase(); return <span className={`relative grid shrink-0 place-items-center overflow-hidden border border-bx-border bg-bx-surface font-black text-bx-muted ${box}`}><span aria-hidden="true">{initials}</span>{logoUrl && <img src={logoUrl} alt={`Логотип ${name}`} loading="lazy" onError={event => { event.currentTarget.style.display = 'none' }} className="absolute inset-0 h-full w-full bg-bx-surface object-contain p-1" />}</span> }
 function BankValue({ label, value, highlighted, badge }: { label: string; value: number; highlighted: boolean; badge: string }) { return <div className={`rounded-xl border p-3 ${highlighted ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-bx-border bg-bx-surface'}`}><p className="text-[8px] font-black uppercase tracking-wide text-bx-muted">{label}</p><p className="mt-1 text-lg font-black tabular-nums text-bx-text">{formatRate(value)}</p>{highlighted && <p className="mt-1 text-[8px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{badge}</p>}</div> }
 function RateCard({ rate }: { rate: CurrencyRate }) { return <article className="rounded-[22px] border border-bx-border bg-bx-surface p-5 shadow-sm"><div className="flex items-start justify-between"><span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-500/10 text-xs font-black text-blue-600 dark:text-blue-300">{rate.code}</span><span className={`rounded-lg px-2 py-1 text-[9px] font-bold ${rate.diff >= 0 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300' : 'bg-rose-500/10 text-rose-600 dark:text-rose-300'}`}>{rate.diff >= 0 ? '+' : '−'}{Math.abs(rate.diff).toFixed(2)}</span></div><p className="mt-4 text-2xl font-black tabular-nums text-bx-text">{formatRate(rate.value)} <span className="text-xs text-bx-muted">сум</span></p><p className="mt-1 text-[10px] text-bx-muted">{rate.name}</p></article> }
 function ToolHeader({ icon, tone, eyebrow, title }: { icon: string; tone: 'blue' | 'emerald'; eyebrow: string; title: string }) { const style = tone === 'blue' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-300' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'; return <div className="flex items-center gap-2.5"><span className={`grid h-9 w-9 place-items-center rounded-xl ${style}`}><Icon name={icon} className="h-4 w-4" /></span><div><p className={`text-[9px] font-extrabold uppercase tracking-wide ${tone === 'blue' ? 'text-blue-600 dark:text-blue-300' : 'text-emerald-600 dark:text-emerald-300'}`}>{eyebrow}</p><h2 className="text-sm font-black text-bx-text">{title}</h2></div></div> }

@@ -15,4 +15,19 @@ describe('settings backup', () => {
     expect(() => parseSettingsBackup(JSON.stringify({ version: '1', timestamp: 'now', theme: 'neon' }))).toThrow('тем')
     expect(() => parseSettingsBackup(JSON.stringify({ version: '1', timestamp: 'now', templates: {} }))).toThrow('списком')
   })
+
+  it('accepts the graphite and lime theme in a backup', () => {
+    const backup = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', theme: 'lime' }))
+    expect(backup.theme).toBe('lime')
+  })
+
+  it('accepts the light lavender theme in a backup', () => {
+    const backup = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', theme: 'lavender-light' }))
+    expect(backup.theme).toBe('lavender-light')
+  })
+
+  it('migrates the retired light lime theme in an older backup', () => {
+    const backup = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', theme: 'lime-light' }))
+    expect(backup.theme).toBe('lavender-light')
+  })
 })

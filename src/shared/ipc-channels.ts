@@ -22,6 +22,9 @@ export const IPC = {
   PC_SCAN: 'pc:scan',
   PC_CLEAN: 'pc:clean',
   PC_CHECK_BROWSERS: 'pc:checkBrowsers',
+  // Isolated web-service window
+  SITE_SESSION_OPEN: 'site-session:open',
+  SITE_SESSION_RESET: 'site-session:reset',
   // ECP / E-Imzo
   ECP_PICK_PFX: 'ecp:pickPfx',
   ECP_PARSE_PFX: 'ecp:parsePfx',

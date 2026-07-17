@@ -98,7 +98,7 @@ export default function Sidebar() {
           title={collapsed ? 'BX · На главную' : undefined}
           aria-label="BX — перейти на рабочий стол"
         >
-          <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-[11px] font-black tracking-tight text-white shadow-lg shadow-blue-600/20">BX</span>
+          <span data-testid="bx-brand-mark" className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-blue-600 text-[11px] font-black tracking-tight text-bx-on-accent shadow-lg shadow-blue-600/20">BX</span>
           {!collapsed && <span className="min-w-0"><span className="block text-sm font-black leading-tight text-bx-text">BX</span><span className="mt-0.5 block truncate text-[9px] font-semibold text-bx-muted">Помощник бухгалтера</span></span>}
         </button>
         <button
@@ -130,7 +130,7 @@ export default function Sidebar() {
                   </a>
                 ) : (
                   <NavLink key={item.to} to={item.to} title={collapsed ? item.label : undefined} aria-label={item.label} className={({ isActive }) => navItemClass(isActive, collapsed)}>
-                    {({ isActive }) => <><NavIcon name={item.icon} active={isActive} collapsed={collapsed} />{!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}{isActive && !collapsed && <span className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.65)]" aria-hidden="true" />}</>}
+                    {({ isActive }) => <><NavIcon name={item.icon} active={isActive} collapsed={collapsed} />{!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}{isActive && !collapsed && <span className="h-1.5 w-1.5 rounded-full bg-bx-on-accent shadow-sm" aria-hidden="true" />}</>}
                   </NavLink>
                 ))}
               </div>
@@ -155,11 +155,11 @@ export default function Sidebar() {
 function navItemClass(active: boolean, collapsed: boolean) {
   const layout = collapsed ? 'justify-center px-0' : 'gap-2.5 px-2.5'
   const state = active
-    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+    ? 'bg-blue-600 text-bx-on-accent shadow-md shadow-blue-600/20'
     : 'text-[color:var(--bx-sidebar-text)] hover:bg-bx-bg hover:text-bx-text'
   return `group relative flex min-h-10 w-full cursor-pointer items-center rounded-xl text-xs font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 ${layout} ${state}`
 }
 
 function NavIcon({ name, active, collapsed }: { name: string; active: boolean; collapsed: boolean }) {
-  return <span className={`grid flex-shrink-0 place-items-center rounded-lg transition-colors ${collapsed ? 'h-9 w-9' : 'h-7 w-7'} ${active ? 'bg-white/12 text-white' : 'bg-bx-bg text-bx-muted group-hover:text-blue-600 dark:group-hover:text-blue-300'}`}><Icon name={name} className="h-4 w-4" /></span>
+  return <span className={`grid flex-shrink-0 place-items-center rounded-lg transition-colors ${collapsed ? 'h-9 w-9' : 'h-7 w-7'} ${active ? 'bg-bx-on-accent/10 text-bx-on-accent' : 'bg-bx-bg text-bx-muted group-hover:text-blue-600 dark:group-hover:text-blue-300'}`}><Icon name={name} className="h-4 w-4" /></span>
 }

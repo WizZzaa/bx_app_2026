@@ -55,4 +55,12 @@ describe('Sidebar', () => {
     expect(screen.getByRole('link', { name: 'Рабочий стол' })).toBeTruthy()
     expect(screen.queryByText('Дашборд')).toBeNull()
   })
+
+  it('uses one semantic accent color for the brand and active navigation', () => {
+    render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
+
+    expect(screen.getByTestId('bx-brand-mark').className).toContain('bg-blue-600')
+    expect(screen.getByTestId('bx-brand-mark').className).not.toContain('from-blue-600')
+    expect(screen.getByRole('link', { name: 'Рабочий стол' }).className).toContain('text-bx-on-accent')
+  })
 })

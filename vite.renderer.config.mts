@@ -4,9 +4,10 @@ import { fetchBankExchangeRates } from './src/main/services/currency';
 
 // CSP только для продакшн-сборки: dev-серверу Vite нужны inline-скрипты и eval для HMR.
 // connect-src: Supabase (API/edge functions), госсервисы РУз, погода, локальная Ollama.
-const CSP = [
+export const buildRendererCsp = () => [
   "default-src 'self'",
-  "script-src 'self'",
+  "script-src 'self' https://cdn.jsdelivr.net",
+  "worker-src 'self' blob: https://cdn.jsdelivr.net",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
@@ -19,7 +20,7 @@ const cspPlugin = (): Plugin => ({
   transformIndexHtml(html) {
     return html.replace(
       '<meta charset="UTF-8" />',
-      `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`,
+      `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${buildRendererCsp()}" />`,
     );
   },
 });
