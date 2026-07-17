@@ -258,6 +258,13 @@ ipcMain.handle('tray:dock-to-taskbar', () => {
   dockTrayWindow()
 })
 
+// Большие встроенные панели (переводчик, утилиты и т. п.) сами запрашивают
+// больше места. Это не меняет «свою» позицию пользователя, а при докинге
+// растит окно вверх — Бикс остаётся у панели задач.
+ipcMain.handle('tray:resize-widget', (_e, requestedWidth: number, requestedHeight: number) => {
+  resizeTrayWindow(requestedWidth, requestedHeight)
+})
+
 // Открыть главное окно приложения (опц. на конкретном разделе) из трей-виджета.
 ipcMain.handle('tray:open-app', (_e, route?: string) => {
   if (!mainWindow) return
@@ -360,6 +367,30 @@ const dockTrayWindow = () => {
   trayWindow.setPosition(x, y, false)
   setTimeout(() => { suppressTrayMove = false }, 150)
   saveTrayState()
+}
+
+const resizeTrayWindow = (requestedWidth: number, requestedHeight: number) => {
+  if (!trayWindow) return
+
+  const current = trayWindow.getBounds()
+  const display = screen.getDisplayNearestPoint({ x: current.x + current.width / 2, y: current.y + current.height / 2 })
+  const { workArea } = display
+  const width = Math.max(current.width, Math.min(760, Math.max(430, Math.round(requestedWidth))))
+  // Не уходим за рабочую область на небольших экранах (например, 1366×768).
+  const height = Math.max(560, Math.min(860, workArea.height, Math.max(current.height, Math.round(requestedHeight))))
+  if (width === current.width && height === current.height) return
+
+  // При ручном размещении сохраняем нижний край окна. Для дока после resize
+  // сработает dockTrayWindow и ровно посадит его к верхнему краю taskbar.
+  const bottom = current.y + current.height
+  const x = trayState.custom ? current.x : workArea.x + workArea.width - width - 18
+  const y = trayState.custom ? Math.max(workArea.y, bottom - height) : workArea.y + workArea.height - height
+  suppressTrayMove = true
+  trayWindow.setBounds({ x, y, width, height }, false)
+  trayState = { ...trayState, width, height, x, y }
+  setTimeout(() => { suppressTrayMove = false }, 150)
+  if (!trayState.custom) dockTrayWindow()
+  else saveTrayState()
 }
 
 const createTrayWindow = () => {

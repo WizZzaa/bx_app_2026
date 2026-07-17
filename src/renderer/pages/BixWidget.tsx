@@ -14,7 +14,7 @@ import { buildPlainLanguagePrompt, buildTranslationPrompt, type TranslationLangu
 import type { CacheScanResult, ProcessEntry } from '../../shared/types'
 
 type Panel = 'menu' | 'ai' | 'task' | 'note' | 'translator' | 'tools' | 'home' | 'settings' | 'intro' | null
-type BxWidgetWindow = Window & { bx?: { tray?: { openApp?: (route?: string) => Promise<void>; getPinned?: () => Promise<boolean>; setPinned?: (pinned: boolean) => Promise<boolean>; dockToTaskbar?: () => Promise<void> }; onec?: { scanCache?: () => Promise<CacheScanResult>; cleanCache?: (paths: string[], backup?: boolean) => Promise<{ deletedPaths: string[]; failedPaths: Array<{ path: string }>; freedBytes: number }>; listProcesses?: () => Promise<ProcessEntry[]>; killProcesses?: (pids: number[]) => Promise<{ killed: number[]; failed: Array<{ pid: number }> }> } } }
+type BxWidgetWindow = Window & { bx?: { tray?: { openApp?: (route?: string) => Promise<void>; getPinned?: () => Promise<boolean>; setPinned?: (pinned: boolean) => Promise<boolean>; dockToTaskbar?: () => Promise<void>; resizeWidget?: (width: number, height: number) => Promise<void> }; onec?: { scanCache?: () => Promise<CacheScanResult>; cleanCache?: (paths: string[], backup?: boolean) => Promise<{ deletedPaths: string[]; failedPaths: Array<{ path: string }>; freedBytes: number }>; listProcesses?: () => Promise<ProcessEntry[]>; killProcesses?: (pids: number[]) => Promise<{ killed: number[]; failed: Array<{ pid: number }> }> } } }
 type BixState = { coins: number; needs: { food: number; mood: number; energy: number }; lastDailyClaim: string | null }
 type BixReminder = { id: string; title: string; date: string; type: string }
 type JokeFrequency = 'rare' | 'normal' | 'often'
@@ -158,6 +158,14 @@ export default function BixWidget() {
   }, [])
 
   useEffect(() => { void (window as BxWidgetWindow).bx?.tray?.getPinned?.().then(setPinned) }, [])
+
+  useEffect(() => {
+    if (!panel || panel === 'menu') return
+    // Открываем развёрнутую область сразу: пользователю не нужно сначала
+    // искать край окна и растягивать его вручную.
+    const roomyPanels: Panel[] = ['ai', 'task', 'translator', 'tools', 'home', 'settings']
+    if (roomyPanels.includes(panel)) void (window as BxWidgetWindow).bx?.tray?.resizeWidget?.(540, 720)
+  }, [panel])
 
   useEffect(() => {
     if (activity === 'idle') return
