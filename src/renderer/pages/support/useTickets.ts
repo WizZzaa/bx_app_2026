@@ -20,7 +20,7 @@ export interface BxTicketMessage {
   id: string
   ticket_id: string
   user_id: string
-  author: 'user' | 'staff'
+  author: 'user' | 'staff' | 'auto'
   body: string
   created_at: string
 }
