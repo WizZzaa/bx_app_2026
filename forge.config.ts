@@ -19,6 +19,9 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     icon: 'resources/icon',
+    // Иконки трея запрашиваются главным процессом уже после упаковки, поэтому
+    // они должны лежать рядом с app.asar, а не только в исходном дереве.
+    extraResource: ['resources'],
   },
   rebuildConfig: {},
   makers: [

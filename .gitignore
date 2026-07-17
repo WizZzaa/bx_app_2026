@@ -91,6 +91,7 @@ dist/
 
 # Electron-Forge
 out/
+output/imagegen/
 
 # claude-flow runtime session data
 .claude-flow/
