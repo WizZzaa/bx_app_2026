@@ -178,7 +178,7 @@ const Calc = () => {
   return (
     <div className="flex-1 flex overflow-hidden z-10 font-sans bg-bx-bg text-bx-text">
       {/* Левая панель — список калькуляторов */}
-      <aside className="w-[292px] flex-shrink-0 border-r border-bx-border bg-bx-surface-2/65 dark:bg-bx-surface flex flex-col z-10 overflow-hidden">
+      <aside className="w-[248px] flex-shrink-0 border-r border-bx-border bg-bx-surface-2/65 dark:bg-bx-surface flex flex-col z-10 overflow-hidden 2xl:w-[292px]">
         <div className="px-5 pt-5 pb-3">
           <h1 className="text-xs font-black text-bx-text uppercase tracking-wider">Калькуляторы</h1>
           <p className="text-[10px] text-bx-muted mt-0.5">{READY_TABS.length} работают · {PROPOSAL_TABS.length} идей на согласование</p>

@@ -27,7 +27,7 @@ interface ResourceSidebarProps {
 
 export function ResourceSidebar({ icon, title, subtitle, search, searchPlaceholder, onSearch, onClear, label, children, footer }: ResourceSidebarProps) {
   return (
-    <aside className="flex w-[276px] flex-shrink-0 flex-col border-r border-bx-border bg-bx-surface/70" aria-label={label}>
+    <aside className="flex w-[244px] flex-shrink-0 flex-col border-r border-bx-border bg-bx-surface/70 2xl:w-[276px]" aria-label={label}>
       <div className="border-b border-bx-border px-4 pb-4 pt-5">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-2xl border border-blue-500/15 bg-blue-500/10 text-blue-600 dark:text-blue-300">
@@ -102,7 +102,7 @@ export function ResourceHero({ eyebrow, title, description, icon, stats = [], ac
   return (
     <header className="relative overflow-hidden rounded-[24px] border border-bx-border bg-bx-surface px-5 py-5 shadow-sm lg:px-6 lg:py-6">
       <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" aria-hidden="true" />
-      <div className="relative flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
+      <div className="relative flex flex-col justify-between gap-5 2xl:flex-row 2xl:items-end">
         <div className="flex min-w-0 gap-4">
           <span className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-600/20">
             <Icon name={icon} className="h-5 w-5" />
@@ -113,7 +113,7 @@ export function ResourceHero({ eyebrow, title, description, icon, stats = [], ac
             <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-bx-muted">{description}</p>
           </div>
         </div>
-        {actions && <div className="flex flex-wrap items-center gap-2 xl:justify-end">{actions}</div>}
+        {actions && <div className="flex flex-wrap items-center gap-2 2xl:justify-end">{actions}</div>}
       </div>
       {stats.length > 0 && (
         <dl className="relative mt-5 grid grid-cols-2 gap-2 border-t border-bx-border pt-4 sm:grid-cols-3 lg:flex lg:flex-wrap">

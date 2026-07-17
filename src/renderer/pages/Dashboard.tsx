@@ -76,7 +76,7 @@ export default function Dashboard() {
       <div className="bx-page-container space-y-4">
         <header className="relative overflow-hidden rounded-[28px] border border-bx-border bg-bx-surface px-6 py-5 shadow-sm">
           <div className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-blue-500/[0.10] blur-3xl" />
-          <div className="relative flex flex-col gap-5 xl:flex-row xl:items-center">
+          <div className="relative flex flex-col gap-5 2xl:flex-row 2xl:items-center">
             <div className="min-w-0 flex-1"><p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">{active?.name || 'Рабочее пространство BX'}</p><h1 className="mt-1.5 text-2xl font-black tracking-tight text-bx-text">{greeting()}, всё под контролем</h1><p className="mt-1 text-xs capitalize text-bx-muted">{new Date().toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p></div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {stats.map(stat => <button key={stat.label} onClick={() => navigate(stat.to)} className="flex min-w-[126px] items-center gap-2.5 rounded-xl border border-bx-border bg-bx-bg/70 p-2.5 text-left transition-colors hover:border-blue-500/30"><span className={`grid h-8 w-8 place-items-center rounded-lg ${TONES[stat.tone].bg} ${TONES[stat.tone].text}`}><Icon name={stat.icon} className="h-3.5 w-3.5" /></span><span><span className="block text-sm font-black tabular-nums text-bx-text">{loading ? '…' : stat.value}</span><span className="block text-[8px] font-extrabold uppercase tracking-wide text-bx-muted">{stat.label}</span></span></button>)}
@@ -89,9 +89,9 @@ export default function Dashboard() {
 
         <CurrencyWidget />
 
-        <section className="grid gap-4 xl:grid-cols-12">
-          <div className="xl:col-span-5"><SmartCalendar marks={{ deadlines, tasks }} entries={calendarEntries} onOpen={() => navigate('/planner')} onAdd={addTaskOnDate} onOpenEntry={openCalendarEntry} /></div>
-          <article className="flex min-h-[430px] flex-col rounded-[26px] border border-bx-border bg-bx-surface p-5 shadow-sm xl:col-span-4">
+        <section className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-12">
+          <div className="2xl:col-span-5"><SmartCalendar marks={{ deadlines, tasks }} entries={calendarEntries} onOpen={() => navigate('/planner')} onAdd={addTaskOnDate} onOpenEntry={openCalendarEntry} /></div>
+          <article className="flex min-h-[430px] flex-col rounded-[26px] border border-bx-border bg-bx-surface p-5 shadow-sm 2xl:col-span-4">
             <SectionHeader icon="clock" tone="blue" eyebrow="Рабочий фокус" title="На сегодня" action="Все задачи" onAction={() => navigate('/planner')} />
             {overdueEvents.length > 0 && <div className="mt-4 flex gap-2 rounded-xl border border-rose-500/20 bg-rose-500/[0.07] p-3 text-[10px] text-rose-700 dark:text-rose-300"><Icon name="alert" className="h-4 w-4 flex-shrink-0" /><b>{overdueEvents.length} просроченных задач — проверьте сроки.</b></div>}
             <div className="mt-4 space-y-2">
@@ -100,7 +100,7 @@ export default function Dashboard() {
             </div>
             <button onClick={() => navigate('/planner')} className="mt-auto flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 text-xs font-extrabold text-white hover:bg-blue-500"><Icon name="plus" className="h-4 w-4" />Добавить задачу</button>
           </article>
-          <article className="flex min-h-[430px] flex-col rounded-[26px] border border-bx-border bg-bx-surface p-5 shadow-sm xl:col-span-3">
+          <article className="flex min-h-[430px] flex-col rounded-[26px] border border-bx-border bg-bx-surface p-5 shadow-sm lg:col-span-2 2xl:col-span-3">
             <SectionHeader icon="planner" tone="amber" eyebrow="Ближайший горизонт" title="Обязательства" />
             <div className="mt-4 space-y-2">
               {upcomingTax.map(event => { const date = event.due_date || event.date; const left = Math.ceil((new Date(`${date}T12:00:00`).getTime() - new Date(`${todayStr}T12:00:00`).getTime()) / 86400000); return <button key={event.id} onClick={() => navigate('/planner')} className="w-full rounded-xl border border-bx-border/70 bg-bx-bg p-3 text-left transition-colors hover:border-blue-500/30"><div className="flex items-center gap-2"><span className="rounded-lg bg-blue-500/10 px-2 py-1 text-[9px] font-black text-blue-600 dark:text-blue-300">{new Date(`${date}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span><span className="text-[9px] font-bold text-bx-muted">{left === 0 ? 'Сегодня' : `через ${left} д.`}</span></div><p className="mt-2 line-clamp-2 text-xs font-bold leading-relaxed text-bx-text">{event.title}</p></button> })}
@@ -110,7 +110,7 @@ export default function Dashboard() {
           </article>
         </section>
 
-        {(visible.weather || visible.notifications || visible.horoscope) && <section className="pb-5" aria-labelledby="services-heading"><div className="mb-3 flex items-end justify-between"><div><p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">Полезное рядом</p><h2 id="services-heading" className="mt-1 text-lg font-black text-bx-text">Сервисные виджеты</h2></div><button onClick={() => setConfigOpen(true)} className="text-[10px] font-bold text-bx-muted hover:text-bx-text">Настроить</button></div><div className={`grid auto-rows-fr gap-4 ${[visible.weather, visible.notifications, visible.horoscope].filter(Boolean).length === 1 ? 'grid-cols-1' : 'md:grid-cols-2'} xl:grid-cols-3`}>{visible.weather && <WidgetBoundary name="Погода"><WeatherWidget /></WidgetBoundary>}{visible.notifications && <WidgetBoundary name="Оповещения"><NotificationsWidget /></WidgetBoundary>}{visible.horoscope && <WidgetBoundary name="Бухо-гороскоп"><HoroscopeWidget /></WidgetBoundary>}</div></section>}
+        {(visible.weather || visible.notifications || visible.horoscope) && <section className="pb-5" aria-labelledby="services-heading"><div className="mb-3 flex items-end justify-between"><div><p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">Полезное рядом</p><h2 id="services-heading" className="mt-1 text-lg font-black text-bx-text">Сервисные виджеты</h2></div><button onClick={() => setConfigOpen(true)} className="text-[10px] font-bold text-bx-muted hover:text-bx-text">Настроить</button></div><div className={`grid auto-rows-fr gap-4 ${[visible.weather, visible.notifications, visible.horoscope].filter(Boolean).length === 1 ? 'grid-cols-1' : 'md:grid-cols-2'} 2xl:grid-cols-3`}>{visible.weather && <WidgetBoundary name="Погода"><WeatherWidget /></WidgetBoundary>}{visible.notifications && <WidgetBoundary name="Оповещения"><NotificationsWidget /></WidgetBoundary>}{visible.horoscope && <WidgetBoundary name="Бухо-гороскоп"><HoroscopeWidget /></WidgetBoundary>}</div></section>}
       </div>
     </main>
   )
