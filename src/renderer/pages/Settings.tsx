@@ -6,7 +6,7 @@ import { db } from '../lib/db/localDb'
 import { usePlan } from '../lib/plan'
 import { useToast } from '../lib/ui/ToastContext'
 import { loadEcpKeys, saveEcpKeys } from '../lib/ecpStorage'
-import { applyTheme } from '../lib/theme'
+import { applyTheme, currentTheme, THEME_KEY, type BxTheme } from '../lib/theme'
 import { CompanyTeamPanel } from '../components/CompanyTeamPanel'
 import { currentFontScale, FONT_SCALE_OPTIONS, saveFontScale, type FontScale } from '../lib/uiScale'
 import Icon from '../lib/ui/Icon'
@@ -16,7 +16,6 @@ import { parseSettingsBackup, settingsBackupSummary, type SettingsBackupPayload 
 import { useCompany } from '../lib/CompanyContext'
 import { useNavigate } from 'react-router-dom'
 
-const THEME_KEY = 'bx_theme'
 const NOTIFY_KEY = 'bx_notify_days'
 const IDLE_LOCK_KEY = 'bx_idle_lock'
 
@@ -26,6 +25,11 @@ type TabType = 'overview' | 'workspace' | 'notifications' | 'security' | 'ai' | 
 type DashboardWidgets = { weather: boolean; currency: boolean; notifications: boolean; horoscope: boolean }
 type DataStats = { templates: number; counterparties: number; transactions: number; employees: number }
 const DEFAULT_WIDGETS: DashboardWidgets = { weather: true, currency: true, notifications: true, horoscope: false }
+const THEME_CHOICES: Array<{ value: BxTheme; label: string; colors: string[] }> = [
+  { value: 'light', label: 'Светлая', colors: ['#F4F5F7', '#FFFFFF', '#4F46E5', '#1E293B'] },
+  { value: 'dark', label: 'Тёмная', colors: ['#0F1117', '#141820', '#3B82F6', '#F8FAFC'] },
+  { value: 'lime', label: 'Графит + лайм', colors: ['#111111', '#FFFFFF', '#B7F500', '#333333'] },
+]
 
 export default function Settings() {
   const { plan, isPro, isTrial, trialDaysLeft, planExpiresAt, referralCode, refresh: refreshPlan } = usePlan()
@@ -41,7 +45,7 @@ export default function Settings() {
   const [userId, setUserId] = useState('')
   const [notifyDays, setNotifyDays] = useState<NotifyDays>('3')
   const [signingOut, setSigningOut] = useState(false)
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+  const [theme, setTheme] = useState<BxTheme>(() => currentTheme())
   const [showHoroscope, setShowHoroscope] = useState(false)
   const [payMethod, setPayMethod] = useState<'card' | 'invoice'>('card')
   const [autostartEnabled, setAutostartEnabled] = useState(false)
@@ -174,8 +178,7 @@ export default function Settings() {
     if (savedIdle) setIdleLock(savedIdle)
     setPinEnabledState(isPinEnabled())
 
-    const savedTheme = localStorage.getItem(THEME_KEY) as 'dark' | 'light'
-    if (savedTheme) setTheme(savedTheme)
+    setTheme(currentTheme())
     setFontScale(currentFontScale())
 
     if (window.bx?.autostart?.get) window.bx.autostart.get().then(setAutostartEnabled)
@@ -203,7 +206,7 @@ export default function Settings() {
     localStorage.setItem(IDLE_LOCK_KEY, v)
   }
 
-  function saveTheme(t: 'dark' | 'light') {
+  function saveTheme(t: BxTheme) {
     setTheme(t)
     localStorage.setItem(THEME_KEY, t)
     applyTheme(t)
@@ -389,14 +392,14 @@ export default function Settings() {
     about: { eyebrow: 'BX', title: 'О программе', description: 'Версия, поддержка и принципы продукта.' },
   }
 
-  function SettingRow({ icon, label, desc, children }: { icon: string; label: string; desc?: string; children: React.ReactNode }) {
+  function SettingRow({ icon, label, desc, children, wide = false }: { icon: string; label: string; desc?: string; children: React.ReactNode; wide?: boolean }) {
     return (
-      <div className="flex flex-col gap-3 border-b border-bx-border/70 px-5 py-4 last:border-0 sm:flex-row sm:items-center sm:justify-between">
+      <div className={`flex flex-col gap-3 border-b border-bx-border/70 px-5 py-4 last:border-0 ${wide ? '' : 'sm:flex-row sm:items-center sm:justify-between'}`}>
         <div className="flex min-w-0 items-start gap-3">
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-bx-border bg-bx-surface-2 text-bx-muted"><Icon name={icon} className="h-4 w-4" /></span>
           <div><p className="text-sm font-bold text-bx-text">{label}</p>{desc && <p className="mt-1 max-w-2xl text-xs leading-relaxed text-bx-muted">{desc}</p>}</div>
         </div>
-        <div className="flex-shrink-0 pl-12 sm:pl-0">{children}</div>
+        <div className={`${wide ? 'w-full pl-12' : 'flex-shrink-0 pl-12 sm:pl-0'}`}>{children}</div>
       </div>
     )
   }
@@ -487,7 +490,7 @@ export default function Settings() {
           {activeTab === 'workspace' && (
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
               <section className={card}>
-                <SettingRow icon="sun" label="Тема оформления" desc="Светлая для дневной работы или тёмная для кабинета и слабого освещения."><div className="flex rounded-xl border border-bx-border bg-bx-bg p-1">{(['light', 'dark'] as const).map(value => <button key={value} type="button" onClick={() => saveTheme(value)} className={`${button} min-w-24 ${theme === value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}>{value === 'light' ? 'Светлая' : 'Тёмная'}</button>)}</div></SettingRow>
+                <SettingRow wide icon="sun" label="Тема оформления" desc="Три готовых режима. Графитовый вариант использует вашу контрастную палитру с лаймовым акцентом."><div className="grid grid-cols-1 gap-1.5 rounded-xl border border-bx-border bg-bx-bg p-1 sm:grid-cols-3" role="group" aria-label="Тема оформления">{THEME_CHOICES.map(option => <button key={option.value} type="button" onClick={() => saveTheme(option.value)} aria-pressed={theme === option.value} className={`${button} min-w-0 px-3 ${theme === option.value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}><span className="flex items-center justify-center gap-1" aria-hidden="true">{option.colors.map(color => <span key={color} className="h-2.5 w-2.5 rounded-full border border-black/10" style={{ backgroundColor: color }} />)}</span><span className="mt-1 block whitespace-nowrap text-[10px]">{option.label}</span></button>)}</div></SettingRow>
                 <SettingRow icon="monitor" label="Масштаб интерфейса" desc="Увеличивает текст, кнопки и интервалы во всём приложении без перезапуска."><div className="grid grid-cols-4 gap-1 rounded-xl border border-bx-border bg-bx-bg p-1" role="group" aria-label="Масштаб интерфейса">{FONT_SCALE_OPTIONS.map(option => <button key={option.value} type="button" onClick={() => changeFontScale(option.value)} aria-pressed={fontScale === option.value} className={`${button} min-w-14 px-2 ${fontScale === option.value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}>{option.hint}</button>)}</div></SettingRow>
                 <SettingRow icon="dashboard" label="Погода на рабочем столе" desc="Показывать краткий прогноз рядом с рабочей сводкой."><Toggle checked={widgets.weather} onChange={() => toggleWidget('weather')} label="Показывать погоду" /></SettingRow>
                 <SettingRow icon="exchange" label="Курсы валют" desc="Показывать основные курсы ЦБ РУз на рабочем столе."><Toggle checked={widgets.currency} onChange={() => toggleWidget('currency')} label="Показывать курсы валют" /></SettingRow>

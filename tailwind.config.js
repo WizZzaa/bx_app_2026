@@ -17,6 +17,21 @@ module.exports = {
         '68': '17rem',
       },
       colors: {
+        // Базовая шкала акцента остаётся синей в стандартных темах,
+        // а тема .lime переопределяет RGB-токены без ручной перекраски страниц.
+        blue: {
+          50: 'rgb(var(--bx-blue-50-rgb) / <alpha-value>)',
+          100: 'rgb(var(--bx-blue-100-rgb) / <alpha-value>)',
+          200: 'rgb(var(--bx-blue-200-rgb) / <alpha-value>)',
+          300: 'rgb(var(--bx-blue-300-rgb) / <alpha-value>)',
+          400: 'rgb(var(--bx-blue-400-rgb) / <alpha-value>)',
+          500: 'rgb(var(--bx-blue-500-rgb) / <alpha-value>)',
+          600: 'rgb(var(--bx-blue-600-rgb) / <alpha-value>)',
+          700: 'rgb(var(--bx-blue-700-rgb) / <alpha-value>)',
+          800: 'rgb(var(--bx-blue-800-rgb) / <alpha-value>)',
+          900: 'rgb(var(--bx-blue-900-rgb) / <alpha-value>)',
+          950: 'rgb(var(--bx-blue-950-rgb) / <alpha-value>)',
+        },
         bx: {
           bg: 'rgb(var(--bx-bg-rgb) / <alpha-value>)',
           surface: 'rgb(var(--bx-surface-rgb) / <alpha-value>)',

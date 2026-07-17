@@ -32,6 +32,20 @@
   --bx-text-rgb: 248 250 252;
   --bx-muted-rgb: 203 213 225;
   --bx-accent-rgb: 59 130 246;
+
+  /* Стандартная Tailwind blue-палитра как переменные: тема может заменить
+     основной акцент сразу во всём приложении. */
+  --bx-blue-50-rgb: 239 246 255;
+  --bx-blue-100-rgb: 219 234 254;
+  --bx-blue-200-rgb: 191 219 254;
+  --bx-blue-300-rgb: 147 197 253;
+  --bx-blue-400-rgb: 96 165 250;
+  --bx-blue-500-rgb: 59 130 246;
+  --bx-blue-600-rgb: 37 99 235;
+  --bx-blue-700-rgb: 29 78 216;
+  --bx-blue-800-rgb: 30 64 175;
+  --bx-blue-900-rgb: 30 58 138;
+  --bx-blue-950-rgb: 23 37 84;
 }
 
 html {
@@ -74,6 +88,48 @@ html {
   --bx-text-rgb: 30 41 59;
   --bx-muted-rgb: 100 116 139;
   --bx-accent-rgb: 79 70 229;
+}
+
+/* Третья тема по палитре пользователя: #111111 / #FFFFFF / #B7F500 / #333333. */
+.lime {
+  color-scheme: dark;
+  --bx-bg: #111111;
+  --bx-surface: #191919;
+  --bx-surface-2: #242424;
+  --bx-border: #333333;
+  --bx-border-2: #484848;
+  --bx-text: #ffffff;
+  --bx-muted: #b8b8b8;
+  --bx-accent: #b7f500;
+  --bx-sidebar-text: #ffffff;
+
+  --bx-bg-rgb: 17 17 17;
+  --bx-surface-rgb: 25 25 25;
+  --bx-surface-2-rgb: 36 36 36;
+  --bx-border-rgb: 51 51 51;
+  --bx-border-2-rgb: 72 72 72;
+  --bx-text-rgb: 255 255 255;
+  --bx-muted-rgb: 184 184 184;
+  --bx-accent-rgb: 183 245 0;
+
+  --bx-blue-50-rgb: 247 255 230;
+  --bx-blue-100-rgb: 239 255 204;
+  --bx-blue-200-rgb: 225 255 153;
+  --bx-blue-300-rgb: 211 255 92;
+  --bx-blue-400-rgb: 200 255 61;
+  --bx-blue-500-rgb: 194 255 36;
+  --bx-blue-600-rgb: 183 245 0;
+  --bx-blue-700-rgb: 149 201 0;
+  --bx-blue-800-rgb: 111 150 0;
+  --bx-blue-900-rgb: 76 103 0;
+  --bx-blue-950-rgb: 40 54 0;
+}
+
+/* На ярком лаймовом CTA белый текст недостаточно контрастен. */
+.lime .bg-blue-500.text-white,
+.lime .bg-blue-600.text-white,
+.lime .bg-blue-700.text-white {
+  color: #111111;
 }
 
 /* Анимации */

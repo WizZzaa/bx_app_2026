@@ -1,11 +1,12 @@
 import type { FontScale } from './uiScale'
+import type { BxTheme } from './theme'
 
 export interface SettingsBackupPayload {
   version: string
   timestamp: string
   ecpKeys?: unknown[]
   localRequisites?: unknown[]
-  theme?: 'dark' | 'light'
+  theme?: BxTheme
   notifyDays?: '1' | '3' | '7' | 'off'
   idleLock?: 'off' | '5' | '10' | '30' | '60'
   pinEnabled?: boolean
@@ -23,7 +24,7 @@ export interface SettingsBackupSummary {
   counterparties: number
 }
 
-const VALID_THEME = new Set(['dark', 'light'])
+const VALID_THEME = new Set(['dark', 'light', 'lime'])
 const VALID_NOTIFY = new Set(['1', '3', '7', 'off'])
 const VALID_IDLE = new Set(['off', '5', '10', '30', '60'])
 const VALID_SCALE = new Set(['100', '110', '120', '130'])

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { APP_VERSION, CHANGELOG } from '../../../shared/version'
-import { applyTheme } from '../../lib/theme'
+import { applyTheme, normalizeTheme } from '../../lib/theme'
 
 interface Props {
   onSignIn: (email: string, password: string) => Promise<string | null>
@@ -38,7 +38,7 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
       const savedTheme = localStorage.getItem('bx_theme')
       applyTheme('dark') // экран входа всегда тёмный
       return () => {
-        if (savedTheme === 'light') applyTheme('light')
+        applyTheme(normalizeTheme(savedTheme))
       }
     }
     return undefined

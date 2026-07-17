@@ -15,4 +15,9 @@ describe('settings backup', () => {
     expect(() => parseSettingsBackup(JSON.stringify({ version: '1', timestamp: 'now', theme: 'neon' }))).toThrow('тем')
     expect(() => parseSettingsBackup(JSON.stringify({ version: '1', timestamp: 'now', templates: {} }))).toThrow('списком')
   })
+
+  it('accepts the graphite and lime theme in a backup', () => {
+    const backup = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', theme: 'lime' }))
+    expect(backup.theme).toBe('lime')
+  })
 })
