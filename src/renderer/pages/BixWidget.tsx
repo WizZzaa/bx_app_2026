@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import '../styles/bix-widget.css'
 import bixMascot from '../assets/mascot/bix-head-paws.png'
+import bixBusinessMascot from '../assets/mascot/bix-business.png'
+import bixAnalystMascot from '../assets/mascot/bix-analyst.png'
+import bixNightMascot from '../assets/mascot/bix-night.png'
 import { usePlan } from '../lib/plan'
 import { createCanonicalEvent } from './planner/eventRepository'
 import { todayISO } from '../lib/dates'
@@ -10,7 +13,7 @@ import { emitPlannerReload } from './planner/plannerBus'
 import { buildTranslationPrompt, type TranslationLanguage } from '../lib/translator'
 import type { CacheScanResult, ProcessEntry } from '../../shared/types'
 
-type Panel = 'menu' | 'task' | 'note' | 'translator' | 'tools' | 'home' | 'settings' | 'intro' | null
+type Panel = 'menu' | 'ai' | 'task' | 'note' | 'translator' | 'tools' | 'home' | 'settings' | 'intro' | null
 type BxWidgetWindow = Window & { bx?: { tray?: { openApp?: (route?: string) => Promise<void>; getPinned?: () => Promise<boolean>; setPinned?: (pinned: boolean) => Promise<boolean>; dockToTaskbar?: () => Promise<void> }; onec?: { scanCache?: () => Promise<CacheScanResult>; cleanCache?: (paths: string[], backup?: boolean) => Promise<{ deletedPaths: string[]; failedPaths: Array<{ path: string }>; freedBytes: number }>; listProcesses?: () => Promise<ProcessEntry[]>; killProcesses?: (pids: number[]) => Promise<{ killed: number[]; failed: Array<{ pid: number }> }> } } }
 type BixState = { coins: number; needs: { food: number; mood: number; energy: number }; lastDailyClaim: string | null }
 type BixReminder = { id: string; title: string; date: string; type: string }
@@ -75,7 +78,7 @@ function stateFromRemote(row: { coins: number; food: number; mood: number; energ
 }
 
 const ACTIONS = [
-  { id: 'ai', label: 'Спросить BX', icon: '✦', route: '/ai' },
+  { id: 'ai', label: 'Спросить BX', icon: '✦' },
   { id: 'task', label: 'Создать задачу', icon: '✓' },
   { id: 'note', label: 'Быстрая заметка', icon: '✎' },
   { id: 'tools', label: 'Утилиты', icon: '⌘' },
@@ -100,6 +103,10 @@ export default function BixWidget() {
   const [message, setMessage] = useState('Я рядом. Нажмите — покажу, что умею.')
   const [bix, setBix] = useState<BixState>(loadBixState)
   const [draft, setDraft] = useState('')
+  const [taskDate, setTaskDate] = useState(todayISO)
+  const [taskTime, setTaskTime] = useState('')
+  const [taskPriority, setTaskPriority] = useState<'low' | 'normal' | 'high'>('normal')
+  const [taskNote, setTaskNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [reminder, setReminder] = useState<BixReminder | null>(null)
   const [idleJoke, setIdleJoke] = useState<string | null>(null)
@@ -117,6 +124,11 @@ export default function BixWidget() {
   const [cacheScan, setCacheScan] = useState<CacheScanResult | null>(null)
   const [onecProcesses, setOnecProcesses] = useState<ProcessEntry[]>([])
   const [utilityStatus, setUtilityStatus] = useState('')
+  const [speechVisible, setSpeechVisible] = useState(true)
+  const [speechHovered, setSpeechHovered] = useState(false)
+  const [aiQuestion, setAiQuestion] = useState('')
+  const [aiAnswer, setAiAnswer] = useState('')
+  const [askingAi, setAskingAi] = useState(false)
 
   useEffect(() => {
     const html = document.documentElement
@@ -146,7 +158,6 @@ export default function BixWidget() {
   }, [])
 
   useEffect(() => {
-    let hideTimer: number | undefined
     let nextTimer: number | undefined
     const schedule = () => {
       if (!settings.jokesEnabled) return
@@ -154,14 +165,27 @@ export default function BixWidget() {
       nextTimer = window.setTimeout(() => {
         if (!isWithinQuietHours(settings)) {
           setIdleJoke(BIX_JOKES[Math.floor(Math.random() * BIX_JOKES.length)])
-          hideTimer = window.setTimeout(() => setIdleJoke(null), 7 * 1000)
         }
         schedule()
       }, delay)
     }
     schedule()
-    return () => { if (nextTimer) window.clearTimeout(nextTimer); if (hideTimer) window.clearTimeout(hideTimer) }
+    return () => { if (nextTimer) window.clearTimeout(nextTimer) }
   }, [settings])
+
+  useEffect(() => {
+    if (!idleJoke || speechHovered) return
+    const timer = window.setTimeout(() => setIdleJoke(null), 7_000)
+    return () => window.clearTimeout(timer)
+  }, [idleJoke, speechHovered])
+
+  useEffect(() => { setSpeechVisible(true) }, [message])
+
+  useEffect(() => {
+    if (!speechVisible || speechHovered || reminder || idleJoke) return
+    const timer = window.setTimeout(() => setSpeechVisible(false), 7_000)
+    return () => window.clearTimeout(timer)
+  }, [speechVisible, speechHovered, reminder, idleJoke, message])
 
   useEffect(() => {
     const refreshReminder = async () => {
@@ -303,8 +327,23 @@ export default function BixWidget() {
     finally { setUtilityBusy(false) }
   }
   const choose = (action: typeof ACTIONS[number]) => {
-    if (action.route) { openApp(action.route); setPanel(null); return }
     setPanel(action.id as Panel)
+  }
+  const askBix = async () => {
+    const question = aiQuestion.trim()
+    if (!question || askingAi) return
+    setAskingAi(true); setAiAnswer(''); setActivity('thinking')
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-consultant', {
+        body: { messages: [{ role: 'system', content: 'Ты Бикс, краткий и доброжелательный помощник BX.UZ для малого бизнеса Узбекистана. Отвечай по-русски, профессионально и без выдуманных юридических или налоговых утверждений. Если вопрос требует проверки, предложи открыть полный AI-консультант.' }, { role: 'user', content: question }] },
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.message || data.error)
+      const answer = String(data?.text || '').trim()
+      if (!answer) throw new Error('Не получил ответ от консультанта.')
+      setAiAnswer(answer); setMessage('Ответ готов.'); setActivity('success')
+    } catch (error) { setAiAnswer(error instanceof Error ? `Не удалось получить ответ: ${error.message}` : 'Не удалось получить ответ.'); setActivity('error') }
+    finally { setAskingAi(false) }
   }
   const useCare = async (kind: 'food' | 'mood') => {
     if (bix.coins < 2) { setMessage('Сначала накопим ещё немного монет.'); return }
@@ -347,6 +386,7 @@ export default function BixWidget() {
     setMessage(owned ? `${item.title} теперь на Биксе.` : `${item.title} добавлен в гардероб.`)
   }
   const equippedVisuals = useMemo(() => new Set(collection.inventory.filter(item => item.equipped).map(item => collection.catalog.find(catalogItem => catalogItem.sku === item.sku)?.visual_key).filter(Boolean)), [collection])
+  const mascotSource = equippedVisuals.has('business') ? bixBusinessMascot : equippedVisuals.has('analyst') ? bixAnalystMascot : equippedVisuals.has('night') ? bixNightMascot : bixMascot
   const bixMode = activity !== 'idle' ? activity : reminder ? 'reminding' : panel ? 'engaged' : idleJoke ? 'joking' : bix.needs.energy < 25 ? 'sleepy' : bix.needs.food < 25 || bix.needs.mood < 25 ? 'concerned' : 'idle'
   const saveDraft = async (kind: 'task' | 'note') => {
     const text = draft.trim()
@@ -354,10 +394,11 @@ export default function BixWidget() {
     setSaving(true); setActivity('working')
     try {
       if (kind === 'task') {
+        const reminderAt = taskTime ? new Date(`${taskDate || todayISO()}T${taskTime}`).toISOString() : null
         const task = await createCanonicalEvent({
           company_id: localStorage.getItem('bx_active_company') || null,
-          type: 'task', title: text, date: todayISO(), due_date: null,
-          status: 'todo', priority: 'normal', source: 'manual',
+          type: 'task', title: text, date: taskDate || todayISO(), due_date: taskDate || todayISO(),
+          status: 'todo', priority: taskPriority, note: taskNote.trim() || null, reminder_at: reminderAt, source: 'manual',
         })
         if (!task) throw new Error('Не удалось сохранить задачу. Проверьте подключение и вход в BX.')
         setMessage('Задача добавлена в Планировщик. Отлично!')
@@ -366,7 +407,7 @@ export default function BixWidget() {
         localStorage.setItem(QUICK_NOTES_KEY, JSON.stringify([{ id: uid(), text, createdAt: new Date().toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }), pinned: false }, ...current]))
         setMessage('Заметка сохранена. Ничего не потеряем.')
       }
-      setDraft(''); setPanel(null); setActivity('success')
+      setDraft(''); setTaskNote(''); setTaskTime(''); setTaskPriority('normal'); setPanel(null); setActivity('success')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось сохранить. Попробуйте ещё раз.'); setActivity('error')
     } finally { setSaving(false) }
@@ -385,7 +426,7 @@ export default function BixWidget() {
     emitPlannerReload(); setMessage('Хорошо, напомню через 15 минут.'); setReminder(null)
   }
 
-  const reminderText = reminder ? (settings.privateReminders ? 'Напоминание: есть задача на сегодня.' : `Напоминание: ${reminder.title}`) : idleJoke || message
+  const reminderText = reminder ? (settings.privateReminders ? 'Напоминание: есть задача на сегодня.' : `Напоминание: ${reminder.title}`) : idleJoke || (speechVisible ? message : null)
   const pupilGaze = { transform: `translate(${pointer.x * .42}px, ${pointer.y * .42}px)` }
 
   return <main className={`bix-widget bix-state-${bixMode}${settings.reducedMotion ? ' bix-reduced-motion' : ''}`} onMouseDown={event => { if (event.target === event.currentTarget) setPanel(null) }}>
@@ -403,7 +444,8 @@ export default function BixWidget() {
 
     {panel && panel !== 'menu' && <section className="bix-panel">
       <button className="bix-panel-close" onClick={() => setPanel(null)} aria-label="Закрыть">×</button>
-      {panel === 'task' && <><small>БЫСТРАЯ ЗАДАЧА</small><h2>Что не забыть?</h2><textarea value={draft} onChange={e => setDraft(e.target.value)} placeholder="Например: сверить первичку" autoFocus /><button className="bix-primary" disabled={saving} onClick={() => void saveDraft('task')}>{saving ? 'Сохраняю…' : 'Добавить в план'}</button></>}
+      {panel === 'ai' && <><small>СПРОСИТЬ БИКСА</small><h2>Коротко разберём вопрос.</h2><textarea value={aiQuestion} onChange={event => setAiQuestion(event.target.value)} placeholder="Например: что проверить перед сдачей отчёта?" autoFocus /><button className="bix-primary" disabled={!aiQuestion.trim() || askingAi} onClick={() => void askBix()}>{askingAi ? 'Думаю…' : 'Спросить'}</button>{aiAnswer && <div className="bix-ai-answer">{aiAnswer}</div>}<div className="bix-inline-actions"><button onClick={() => openApp('/ai')}>Открыть полный диалог ↗</button></div></>}
+      {panel === 'task' && <><small>БЫСТРАЯ ЗАДАЧА</small><h2>Что не забыть?</h2><textarea value={draft} onChange={e => setDraft(e.target.value)} placeholder="Например: сверить первичку" autoFocus /><div className="bix-task-fields"><label>Дата<input type="date" value={taskDate} onChange={event => setTaskDate(event.target.value)} /></label><label>Напомнить<input type="time" value={taskTime} onChange={event => setTaskTime(event.target.value)} /></label><label className="bix-task-priority">Приоритет<select value={taskPriority} onChange={event => setTaskPriority(event.target.value as 'low' | 'normal' | 'high')}><option value="low">Низкий</option><option value="normal">Обычный</option><option value="high">Высокий</option></select></label></div><textarea className="bix-task-note" value={taskNote} onChange={event => setTaskNote(event.target.value)} placeholder="Комментарий или детали (необязательно)" /><button className="bix-primary" disabled={saving} onClick={() => void saveDraft('task')}>{saving ? 'Сохраняю…' : taskTime ? 'Добавить с напоминанием' : 'Добавить в план'}</button></>}
       {panel === 'note' && <><small>БЫСТРАЯ ЗАМЕТКА</small><h2>Запишу, не потеряем.</h2><textarea value={draft} onChange={e => setDraft(e.target.value)} placeholder="Введите заметку…" autoFocus /><button className="bix-primary" disabled={saving} onClick={() => void saveDraft('note')}>{saving ? 'Сохраняю…' : 'Сохранить'}</button></>}
       {panel === 'translator' && <><small>БЫСТРЫЙ ПЕРЕВОДЧИК</small><h2>RU ↔ UZ прямо здесь.</h2><div className="bix-translate-direction"><button className={translationDirection === 'ru-uz' ? 'active' : ''} onClick={() => setTranslationDirection('ru-uz')}>RU → UZ</button><button className={translationDirection === 'uz-ru' ? 'active' : ''} onClick={() => setTranslationDirection('uz-ru')}>UZ → RU</button></div><textarea value={translationText} onChange={event => setTranslationText(event.target.value)} placeholder="Вставьте короткий текст…" /><button className="bix-primary" disabled={!translationText.trim() || translating} onClick={() => void translateInline()}>{translating ? 'Перевожу…' : 'Перевести'}</button>{translationResult && <div className="bix-translation-result">{translationResult}</div>}<div className="bix-inline-actions">{translationResult && <button onClick={() => void copyTranslation()}>Копировать</button>}<button onClick={() => openApp('/translator')}>Полный переводчик ↗</button></div></>}
       {panel === 'tools' && <><small>УТИЛИТЫ BX</small><h2>Быстрые действия здесь</h2><p className="bix-panel-hint">Кэш и процессы 1С можно проверить прямо в виджете. Остальное открывается в полном режиме.</p><div className="bix-quick-tools"><button disabled={utilityBusy} onClick={() => void scanCacheFromWidget()}>🧹 Проверить кэш 1С</button>{cacheScan?.entries.length ? <button disabled={utilityBusy} className="accent" onClick={() => void cleanCacheFromWidget()}>Очистить {cacheScan.entries.length} папок</button> : null}<button disabled={utilityBusy} onClick={() => void scanProcessesFromWidget()}>⚡ Процессы 1С</button>{onecProcesses.length ? <button disabled={utilityBusy} className="danger" onClick={() => void stopProcessesFromWidget()}>Завершить {onecProcesses.length} процессов</button> : null}</div>{utilityStatus && <p className="bix-utility-status">{utilityStatus}</p>}<div className="bix-tools">{TOOL_ACTIONS.slice(2).map(([label, route]) => <button key={label} onClick={() => { openApp(route); setPanel(null) }}><span>{label}</span><b>Полный режим ↗</b></button>)}</div></>}
@@ -411,7 +453,7 @@ export default function BixWidget() {
       {panel === 'settings' && <><small>НАСТРОЙКИ БИКСА</small><h2>Тихо, бережно, по делу.</h2><div className="bix-settings"><label><span>Шутки</span><input type="checkbox" checked={settings.jokesEnabled} onChange={event => setSettings(value => ({ ...value, jokesEnabled: event.target.checked }))} /></label><label><span>Частота шуток</span><select value={settings.jokeFrequency} disabled={!settings.jokesEnabled} onChange={event => setSettings(value => ({ ...value, jokeFrequency: event.target.value as JokeFrequency }))}><option value="rare">реже — 15–20 мин</option><option value="normal">обычно — 10–15 мин</option><option value="often">чаще — 10–12 мин</option></select></label><label><span>Тихие часы</span><input type="checkbox" checked={settings.quietHours} onChange={event => setSettings(value => ({ ...value, quietHours: event.target.checked }))} /></label>{settings.quietHours && <label className="bix-setting-time"><span>Не беспокоить</span><input type="time" value={settings.quietFrom} onChange={event => setSettings(value => ({ ...value, quietFrom: event.target.value }))} /><b>—</b><input type="time" value={settings.quietTo} onChange={event => setSettings(value => ({ ...value, quietTo: event.target.value }))} /></label>}<label><span>Скрывать названия задач</span><input type="checkbox" checked={settings.privateReminders} onChange={event => setSettings(value => ({ ...value, privateReminders: event.target.checked }))} /></label><label><span>Уменьшить анимацию</span><input type="checkbox" checked={settings.reducedMotion} onChange={event => setSettings(value => ({ ...value, reducedMotion: event.target.checked }))} /></label></div><p className="bix-settings-note">Системный режим Windows «Не беспокоить» пока не считывается автоматически.</p></>}
     </section>}
 
-    <div className="bix-speech" aria-live="polite">{reminderText}</div>
+    {reminderText && <div className="bix-speech" aria-live="polite" onMouseEnter={() => setSpeechHovered(true)} onMouseLeave={() => setSpeechHovered(false)}>{reminderText}</div>}
     {reminder && <div className="bix-reminder-actions">
       <button onClick={() => void finishReminder()}>Готово</button>
       <button onClick={() => void snoozeReminder()}>15 мин</button>
@@ -419,7 +461,7 @@ export default function BixWidget() {
     </div>}
     <button className="bix-character" onClick={toggleMenu} aria-label="Открыть действия Бикса">
       <span className="bix-drag" title="Перетащите Бикса за голову" />
-      <img className="bix-mascot" src={bixMascot} alt="Бикс — питомец BX" style={gaze} draggable={false} />
+      <img className="bix-mascot" src={mascotSource} alt="Бикс — питомец BX" style={gaze} draggable={false} />
       <span className="bix-pupil bix-pupil-left" style={pupilGaze} /><span className="bix-pupil bix-pupil-right" style={pupilGaze} />
       {equippedVisuals.has('glasses') && <span className="bix-accessory bix-accessory-glasses" />}
       {equippedVisuals.has('bowtie') && <span className="bix-accessory bix-accessory-bowtie" />}
