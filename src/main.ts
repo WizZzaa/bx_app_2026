@@ -374,7 +374,7 @@ const createTrayWindow = () => {
     show: true,
     frame: false,
     fullscreenable: false,
-    resizable: true,
+    resizable: false,
     skipTaskbar: true,
     alwaysOnTop: true,
     transparent: true,

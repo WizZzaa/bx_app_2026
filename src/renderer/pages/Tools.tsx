@@ -156,7 +156,7 @@ const Tools = () => {
   return (
     <div className="flex-1 flex overflow-hidden z-10 font-sans bg-bx-bg text-bx-text">
       {/* Левая панель — список утилит */}
-      <aside className="w-[292px] flex-shrink-0 border-r border-bx-border bg-bx-surface-2/65 dark:bg-bx-surface flex flex-col z-10 overflow-hidden">
+      <aside className="w-[248px] flex-shrink-0 border-r border-bx-border bg-bx-surface-2/65 dark:bg-bx-surface flex flex-col z-10 overflow-hidden 2xl:w-[292px]">
         <div className="px-5 pt-5 pb-3 flex-shrink-0">
           <h1 className="text-xs font-black text-bx-text uppercase tracking-wider">Утилиты</h1>
           <p className="text-[10px] text-bx-muted mt-0.5">{READY_TOOLS.length} работают · {PROPOSAL_TOOLS.length} идей на согласование</p>
@@ -255,7 +255,7 @@ const Tools = () => {
           )}
           {/* Hero-шапка с акцентом группы */}
           <div className={`rounded-3xl bg-gradient-to-br ${a.grad} via-transparent to-transparent border border-bx-border px-5 py-4.5 mb-5 bg-bx-surface shadow-sm`}>
-            <div className="flex items-center gap-3.5">
+            <div className="flex flex-wrap items-center gap-3.5">
               <span className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${a.iconBg} shadow-inner`}>
                 <Icon name={tool.icon} className="w-5 h-5" />
               </span>
@@ -269,7 +269,7 @@ const Tools = () => {
                 </div>
                 <p className="text-[11px] text-bx-muted mt-1">{tool.desc}</p>
               </div>
-              <div className="ml-auto">
+              <div className="ml-auto flex-shrink-0">
                 <WorkbenchActions
                   isFavorite={favorites.includes(tool.id)}
                   onToggleFavorite={() => toggleFavorite(tool.id)}

@@ -1,6 +1,9 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { readFileSync } from 'node:fs';
 import { fetchBankExchangeRates } from './src/main/services/currency';
+
+const packageMeta = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
 // CSP только для продакшн-сборки: dev-серверу Vite нужны inline-скрипты и eval для HMR.
 // connect-src: Supabase (API/edge functions), госсервисы РУз, погода, локальная Ollama.
@@ -44,8 +47,24 @@ const bankRatesPreviewPlugin = (): Plugin => ({
   },
 });
 
+const webVersionManifestPlugin = (): Plugin => ({
+  name: 'bx-web-version-manifest',
+  apply: 'build',
+  generateBundle() {
+    this.emitFile({
+      type: 'asset',
+      fileName: 'version.json',
+      source: JSON.stringify({
+        version: packageMeta.version,
+        commit: process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || 'local',
+        builtAt: new Date().toISOString(),
+      }),
+    });
+  },
+});
+
 export default defineConfig({
-  plugins: [react(), bankRatesPreviewPlugin(), cspPlugin()],
+  plugins: [react(), bankRatesPreviewPlugin(), cspPlugin(), webVersionManifestPlugin()],
   css: {
     postcss: './postcss.config.js',
   },

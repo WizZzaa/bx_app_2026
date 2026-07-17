@@ -239,7 +239,7 @@ export default function Ai() {
 
   return (
     <div className="flex flex-1 overflow-hidden bg-bx-bg text-bx-text">
-      <aside className="z-10 flex w-72 flex-shrink-0 flex-col overflow-hidden border-r border-bx-border bg-bx-surface">
+      <aside className="z-10 flex w-60 flex-shrink-0 flex-col overflow-hidden border-r border-bx-border bg-bx-surface 2xl:w-72">
         <div className="border-b border-bx-border p-4">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-sm shadow-violet-500/20">
