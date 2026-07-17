@@ -2,17 +2,15 @@ import React, { useState, useRef } from 'react';
 import { createWorker } from 'tesseract.js';
 import * as pdfjsLib from 'pdfjs-dist';
 
-/* eslint-disable @typescript-eslint/ban-ts-comment, import/no-unresolved */
-// @ts-ignore
-import PDFWorker from 'pdfjs-dist/build/pdf.worker.mjs?worker&inline';
-/* eslint-enable @typescript-eslint/ban-ts-comment, import/no-unresolved */
+// eslint-disable-next-line import/no-unresolved
+import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
-// Set PDF.js worker port using inline worker to avoid CDN/CORS issues
-try {
-  pdfjsLib.GlobalWorkerOptions.workerPort = new PDFWorker();
-} catch (e) {
-  console.error('Failed to set PDF.js workerPort:', e);
-}
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+
+const HTML_ENTITIES: Record<string, string> = {
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
+};
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (character) => HTML_ENTITIES[character] ?? character);
 
 const LANGUAGES = [
   { code: 'rus', label: 'Русский' },
@@ -49,7 +47,15 @@ export default function OcrTool() {
     let worker;
     try {
       // 1. Initialize Tesseract Worker
-      worker = await createWorker(lang);
+      worker = await createWorker(lang, 1, {
+        logger: (message) => {
+          if (typeof message.progress === 'number') {
+            setProgress(Math.round(message.progress * 100));
+          }
+          if (message.status === 'loading language traineddata') setStatus('Загрузка языковой модели...');
+          if (message.status === 'recognizing text') setStatus('Распознавание текста...');
+        },
+      });
 
       // Listen for progress updates
       // Tesseract reports status via worker events
@@ -97,12 +103,17 @@ export default function OcrTool() {
       setStatus('Распознавание успешно завершено!');
     } catch (err: any) {
       console.error(err);
-      setStatus('Ошибка распознавания: ' + (err.message || 'неизвестная ошибка'));
+      const message = err instanceof Error ? err.message : String(err ?? 'неизвестная ошибка');
+      const networkHint = /worker|fetch|network|load|content security/i.test(message)
+        ? ' Не удалось загрузить модуль распознавания — проверьте интернет при первом запуске.'
+        : '';
+      setStatus(`Ошибка распознавания: ${message}.${networkHint}`);
     } finally {
-      if (worker) {
-        await worker.terminate();
+      try {
+        if (worker) await worker.terminate();
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
   };
 
@@ -115,7 +126,7 @@ export default function OcrTool() {
         <body style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5;">
           ${resultText
             .split('\n')
-            .map(line => line.trim() ? `<p>${line}</p>` : '<br/>')
+            .map(line => line.trim() ? `<p>${escapeHtml(line)}</p>` : '<br/>')
             .join('')}
         </body>
       </html>
@@ -123,11 +134,13 @@ export default function OcrTool() {
 
     const blob = new Blob([htmlContent], { type: 'application/msword' });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
+    const downloadUrl = URL.createObjectURL(blob);
+    link.href = downloadUrl;
     link.download = `${file?.name.split('.')[0] || 'ocr'}_recognized.doc`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
   };
 
   return (

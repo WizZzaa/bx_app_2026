@@ -1,17 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
-/* eslint-disable @typescript-eslint/ban-ts-comment, import/no-unresolved */
-// @ts-ignore
-import PDFWorker from 'pdfjs-dist/build/pdf.worker.mjs?worker&inline';
-/* eslint-enable @typescript-eslint/ban-ts-comment, import/no-unresolved */
+// eslint-disable-next-line import/no-unresolved
+import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
-// Set PDF.js worker port using inline worker to avoid CDN/CORS issues
-try {
-  pdfjsLib.GlobalWorkerOptions.workerPort = new PDFWorker();
-} catch (e) {
-  console.error('Failed to set PDF.js workerPort:', e);
-}
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const binaryString = atob(base64);
@@ -31,6 +24,7 @@ export default function PdfCompress() {
   const [originalSize, setOriginalSize] = useState(0);
   const [compressedSize, setCompressedSize] = useState(0);
   const [downloadBytes, setDownloadBytes] = useState<Uint8Array | null>(null);
+  const [compressionUseful, setCompressionUseful] = useState(true);
 
   // Compression Settings
   const [mode, setMode] = useState<'vector' | 'raster'>('vector');
@@ -48,6 +42,7 @@ export default function PdfCompress() {
       setDownloadBytes(null);
       setStatus('');
       setProgress(0);
+      setCompressionUseful(true);
     }
   };
 
@@ -77,9 +72,13 @@ export default function PdfCompress() {
         });
 
         const newSize = compressedBytes.length;
+        const isUseful = newSize < file.size;
         setCompressedSize(newSize);
         setDownloadBytes(compressedBytes);
-        setStatus('Сжатие успешно выполнено!');
+        setCompressionUseful(isUseful);
+        setStatus(isUseful
+          ? 'PDF оптимизирован и стал меньше.'
+          : 'Быстрая оптимизация не уменьшила файл. Для скана выберите растровый режим.');
       } else {
         // Deep Raster/Image compression (ideal for scanned PDFs)
         setStatus('Запуск глубокого анализа скана...');
@@ -125,9 +124,13 @@ export default function PdfCompress() {
           useObjectStreams: true,
         });
 
+        const isUseful = compressedBytes.length < file.size;
         setCompressedSize(compressedBytes.length);
         setDownloadBytes(compressedBytes);
-        setStatus('Глубокое растровое сжатие скана успешно выполнено!');
+        setCompressionUseful(isUseful);
+        setStatus(isUseful
+          ? 'Скан сжат, готовый PDF можно скачать.'
+          : 'При выбранных параметрах файл не стал меньше. Уменьшите качество или разрешение.');
       }
     } catch (err: any) {
       console.error(err);
@@ -141,11 +144,13 @@ export default function PdfCompress() {
     if (!downloadBytes || !file) return;
     const blob = new Blob([downloadBytes as any], { type: 'application/pdf' });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${file.name.replace('.pdf', '')}_compressed.pdf`;
+    const downloadUrl = URL.createObjectURL(blob);
+    link.href = downloadUrl;
+    link.download = `${file.name.replace(/\.pdf$/i, '')}_compressed.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
   };
 
   const formatSize = (bytes: number) => {
@@ -298,7 +303,7 @@ export default function PdfCompress() {
 
       {/* Results */}
       {compressedSize > 0 && (
-        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-5 space-y-4">
+        <div className={`${compressionUseful ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-amber-500/10 border-amber-500/30'} border rounded-xl p-5 space-y-4`}>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div className="bg-bx-surface/30 p-3 rounded-lg border border-bx-border">
               <span className="text-[9px] uppercase font-bold text-bx-muted tracking-wider block">Исходный размер</span>
@@ -306,7 +311,7 @@ export default function PdfCompress() {
             </div>
             <div className="bg-bx-surface/30 p-3 rounded-lg border border-bx-border">
               <span className="text-[9px] uppercase font-bold text-bx-muted tracking-wider block">Сжатый размер</span>
-              <span className="text-sm font-bold text-emerald-400 block mt-1">{formatSize(compressedSize)}</span>
+              <span className={`text-sm font-bold ${compressionUseful ? 'text-emerald-400' : 'text-amber-400'} block mt-1`}>{formatSize(compressedSize)}</span>
             </div>
             <div className="bg-bx-surface/30 p-3 rounded-lg border border-bx-border">
               <span className="text-[9px] uppercase font-bold text-bx-muted tracking-wider block">Экономия</span>
