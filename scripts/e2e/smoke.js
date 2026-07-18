@@ -16,11 +16,17 @@ async function main() {
   const ctx = browser.contexts()[0]
   if (!ctx) throw new Error('нет CDP-контекста — приложение не поднялось?')
 
-  // Даём renderer'у время домонтироваться.
-  await new Promise(r => setTimeout(r, 2000))
+  // CDP становится доступен раньше, чем Vite успевает смонтировать React.
+  // DevTools также появляется отдельной страницей и раньше ошибочно выбирался
+  // как главное окно приложения.
   const pages = ctx.pages()
-  const main = pages.find(p => !p.url().includes('tray'))
-  const tray = pages.find(p => p.url().includes('tray'))
+  const appPages = pages.filter(page => {
+    const url = page.url()
+    return url !== 'about:blank' && !url.startsWith('devtools://')
+  })
+  console.log('PAGES:', appPages.map(page => page.url()).join(' | '))
+  const main = appPages.find(p => !p.url().includes('#/tray'))
+  const tray = appPages.find(p => p.url().includes('#/tray'))
   if (!main) throw new Error('не найдено главное окно')
 
   const failures = []
@@ -33,6 +39,8 @@ async function main() {
     const errors = []
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)) })
     page.on('pageerror', e => errors.push('pageerror: ' + e.message.slice(0, 200)))
+
+    await page.waitForSelector('#root > *', { state: 'attached', timeout: 15_000 }).catch(() => undefined)
 
     const state = await page.evaluate(() => ({
       title: document.title,

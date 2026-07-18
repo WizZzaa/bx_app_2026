@@ -9,7 +9,7 @@ set -uo pipefail
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PORT="${CDP_PORT:-9245}"
 USER_DATA_DIR="$(mktemp -d /tmp/bx-e2e-XXXXXX)"
-LOG="$(mktemp /tmp/bx-e2e-run-XXXXXX.log)"
+LOG="$(mktemp /tmp/bx-e2e-run-XXXXXX)"
 
 cleanup() {
   [[ -n "${APP_PID:-}" ]] && kill "$APP_PID" 2>/dev/null
@@ -26,7 +26,7 @@ ELECTRON_ENABLE_LOGGING=1 npm start -- -- \
   --user-data-dir="$USER_DATA_DIR" >"$LOG" 2>&1 &
 APP_PID=$!
 
-echo "▶ Ожидание CDP на :$PORT…"
+echo "▶ Ожидание CDP на :${PORT}…"
 for i in $(seq 1 60); do
   if curl -sf "http://127.0.0.1:$PORT/json/version" >/dev/null 2>&1; then
     echo "  CDP готов (через ${i}s)"
