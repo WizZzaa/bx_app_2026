@@ -22,12 +22,9 @@ describe('Bix widget settings', () => {
     expect(isWithinQuietHours({ ...quietSettings, quietHours: false }, new Date('2026-07-18T22:30:00'))).toBe(false)
   })
 
-  it('keeps jokes within their selected interval', () => {
-    expect(jokeDelay('often')).toBeGreaterThanOrEqual(10 * 60 * 1000)
-    expect(jokeDelay('often')).toBeLessThanOrEqual(12 * 60 * 1000)
-    expect(jokeDelay('normal')).toBeGreaterThanOrEqual(10 * 60 * 1000)
-    expect(jokeDelay('normal')).toBeLessThanOrEqual(15 * 60 * 1000)
-    expect(jokeDelay('rare')).toBeGreaterThanOrEqual(15 * 60 * 1000)
-    expect(jokeDelay('rare')).toBeLessThanOrEqual(20 * 60 * 1000)
+  it('uses the exact selected joke frequency', () => {
+    expect(jokeDelay('often')).toBe(2 * 60 * 1000)
+    expect(jokeDelay('normal')).toBe(5 * 60 * 1000)
+    expect(jokeDelay('rare')).toBe(10 * 60 * 1000)
   })
 })
