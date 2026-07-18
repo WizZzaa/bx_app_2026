@@ -8,6 +8,13 @@ const VARIANTS = ['base', 'business', 'analyst', 'night']
 const EXPECTED_FRAMES = 24
 const EXPECTED_SIZE = 1024
 const PNG_SIGNATURE = '89504e470d0a1a0a'
+const requestedVariant = process.argv.includes('--variant') ? process.argv[process.argv.indexOf('--variant') + 1] : null
+const requestedCycle = process.argv.includes('--cycle') ? process.argv[process.argv.indexOf('--cycle') + 1] : null
+const selectedVariants = requestedVariant ? VARIANTS.filter(variant => variant === requestedVariant) : VARIANTS
+const selectedCycles = requestedCycle ? CYCLES.filter(cycle => cycle === requestedCycle) : CYCLES
+
+if (requestedVariant && !selectedVariants.length) throw new Error(`Неизвестный образ: ${requestedVariant}`)
+if (requestedCycle && !selectedCycles.length) throw new Error(`Неизвестный цикл: ${requestedCycle}`)
 
 function paeth(a, b, c) {
   const p = a + b - c
@@ -95,8 +102,8 @@ function analyseFrame(path) {
 }
 
 const errors = []
-for (const variant of VARIANTS) {
-  for (const cycle of CYCLES) {
+for (const variant of selectedVariants) {
+  for (const cycle of selectedCycles) {
     const label = `${variant}/${cycle}`
     const directory = variant === 'base' ? join(ROOT.pathname, cycle) : join(ROOT.pathname, 'outfits', variant, cycle)
     let files = []
@@ -129,5 +136,5 @@ if (errors.length) {
   errors.forEach(error => console.error(`- ${error}`))
   process.exitCode = 1
 } else {
-  console.log(`Готово: ${VARIANTS.length * CYCLES.length * EXPECTED_FRAMES} кадров прошли проверку RGBA, прозрачности, отступов и геометрии.`)
+  console.log(`Готово: ${selectedVariants.length * selectedCycles.length * EXPECTED_FRAMES} кадров прошли проверку RGBA, прозрачности, отступов и геометрии.`)
 }
