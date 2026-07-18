@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { todayISO } from '../lib/dates';
-import type { Company, CompanyLegalForm, CompanyProfileDetails, CompanyProfileForm, CompanyProfileRole } from '../lib/db/types';
+import type {
+  Company,
+  CompanyLegalForm,
+  CompanyProfileDetails,
+  CompanyProfileForm,
+  CompanyProfileRole,
+  ObligationRuleDecision,
+} from '../lib/db/types';
 import {
   buildTaxDeadlineEvents,
   buildTaxDeadlineRuleOptions,
@@ -48,30 +55,58 @@ function formCalendarHint(form: CompanyLegalForm) {
   return 'BX предлагает правила по форме и режиму. Условные и разовые обязанности остаются только после вашего выбора.';
 }
 
-function defaultRuleIds(regime: string, bxStartDate: string): string[] {
-  return buildTaxDeadlineRuleOptions(regime, bxStartDate)
-    .filter(rule => rule.defaultSelected)
-    .map(rule => rule.id);
+function obligationTraits(
+  legalForm: CompanyLegalForm,
+  isVatPayer: boolean,
+  details: CompanyProfileDetails,
+) {
+  return {
+    legalForm,
+    isVatPayer,
+    hasEmployees: details.has_employees,
+    hasImport: details.has_import,
+    hasExport: details.has_export,
+  };
 }
 
 function initialProfile(company?: Company | null, initial?: CompanyWizardInitial): CompanyProfileForm {
   const startDate = initial?.bx_start_date ?? company?.bx_start_date ?? todayISO();
   const regime = initial?.regime ?? company?.regime ?? 'Налог с оборота';
+  const legalForm = initial?.legal_form ?? company?.legal_form ?? 'ooo';
+  const isVatPayer = initial?.is_vat_payer ?? company?.is_vat_payer ?? regime === 'ОСН';
+  const details = {
+    ...EMPTY_DETAILS,
+    ...(company?.profile_details ?? {}),
+    ...(initial?.profile_details ?? {}),
+  };
   const savedRules = initial?.enabled_obligation_rules ?? company?.enabled_obligation_rules;
+  const options = buildTaxDeadlineRuleOptions(
+    regime,
+    startDate,
+    todayISO(),
+    TAX_HORIZON_DAYS,
+    obligationTraits(legalForm, isVatPayer, details),
+  );
+  const enabledRules = savedRules ?? options.filter(rule => rule.defaultSelected).map(rule => rule.id);
+  const decisions: Record<string, ObligationRuleDecision> = Object.fromEntries(
+    options.map(rule => [rule.id, rule.recommendedDecision]),
+  );
+  Object.assign(decisions, details.obligation_rule_decisions ?? {});
+  for (const id of enabledRules) decisions[id] = 'applies';
 
   return {
     name: initial?.name ?? company?.name ?? '',
     inn: initial?.inn ?? company?.inn ?? null,
     regime,
-    legal_form: initial?.legal_form ?? company?.legal_form ?? 'ooo',
-    profile_details: initial?.profile_details ?? company?.profile_details ?? EMPTY_DETAILS,
+    legal_form: legalForm,
+    profile_details: { ...details, obligation_rule_decisions: decisions },
     registration_date: initial?.registration_date ?? company?.registration_date ?? null,
     bx_start_date: startDate,
-    is_vat_payer: initial?.is_vat_payer ?? company?.is_vat_payer ?? regime === 'ОСН',
+    is_vat_payer: isVatPayer,
     work_weekdays: initial?.work_weekdays ?? company?.work_weekdays ?? [1, 2, 3, 4, 5],
     notification_channels: initial?.notification_channels ?? company?.notification_channels ?? ['in_app'],
     preferred_language: initial?.preferred_language ?? company?.preferred_language ?? 'ru',
-    enabled_obligation_rules: savedRules ?? defaultRuleIds(regime, startDate),
+    enabled_obligation_rules: enabledRules,
   };
 }
 
@@ -81,8 +116,22 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
   const [profile, setProfile] = useState<CompanyProfileForm>(() => initialProfile(company, initial));
 
   const ruleOptions = useMemo(
-    () => buildTaxDeadlineRuleOptions(profile.regime, profile.bx_start_date),
-    [profile.regime, profile.bx_start_date],
+    () => buildTaxDeadlineRuleOptions(
+      profile.regime,
+      profile.bx_start_date,
+      todayISO(),
+      TAX_HORIZON_DAYS,
+      obligationTraits(profile.legal_form, profile.is_vat_payer, profile.profile_details),
+    ),
+    [
+      profile.regime,
+      profile.bx_start_date,
+      profile.legal_form,
+      profile.is_vat_payer,
+      profile.profile_details.has_employees,
+      profile.profile_details.has_import,
+      profile.profile_details.has_export,
+    ],
   );
   const previewEvents = useMemo(
     () => buildTaxDeadlineEvents(company?.id ?? 'preview-company', {
@@ -121,21 +170,74 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
     }));
   }
 
+  function updateWorkTraits(patch: Partial<CompanyProfileDetails>, isVatPayer = profile.is_vat_payer) {
+    const details = { ...profile.profile_details, ...patch };
+    const options = buildTaxDeadlineRuleOptions(
+      profile.regime,
+      profile.bx_start_date,
+      todayISO(),
+      TAX_HORIZON_DAYS,
+      obligationTraits(profile.legal_form, isVatPayer, details),
+    );
+    const decisions = { ...(profile.profile_details.obligation_rule_decisions ?? {}) };
+    const enabled = new Set(profile.enabled_obligation_rules);
+
+    for (const option of options) {
+      const current = decisions[option.id];
+      if (current === undefined || current === 'needs_review' || current === 'not_applicable') {
+        decisions[option.id] = option.recommendedDecision;
+        if (option.recommendedDecision === 'applies') enabled.add(option.id);
+        else enabled.delete(option.id);
+      }
+    }
+
+    setProfile(current => ({
+      ...current,
+      is_vat_payer: isVatPayer,
+      profile_details: { ...details, obligation_rule_decisions: decisions },
+      enabled_obligation_rules: [...enabled],
+    }));
+  }
+
   function changeRegime(regime: string) {
-    const selected = defaultRuleIds(regime, profile.bx_start_date);
+    const isVatPayer = regime === 'ОСН' ? true : profile.is_vat_payer;
+    const options = buildTaxDeadlineRuleOptions(
+      regime,
+      profile.bx_start_date,
+      todayISO(),
+      TAX_HORIZON_DAYS,
+      obligationTraits(profile.legal_form, isVatPayer, profile.profile_details),
+    );
+    const selected = options.filter(rule => rule.defaultSelected).map(rule => rule.id);
+    const decisions = Object.fromEntries(options.map(rule => [rule.id, rule.recommendedDecision]));
     setProfile(current => ({
       ...current,
       regime,
-      is_vat_payer: regime === 'ОСН' ? true : current.is_vat_payer,
+      is_vat_payer: isVatPayer,
+      profile_details: { ...current.profile_details, obligation_rule_decisions: decisions },
       enabled_obligation_rules: selected,
     }));
   }
 
   function changeStartDate(bxStartDate: string) {
-    const available = new Set(buildTaxDeadlineRuleOptions(profile.regime, bxStartDate).map(rule => rule.id));
+    const options = buildTaxDeadlineRuleOptions(
+      profile.regime,
+      bxStartDate,
+      todayISO(),
+      TAX_HORIZON_DAYS,
+      obligationTraits(profile.legal_form, profile.is_vat_payer, profile.profile_details),
+    );
+    const available = new Set(options.map(rule => rule.id));
     setProfile(current => ({
       ...current,
       bx_start_date: bxStartDate,
+      profile_details: {
+        ...current.profile_details,
+        obligation_rule_decisions: Object.fromEntries(
+          Object.entries(current.profile_details.obligation_rule_decisions ?? {})
+            .filter(([id]) => available.has(id)),
+        ),
+      },
       enabled_obligation_rules: current.enabled_obligation_rules.filter(id => available.has(id)),
     }));
   }
@@ -167,12 +269,19 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
     setStep(current => Math.min(3, current + 1));
   }
 
-  function toggleRule(id: string) {
+  function setRuleDecision(id: string, decision: ObligationRuleDecision) {
     setProfile(current => ({
       ...current,
-      enabled_obligation_rules: current.enabled_obligation_rules.includes(id)
-        ? current.enabled_obligation_rules.filter(ruleId => ruleId !== id)
-        : [...current.enabled_obligation_rules, id],
+      profile_details: {
+        ...current.profile_details,
+        obligation_rule_decisions: {
+          ...(current.profile_details.obligation_rule_decisions ?? {}),
+          [id]: decision,
+        },
+      },
+      enabled_obligation_rules: decision === 'applies'
+        ? [...new Set([...current.enabled_obligation_rules, id])]
+        : current.enabled_obligation_rules.filter(ruleId => ruleId !== id),
     }));
   }
 
@@ -259,9 +368,40 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
                   </select>
                 </label>
                 <label className="flex items-center gap-3 rounded-xl border border-bx-border bg-bx-bg px-4 py-3 mt-5">
-                  <input type="checkbox" checked={profile.is_vat_payer} onChange={event => setField('is_vat_payer', event.target.checked)} />
+                  <input type="checkbox" checked={profile.is_vat_payer} onChange={event => updateWorkTraits({}, event.target.checked)} />
                   <span className="text-xs font-bold text-bx-text">Компания является плательщиком НДС</span>
                 </label>
+              </div>
+
+              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.05] p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-600 dark:text-blue-300">Рабочие признаки</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-bx-muted">По этим ответам BX предложит применимые отчёты. Окончательное решение всё равно останется за бухгалтером.</p>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase text-bx-muted">Основная деятельность</span>
+                    <select value={profile.profile_details.primary_activity ?? ''} onChange={event => updateWorkTraits({ primary_activity: event.target.value as CompanyProfileDetails['primary_activity'] })} className={inputCls}>
+                      <option value="">Нужно уточнить</option>
+                      <option value="trade">Торговля</option>
+                      <option value="services">Услуги</option>
+                      <option value="production">Производство</option>
+                      <option value="construction">Строительство</option>
+                      <option value="agriculture">Сельское хозяйство</option>
+                      <option value="other">Другое</option>
+                    </select>
+                  </label>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:pt-5">
+                    {([
+                      ['has_employees', 'Есть сотрудники'],
+                      ['has_import', 'Есть импорт'],
+                      ['has_export', 'Есть экспорт'],
+                    ] as const).map(([key, label]) => (
+                      <label key={key} className="flex items-center gap-2 rounded-xl border border-bx-border bg-bx-bg px-3 py-2.5 text-[10px] font-bold text-bx-text">
+                        <input type="checkbox" checked={Boolean(profile.profile_details[key])} onChange={event => updateWorkTraits({ [key]: event.target.checked })} />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-bx-border pt-5">
@@ -306,9 +446,9 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <h3 className="text-sm font-black text-bx-text">Обязательства на ближайшие {TAX_HORIZON_DAYS} дней</h3>
-                  <p className="text-xs text-bx-muted mt-1">Выбрано правил: {profile.enabled_obligation_rules.length}; событий в предварительном списке: {previewEvents.length}</p>
+                  <p className="text-xs text-bx-muted mt-1">Применяется: {profile.enabled_obligation_rules.length}; нужно уточнить: {ruleOptions.filter(rule => (profile.profile_details.obligation_rule_decisions?.[rule.id] ?? rule.recommendedDecision) === 'needs_review').length}; событий: {previewEvents.length}</p>
                 </div>
-                <button type="button" onClick={() => setField('enabled_obligation_rules', [])} className="text-[11px] text-bx-muted hover:text-bx-text">Снять всё</button>
+                <button type="button" onClick={() => setProfile(current => ({ ...current, enabled_obligation_rules: [], profile_details: { ...current.profile_details, obligation_rule_decisions: Object.fromEntries(ruleOptions.map(rule => [rule.id, 'needs_review'])) } }))} className="text-[11px] text-bx-muted hover:text-bx-text">Отметить всё «Уточнить»</button>
               </div>
               {company && <div className="grid gap-2 rounded-2xl border border-blue-500/25 bg-blue-500/[0.06] p-4 sm:grid-cols-3">
                 <div><p className="text-[9px] font-extrabold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Добавится</p><p className="mt-1 text-lg font-black tabular-nums text-bx-text">{calendarChange.added.length}</p></div>
@@ -318,15 +458,28 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
               </div>}
               <div className="space-y-2">
                 {ruleOptions.map(rule => {
-                  const checked = profile.enabled_obligation_rules.includes(rule.id);
+                  const decision = profile.profile_details.obligation_rule_decisions?.[rule.id] ?? rule.recommendedDecision;
                   return (
-                    <label key={rule.id} className={`flex items-start gap-3 rounded-2xl border px-4 py-3 cursor-pointer ${checked ? 'border-blue-500/40 bg-blue-500/10' : 'border-bx-border bg-bx-bg'}`}>
-                      <input type="checkbox" checked={checked} onChange={() => toggleRule(rule.id)} className="mt-0.5" />
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-xs font-bold text-bx-text">{rule.title}</span>
-                        <span className="block text-[10px] text-bx-muted mt-1">{rule.taxType} · {rule.dates.join(', ')}{rule.defaultSelected ? ' · по режиму' : ' · условное'}</span>
-                      </span>
-                    </label>
+                    <div key={rule.id} className={`rounded-2xl border px-4 py-3 ${decision === 'applies' ? 'border-emerald-500/35 bg-emerald-500/[0.07]' : decision === 'not_applicable' ? 'border-bx-border bg-bx-bg opacity-80' : 'border-amber-500/30 bg-amber-500/[0.06]'}`}>
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs font-bold text-bx-text">{rule.title}</span>
+                          <span className="block text-[10px] text-bx-muted mt-1">{rule.taxType} · {rule.dates.length > 0 ? rule.dates.join(', ') : 'следующий срок пока вне горизонта 60 дней'}</span>
+                          <span className="mt-1.5 block text-[10px] leading-relaxed text-bx-muted">Рекомендация BX: {rule.recommendationReason}</span>
+                        </span>
+                        <div className="grid grid-cols-3 gap-1 rounded-xl border border-bx-border bg-bx-surface p-1" role="group" aria-label={`Применимость: ${rule.title}`}>
+                          {([
+                            ['applies', 'Применяется'],
+                            ['not_applicable', 'Не применяется'],
+                            ['needs_review', 'Уточнить'],
+                          ] as const).map(([value, label]) => (
+                            <button key={value} type="button" onClick={() => setRuleDecision(rule.id, value)} aria-pressed={decision === value} className={`min-h-8 rounded-lg px-2 text-[9px] font-black transition ${decision === value ? value === 'applies' ? 'bg-emerald-600 text-white' : value === 'not_applicable' ? 'bg-bx-surface-2 text-bx-text shadow-sm' : 'bg-amber-500 text-slate-950' : 'text-bx-muted hover:text-bx-text'}`}>
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
                 {ruleOptions.length === 0 && <p className="text-xs text-bx-muted py-8 text-center">В текущем подтверждённом календаре нет сроков для выбранного периода.</p>}

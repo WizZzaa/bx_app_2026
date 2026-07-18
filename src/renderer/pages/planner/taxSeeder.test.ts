@@ -60,4 +60,57 @@ describe('buildTaxDeadlineEvents', () => {
     expect(excise?.defaultSelected).toBe(false);
     expect(vat?.defaultSelected).toBe(true);
   });
+
+  it('uses company traits to recommend payroll obligations', () => {
+    const withEmployees = buildTaxDeadlineRuleOptions(
+      'ОСН',
+      '2026-07-16',
+      '2026-07-16',
+      60,
+      { hasEmployees: true, isVatPayer: true },
+    );
+    const withoutEmployees = buildTaxDeadlineRuleOptions(
+      'ОСН',
+      '2026-07-16',
+      '2026-07-16',
+      60,
+      { hasEmployees: false, isVatPayer: true },
+    );
+
+    expect(withEmployees.find(option => option.id === 'pit-report')?.recommendedDecision).toBe('applies');
+    expect(withoutEmployees.find(option => option.id === 'pit-report')?.recommendedDecision).toBe('not_applicable');
+  });
+
+  it('does not recommend VAT reporting to a non-VAT profile', () => {
+    const options = buildTaxDeadlineRuleOptions(
+      'ОСН',
+      '2026-07-16',
+      '2026-07-16',
+      60,
+      { isVatPayer: false },
+    );
+
+    expect(options.find(option => option.id === 'vat-report')?.recommendedDecision).toBe('not_applicable');
+  });
+
+  it('keeps confirmed rules whose next occurrence is outside the current horizon', () => {
+    const options = buildTaxDeadlineRuleOptions('ОСН', '2026-07-16', '2026-07-16', 60, { isVatPayer: true });
+    const octoberProfitReport = options.find(option => option.id === 'profit-q3-report');
+
+    expect(octoberProfitReport).toBeDefined();
+    expect(octoberProfitReport?.dates).toEqual([]);
+    expect(octoberProfitReport?.recommendedDecision).toBe('applies');
+
+    const earlyEvents = buildTaxDeadlineEvents('company-1', {
+      ...OSN_PROFILE,
+      enabledObligationRules: ['profit-q3-report'],
+    }, '2026-07-16', 60);
+    const laterEvents = buildTaxDeadlineEvents('company-1', {
+      ...OSN_PROFILE,
+      enabledObligationRules: ['profit-q3-report'],
+    }, '2026-08-30', 60);
+
+    expect(earlyEvents).toEqual([]);
+    expect(laterEvents.some(event => event.source_key === 'tax:profit-q3-report:2026-10-20')).toBe(true);
+  });
 });

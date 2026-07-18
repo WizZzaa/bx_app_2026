@@ -89,6 +89,36 @@ describe('CalendarView', () => {
     expect(within(preview).queryByText('23 июля 2026')).toBeNull()
   })
 
+  it('keeps the selected day visible and exposes a labeled add-task action', () => {
+    const onAddEvent = vi.fn()
+    render(
+      <CalendarView
+        events={[]}
+        onDayClick={vi.fn()}
+        onAddEvent={onAddEvent}
+        onEventClick={vi.fn()}
+        companyId="company-1"
+        companyRegime="ОСН"
+      />,
+    )
+
+    const selectedCell = screen.getByRole('button', { name: /^Открыть среда, 22 июля 2026/i }).closest('[data-calendar-date]')
+    const hoveredCell = screen.getByRole('button', { name: /^Открыть четверг, 23 июля 2026/i }).closest('[data-calendar-date]')
+    if (!(selectedCell instanceof HTMLElement) || !(hoveredCell instanceof HTMLElement)) throw new Error('Calendar day cell is missing')
+
+    fireEvent.click(selectedCell)
+    expect(selectedCell.dataset.selected).toBe('true')
+
+    fireEvent.mouseEnter(hoveredCell)
+    act(() => vi.advanceTimersByTime(180))
+    expect(selectedCell.dataset.selected).toBe('true')
+
+    const preview = screen.getByRole('complementary', { name: 'Предпросмотр дня' })
+    expect(within(preview).getByText('Добавить задачу')).toBeTruthy()
+    fireEvent.click(within(preview).getByRole('button', { name: /^Добавить задачу на четверг, 23 июля 2026/i }))
+    expect(onAddEvent).toHaveBeenCalledWith('2026-07-23')
+  })
+
   it('opens a day from a focusable native button instead of relying on hover', () => {
     const onDayClick = vi.fn()
     render(
@@ -124,6 +154,33 @@ describe('CalendarView', () => {
     expect(screen.getByText('Бухгалтерские сроки', { selector: 'h4' })).toBeTruthy()
     expect(screen.getByText('Праздники и особые дни')).toBeTruthy()
     expect(screen.getByText(/Весь месяц одним списком/)).toBeTruthy()
+  })
+
+  it('keeps deadline actions readable and clickable when all companies are shown', () => {
+    const onAddDeadline = vi.fn()
+    render(
+      <CalendarView
+        events={[]}
+        onDayClick={vi.fn()}
+        onAddEvent={vi.fn()}
+        onEventClick={vi.fn()}
+        onAddDeadline={onAddDeadline}
+        companyId={null}
+        companyRegime="ОСН"
+      />,
+    )
+
+    const deadlineCell = screen.getByRole('button', { name: /^Открыть среда, 15 июля 2026/i }).closest('[data-calendar-date]')
+    if (!(deadlineCell instanceof HTMLElement)) throw new Error('Deadline day cell is missing')
+    fireEvent.mouseEnter(deadlineCell)
+    act(() => vi.advanceTimersByTime(180))
+
+    const preview = screen.getByRole('complementary', { name: 'Предпросмотр дня' })
+    const addButtons = within(preview).getAllByRole('button', { name: 'Добавить в задачи' })
+    expect(addButtons.length).toBeGreaterThan(0)
+    expect((addButtons[0] as HTMLButtonElement).disabled).toBe(false)
+    fireEvent.click(addButtons[0])
+    expect(onAddDeadline).toHaveBeenCalledOnce()
   })
 
   it('marks ordinary weekends with a text label, not color alone', () => {

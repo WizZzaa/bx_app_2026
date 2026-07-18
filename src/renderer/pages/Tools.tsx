@@ -70,6 +70,11 @@ const PROPOSAL_TOOLS: Tool[] = UTILITY_PROPOSALS.map(proposal => ({
 
 const TOOLS: Tool[] = [...READY_TOOLS, ...PROPOSAL_TOOLS]
 
+const PROPOSAL_SECTOR_COUNTS = UTILITY_PROPOSALS.reduce<Record<string, number>>((counts, proposal) => {
+  counts[proposal.sector] = (counts[proposal.sector] ?? 0) + 1
+  return counts
+}, {})
+
 const GROUPS = ['Текст и проверки', 'Документы и PDF', '1С', 'Система', 'Заметки', 'Общее · идеи', 'Документы и право · идеи', 'Агро · идеи', 'Строительство · идеи']
 
 const ACCENT: Record<string, { text: string; chipBg: string; activeBg: string; iconBg: string; grad: string }> = {
@@ -126,6 +131,8 @@ const Tools = () => {
   }
 
   const handleCatalogChange = (next: 'ready' | 'proposal') => {
+    setSearch('')
+    setFavoritesOnly(false)
     setCatalog(next)
     const current = TOOLS.find(item => item.id === active)
     const activeMatches = next === 'proposal' ? current?.status === 'proposal' : current?.status !== 'proposal'
@@ -237,6 +244,36 @@ const Tools = () => {
       {/* Правая панель */}
       <div className={`flex-1 ${isFullHeight ? 'flex flex-col overflow-hidden bg-bx-bg' : 'overflow-y-auto bg-bx-bg'}`}>
         <div className={isFullHeight ? 'px-6 pt-6 flex-shrink-0' : 'max-w-5xl mx-auto px-6 pt-6'}>
+          {catalog === 'ready' && (
+            <section
+              aria-labelledby="utility-ideas-title"
+              className="mb-4 flex flex-col gap-4 rounded-2xl border border-violet-500/25 bg-violet-500/[0.07] p-4 sm:flex-row sm:items-center"
+            >
+              <span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-xl bg-violet-600 text-white">
+                <Icon name="ai" className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-700 dark:text-violet-300">Новые идеи для BX</p>
+                <h2 id="utility-ideas-title" className="mt-1 text-base font-black text-bx-text">{PROPOSAL_TOOLS.length} утилит уже можно посмотреть и обсудить</h2>
+                <p className="mt-1 text-xs leading-relaxed text-bx-muted">В каждой карточке описано, что загружать, какой результат получится и зачем инструмент нужен бухгалтеру, юристу, агро- или строительной компании.</p>
+                <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Идеи по направлениям">
+                  {Object.entries(PROPOSAL_SECTOR_COUNTS).map(([sector, count]) => (
+                    <span key={sector} className="rounded-lg border border-bx-border bg-bx-surface px-2 py-1 text-[10px] font-bold text-bx-text">
+                      {sector} · {count}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleCatalogChange('proposal')}
+                className="inline-flex min-h-11 flex-shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-black text-white transition-colors hover:bg-violet-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-bx-bg"
+              >
+                Посмотреть все идеи
+                <Icon name="arrowR" className="h-4 w-4" />
+              </button>
+            </section>
+          )}
           {!isFullHeight && view === 'guided' && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               <div className="rounded-2xl border border-bx-border bg-bx-surface px-4 py-3">
