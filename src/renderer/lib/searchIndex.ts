@@ -2,6 +2,7 @@
 import { loadAccounts, loadNsbu, loadTaxes, loadIndicators } from './db/referenceRepo';
 import { getAllArticlesSync } from './db/knowledgeRepo';
 import { LEGISLATION_NEWS } from '../data/newsItems';
+import { UTILITY_PROPOSALS } from '../data/workbenchCatalog';
 
 export interface SearchItem {
   title: string;
@@ -9,6 +10,13 @@ export interface SearchItem {
   category: string;
   route: string;       // hash-route для перехода
 }
+
+export const UTILITY_IDEA_SEARCH_ITEMS: SearchItem[] = UTILITY_PROPOSALS.map(item => ({
+  title: item.title,
+  subtitle: `${item.sector} · новая идея утилиты`,
+  category: 'Идея',
+  route: `/tools?tool=${encodeURIComponent(item.id)}`,
+}));
 
 // Статичные разделы и быстрые действия
 const staticItems: SearchItem[] = [
@@ -26,6 +34,7 @@ const staticItems: SearchItem[] = [
   { title: 'Проверка ИНН', subtitle: 'Контрагенты', category: 'Раздел', route: '/check-inn' },
   { title: 'AI-Консультант', subtitle: 'Налоговый помощник', category: 'Раздел', route: '/ai' },
   { title: 'E-Imzo', subtitle: 'Диагностика ЭЦП', category: 'Действие', route: '/tools' },
+  ...UTILITY_IDEA_SEARCH_ITEMS,
 ];
 
 let cache: SearchItem[] | null = null;

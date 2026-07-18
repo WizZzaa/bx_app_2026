@@ -15,6 +15,12 @@ export function canShowReminder(remindAt: string | null, now = Date.now()) {
   return !remindAt || new Date(remindAt).getTime() <= now
 }
 
+export function getOnboardingSurface(state: OnboardingState | null, remindAt: string | null, now = Date.now()) {
+  if (state === null || state === 'completed') return 'hidden' as const
+  if (state === 'deferred') return canShowReminder(remindAt, now) ? 'reminder' as const : 'hidden' as const
+  return 'dialog' as const
+}
+
 export default function OnboardingWizard() {
   const { companies, startCompanyCreation } = useCompany()
   const [state, setState] = useState<OnboardingState | null>(null)
@@ -75,12 +81,18 @@ export default function OnboardingWizard() {
     if (firstOwnedCompany) void saveState('completed', firstOwnedCompany.id)
   }, [companies, saveState, state, userId])
 
-  if (state === null || state === 'completed') return null
+  const surface = getOnboardingSurface(state, remindAt)
+  if (surface === 'hidden') return null
 
-  const openCompanyWizard = () => startCompanyCreation()
-  const showReminder = state === 'deferred' && canShowReminder(remindAt)
-
-  if (showReminder) {
+  const openCompanyWizard = () => {
+    // Убираем большой onboarding-диалог до открытия мастера, чтобы в интерфейсе
+    // не оставались два aria-modal одновременно. Если мастер отменят, сразу
+    // появится компактное напоминание без записи отсрочки на сервер.
+    setState('deferred')
+    setRemindAt(null)
+    startCompanyCreation()
+  }
+  if (surface === 'reminder') {
     return (
       <aside className="fixed bottom-5 right-5 z-[55] w-[min(420px,calc(100vw-2.5rem))] rounded-2xl border border-blue-500/25 bg-bx-surface p-4 shadow-2xl">
         <div className="flex items-start gap-3">

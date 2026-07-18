@@ -18,6 +18,8 @@ import type { TaxDeadline } from '../data/taxCalendar';
 
 type View = 'focus' | 'calendar' | 'board';
 
+export const DEFAULT_PLANNER_VIEW: View = 'calendar';
+
 const TYPE_FILTERS = [
   { id: '',             label: 'Все' },
   { id: 'task',         label: '✅ Задачи' },
@@ -33,7 +35,7 @@ export default function Planner() {
   const toast = useToast();
   const { events, loading, error: eventsError, reload, add, update, remove } = useEvents();
 
-  const [view,      setView]      = useState<View>('focus');
+  const [view,      setView]      = useState<View>(DEFAULT_PLANNER_VIEW);
 
   // events modal (calendar/list)
   const [modalOpen, setModalOpen] = useState(false);
@@ -184,6 +186,10 @@ export default function Planner() {
   }, [companies, events, setActive]);
 
   function handleAddTaxDeadline(date: string, deadline: TaxDeadline) {
+    if (!active?.id) {
+      toast.info('Выберите компанию в верхней панели, затем добавьте срок в задачи');
+      return;
+    }
     const sourceKey = `tax:${deadline.id}:${date}`;
     const existing = events.find(event => event.company_id === active?.id && event.source_key === sourceKey);
     if (existing) {

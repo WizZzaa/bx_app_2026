@@ -16,6 +16,7 @@ export type CompanyLegalForm =
 export type CompanyProfileStatus = 'draft' | 'confirmed';
 export type CompanyLanguage = 'ru' | 'uz';
 export type CompanyNotificationChannel = 'in_app' | 'desktop';
+export type ObligationRuleDecision = 'applies' | 'not_applicable' | 'needs_review';
 
 export interface CompanyProfileDetails {
   owner_name?: string;
@@ -32,6 +33,11 @@ export interface CompanyProfileDetails {
   farm_area_hectares?: string;
   farm_specialization?: string;
   seasonal?: boolean;
+  primary_activity?: 'trade' | 'services' | 'production' | 'construction' | 'agriculture' | 'other' | '';
+  has_employees?: boolean;
+  has_import?: boolean;
+  has_export?: boolean;
+  obligation_rule_decisions?: Record<string, ObligationRuleDecision>;
   custom_legal_form?: string;
 }
 

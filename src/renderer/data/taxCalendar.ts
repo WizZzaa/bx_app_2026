@@ -13,6 +13,11 @@ export interface TaxDeadline {
   note?: string
   law?: string         // ссылка на статью НК/ПКМ
   verified: boolean
+  sourceUrl?: string
+  verifiedAt?: string
+  reviewedBy?: string
+  editorialStatus?: 'draft' | 'review' | 'approved' | 'archived'
+  selectionPolicy?: 'core' | 'vat' | 'employees' | 'conditional'
 }
 
 export const taxDeadlines: TaxDeadline[] = [
@@ -79,21 +84,24 @@ export const taxDeadlines: TaxDeadline[] = [
     title: 'Взносы на ИНПС — реестры и уплата',
     taxType: 'ИНПС', kind: 'both', day: 15, month: null, regime: 'все',
     note: 'Представление реестров и уплата взносов за предыдущий месяц',
-    law: 'пп.6,9 Положения, рег.МЮ №3577', verified: true
+    law: 'пп.6,9 Положения, рег.МЮ №3577', verified: true,
+    selectionPolicy: 'employees'
   },
   {
     id: 'pit-report',
     title: 'НДФЛ и соцналог — отчётность и уплата',
     taxType: 'НДФЛ', kind: 'both', day: 15, month: null, regime: 'все',
     note: 'Ежемесячно до 15 числа. НДФЛ уплачивается одновременно с выплатой доходов, но не позднее сроков представления отчётности',
-    law: 'ст.389-390 НК, ч.ч.4-5 ст.407 НК', verified: true
+    law: 'ст.389-390 НК, ч.ч.4-5 ст.407 НК', verified: true,
+    selectionPolicy: 'employees'
   },
   {
     id: 'turnover-report',
     title: 'Налог с оборота — отчётность и уплата',
     taxType: 'Оборот', kind: 'both', day: 15, month: null, regime: 'Налог с оборота',
     note: 'Ежемесячно',
-    law: 'чч.3,5 ст.470 НК', verified: true
+    law: 'чч.3,5 ст.470 НК', verified: true,
+    selectionPolicy: 'core'
   },
   {
     id: 'turnover-agent',
@@ -116,7 +124,8 @@ export const taxDeadlines: TaxDeadline[] = [
     title: 'НДС — отчётность и уплата',
     taxType: 'НДС', kind: 'both', day: 20, month: null, regime: 'ОСН',
     note: 'Ежемесячно до 20 числа за предыдущий месяц',
-    law: 'чч.1-4 ст.273 НК', verified: true
+    law: 'чч.1-4 ст.273 НК', verified: true,
+    selectionPolicy: 'vat'
   },
   {
     id: 'vat-agent',
@@ -194,7 +203,8 @@ export const taxDeadlines: TaxDeadline[] = [
     title: 'Налог на прибыль — расчёт за I квартал',
     taxType: 'Прибыль', kind: 'both', day: 20, month: 4, regime: 'ОСН',
     note: 'Расчёт и уплата за I квартал 2026 года',
-    law: 'ч.5 ст.339, ст.340 НК', verified: true
+    law: 'ч.5 ст.339, ст.340 НК', verified: true,
+    selectionPolicy: 'core'
   },
   {
     id: 'vat-foreign-q1',
@@ -231,7 +241,8 @@ export const taxDeadlines: TaxDeadline[] = [
     title: 'Налог на прибыль — расчёт за II квартал',
     taxType: 'Прибыль', kind: 'both', day: 20, month: 7, regime: 'ОСН',
     note: 'Расчёт и уплата за II квартал 2026 года',
-    law: 'ч.5 ст.339, ст.340 НК', verified: true
+    law: 'ч.5 ст.339, ст.340 НК', verified: true,
+    selectionPolicy: 'core'
   },
   {
     id: 'vat-foreign-q2',
@@ -261,7 +272,8 @@ export const taxDeadlines: TaxDeadline[] = [
     title: 'Налог на прибыль — расчёт за III квартал',
     taxType: 'Прибыль', kind: 'both', day: 20, month: 10, regime: 'ОСН',
     note: 'Расчёт и уплата за III квартал 2026 года',
-    law: 'ч.5 ст.339, ст.340 НК', verified: true
+    law: 'ч.5 ст.339, ст.340 НК', verified: true,
+    selectionPolicy: 'core'
   },
   {
     id: 'vat-foreign-q3',
