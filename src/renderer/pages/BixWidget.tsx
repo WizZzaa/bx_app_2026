@@ -156,6 +156,8 @@ const ACTIONS = [
   { id: 'note', label: 'Быстрая заметка', icon: '✎' },
   { id: 'tools', label: 'Утилиты', icon: '⌘' },
   { id: 'translator', label: 'Переводчик', icon: '文' },
+  { id: 'app', label: 'Открыть приложение', icon: '▣', route: '/' },
+  { id: 'currency', label: 'Курсы валют', icon: '💱', route: '/currency' },
 ]
 
 const TOOL_ACTIONS = [
@@ -517,6 +519,7 @@ export default function BixWidget() {
     finally { setUtilityBusy(false) }
   }
   const choose = (action: typeof ACTIONS[number]) => {
+    if (action.route) { openApp(action.route); setPanel(null); return }
     setPanel(action.id as Panel)
   }
   const askBix = async () => {
@@ -714,7 +717,7 @@ export default function BixWidget() {
       {ACTIONS.map((action, index) => <button key={action.id} className={`bix-action bix-action-${index}`} onClick={() => choose(action)}>
         <b>{action.icon}</b><span>{action.label}</span>
       </button>)}
-      <button className="bix-home-button" onClick={() => setPanel('home')}><span>♟</span>Домик Бикса</button>
+      <button className="bix-home-button" onClick={() => setPanel('home')}><b>♟</b><span>Домик Бикса</span></button>
     </section>}
 
     {introOpen && <section className="bix-intro" aria-label="Знакомство с Биксом">
