@@ -80,5 +80,6 @@
   "78": "SystemTaskBoard.tsx",
   "79": "NetworkChecker.tsx",
   "80": "useToast",
-  "81": "loadCycle"
+  "81": "loadCycle",
+  "82": "uiScale.ts"
 }

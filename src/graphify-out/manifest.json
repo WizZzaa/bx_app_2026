@@ -1,7 +1,7 @@
 {
   "main.ts": {
-    "mtime": 1784379400.7383816,
-    "ast_hash": "c8a2ed290564add26e736ee279842761",
+    "mtime": 1784380169.0420172,
+    "ast_hash": "95e834e03f3347215250a7ae1f47dd15",
     "semantic_hash": ""
   },
   "main/ipc.ts": {
@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "renderer/lib/notifications.ts": {
-    "mtime": 1784379400.7375665,
-    "ast_hash": "315884d5fa42ffec1bef8a0e45061805",
+    "mtime": 1784380148.1394446,
+    "ast_hash": "0f9a168ae3f4f451d005bb5b041f1956",
     "semantic_hash": ""
   },
   "renderer/lib/numToWords.ts": {
@@ -1120,8 +1120,8 @@
     "semantic_hash": ""
   },
   "shared/version.ts": {
-    "mtime": 1784379794.7483978,
-    "ast_hash": "9f47ace5fdd19ce2fad015e46553515c",
+    "mtime": 1784393471.922218,
+    "ast_hash": "e186d85cc6138d34bc912ef35e489e33",
     "semantic_hash": ""
   },
   "renderer/assets/widgets/horoscope.png": {
@@ -1310,8 +1310,8 @@
     "semantic_hash": ""
   },
   "renderer/pages/BixWidget.tsx": {
-    "mtime": 1784379978.8607502,
-    "ast_hash": "e9e8287bd826ba56baddb3609b3c19b1",
+    "mtime": 1784393471.9203475,
+    "ast_hash": "31e62ca227c7230c3e689df0956c97e2",
     "semantic_hash": ""
   },
   "renderer/pages/calc/RegimeCompareCalc.test.ts": {
