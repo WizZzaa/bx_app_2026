@@ -56,16 +56,12 @@ function formCalendarHint(form: CompanyLegalForm) {
 }
 
 function obligationTraits(
-  legalForm: CompanyLegalForm,
   isVatPayer: boolean,
   details: CompanyProfileDetails,
 ) {
   return {
-    legalForm,
     isVatPayer,
     hasEmployees: details.has_employees,
-    hasImport: details.has_import,
-    hasExport: details.has_export,
   };
 }
 
@@ -85,7 +81,7 @@ function initialProfile(company?: Company | null, initial?: CompanyWizardInitial
     startDate,
     todayISO(),
     TAX_HORIZON_DAYS,
-    obligationTraits(legalForm, isVatPayer, details),
+    obligationTraits(isVatPayer, details),
   );
   const enabledRules = savedRules ?? options.filter(rule => rule.defaultSelected).map(rule => rule.id);
   const decisions: Record<string, ObligationRuleDecision> = Object.fromEntries(
@@ -121,16 +117,13 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
       profile.bx_start_date,
       todayISO(),
       TAX_HORIZON_DAYS,
-      obligationTraits(profile.legal_form, profile.is_vat_payer, profile.profile_details),
+      obligationTraits(profile.is_vat_payer, profile.profile_details),
     ),
     [
       profile.regime,
       profile.bx_start_date,
-      profile.legal_form,
       profile.is_vat_payer,
       profile.profile_details.has_employees,
-      profile.profile_details.has_import,
-      profile.profile_details.has_export,
     ],
   );
   const previewEvents = useMemo(
@@ -177,7 +170,7 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
       profile.bx_start_date,
       todayISO(),
       TAX_HORIZON_DAYS,
-      obligationTraits(profile.legal_form, isVatPayer, details),
+      obligationTraits(isVatPayer, details),
     );
     const decisions = { ...(profile.profile_details.obligation_rule_decisions ?? {}) };
     const enabled = new Set(profile.enabled_obligation_rules);
@@ -200,23 +193,30 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
   }
 
   function changeRegime(regime: string) {
-    const isVatPayer = regime === 'ОСН' ? true : profile.is_vat_payer;
-    const options = buildTaxDeadlineRuleOptions(
-      regime,
-      profile.bx_start_date,
-      todayISO(),
-      TAX_HORIZON_DAYS,
-      obligationTraits(profile.legal_form, isVatPayer, profile.profile_details),
-    );
-    const selected = options.filter(rule => rule.defaultSelected).map(rule => rule.id);
-    const decisions = Object.fromEntries(options.map(rule => [rule.id, rule.recommendedDecision]));
-    setProfile(current => ({
-      ...current,
-      regime,
-      is_vat_payer: isVatPayer,
-      profile_details: { ...current.profile_details, obligation_rule_decisions: decisions },
-      enabled_obligation_rules: selected,
-    }));
+    setProfile(current => {
+      const isVatPayer = regime === 'ОСН' ? true : current.is_vat_payer;
+      const options = buildTaxDeadlineRuleOptions(
+        regime,
+        current.bx_start_date,
+        todayISO(),
+        TAX_HORIZON_DAYS,
+        obligationTraits(isVatPayer, current.profile_details),
+      );
+      const previousDecisions = current.profile_details.obligation_rule_decisions ?? {};
+      const decisions = Object.fromEntries(
+        options.map(rule => [rule.id, previousDecisions[rule.id] ?? rule.recommendedDecision]),
+      );
+      const selected = options
+        .filter(rule => decisions[rule.id] === 'applies')
+        .map(rule => rule.id);
+      return {
+        ...current,
+        regime,
+        is_vat_payer: isVatPayer,
+        profile_details: { ...current.profile_details, obligation_rule_decisions: decisions },
+        enabled_obligation_rules: selected,
+      };
+    });
   }
 
   function changeStartDate(bxStartDate: string) {
@@ -225,7 +225,7 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
       bxStartDate,
       todayISO(),
       TAX_HORIZON_DAYS,
-      obligationTraits(profile.legal_form, profile.is_vat_payer, profile.profile_details),
+      obligationTraits(profile.is_vat_payer, profile.profile_details),
     );
     const available = new Set(options.map(rule => rule.id));
     setProfile(current => ({
@@ -464,7 +464,7 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
                         <span className="min-w-0 flex-1">
                           <span className="block text-xs font-bold text-bx-text">{rule.title}</span>
-                          <span className="block text-[10px] text-bx-muted mt-1">{rule.taxType} · {rule.dates.length > 0 ? rule.dates.join(', ') : 'следующий срок пока вне горизонта 60 дней'}</span>
+                          <span className="block text-[10px] text-bx-muted mt-1">{rule.taxType} · {rule.dates.length > 0 ? rule.dates.join(', ') : `следующий срок пока вне горизонта ${TAX_HORIZON_DAYS} дней`}</span>
                           <span className="mt-1.5 block text-[10px] leading-relaxed text-bx-muted">Рекомендация BX: {rule.recommendationReason}</span>
                         </span>
                         <div className="grid grid-cols-3 gap-1 rounded-xl border border-bx-border bg-bx-surface p-1" role="group" aria-label={`Применимость: ${rule.title}`}>
@@ -500,7 +500,7 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
                   ['Начало в BX', profile.bx_start_date],
                   ['НДС', profile.is_vat_payer ? 'Плательщик' : 'Не плательщик'],
                   ['Правил', String(profile.enabled_obligation_rules.length)],
-                  ['Событий на 60 дней', String(previewEvents.length)],
+                  [`Событий на ${TAX_HORIZON_DAYS} дней`, String(previewEvents.length)],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-2xl border border-bx-border bg-bx-bg px-4 py-3">
                     <p className="text-[10px] font-bold uppercase text-bx-muted">{label}</p>

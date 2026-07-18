@@ -52,13 +52,14 @@ describe('buildTaxDeadlineEvents', () => {
     expect(events.every(event => event.source_key?.startsWith('tax:vat-report:'))).toBe(true);
   });
 
-  it('keeps conditional common rules unchecked in the profile preview', () => {
+  it('keeps conditional common rules and unknown VAT status unchecked in the profile preview', () => {
     const options = buildTaxDeadlineRuleOptions('ОСН', '2026-07-16', '2026-07-16', 60);
     const excise = options.find(option => option.id === 'excise-report');
     const vat = options.find(option => option.id === 'vat-report');
 
     expect(excise?.defaultSelected).toBe(false);
-    expect(vat?.defaultSelected).toBe(true);
+    expect(vat?.defaultSelected).toBe(false);
+    expect(vat?.recommendedDecision).toBe('needs_review');
   });
 
   it('uses company traits to recommend payroll obligations', () => {
@@ -82,15 +83,23 @@ describe('buildTaxDeadlineEvents', () => {
   });
 
   it('does not recommend VAT reporting to a non-VAT profile', () => {
-    const options = buildTaxDeadlineRuleOptions(
+    const withoutVat = buildTaxDeadlineRuleOptions(
       'ОСН',
       '2026-07-16',
       '2026-07-16',
       60,
       { isVatPayer: false },
     );
+    const withVat = buildTaxDeadlineRuleOptions(
+      'ОСН',
+      '2026-07-16',
+      '2026-07-16',
+      60,
+      { isVatPayer: true },
+    );
 
-    expect(options.find(option => option.id === 'vat-report')?.recommendedDecision).toBe('not_applicable');
+    expect(withoutVat.find(option => option.id === 'vat-report')?.recommendedDecision).toBe('not_applicable');
+    expect(withVat.find(option => option.id === 'vat-report')?.recommendedDecision).toBe('applies');
   });
 
   it('keeps confirmed rules whose next occurrence is outside the current horizon', () => {

@@ -3,7 +3,7 @@ import { taxDeadlines } from '../../data/taxCalendar';
 import type { NewEvent } from './useEvents';
 import { todayISO, toLocalISO } from '../../lib/dates';
 import type { TaxDeadline } from '../../data/taxCalendar';
-import type { CompanyLegalForm, ObligationRuleDecision } from '../../lib/db/types';
+import type { ObligationRuleDecision } from '../../lib/db/types';
 
 const TAX_CALENDAR_YEAR = 2026;
 export const TAX_HORIZON_DAYS = 60;
@@ -15,19 +15,11 @@ export interface CompanyTaxProfile {
   bxStartDate: string;
   enabledObligationRules: string[];
   assigneeId?: string | null;
-  legalForm?: CompanyLegalForm;
-  isVatPayer?: boolean;
-  hasEmployees?: boolean;
-  hasImport?: boolean;
-  hasExport?: boolean;
 }
 
 export interface CompanyObligationTraits {
-  legalForm?: CompanyLegalForm;
   isVatPayer?: boolean;
   hasEmployees?: boolean;
-  hasImport?: boolean;
-  hasExport?: boolean;
 }
 
 export interface TaxDeadlineRuleOption {
@@ -74,9 +66,10 @@ function recommendationForDeadline(
       if (traits.isVatPayer === false) {
         return { decision: 'not_applicable', reason: 'Профиль отмечен как неплательщик НДС' };
       }
-      return traits.isVatPayer === true || traits.isVatPayer === undefined
-        ? { decision: 'applies', reason: 'Применяется к плательщику НДС' }
-        : { decision: 'needs_review', reason: 'Нужно уточнить статус плательщика НДС' };
+      if (traits.isVatPayer === true) {
+        return { decision: 'applies', reason: 'Применяется к плательщику НДС' };
+      }
+      return { decision: 'needs_review', reason: 'Нужно уточнить статус плательщика НДС' };
     case 'employees':
       if (traits.hasEmployees === true) {
         return { decision: 'applies', reason: 'В профиле указаны сотрудники' };

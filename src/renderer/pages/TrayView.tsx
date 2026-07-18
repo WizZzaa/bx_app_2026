@@ -82,7 +82,8 @@ export default function TrayView() {
 
   const reloadDeadlines = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) return
       const { data } = await supabase.from('bx_events').select('id, title, date, type')
         .eq('user_id', user.id).gte('date', todayISO()).order('date', { ascending: true }).limit(8)

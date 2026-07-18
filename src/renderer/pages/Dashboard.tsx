@@ -46,6 +46,7 @@ export default function Dashboard() {
   const [ecpExpiring, setEcpExpiring] = useState(0)
   const [configOpen, setConfigOpen] = useState(false)
   const [visible, setVisible] = useState<ServiceVisibility>(DEFAULT_WIDGETS)
+  const [visibilityReady, setVisibilityReady] = useState(false)
   const [widgetPolicy, setWidgetPolicy] = useState<RuntimeWidgetPolicy>(() => defaultRuntimeWidgetPolicy())
 
   useEffect(() => { getExpiringEcpCount().then(setEcpExpiring) }, [])
@@ -54,6 +55,7 @@ export default function Dashboard() {
       const saved = JSON.parse(localStorage.getItem('bx_dashboard_widgets') || '{}')
       setVisible({ weather: saved.weather ?? true, notifications: saved.notifications ?? true, horoscope: saved.horoscope ?? true })
     } catch { setVisible(DEFAULT_WIDGETS) }
+    setVisibilityReady(true)
   }, [])
 
   useEffect(() => {
@@ -92,11 +94,19 @@ export default function Dashboard() {
   ]
 
   useEffect(() => {
-    const visibleWidgetIds = ['currency-rates', 'smart-calendar', 'quick-actions', 'weather', 'notification-center', 'accounting-horoscope']
+    if (!visibilityReady) return
+    const visibleWidgetIds = [
+      'currency-rates',
+      'smart-calendar',
+      'quick-actions',
+      ...(visible.weather ? ['weather'] : []),
+      ...(visible.notifications ? ['notification-center'] : []),
+      ...(visible.horoscope ? ['accounting-horoscope'] : []),
+    ]
     visibleWidgetIds
       .filter(id => allowed(id))
       .forEach(id => { void trackWidgetEvent(id, 'view') })
-  }, [widgetPolicy, plan, role])
+  }, [visibilityReady, visible.weather, visible.notifications, visible.horoscope, widgetPolicy, plan, role])
 
   return (
     <main className="z-10 flex-1 overflow-y-auto bg-bx-bg px-5 py-5 text-bx-text sm:px-6">

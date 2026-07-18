@@ -21,7 +21,9 @@ export default class WidgetBoundary extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    if (this.props.widgetId) void trackWidgetEvent(this.props.widgetId, 'load_success', performance.now() - this.startedAt)
+    if (!this.state.error && this.props.widgetId) {
+      void trackWidgetEvent(this.props.widgetId, 'load_success', performance.now() - this.startedAt)
+    }
   }
 
   render() {
