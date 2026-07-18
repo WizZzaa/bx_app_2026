@@ -102,6 +102,9 @@ const api = {
     setPinned: (pinned: boolean): Promise<boolean> => ipcRenderer.invoke('tray:set-pinned', pinned),
     getPinned: (): Promise<boolean> => ipcRenderer.invoke('tray:get-pinned'),
     dockToTaskbar: (): Promise<void> => ipcRenderer.invoke('tray:dock-to-taskbar'),
+    resizeWidget: (width: number, height: number): Promise<void> => ipcRenderer.invoke('tray:resize-widget', width, height),
+    setClickThrough: (enabled: boolean): Promise<void> => ipcRenderer.invoke('tray:set-click-through', enabled),
+    showNotification: (title: string, body: string, route?: string): Promise<boolean> => ipcRenderer.invoke('tray:show-notification', title, body, route),
     openApp: (route?: string): Promise<void> => ipcRenderer.invoke('tray:open-app', route),
     onNavigate: (callback: (route: string) => void) => {
       const handler = (_event: any, route: string) => callback(route)
