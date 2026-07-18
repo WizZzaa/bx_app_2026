@@ -317,7 +317,7 @@ export default function Translator() {
 
   return (
     <div className="custom-scrollbar flex-1 overflow-y-auto bg-bx-bg text-bx-text">
-      <div className="bx-page-container space-y-5 py-5 lg:py-6">
+      <div className="bx-page-container space-y-5 px-4 py-5 sm:px-5 lg:px-6 lg:py-6">
         <TranslatorWorkspaceSwitch value={workspaceMode} onChange={changeWorkspaceMode} />
 
         {professionalMode && <ResourceHero eyebrow="Профессиональная работа с документами" title="Перевод без потери терминов, структуры и смысла" description="Рабочий стол для договоров, писем, счетов, таблиц и нормативных текстов на узбекском, русском и английском языках. Результат остаётся редактируемым перед выгрузкой." icon="languages" stats={[{ value: '4', label: 'языковых варианта' }, { value: '7', label: 'форматов файлов' }, { value: '15 МБ', label: 'до одного файла' }]} />}

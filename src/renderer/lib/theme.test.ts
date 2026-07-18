@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { applyTheme, currentTheme, nextTheme, THEME_KEY } from './theme'
+import { applyTheme, currentTheme, nextTheme, saveTheme, subscribeToTheme, THEME_KEY } from './theme'
 
 describe('application themes', () => {
   beforeEach(() => {
@@ -42,5 +42,30 @@ describe('application themes', () => {
     localStorage.setItem(THEME_KEY, 'lime-light')
     expect(currentTheme()).toBe('lavender-light')
     expect(localStorage.getItem(THEME_KEY)).toBe('lavender-light')
+  })
+
+  it('keeps theme controls synchronized in the same window', () => {
+    const updates: string[] = []
+    const unsubscribe = subscribeToTheme(theme => updates.push(theme))
+
+    saveTheme('lime')
+
+    expect(localStorage.getItem(THEME_KEY)).toBe('lime')
+    expect(document.documentElement.dataset.theme).toBe('lime')
+    expect(updates).toEqual(['lime'])
+    unsubscribe()
+  })
+
+  it('applies a theme changed in another browser tab', () => {
+    const updates: string[] = []
+    const unsubscribe = subscribeToTheme(theme => updates.push(theme))
+    localStorage.setItem(THEME_KEY, 'lavender-light')
+
+    window.dispatchEvent(new StorageEvent('storage', { key: THEME_KEY, newValue: 'lavender-light' }))
+
+    expect(document.documentElement.dataset.theme).toBe('lavender-light')
+    expect(document.documentElement.classList.contains('light')).toBe(true)
+    expect(updates).toEqual(['lavender-light'])
+    unsubscribe()
   })
 })
