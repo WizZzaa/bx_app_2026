@@ -411,9 +411,11 @@ const resizeTrayWindow = (requestedWidth: number, requestedHeight: number) => {
   const current = trayWindow.getBounds()
   const display = screen.getDisplayNearestPoint({ x: current.x + current.width / 2, y: current.y + current.height / 2 })
   const { workArea } = display
-  const width = Math.max(current.width, Math.min(760, Math.max(430, Math.round(requestedWidth))))
+  const width = Math.min(760, Math.max(430, Math.round(requestedWidth)))
   // Не уходим за рабочую область на небольших экранах (например, 1366×768).
-  const height = Math.max(560, Math.min(860, workArea.height, Math.max(current.height, Math.round(requestedHeight))))
+  // У высоких мониторов не искусственно обрезаем переводчик, сундук или
+  // гардероб: пределом остаётся рабочая область Windows, а не старые 860 px.
+  const height = Math.max(560, Math.min(1200, workArea.height, Math.round(requestedHeight)))
   if (width === current.width && height === current.height) return
 
   // Нижний край — единственный надёжный якорь питомца: пользователь может
@@ -422,7 +424,9 @@ const resizeTrayWindow = (requestedWidth: number, requestedHeight: number) => {
   // его нижнюю координату от workArea Windows.
   const bottom = current.y + current.height
   const x = trayState.custom ? current.x : workArea.x + workArea.width - width - 18
-  const y = bottom - height
+  // На очень маленьком экране или при ручном расположении виджета сверху не
+  // выпускаем верхнюю часть панели за границу видимой рабочей области.
+  const y = Math.max(workArea.y, bottom - height)
   suppressTrayMove = true
   suppressTrayResize = true
   trayWindow.setBounds({ x, y, width, height }, false)
@@ -442,7 +446,7 @@ const createTrayWindow = () => {
     minWidth: 430,
     minHeight: 560,
     maxWidth: 760,
-    maxHeight: 860,
+    maxHeight: 1200,
     show: true,
     frame: false,
     fullscreenable: false,
