@@ -226,7 +226,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       isPro: plan === 'standard' || plan === 'premium',
       isPremium: plan === 'premium',
       role,
-      isAdmin: role === 'admin' || role.startsWith('admin_'),
+      isAdmin: role === 'admin' || role.startsWith('admin_') || role === 'product_operator',
       loading,
       limits: allLimits[plan],
       allLimits,

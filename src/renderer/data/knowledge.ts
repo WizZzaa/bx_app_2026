@@ -5,6 +5,9 @@ export interface KbArticle {
   tags: string[];
   source: string;
   updated: string;
+  sourceUrl?: string;
+  reviewedBy?: string;
+  editorialStatus?: 'draft' | 'review' | 'approved' | 'archived';
   body: string; // markdown-like: ## headings, **bold**, `code`, > quote, - list
   tools?: { label: string; route: string }[]; // связки «Инструменты по теме»
 }

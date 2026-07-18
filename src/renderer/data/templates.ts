@@ -16,6 +16,10 @@ export interface DocTemplate {
   icon: string;
   title: string;
   description: string;
+  purpose?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  editorialStatus?: 'draft' | 'review' | 'approved' | 'archived';
   vars: TemplateVar[];
   body: string;
 }
@@ -24,6 +28,8 @@ export const TEMPLATE_CATEGORIES = [
   'Все',
   'Договоры',
   'Акты и счета',
+  'Бухгалтерские документы',
+  'Письма и обращения',
   'Кадровые приказы',
   'Доверенности',
   'ВЭД',
@@ -772,5 +778,96 @@ We hereby certify that the information herein is true, correct and complete.
 
 Authorised Signature: ___________________
 {{seller_name}}`,
+  },
+
+  // ─── БУХГАЛТЕРСКИЕ ДОКУМЕНТЫ ───────────────────────────────────────────
+  {
+    id: 'accounting-note',
+    category: 'Бухгалтерские документы',
+    icon: '🧾',
+    title: 'Бухгалтерская справка',
+    description: 'Обоснование расчёта, исправления или хозяйственной операции для внутреннего учёта',
+    purpose: 'Зафиксировать основание операции, расчёт и бухгалтерские проводки в одном внутреннем документе.',
+    editorialStatus: 'draft',
+    vars: [
+      { key: 'note_num', label: 'Номер справки', type: 'text', placeholder: 'БС-01/2026' },
+      { key: 'note_date', label: 'Дата составления', type: 'date', default: todayISO() },
+      { key: 'company_name', label: 'Организация', type: 'text', placeholder: 'ООО «Компания»' },
+      { key: 'company_tin', label: 'ИНН', type: 'text', placeholder: '123456789' },
+      { key: 'operation', label: 'Хозяйственная операция', type: 'textarea', placeholder: 'Опишите факт хозяйственной жизни или исправляемую операцию' },
+      { key: 'basis', label: 'Основание', type: 'textarea', placeholder: 'Договор, акт, первичный документ, результат инвентаризации…' },
+      { key: 'calculation', label: 'Расчёт суммы', type: 'textarea', placeholder: 'Покажите формулу и исходные показатели' },
+      { key: 'entries', label: 'Проводки', type: 'textarea', placeholder: 'Дт … Кт … — сумма …' },
+      { key: 'accountant_name', label: 'Ответственный бухгалтер', type: 'text', placeholder: 'ФИО' },
+      { key: 'approver_name', label: 'Утверждает', type: 'text', placeholder: 'ФИО руководителя или главного бухгалтера' },
+    ],
+    body: `{{company_name}}
+ИНН {{company_tin}}
+
+БУХГАЛТЕРСКАЯ СПРАВКА № {{note_num}}
+от {{note_date}}
+
+1. ХОЗЯЙСТВЕННАЯ ОПЕРАЦИЯ
+
+{{operation}}
+
+2. ОСНОВАНИЕ
+
+{{basis}}
+
+3. РАСЧЁТ
+
+{{calculation}}
+
+4. БУХГАЛТЕРСКИЕ ЗАПИСИ
+
+{{entries}}
+
+Составил(а): ___________________ / {{accountant_name}} /
+
+Утвердил(а): ___________________ / {{approver_name}} /`,
+  },
+
+  // ─── ПИСЬМА И ОБРАЩЕНИЯ ────────────────────────────────────────────────
+  {
+    id: 'tax-authority-response',
+    category: 'Письма и обращения',
+    icon: '✉️',
+    title: 'Ответ на требование государственного органа',
+    description: 'Структурированный ответ с реквизитами требования, пояснениями и перечнем приложений',
+    purpose: 'Подготовить понятный проект официального ответа и не потерять требование, пояснение или приложение.',
+    editorialStatus: 'draft',
+    vars: [
+      { key: 'outgoing_num', label: 'Исходящий номер', type: 'text', placeholder: '01-12/45' },
+      { key: 'response_date', label: 'Дата ответа', type: 'date', default: todayISO() },
+      { key: 'authority_name', label: 'Получатель', type: 'text', placeholder: 'Наименование государственного органа' },
+      { key: 'company_name', label: 'Организация', type: 'text', placeholder: 'ООО «Компания»' },
+      { key: 'company_tin', label: 'ИНН организации', type: 'text', placeholder: '123456789' },
+      { key: 'requirement_num', label: 'Номер требования', type: 'text', placeholder: '№ 12345' },
+      { key: 'requirement_date', label: 'Дата требования', type: 'date' },
+      { key: 'subject', label: 'Тема ответа', type: 'text', placeholder: 'О предоставлении пояснений и документов' },
+      { key: 'explanation', label: 'Пояснения', type: 'textarea', placeholder: 'Изложите факты, расчёт и позицию организации без предположений' },
+      { key: 'attachments', label: 'Приложения', type: 'textarea', placeholder: '1. Копия договора — 3 л.\n2. Акт сверки — 1 л.' },
+      { key: 'signer_role', label: 'Должность подписанта', type: 'text', default: 'Директор' },
+      { key: 'signer_name', label: 'ФИО подписанта', type: 'text', placeholder: 'ФИО' },
+      { key: 'contact', label: 'Контакт исполнителя', type: 'text', placeholder: 'ФИО, телефон, электронная почта' },
+    ],
+    body: `Исх. № {{outgoing_num}} от {{response_date}}
+
+В {{authority_name}}
+от {{company_name}}, ИНН {{company_tin}}
+
+{{subject}}
+
+В ответ на требование {{requirement_num}} от {{requirement_date}} сообщаем следующее.
+
+{{explanation}}
+
+Приложения:
+{{attachments}}
+
+{{signer_role}} ___________________ / {{signer_name}} /
+
+Исполнитель: {{contact}}`,
   },
 ];

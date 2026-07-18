@@ -3,6 +3,7 @@ import { taxDeadlines } from '../../data/taxCalendar';
 import type { NewEvent } from './useEvents';
 import { todayISO, toLocalISO } from '../../lib/dates';
 import type { TaxDeadline } from '../../data/taxCalendar';
+import type { ObligationRuleDecision } from '../../lib/db/types';
 
 const TAX_CALENDAR_YEAR = 2026;
 export const TAX_HORIZON_DAYS = 60;
@@ -16,6 +17,11 @@ export interface CompanyTaxProfile {
   assigneeId?: string | null;
 }
 
+export interface CompanyObligationTraits {
+  isVatPayer?: boolean;
+  hasEmployees?: boolean;
+}
+
 export interface TaxDeadlineRuleOption {
   id: string;
   title: string;
@@ -24,6 +30,8 @@ export interface TaxDeadlineRuleOption {
   regime: string;
   dates: string[];
   defaultSelected: boolean;
+  recommendedDecision: ObligationRuleDecision;
+  recommendationReason: string;
 }
 
 export interface TaxDeadlineSyncResult {
@@ -46,11 +54,41 @@ function datesForDeadline(deadline: TaxDeadline, from: string, to: string, notBe
     .filter(date => date >= from && date >= notBefore && date <= to);
 }
 
+function recommendationForDeadline(
+  deadline: TaxDeadline,
+  companyRegime: CompanyRegime,
+  traits: CompanyObligationTraits,
+): { decision: ObligationRuleDecision; reason: string } {
+  switch (deadline.selectionPolicy ?? 'conditional') {
+    case 'core':
+      return { decision: 'applies', reason: `Основное обязательство для режима «${companyRegime}»` };
+    case 'vat':
+      if (traits.isVatPayer === false) {
+        return { decision: 'not_applicable', reason: 'Профиль отмечен как неплательщик НДС' };
+      }
+      if (traits.isVatPayer === true) {
+        return { decision: 'applies', reason: 'Применяется к плательщику НДС' };
+      }
+      return { decision: 'needs_review', reason: 'Нужно уточнить статус плательщика НДС' };
+    case 'employees':
+      if (traits.hasEmployees === true) {
+        return { decision: 'applies', reason: 'В профиле указаны сотрудники' };
+      }
+      if (traits.hasEmployees === false) {
+        return { decision: 'not_applicable', reason: 'В профиле указано отсутствие сотрудников' };
+      }
+      return { decision: 'needs_review', reason: 'Нужно уточнить наличие сотрудников' };
+    default:
+      return { decision: 'needs_review', reason: 'Условное или специальное обязательство — подтвердите вручную' };
+  }
+}
+
 export function buildTaxDeadlineRuleOptions(
   companyRegime: CompanyRegime,
   bxStartDate: string,
   from = todayISO(),
   horizonDays = TAX_HORIZON_DAYS,
+  traits: CompanyObligationTraits = {},
 ): TaxDeadlineRuleOption[] {
   const to = addDaysISO(from, Math.max(0, horizonDays));
   const notBefore = bxStartDate > from ? bxStartDate : from;
@@ -58,17 +96,20 @@ export function buildTaxDeadlineRuleOptions(
   return taxDeadlines
     .filter(deadline => deadline.verified)
     .filter(deadline => deadline.regime === 'все' || deadline.regime === companyRegime)
-    .map(deadline => ({
-      id: deadline.id,
-      title: deadline.title,
-      taxType: deadline.taxType,
-      kind: deadline.kind,
-      regime: deadline.regime,
-      dates: datesForDeadline(deadline, from, to, notBefore),
-      // Общие правила часто условны. Их владелец выбирает вручную.
-      defaultSelected: deadline.regime !== 'все',
-    }))
-    .filter(rule => rule.dates.length > 0);
+    .map(deadline => {
+      const recommendation = recommendationForDeadline(deadline, companyRegime, traits);
+      return {
+        id: deadline.id,
+        title: deadline.title,
+        taxType: deadline.taxType,
+        kind: deadline.kind,
+        regime: deadline.regime,
+        dates: datesForDeadline(deadline, from, to, notBefore),
+        defaultSelected: recommendation.decision === 'applies',
+        recommendedDecision: recommendation.decision,
+        recommendationReason: recommendation.reason,
+      };
+    });
 }
 
 /**

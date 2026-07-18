@@ -1,12 +1,14 @@
 import React from 'react'
+import { trackWidgetEvent } from '../lib/adminWidgetPolicy'
 
 // Локальная граница ошибок для виджетов дашборда: сбой в одном виджете
 // не должен гасить весь экран (в приложении общего ErrorBoundary нет).
-interface Props { name?: string; children: React.ReactNode }
+interface Props { name?: string; widgetId?: string; children: React.ReactNode }
 interface State { error: Error | null }
 
 export default class WidgetBoundary extends React.Component<Props, State> {
   state: State = { error: null }
+  private readonly startedAt = performance.now()
 
   static getDerivedStateFromError(error: Error): State {
     return { error }
@@ -15,6 +17,13 @@ export default class WidgetBoundary extends React.Component<Props, State> {
   componentDidCatch(error: Error) {
     // eslint-disable-next-line no-console
     console.error(`[widget${this.props.name ? ':' + this.props.name : ''}]`, error)
+    if (this.props.widgetId) void trackWidgetEvent(this.props.widgetId, 'load_error', performance.now() - this.startedAt)
+  }
+
+  componentDidMount() {
+    if (!this.state.error && this.props.widgetId) {
+      void trackWidgetEvent(this.props.widgetId, 'load_success', performance.now() - this.startedAt)
+    }
   }
 
   render() {
