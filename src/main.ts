@@ -274,6 +274,9 @@ ipcMain.handle('tray:set-click-through', (_e, enabled: boolean) => {
 // Нативные Windows-уведомления для напоминаний Бикса. Рендерер не получает
 // прямой доступ к Electron Notification, поэтому отправляет только текст.
 ipcMain.handle('tray:show-notification', (_e, title: string, body: string, route = '/planner') => {
+  // Когда Бикс виден, он сам является каналом напоминания. Второй toast Windows
+  // в этот момент только дублирует сообщение и отвлекает пользователя.
+  if (trayWindow?.isVisible()) return false
   if (!Notification.isSupported()) return false
   try {
     const notice = new Notification({
