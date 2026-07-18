@@ -15,6 +15,7 @@
     "lint": "eslint --ext .ts,.tsx .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:bix-frames": "node scripts/validate-bix-frames.mjs",
     "test:watch": "vitest",
     "dev": "vite --config vite.renderer.config.mts --port 5173",
     "e2e": "bash scripts/e2e/run-smoke.sh",
