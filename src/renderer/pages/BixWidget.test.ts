@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { animationDelay, clampPanelOffset, isWithinQuietHours, jokeDelay, loadCycle, pickFrameCycle, taskReminderAt } from './BixWidget'
+import { animationDelay, clampPanelOffset, isWithinQuietHours, jokeDelay, loadCycle, pickFrameCycle, taskReminderAt, widgetHeightForPanel } from './BixWidget'
 
 const quietSettings = {
   jokesEnabled: true,
@@ -50,6 +50,13 @@ describe('Bix widget settings', () => {
     const bounds = { baseLeft: 20, baseTop: 40, width: 300, height: 240, viewportWidth: 540, viewportHeight: 560 }
     expect(clampPanelOffset({ x: -200, y: -100 }, bounds)).toEqual({ x: -20, y: -40 })
     expect(clampPanelOffset({ x: 400, y: 500 }, bounds)).toEqual({ x: 220, y: 280 })
+  })
+
+  it('opens the Bix home panel at its full content height without a scrollbar', () => {
+    // 468px is the measured scrollHeight of the six-card Home panel.
+    expect(widgetHeightForPanel(468)).toBe(702)
+    expect(widgetHeightForPanel(200)).toBe(560)
+    expect(widgetHeightForPanel(1_100)).toBe(1_200)
   })
 
   it('calculates explicit task reminder offsets', () => {

@@ -106,6 +106,13 @@ const DAILY_COINS = { free: 0, standard: 5, premium: 15 } as const
 const DEFAULT_BIX_STATE: BixState = { coins: 30, needs: { food: 72, mood: 86, energy: 91 }, lastDailyClaim: null }
 const DEFAULT_BIX_SETTINGS: BixSettings = { jokesEnabled: true, jokeFrequency: 'normal', animationSpeed: 'normal', quietHours: true, quietFrom: '21:00', quietTo: '08:00', privateReminders: false, notificationsEnabled: true, reducedMotion: false }
 const EMPTY_COLLECTION: BixCollection = { catalog: [], inventory: [], achievements: [], achievementCatalog: [], achievementProgress: [] }
+const BIX_PANEL_VIEWPORT_RESERVE = 234
+
+export const widgetHeightForPanel = (contentScrollHeight: number) => Math.max(
+  560,
+  Math.min(1200, Math.ceil(contentScrollHeight) + BIX_PANEL_VIEWPORT_RESERVE),
+)
+
 const BIX_JOKES = [
   'Я не паникую. Я просто проверяю, где снова поменяли форму отчёта.',
   'Налоговая любит порядок. Я тоже — особенно когда дедлайн не сегодня.',
@@ -360,7 +367,10 @@ export default function BixWidget() {
     const resizeToContent = () => {
       const element = panelRef.current
       if (!element) return
-      const requestedHeight = Math.max(560, Math.min(1200, element.scrollHeight + 200))
+      // Внизу оставляем 220px под Бикса, сверху 12px воздуха и ещё 2px
+      // под границу панели. Если резерв меньше, последний ряд Домика и других
+      // карточек остаётся во внутреннем скролле даже на высоком мониторе.
+      const requestedHeight = widgetHeightForPanel(element.scrollHeight)
       void tray?.resizeWidget?.(540, requestedHeight)
     }
     const scheduleResize = () => {
