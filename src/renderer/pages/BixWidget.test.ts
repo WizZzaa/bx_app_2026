@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { animationDelay, clampPanelOffset, isWithinQuietHours, jokeDelay, loadCycle, taskReminderAt } from './BixWidget'
+import { animationDelay, clampPanelOffset, isWithinQuietHours, jokeDelay, loadCycle, pickFrameCycle, taskReminderAt } from './BixWidget'
 
 const quietSettings = {
   jokesEnabled: true,
@@ -57,5 +57,13 @@ describe('Bix widget settings', () => {
     expect(taskReminderAt('2026-07-20', '10:00', 'at-time')).toBe(new Date('2026-07-20T10:00:00').toISOString())
     expect(taskReminderAt('2026-07-20', '10:00', '1h')).toBe(new Date('2026-07-20T09:00:00').toISOString())
     expect(taskReminderAt('2026-07-20', '', '1d')).toBe(new Date('2026-07-19T09:00:00').toISOString())
+  })
+
+  it('never mixes base frames into a partially generated outfit', () => {
+    const base = { idle: ['base-idle'], thinking: ['base-thinking'], reminder: ['base-reminder'] } as unknown as Parameters<typeof pickFrameCycle>[0]
+    const outfit = { idle: ['business-idle'], thinking: ['business-thinking'] }
+    expect(pickFrameCycle(base, outfit, 'idle', 'business-static')).toEqual(['business-idle'])
+    expect(pickFrameCycle(base, outfit, 'reminder', 'business-static')).toEqual(['business-thinking'])
+    expect(pickFrameCycle(base, outfit, 'sleep', 'business-static')).toEqual(['business-static'])
   })
 })

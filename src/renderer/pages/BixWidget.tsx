@@ -41,6 +41,7 @@ type BixInventoryItem = { sku: string; equipped: boolean }
 type BixCollection = { catalog: BixCatalogItem[]; inventory: BixInventoryItem[]; achievements: string[] }
 type BixAnimationCycle = 'idle' | 'thinking' | 'working' | 'success' | 'error' | 'sleep' | 'greeting' | 'ai-wait' | 'translation' | 'task-done' | 'reminder' | 'feeding' | 'playing'
 type BixActivity = Exclude<BixAnimationCycle, 'sleep' | 'reminder'>
+type BixOutfit = 'business' | 'analyst' | 'night'
 type WidgetTranslation = { id: string; source: string; result: string; plain?: string; direction: 'ru-uz' | 'uz-ru'; createdAt: string }
 type WidgetCompany = { id: string; name: string }
 type ReminderLead = 'none' | 'at-time' | '15m' | '1h' | '1d'
@@ -96,6 +97,70 @@ const bixFrames: Record<BixAnimationState, string[]> = {
   feeding: eventFrames.feeding.length ? eventFrames.feeding : coreFrames.success,
   playing: eventFrames.playing.length ? eventFrames.playing : coreFrames.success,
 }
+const EVENT_FALLBACK_STATE: Partial<Record<BixAnimationState, BixAnimationState>> = {
+  greeting: 'idle', 'ai-wait': 'thinking', translation: 'working', 'task-done': 'success', reminder: 'thinking', feeding: 'success', playing: 'success',
+}
+const outfitFrameSets: Record<BixOutfit, Partial<Record<BixAnimationState, string[]>>> = {
+  business: {
+    idle: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/idle/*.png', { eager: true, import: 'default', query: '?url' })),
+    thinking: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/thinking/*.png', { eager: true, import: 'default', query: '?url' })),
+    working: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/working/*.png', { eager: true, import: 'default', query: '?url' })),
+    success: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/success/*.png', { eager: true, import: 'default', query: '?url' })),
+    error: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/error/*.png', { eager: true, import: 'default', query: '?url' })),
+    sleep: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/sleep/*.png', { eager: true, import: 'default', query: '?url' })),
+    greeting: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/greeting/*.png', { eager: true, import: 'default', query: '?url' })),
+    'ai-wait': loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/ai-wait/*.png', { eager: true, import: 'default', query: '?url' })),
+    translation: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/translation/*.png', { eager: true, import: 'default', query: '?url' })),
+    'task-done': loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/task-done/*.png', { eager: true, import: 'default', query: '?url' })),
+    reminder: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/reminder/*.png', { eager: true, import: 'default', query: '?url' })),
+    feeding: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/feeding/*.png', { eager: true, import: 'default', query: '?url' })),
+    playing: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/business/playing/*.png', { eager: true, import: 'default', query: '?url' })),
+  },
+  analyst: {
+    idle: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/idle/*.png', { eager: true, import: 'default', query: '?url' })),
+    thinking: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/thinking/*.png', { eager: true, import: 'default', query: '?url' })),
+    working: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/working/*.png', { eager: true, import: 'default', query: '?url' })),
+    success: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/success/*.png', { eager: true, import: 'default', query: '?url' })),
+    error: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/error/*.png', { eager: true, import: 'default', query: '?url' })),
+    sleep: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/sleep/*.png', { eager: true, import: 'default', query: '?url' })),
+    greeting: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/greeting/*.png', { eager: true, import: 'default', query: '?url' })),
+    'ai-wait': loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/ai-wait/*.png', { eager: true, import: 'default', query: '?url' })),
+    translation: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/translation/*.png', { eager: true, import: 'default', query: '?url' })),
+    'task-done': loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/task-done/*.png', { eager: true, import: 'default', query: '?url' })),
+    reminder: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/reminder/*.png', { eager: true, import: 'default', query: '?url' })),
+    feeding: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/feeding/*.png', { eager: true, import: 'default', query: '?url' })),
+    playing: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/analyst/playing/*.png', { eager: true, import: 'default', query: '?url' })),
+  },
+  night: {
+    idle: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/idle/*.png', { eager: true, import: 'default', query: '?url' })),
+    thinking: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/thinking/*.png', { eager: true, import: 'default', query: '?url' })),
+    working: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/working/*.png', { eager: true, import: 'default', query: '?url' })),
+    success: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/success/*.png', { eager: true, import: 'default', query: '?url' })),
+    error: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/error/*.png', { eager: true, import: 'default', query: '?url' })),
+    sleep: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/sleep/*.png', { eager: true, import: 'default', query: '?url' })),
+    greeting: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/greeting/*.png', { eager: true, import: 'default', query: '?url' })),
+    'ai-wait': loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/ai-wait/*.png', { eager: true, import: 'default', query: '?url' })),
+    translation: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/translation/*.png', { eager: true, import: 'default', query: '?url' })),
+    'task-done': loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/task-done/*.png', { eager: true, import: 'default', query: '?url' })),
+    reminder: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/reminder/*.png', { eager: true, import: 'default', query: '?url' })),
+    feeding: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/feeding/*.png', { eager: true, import: 'default', query: '?url' })),
+    playing: loadCycle(import.meta.glob('../assets/mascot/frames/outfits/night/playing/*.png', { eager: true, import: 'default', query: '?url' })),
+  },
+}
+
+export function pickFrameCycle(
+  base: Record<BixAnimationState, string[]>,
+  outfit: Partial<Record<BixAnimationState, string[]>> | null,
+  state: BixAnimationState,
+  fallbackImage: string,
+) {
+  if (!outfit) return base[state]
+  const exact = outfit[state]
+  if (exact?.length) return exact
+  const fallbackState = EVENT_FALLBACK_STATE[state]
+  const fallback = fallbackState ? outfit[fallbackState] : null
+  return fallback?.length ? fallback : [fallbackImage]
+}
 const STORYBOARD_STATES: Array<{ state: BixAnimationState; title: string }> = [
   { state: 'idle', title: 'Обычный' }, { state: 'thinking', title: 'Думает' }, { state: 'working', title: 'Работает' },
   { state: 'success', title: 'Успех' }, { state: 'error', title: 'Ошибка' }, { state: 'sleep', title: 'Сон' },
@@ -103,6 +168,7 @@ const STORYBOARD_STATES: Array<{ state: BixAnimationState; title: string }> = [
   { state: 'task-done', title: 'Задача готова' }, { state: 'reminder', title: 'Напоминание' }, { state: 'feeding', title: 'Кормление' }, { state: 'playing', title: 'Игра' },
 ]
 const TOTAL_FRAME_COUNT = Object.values(bixFrames).reduce((total, frames) => total + frames.length, 0)
+  + Object.values(outfitFrameSets).reduce((variantTotal, frameSet) => variantTotal + Object.values(frameSet).reduce((cycleTotal, frames) => cycleTotal + (frames?.length || 0), 0), 0)
 
 const BIX_STATE_KEY = 'bx_bix_state_v1'
 const BIX_SETTINGS_KEY = 'bx_bix_settings_v1'
@@ -256,6 +322,7 @@ export default function BixWidget() {
   const [collectionLoading, setCollectionLoading] = useState(false)
   const [wardrobeSection, setWardrobeSection] = useState<'outfits' | 'accessories'>('outfits')
   const [storyboardState, setStoryboardState] = useState<BixAnimationState>('idle')
+  const [storyboardVariant, setStoryboardVariant] = useState<'base' | BixOutfit>('base')
   const [introOpen, setIntroOpen] = useState(() => !localStorage.getItem(BIX_INTRO_KEY))
   const [pinned, setPinned] = useState(true)
   const [translationText, setTranslationText] = useState('')
@@ -285,6 +352,7 @@ export default function BixWidget() {
   const [rates, setRates] = useState<CurrencyRate[]>([])
   const [ratesLoading, setRatesLoading] = useState(false)
   const [animationFrame, setAnimationFrame] = useState(0)
+  const [transitionFrame, setTransitionFrame] = useState<string | null>(null)
   const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 })
   const [pinControlsVisible, setPinControlsVisible] = useState(false)
   const notifiedReminderRef = useRef<string | null>(null)
@@ -292,6 +360,7 @@ export default function BixWidget() {
   const clickThroughRef = useRef(true)
   const panelRef = useRef<HTMLElement | null>(null)
   const panelDragRef = useRef<{ pointerId: number; startX: number; startY: number; offsetX: number; offsetY: number } | null>(null)
+  const previousFrameRef = useRef<string | null>(null)
 
   const setClickThrough = useCallback((enabled: boolean) => {
     if (clickThroughRef.current === enabled) return
@@ -848,14 +917,24 @@ export default function BixWidget() {
   // Полные образы — самостоятельные иллюстрации без рискованных CSS-накладок
   // на морду. Базовый образ принимает отдельные непрозрачные кадры каждого
   // состояния, чтобы в цикле не было эффекта «призрака».
-  const currentBixFrame = selectedOutfit ? mascotSource : bixFrames[animationState][animationFrame % bixFrames[animationState].length] || mascotSource
+  const activeFrames = useMemo(
+    () => pickFrameCycle(bixFrames, selectedOutfit ? outfitFrameSets[selectedOutfit] : null, animationState, mascotSource),
+    [animationState, mascotSource, selectedOutfit],
+  )
+  const currentBixFrame = activeFrames[animationFrame % activeFrames.length] || mascotSource
+  const storyboardFrames = useMemo(() => pickFrameCycle(
+    bixFrames,
+    storyboardVariant === 'base' ? null : outfitFrameSets[storyboardVariant],
+    storyboardState,
+    storyboardVariant === 'base' ? bixMascot : WARDROBE_VISUALS[storyboardVariant],
+  ), [storyboardState, storyboardVariant])
   const equippedItemCount = collection.inventory.filter(item => item.equipped).length
   useEffect(() => {
     setAnimationFrame(0)
     if (settings.reducedMotion) return
     let cancelled = false
     let timer = 0
-    const frames = bixFrames[animationState]
+    const frames = activeFrames
     const preload = frames.map(source => new Promise<void>(resolve => {
       const image = new Image()
       image.onload = () => resolve()
@@ -870,7 +949,19 @@ export default function BixWidget() {
       cancelled = true
       window.clearInterval(timer)
     }
-  }, [animationState, settings.animationSpeed, settings.reducedMotion])
+  }, [activeFrames, animationState, settings.animationSpeed, settings.reducedMotion])
+  useEffect(() => {
+    const previous = previousFrameRef.current
+    if (!settings.reducedMotion && previous && previous !== currentBixFrame) {
+      setTransitionFrame(previous)
+      const timer = window.setTimeout(() => setTransitionFrame(null), 260)
+      previousFrameRef.current = currentBixFrame
+      return () => window.clearTimeout(timer)
+    }
+    previousFrameRef.current = currentBixFrame
+    return undefined
+  }, [animationState, selectedOutfit, settings.reducedMotion])
+  useEffect(() => { previousFrameRef.current = currentBixFrame }, [currentBixFrame])
   const saveDraft = async (kind: 'task' | 'note') => {
     const text = draft.trim()
     if (!text || saving) return
@@ -944,7 +1035,7 @@ export default function BixWidget() {
       {panel === 'home' && <><div className="bix-home-head"><div><small>ДОМИК БИКСА · {plan}</small><h2>{bix.coins} <em>монет</em></h2></div><span className="bix-coin">●</span></div><div className="bix-needs">{[['Сытость', bix.needs.food], ['Настроение', bix.needs.mood], ['Энергия', bix.needs.energy]].map(([label, value]) => <label key={String(label)}><span>{label}</span><i><b style={{ width: `${value}%` }} /></i><strong>{value}%</strong></label>)}</div><div className="bix-care"><button onClick={() => void useCare('food')}>🥣<span>Корм</span><small>2 ●</small></button><button onClick={() => void useCare('mood')}>🧶<span>Игрушка</span><small>2 ●</small></button><button onClick={() => setPanel('wardrobe')}>♜<span>Гардероб</span><small>{collection.catalog.length - chestItems.length || '—'} в магазине</small></button><button onClick={() => setPanel('chest')}>◈<span>Сундук</span><small>{chestItems.length} куплено</small></button><button onClick={() => setPanel('animation')}>▷<span>Анимации</span><small>{TOTAL_FRAME_COUNT} кадров</small></button><button onClick={() => setPanel('settings')}>⚙<span>Настройки</span><small>виджет</small></button></div></>}
       {panel === 'wardrobe' && <><small>ГАРДЕРОБ БИКСА</small><h2>Магазин образов.</h2><p className="bix-panel-hint">Покупка сразу отправляет вещь в Сундук. Там её можно надеть или снять с Бикса.</p><div className="bix-wardrobe-toolbar"><span>{collection.catalog.length ? `${collection.catalog.length - chestItems.length} доступно в магазине` : 'Войдите в BX, чтобы загрузить гардероб'}</span><button onClick={() => void refreshCollection()} disabled={collectionLoading}>↻ Обновить</button></div>{collection.catalog.length ? <><div className="bix-wardrobe-tabs" role="tablist" aria-label="Раздел гардероба"><button role="tab" aria-selected={wardrobeSection === 'outfits'} className={wardrobeSection === 'outfits' ? 'active' : ''} onClick={() => setWardrobeSection('outfits')}>Образы Бикса</button><button role="tab" aria-selected={wardrobeSection === 'accessories'} className={wardrobeSection === 'accessories' ? 'active' : ''} onClick={() => setWardrobeSection('accessories')}>Аксессуары и шляпы</button></div>{wardrobeItems.length ? <div className="bix-wardrobe-grid">{wardrobeItems.map(item => renderCollectionCard(item, 'wardrobe'))}</div> : <p className="bix-wardrobe-empty">Все вещи этого раздела уже лежат в Сундуке.</p>}</> : <p className="bix-wardrobe-empty">Гардероб загрузится после входа в BX.</p>}</>}
       {panel === 'chest' && <><small>СУНДУК БИКСА</small><h2>Купленные вещи.</h2><p className="bix-panel-hint">Здесь хранится всё, что уже куплено. Нажмите на вещь, чтобы надеть её; на надетую — чтобы снять.</p><div className="bix-wardrobe-toolbar"><span>{chestItems.length ? `${chestItems.length} вещей в Сундуке` : 'Сундук пока пуст'}</span><span className="bix-wardrobe-actions"><button onClick={() => void refreshCollection()} disabled={collectionLoading}>↻ Обновить</button>{equippedItemCount > 0 && <button className="bix-wardrobe-reset" onClick={() => void unequipAll()} disabled={collectionLoading}>Снять всё</button>}</span></div>{chestItems.length ? <div className="bix-chest-sections">{chestOutfits.length > 0 && <section><h3>Образы Бикса</h3><div className="bix-wardrobe-grid">{chestOutfits.map(item => renderCollectionCard(item, 'chest'))}</div></section>}{chestAccessories.length > 0 && <section><h3>Аксессуары и шляпы</h3><div className="bix-wardrobe-grid">{chestAccessories.map(item => renderCollectionCard(item, 'chest'))}</div></section>}</div> : <p className="bix-wardrobe-empty">Купите первый образ или шляпу в Гардеробе — вещь появится здесь.</p>}</>}
-      {panel === 'animation' && <><small>АНИМАЦИИ БИКСА</small><h2>Состояния и события.</h2><p className="bix-panel-hint">Каждый финальный цикл рассчитан на 20–25 отдельных прозрачных PNG. Состояния и события переключаются без смешивания старых дефектных кадров.</p><div className="bix-wardrobe-tabs bix-animation-tabs" role="tablist" aria-label="Состояние анимации">{STORYBOARD_STATES.map(({ state, title }) => <button key={state} role="tab" aria-selected={storyboardState === state} className={storyboardState === state ? 'active' : ''} onClick={() => setStoryboardState(state)}>{title}</button>)}</div><div className="bix-animation-storyboard"><div><b>{STORYBOARD_STATES.find(item => item.state === storyboardState)?.title}</b><small>{bixFrames[storyboardState].length} кадров · плавный цикл</small></div><div className="bix-storyboard-frames">{bixFrames[storyboardState].map((frame, index) => <img key={frame} src={frame} alt={`${STORYBOARD_STATES.find(item => item.state === storyboardState)?.title}, кадр ${index + 1}`} />)}</div><p>Runtime принимает только новую серию frame_001…frame_025 либо исправленные прозрачные кадры *_5 — старые изображения с чёрной подложкой исключены.</p></div></>}
+      {panel === 'animation' && <><small>АНИМАЦИИ БИКСА</small><h2>Состояния и события.</h2><p className="bix-panel-hint">Каждый финальный цикл рассчитан на 24 отдельных прозрачных PNG. Базовый, Деловой, Аналитик и Ночной Бикс имеют независимые наборы кадров.</p><div className="bix-animation-variants" role="tablist" aria-label="Образ анимации">{([['base', 'Базовый'], ['business', 'Деловой'], ['analyst', 'Аналитик'], ['night', 'Ночной']] as const).map(([variant, title]) => <button key={variant} role="tab" aria-selected={storyboardVariant === variant} className={storyboardVariant === variant ? 'active' : ''} onClick={() => setStoryboardVariant(variant)}>{title}</button>)}</div><div className="bix-wardrobe-tabs bix-animation-tabs" role="tablist" aria-label="Состояние анимации">{STORYBOARD_STATES.map(({ state, title }) => <button key={state} role="tab" aria-selected={storyboardState === state} className={storyboardState === state ? 'active' : ''} onClick={() => setStoryboardState(state)}>{title}</button>)}</div><div className="bix-animation-storyboard"><div><b>{STORYBOARD_STATES.find(item => item.state === storyboardState)?.title}</b><small>{storyboardFrames.length} кадров · {storyboardVariant === 'base' ? 'базовый образ' : storyboardVariant}</small></div><div className="bix-storyboard-frames">{storyboardFrames.map((frame, index) => <img key={`${frame}-${index}`} src={frame} alt={`${STORYBOARD_STATES.find(item => item.state === storyboardState)?.title}, кадр ${index + 1}`} />)}</div><p>Runtime принимает только новую серию frame_001…frame_024 либо исправленные прозрачные кадры *_5. При отсутствии цикла образ остаётся статичным, поэтому чужие кадры и одежда не смешиваются.</p></div></>}
       {panel === 'settings' && <><small>НАСТРОЙКИ БИКСА</small><h2>Тихо, бережно, по делу.</h2><div className="bix-settings"><label><span>Шутки</span><input type="checkbox" checked={settings.jokesEnabled} onChange={event => setSettings(value => ({ ...value, jokesEnabled: event.target.checked }))} /></label><label><span>Частота шуток</span><select value={settings.jokeFrequency} disabled={!settings.jokesEnabled} onChange={event => setSettings(value => ({ ...value, jokeFrequency: event.target.value as JokeFrequency }))}><option value="often">часто — раз в 2 минуты</option><option value="normal">обычно — раз в 5 минут</option><option value="rare">редко — раз в 10 минут</option></select></label><label><span>Скорость анимации</span><select value={settings.animationSpeed} disabled={settings.reducedMotion} onChange={event => setSettings(value => ({ ...value, animationSpeed: event.target.value as AnimationSpeed }))}><option value="calm">спокойная</option><option value="slow">медленная</option><option value="normal">обычная</option><option value="fast">быстрая</option><option value="turbo">турбо</option></select></label><label><span>Уведомления Windows</span><input type="checkbox" checked={settings.notificationsEnabled !== false} onChange={event => setSettings(value => ({ ...value, notificationsEnabled: event.target.checked }))} /></label><label><span>Тихие часы</span><input type="checkbox" checked={settings.quietHours} onChange={event => setSettings(value => ({ ...value, quietHours: event.target.checked }))} /></label>{settings.quietHours && <label className="bix-setting-time"><span>Не беспокоить</span><input type="time" value={settings.quietFrom} onChange={event => setSettings(value => ({ ...value, quietFrom: event.target.value }))} /><b>—</b><input type="time" value={settings.quietTo} onChange={event => setSettings(value => ({ ...value, quietTo: event.target.value }))} /></label>}<label><span>Скрывать названия задач</span><input type="checkbox" checked={settings.privateReminders} onChange={event => setSettings(value => ({ ...value, privateReminders: event.target.checked }))} /></label><label><span>Уменьшить анимацию</span><input type="checkbox" checked={settings.reducedMotion} onChange={event => setSettings(value => ({ ...value, reducedMotion: event.target.checked }))} /></label></div><p className="bix-settings-note">Системный режим Windows «Не беспокоить» пока не считывается автоматически.</p></>}
     </section>}
 
@@ -956,7 +1047,8 @@ export default function BixWidget() {
     </div>}
     <button className="bix-character" onClick={toggleMenu} onMouseEnter={showPinControls} onMouseLeave={schedulePinControlsHide} aria-label="Открыть действия Бикса">
       <span className="bix-drag" title="Перетащите Бикса за голову" />
-      <img className="bix-mascot bix-frame" src={currentBixFrame} alt={`Бикс: ${bixMode}`} style={animationState === 'idle' ? gaze : undefined} draggable={false} />
+      {transitionFrame && <img className="bix-mascot bix-frame bix-transition-frame" src={transitionFrame} alt="" aria-hidden="true" draggable={false} />}
+      <img className="bix-mascot bix-frame bix-current-frame" src={currentBixFrame} alt={`Бикс: ${bixMode}`} style={animationState === 'idle' ? gaze : undefined} draggable={false} />
       {selectedHatSource && <img className="bix-hat" src={selectedHatSource} alt="Надетая шляпа Бикса" draggable={false} />}
     </button>
     <div className={`bix-pin-controls${pinControlsVisible ? ' is-visible' : ''}`} onMouseEnter={showPinControls} onMouseLeave={schedulePinControlsHide} aria-label="Управление виджетом"><button onClick={() => void dockToTaskbar()} title="Прикрепить к панели задач">⌖</button><button onClick={() => void togglePinned()} title={pinned ? 'Открепить виджет' : 'Закрепить виджет'}>{pinned ? '📌' : '📍'}</button><button className="bix-move-control" title="Потяните, чтобы переместить Бикса" aria-label="Переместить Бикса">⠿</button></div>
