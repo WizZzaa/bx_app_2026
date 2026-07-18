@@ -265,6 +265,12 @@ ipcMain.handle('tray:resize-widget', (_e, requestedWidth: number, requestedHeigh
   resizeTrayWindow(requestedWidth, requestedHeight)
 })
 
+// Прозрачная часть крупного окна виджета не должна блокировать рабочий стол.
+// Рендерер переключает это только при входе курсора в реальный элемент Бикса.
+ipcMain.handle('tray:set-click-through', (_e, enabled: boolean) => {
+  trayWindow?.setIgnoreMouseEvents(!!enabled, { forward: true })
+})
+
 // Нативные Windows-уведомления для напоминаний Бикса. Рендерер не получает
 // прямой доступ к Electron Notification, поэтому отправляет только текст.
 ipcMain.handle('tray:show-notification', (_e, title: string, body: string, route = '/planner') => {
@@ -450,6 +456,10 @@ const createTrayWindow = () => {
       `file://${path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)}#/tray`
     )
   }
+
+  // По умолчанию окно пропускает клики по прозрачной области на рабочий стол.
+  // Интерактивные части (Бикс, облачко и панели) сами временно выключают этот режим.
+  trayWindow.setIgnoreMouseEvents(true, { forward: true })
 
   // Пользователь перетащил Бикса → запоминаем позицию как «свою».
   let moveTimer: ReturnType<typeof setTimeout> | null = null
