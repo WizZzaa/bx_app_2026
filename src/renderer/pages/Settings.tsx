@@ -6,7 +6,7 @@ import { db } from '../lib/db/localDb'
 import { usePlan } from '../lib/plan'
 import { useToast } from '../lib/ui/ToastContext'
 import { loadEcpKeys, saveEcpKeys } from '../lib/ecpStorage'
-import { applyTheme, currentTheme, THEME_KEY, type BxTheme } from '../lib/theme'
+import { currentTheme, saveTheme as saveApplicationTheme, subscribeToTheme, type BxTheme } from '../lib/theme'
 import { CompanyTeamPanel } from '../components/CompanyTeamPanel'
 import { currentFontScale, FONT_SCALE_OPTIONS, saveFontScale, type FontScale } from '../lib/uiScale'
 import Icon from '../lib/ui/Icon'
@@ -233,6 +233,8 @@ export default function Settings() {
       .catch(() => undefined)
   }, [])
 
+  useEffect(() => subscribeToTheme(setTheme), [])
+
   useEffect(() => {
     const updater = window.bx?.updater
     if (!updater) return undefined
@@ -253,9 +255,7 @@ export default function Settings() {
   }
 
   function saveTheme(t: BxTheme) {
-    setTheme(t)
-    localStorage.setItem(THEME_KEY, t)
-    applyTheme(t)
+    saveApplicationTheme(t)
   }
 
   function changeFontScale(value: FontScale) {
@@ -353,7 +353,7 @@ export default function Settings() {
     try {
       if (Array.isArray(data.ecpKeys)) await saveEcpKeys(data.ecpKeys as Parameters<typeof saveEcpKeys>[0])
       if (data.localRequisites) localStorage.setItem('bx_company_requisites', JSON.stringify(data.localRequisites))
-      if (data.theme) { localStorage.setItem(THEME_KEY, data.theme); setTheme(data.theme); applyTheme(data.theme) }
+      if (data.theme) saveApplicationTheme(data.theme)
       if (data.notifyDays) { localStorage.setItem(NOTIFY_KEY, data.notifyDays); setNotifyDays(data.notifyDays) }
       if (data.idleLock) { localStorage.setItem(IDLE_LOCK_KEY, data.idleLock); setIdleLock(data.idleLock) }
       if (data.pinEnabled !== undefined) { setPinEnabled(data.pinEnabled); setPinEnabledState(data.pinEnabled) }
@@ -502,7 +502,7 @@ export default function Settings() {
       </aside>
 
       <main className="custom-scrollbar flex-1 overflow-y-auto">
-        <div className="bx-page-container py-6 lg:py-8">
+        <div className="bx-page-container px-4 py-6 sm:px-5 lg:px-6 lg:py-8">
           <header className="relative mb-6 overflow-hidden rounded-[28px] border border-bx-border bg-bx-surface px-6 py-6 shadow-sm">
             <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-blue-600/[0.08] to-transparent" />
             <div className="relative flex flex-wrap items-end justify-between gap-4">

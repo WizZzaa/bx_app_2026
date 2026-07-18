@@ -7,6 +7,7 @@
 export const BX_THEMES = ['light', 'dark', 'lime', 'lavender-light'] as const
 export type BxTheme = typeof BX_THEMES[number]
 export const THEME_KEY = 'bx_theme'
+export const THEME_CHANGE_EVENT = 'bx:theme-change'
 
 export function normalizeTheme(value: unknown): BxTheme {
   if (value === 'lime-light') return 'lavender-light'
@@ -20,6 +21,37 @@ export function applyTheme(theme: BxTheme): void {
   root.classList.toggle('lime', theme === 'lime')
   root.classList.toggle('lavender-light', theme === 'lavender-light')
   root.dataset.theme = theme
+}
+
+export function saveTheme(theme: BxTheme): void {
+  try {
+    localStorage.setItem(THEME_KEY, theme)
+  } catch {
+    // Тема всё равно применяется в текущем окне, даже если хранилище недоступно.
+  }
+  applyTheme(theme)
+  window.dispatchEvent(new CustomEvent<BxTheme>(THEME_CHANGE_EVENT, { detail: theme }))
+}
+
+export function subscribeToTheme(listener: (theme: BxTheme) => void): () => void {
+  const handleThemeChange = (event: Event) => {
+    const theme = normalizeTheme((event as CustomEvent<unknown>).detail)
+    applyTheme(theme)
+    listener(theme)
+  }
+  const handleStorageChange = (event: StorageEvent) => {
+    if (event.key !== null && event.key !== THEME_KEY) return
+    const theme = currentTheme()
+    applyTheme(theme)
+    listener(theme)
+  }
+
+  window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange)
+  window.addEventListener('storage', handleStorageChange)
+  return () => {
+    window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange)
+    window.removeEventListener('storage', handleStorageChange)
+  }
 }
 
 export function currentTheme(): BxTheme {

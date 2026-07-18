@@ -6,7 +6,7 @@ import Icon from '../../lib/ui/Icon'
 import { getSyncQueue, syncOfflineData } from '../../lib/db/syncQueue'
 import { db } from '../../lib/db/localDb'
 import ConflictModal from '../ConflictModal'
-import { applyTheme, currentTheme, nextTheme, THEME_KEY, type BxTheme } from '../../lib/theme'
+import { currentTheme, nextTheme, saveTheme, subscribeToTheme, type BxTheme } from '../../lib/theme'
 import { useNotifications, type BxNotification } from '../../lib/useNotifications'
 
 export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
@@ -29,19 +29,11 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
   const notifBoxRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const handleStorageChange = () => {
-      setTheme(currentTheme())
-    }
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
+    return subscribeToTheme(setTheme)
   }, [])
 
   const handleToggleTheme = () => {
-    const next = nextTheme(theme)
-    setTheme(next)
-    localStorage.setItem(THEME_KEY, next)
-    applyTheme(next)
-    window.dispatchEvent(new Event('storage'))
+    saveTheme(nextTheme(currentTheme()))
   }
 
   const handleOpenNotes = () => {
