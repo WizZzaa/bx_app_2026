@@ -370,6 +370,10 @@ const saveTrayState = () => {
 }
 // Флаг: подавляем сохранение позиции при программном перемещении (к трею)
 let suppressTrayMove = false
+// BrowserWindow при setBounds генерирует resize/move. В этот момент нельзя
+// повторно докать окно: иначе Windows пересчитает y от workArea и Бикс
+// окажется под панелью задач после открытия встроенной панели.
+let suppressTrayResize = false
 
 const navigateMainWindow = (route: string) => {
   if (!mainWindow) return
@@ -409,17 +413,22 @@ const resizeTrayWindow = (requestedWidth: number, requestedHeight: number) => {
   const height = Math.max(560, Math.min(860, workArea.height, Math.max(current.height, Math.round(requestedHeight))))
   if (width === current.width && height === current.height) return
 
-  // При ручном размещении сохраняем нижний край окна. Для дока после resize
-  // сработает dockTrayWindow и ровно посадит его к верхнему краю taskbar.
+  // Нижний край — единственный надёжный якорь питомца: пользователь может
+  // вручную посадить лапки на taskbar (включая небольшое перекрытие). При
+  // раскрытии любой панели растим окно только вверх, никогда не пересчитывая
+  // его нижнюю координату от workArea Windows.
   const bottom = current.y + current.height
   const x = trayState.custom ? current.x : workArea.x + workArea.width - width - 18
-  const y = trayState.custom ? Math.max(workArea.y, bottom - height) : workArea.y + workArea.height - height
+  const y = bottom - height
   suppressTrayMove = true
+  suppressTrayResize = true
   trayWindow.setBounds({ x, y, width, height }, false)
   trayState = { ...trayState, width, height, x, y }
-  setTimeout(() => { suppressTrayMove = false }, 150)
-  if (!trayState.custom) dockTrayWindow()
-  else saveTrayState()
+  setTimeout(() => {
+    suppressTrayMove = false
+    suppressTrayResize = false
+  }, 250)
+  saveTrayState()
 }
 
 const createTrayWindow = () => {
@@ -472,7 +481,7 @@ const createTrayWindow = () => {
   })
 
   trayWindow.on('resize', () => {
-    if (!trayWindow) return
+    if (!trayWindow || suppressTrayResize) return
     const { width, height } = trayWindow.getBounds()
     trayState.width = width; trayState.height = height
     if (!trayState.custom) dockTrayWindow()
