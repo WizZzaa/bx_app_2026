@@ -4,9 +4,17 @@ import { join } from 'node:path'
 
 const ROOT = new URL('../src/renderer/assets/mascot/frames/', import.meta.url)
 const CYCLES = ['idle', 'thinking', 'working', 'success', 'error', 'sleep', 'greeting', 'ai-wait', 'translation', 'task-done', 'reminder', 'feeding', 'playing']
+const VARIANTS = ['base', 'business', 'analyst', 'night']
 const EXPECTED_FRAMES = 24
 const EXPECTED_SIZE = 1024
 const PNG_SIGNATURE = '89504e470d0a1a0a'
+const requestedVariant = process.argv.includes('--variant') ? process.argv[process.argv.indexOf('--variant') + 1] : null
+const requestedCycle = process.argv.includes('--cycle') ? process.argv[process.argv.indexOf('--cycle') + 1] : null
+const selectedVariants = requestedVariant ? VARIANTS.filter(variant => variant === requestedVariant) : VARIANTS
+const selectedCycles = requestedCycle ? CYCLES.filter(cycle => cycle === requestedCycle) : CYCLES
+
+if (requestedVariant && !selectedVariants.length) throw new Error(`Неизвестный образ: ${requestedVariant}`)
+if (requestedCycle && !selectedCycles.length) throw new Error(`Неизвестный цикл: ${requestedCycle}`)
 
 function paeth(a, b, c) {
   const p = a + b - c
@@ -94,30 +102,33 @@ function analyseFrame(path) {
 }
 
 const errors = []
-for (const cycle of CYCLES) {
-  const directory = join(ROOT.pathname, cycle)
-  let files = []
-  try {
-    files = readdirSync(directory).filter(name => /^frame_\d{3}\.png$/.test(name)).sort()
-  } catch {
-    errors.push(`${cycle}: каталог отсутствует`)
-    continue
+for (const variant of selectedVariants) {
+  for (const cycle of selectedCycles) {
+    const label = `${variant}/${cycle}`
+    const directory = variant === 'base' ? join(ROOT.pathname, cycle) : join(ROOT.pathname, 'outfits', variant, cycle)
+    let files = []
+    try {
+      files = readdirSync(directory).filter(name => /^frame_\d{3}\.png$/.test(name)).sort()
+    } catch {
+      errors.push(`${label}: каталог отсутствует`)
+      continue
+    }
+    if (files.length !== EXPECTED_FRAMES) {
+      errors.push(`${label}: ${files.length} кадров вместо ${EXPECTED_FRAMES}`)
+      continue
+    }
+    const metrics = []
+    files.forEach(file => {
+      try { metrics.push(analyseFrame(join(directory, file))) }
+      catch (error) { errors.push(`${label}/${file}: ${error.message}`) }
+    })
+    metrics.forEach((metric, index) => {
+      if (!index) return
+      const previous = metrics[index - 1]
+      const jump = Math.max(Math.abs(metric.centerX - previous.centerX), Math.abs(metric.centerY - previous.centerY), Math.abs(metric.width - previous.width), Math.abs(metric.height - previous.height))
+      if (jump > 96) errors.push(`${label}/${files[index]}: скачок геометрии ${Math.round(jump)}px`)
+    })
   }
-  if (files.length !== EXPECTED_FRAMES) {
-    errors.push(`${cycle}: ${files.length} кадров вместо ${EXPECTED_FRAMES}`)
-    continue
-  }
-  const metrics = []
-  files.forEach(file => {
-    try { metrics.push(analyseFrame(join(directory, file))) }
-    catch (error) { errors.push(`${cycle}/${file}: ${error.message}`) }
-  })
-  metrics.forEach((metric, index) => {
-    if (!index) return
-    const previous = metrics[index - 1]
-    const jump = Math.max(Math.abs(metric.centerX - previous.centerX), Math.abs(metric.centerY - previous.centerY), Math.abs(metric.width - previous.width), Math.abs(metric.height - previous.height))
-    if (jump > 96) errors.push(`${cycle}/${files[index]}: скачок геометрии ${Math.round(jump)}px`)
-  })
 }
 
 if (errors.length) {
@@ -125,5 +136,5 @@ if (errors.length) {
   errors.forEach(error => console.error(`- ${error}`))
   process.exitCode = 1
 } else {
-  console.log(`Готово: ${CYCLES.length * EXPECTED_FRAMES} кадров прошли проверку RGBA, прозрачности, отступов и геометрии.`)
+  console.log(`Готово: ${selectedVariants.length * selectedCycles.length * EXPECTED_FRAMES} кадров прошли проверку RGBA, прозрачности, отступов и геометрии.`)
 }

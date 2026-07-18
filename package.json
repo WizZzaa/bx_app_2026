@@ -1,7 +1,7 @@
 {
   "name": "app",
   "productName": "BX Помощник Бухгалтера",
-  "version": "2.31.18",
+  "version": "2.31.19",
   "description": "BX — помощник бухгалтера Республики Узбекистан: планировщик, калькуляторы, справочники, AI-консультант",
   "main": ".vite/build/main.js",
   "private": true,
@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:bix-frames": "node scripts/validate-bix-frames.mjs",
+    "generate:bix-frames": "node scripts/generate-bix-animation-frames.mjs",
     "test:watch": "vitest",
     "dev": "vite --config vite.renderer.config.mts --port 5173",
     "e2e": "bash scripts/e2e/run-smoke.sh",
