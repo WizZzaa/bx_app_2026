@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { isWithinQuietHours, jokeDelay } from './BixWidget'
+import { animationDelay, isWithinQuietHours, jokeDelay } from './BixWidget'
 
 const quietSettings = {
   jokesEnabled: true,
   jokeFrequency: 'normal' as const,
+  animationSpeed: 'normal' as const,
   quietHours: true,
   quietFrom: '21:00',
   quietTo: '08:00',
@@ -26,5 +27,13 @@ describe('Bix widget settings', () => {
     expect(jokeDelay('often')).toBe(2 * 60 * 1000)
     expect(jokeDelay('normal')).toBe(5 * 60 * 1000)
     expect(jokeDelay('rare')).toBe(10 * 60 * 1000)
+  })
+
+  it('offers five stable animation speeds', () => {
+    expect(animationDelay('calm')).toBe(520)
+    expect(animationDelay('slow')).toBe(400)
+    expect(animationDelay('normal')).toBe(300)
+    expect(animationDelay('fast')).toBe(220)
+    expect(animationDelay('turbo')).toBe(150)
   })
 })
