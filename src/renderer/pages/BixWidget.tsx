@@ -21,10 +21,16 @@ import { uid } from '../lib/uid'
 import { supabase } from '../lib/db/supabase'
 import { emitPlannerReload } from './planner/plannerBus'
 import { buildPlainLanguagePrompt, buildTranslationPrompt, type TranslationLanguage } from '../lib/translator'
+import {
+  enqueueBixEconomyOperation,
+  makeBixEconomyOperation,
+  syncBixEconomyQueue,
+  type BixEconomyState,
+} from '../lib/bixEconomy'
 import type { CacheScanResult, CurrencyRate, ProcessEntry } from '../../shared/types'
 import type { EventRecurrence } from './planner/useEvents'
 
-type Panel = 'menu' | 'ai' | 'accuracy' | 'task' | 'note' | 'translator' | 'currency' | 'tools' | 'home' | 'wardrobe' | 'chest' | 'animation' | 'settings' | 'intro' | null
+type Panel = 'menu' | 'ai' | 'accuracy' | 'task' | 'note' | 'translator' | 'currency' | 'tools' | 'home' | 'wardrobe' | 'chest' | 'achievements' | 'animation' | 'settings' | 'intro' | null
 type BxWidgetWindow = Window & { bx?: {
   tray?: { openApp?: (route?: string) => Promise<void>; getPinned?: () => Promise<boolean>; setPinned?: (pinned: boolean) => Promise<boolean>; dockToTaskbar?: () => Promise<void>; resizeWidget?: (width: number, height: number) => Promise<void>; setClickThrough?: (enabled: boolean) => Promise<void>; showNotification?: (title: string, body: string, route?: string) => Promise<boolean> }
   onec?: { scanCache?: () => Promise<CacheScanResult>; cleanCache?: (paths: string[], backup?: boolean) => Promise<{ deletedPaths: string[]; failedPaths: Array<{ path: string }>; freedBytes: number }>; listProcesses?: () => Promise<ProcessEntry[]>; killProcesses?: (pids: number[]) => Promise<{ killed: number[]; failed: Array<{ pid: number }> }> }
@@ -38,7 +44,16 @@ type AnimationSpeed = 'calm' | 'slow' | 'normal' | 'fast' | 'turbo'
 type BixSettings = { jokesEnabled: boolean; jokeFrequency: JokeFrequency; animationSpeed: AnimationSpeed; quietHours: boolean; quietFrom: string; quietTo: string; privateReminders: boolean; notificationsEnabled?: boolean; reducedMotion: boolean }
 type BixCatalogItem = { sku: string; title: string; category: string; price: number; plan_required: string; visual_key: string }
 type BixInventoryItem = { sku: string; equipped: boolean }
-type BixCollection = { catalog: BixCatalogItem[]; inventory: BixInventoryItem[]; achievements: string[] }
+type BixAchievement = { code: string; title: string; description: string; metric: string; target: number; rewardCoins: number }
+type BixAchievementProgress = { code: string; value: number; target: number }
+type BixCollection = {
+  catalog: BixCatalogItem[]
+  inventory: BixInventoryItem[]
+  achievements: string[]
+  achievementCatalog: BixAchievement[]
+  achievementProgress: BixAchievementProgress[]
+  companion?: BixEconomyState | null
+}
 type BixAnimationCycle = 'idle' | 'thinking' | 'working' | 'success' | 'error' | 'sleep' | 'greeting' | 'ai-wait' | 'translation' | 'task-done' | 'reminder' | 'feeding' | 'playing'
 type BixActivity = Exclude<BixAnimationCycle, 'sleep' | 'reminder'>
 type BixOutfit = 'business' | 'analyst' | 'night'
@@ -178,7 +193,7 @@ const WIDGET_TRANSLATION_HISTORY_KEY = 'bx_widget_translation_history'
 const DAILY_COINS = { free: 0, standard: 5, premium: 15 } as const
 const DEFAULT_BIX_STATE: BixState = { coins: 30, needs: { food: 72, mood: 86, energy: 91 }, lastDailyClaim: null }
 const DEFAULT_BIX_SETTINGS: BixSettings = { jokesEnabled: true, jokeFrequency: 'normal', animationSpeed: 'normal', quietHours: true, quietFrom: '21:00', quietTo: '08:00', privateReminders: false, notificationsEnabled: true, reducedMotion: false }
-const EMPTY_COLLECTION: BixCollection = { catalog: [], inventory: [], achievements: [] }
+const EMPTY_COLLECTION: BixCollection = { catalog: [], inventory: [], achievements: [], achievementCatalog: [], achievementProgress: [] }
 const BIX_JOKES = [
   'Я не паникую. Я просто проверяю, где снова поменяли форму отчёта.',
   'Налоговая любит порядок. Я тоже — особенно когда дедлайн не сегодня.',
@@ -273,7 +288,7 @@ export function clampPanelOffset(
   }
 }
 
-function stateFromRemote(row: { coins: number; food: number; mood: number; energy: number; last_daily_claim: string | null }): BixState {
+function stateFromRemote(row: BixEconomyState): BixState {
   return { coins: row.coins, needs: { food: row.food, mood: row.mood, energy: row.energy }, lastDailyClaim: row.last_daily_claim }
 }
 
@@ -411,7 +426,7 @@ export default function BixWidget() {
   useEffect(() => { void (window as BxWidgetWindow).bx?.tray?.getPinned?.().then(setPinned) }, [])
 
   useEffect(() => {
-    const interactiveSelector = '.bix-character,.bix-pin-controls,.bix-speech,.bix-reminder-actions,.bix-fan,.bix-panel,.bix-intro,.bix-unequip-all,.bix-storyboard-more'
+    const interactiveSelector = '.bix-character,.bix-pin-controls,.bix-speech,.bix-reminder-actions,.bix-fan,.bix-panel,.bix-intro,.bix-unequip-all,.bix-storyboard-more,.bix-resize-handle'
     const syncClickThrough = (event: MouseEvent) => {
       const target = event.target
       const isInteractive = target instanceof Element && !!target.closest(interactiveSelector)
@@ -429,7 +444,6 @@ export default function BixWidget() {
   useEffect(() => {
     const tray = (window as BxWidgetWindow).bx?.tray
     if (!panel || panel === 'menu') {
-      void tray?.resizeWidget?.(430, 560)
       return
     }
 
@@ -447,14 +461,14 @@ export default function BixWidget() {
       window.cancelAnimationFrame(frame)
       frame = window.requestAnimationFrame(resizeToContent)
     }
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(scheduleResize)
-    if (panelRef.current) observer?.observe(panelRef.current)
+    // Не наблюдаем изменение самой высоты панели: ручной resize окна меняет
+    // max-height и иначе сразу провоцировал бы обратный программный resize.
+    // Все изменения содержимого перечислены в зависимостях эффекта ниже.
     scheduleResize()
     return () => {
       window.cancelAnimationFrame(frame)
-      observer?.disconnect()
     }
-  }, [panel, collection.catalog.length, collection.inventory.length, collectionLoading, wardrobeSection, storyboardState, translationResult.length, translationPlain.length, translationHistory.length, aiMessages.length, cacheScan?.entries.length, onecProcesses.length, utilityStatus])
+  }, [panel, collection.catalog.length, collection.inventory.length, collection.achievementCatalog.length, collectionLoading, wardrobeSection, storyboardState, translationResult.length, translationPlain.length, translationHistory.length, aiMessages.length, cacheScan?.entries.length, onecProcesses.length, utilityStatus])
 
   useEffect(() => {
     if (activity === 'idle') return
@@ -588,30 +602,71 @@ export default function BixWidget() {
     if (!user) return
     setCollectionLoading(true)
     const { data, error } = await supabase.rpc('bx_get_bix_collection')
-    if (!error && data) setCollection(data as BixCollection)
+    if (!error && data) {
+      const next = data as BixCollection
+      setCollection(next)
+      if (next.companion) setBix(stateFromRemote(next.companion))
+    }
     setCollectionLoading(false)
   }, [])
 
   useEffect(() => { void refreshCollection() }, [refreshCollection])
 
+  const flushBixEconomy = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    const synced = await syncBixEconomyQueue(async (operationId, operationType) => {
+      const { data, error } = await supabase.rpc('bx_apply_bix_operation', {
+        p_operation_id: operationId,
+        p_operation_type: operationType,
+      })
+      return { data: data as Awaited<ReturnType<typeof syncBixEconomyQueue>>['results'][number] | null, error }
+    }, user.id)
+    if (synced.latestState) setBix(stateFromRemote(synced.latestState))
+    if (synced.results.length) await refreshCollection()
+    return synced
+  }, [refreshCollection])
+
+  useEffect(() => {
+    const flush = () => { void flushBixEconomy() }
+    flush()
+    window.addEventListener('online', flush)
+    return () => window.removeEventListener('online', flush)
+  }, [flushBixEconomy])
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(event => {
+      if (event === 'SIGNED_OUT') {
+        setCollection(EMPTY_COLLECTION)
+        return
+      }
+      if (event === 'SIGNED_IN') {
+        window.setTimeout(() => {
+          void flushBixEconomy()
+          void refreshCollection()
+        }, 0)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [flushBixEconomy, refreshCollection])
+
+  useEffect(() => {
+    if (panel === 'achievements') void refreshCollection()
+  }, [panel, refreshCollection])
+
   const claimDaily = useCallback(async () => {
     const today = todayISO()
     if (bix.lastDailyClaim === today) return
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) { setMessage('Войдите в BX, чтобы получать ежедневные подарки.'); return }
     const reward = DAILY_COINS[plan]
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data, error } = await supabase.rpc('bx_claim_bix_daily_coins')
-      if (!error && data) {
-        setBix(stateFromRemote(data))
-        const claimed = data.last_daily_claim === today && bix.lastDailyClaim !== today
-        if (claimed) setMessage(reward ? pickPhrase(BIX_PHRASES.dailyGift).replace('{coins}', String(reward)) : pickPhrase(BIX_PHRASES.dailyFree))
-        return
-      }
-    }
-    // До применения миграции или без сети виджет остаётся рабочим локально.
-    setBix(value => ({ ...value, coins: value.coins + reward, lastDailyClaim: today }))
+    const operation = makeBixEconomyOperation('daily_claim', session.user.id)
+    enqueueBixEconomyOperation(operation)
+    const synced = await flushBixEconomy()
+    const stillPending = synced?.pending.some(item => item.id === operation.id) ?? true
+    if (stillPending) setBix(value => ({ ...value, coins: value.coins + reward, lastDailyClaim: today }))
     setMessage(reward ? pickPhrase(BIX_PHRASES.dailyGift).replace('{coins}', String(reward)) : pickPhrase(BIX_PHRASES.dailyFree))
-  }, [bix.lastDailyClaim, plan])
+  }, [bix.lastDailyClaim, flushBixEconomy, plan])
 
   const toggleMenu = () => {
     if (panel !== 'menu') void claimDaily()
@@ -814,23 +869,28 @@ export default function BixWidget() {
   }
   const useCare = async (kind: 'food' | 'mood') => {
     if (bix.coins < 2) { setMessage('Сначала накопим ещё немного монет.'); return }
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) { setMessage('Войдите в BX, чтобы состояние Бикса синхронизировалось.'); return }
     setActivity('working')
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data, error } = await supabase.rpc('bx_use_bix_care', { p_item: kind === 'food' ? 'food' : 'toy' })
-      if (!error && data) {
-        setBix(stateFromRemote(data))
-        setMessage(kind === 'food' ? 'Мр-р. Спасибо за угощение!' : 'Поиграли — настроение на высоте!'); setActivity(kind === 'food' ? 'feeding' : 'playing')
-        return
-      }
+    const operation = makeBixEconomyOperation(kind === 'food' ? 'care_food' : 'care_toy', session.user.id)
+    enqueueBixEconomyOperation(operation)
+    const synced = await flushBixEconomy()
+    const result = synced?.results.at(-1)
+    if (result?.error === 'not_enough_coins') {
+      setMessage('На серверном балансе пока не хватает монет. Состояние Бикса обновлено.')
+      setActivity('error')
+      return
     }
-    setBix(value => ({
-      ...value,
-      coins: value.coins - 2,
-      needs: kind === 'food'
-        ? { ...value.needs, food: Math.min(100, value.needs.food + 35) }
-        : { ...value.needs, mood: Math.min(100, value.needs.mood + 25) },
-    }))
+    const stillPending = synced?.pending.some(item => item.id === operation.id) ?? true
+    if (stillPending) {
+      setBix(value => ({
+        ...value,
+        coins: value.coins - 2,
+        needs: kind === 'food'
+          ? { ...value.needs, food: Math.min(100, value.needs.food + 35) }
+          : { ...value.needs, mood: Math.min(100, value.needs.mood + 25) },
+      }))
+    }
     setMessage(kind === 'food' ? 'Мр-р. Спасибо за угощение!' : 'Поиграли — настроение на высоте!'); setActivity(kind === 'food' ? 'feeding' : 'playing')
   }
   const buyOrEquip = async (item: BixCatalogItem) => {
@@ -894,6 +954,7 @@ export default function BixWidget() {
   const chestItems = useMemo(() => collection.catalog.filter(item => ownedSkus.has(item.sku)), [collection.catalog, ownedSkus])
   const chestOutfits = useMemo(() => chestItems.filter(item => item.category === 'outfit'), [chestItems])
   const chestAccessories = useMemo(() => chestItems.filter(item => item.category !== 'outfit'), [chestItems])
+  const achievementProgress = useMemo(() => new Map(collection.achievementProgress.map(item => [item.code, item])), [collection.achievementProgress])
   const renderCollectionCard = (item: BixCatalogItem, location: 'wardrobe' | 'chest') => {
     const owned = collection.inventory.find(entry => entry.sku === item.sku)
     const equipped = owned?.equipped
@@ -1002,6 +1063,14 @@ export default function BixWidget() {
 
   const reminderText = reminder ? (settings.privateReminders ? reminderPhrase || 'Есть задача, требующая внимания.' : `${reminderPhrase || 'Напоминание:'}\n${reminder.title}`) : idleJoke || (speechVisible ? message : null)
   return <main className={`bix-widget bix-state-${bixMode}${settings.reducedMotion ? ' bix-reduced-motion' : ''}`} onMouseDown={event => { if (event.target === event.currentTarget) setPanel(null) }}>
+    <div className="bix-resize-handle bix-resize-n" aria-hidden="true" />
+    <div className="bix-resize-handle bix-resize-e" aria-hidden="true" />
+    <div className="bix-resize-handle bix-resize-s" aria-hidden="true" />
+    <div className="bix-resize-handle bix-resize-w" aria-hidden="true" />
+    <div className="bix-resize-handle bix-resize-ne" aria-hidden="true" />
+    <div className="bix-resize-handle bix-resize-se" aria-hidden="true" />
+    <div className="bix-resize-handle bix-resize-sw" aria-hidden="true" />
+    <div className="bix-resize-handle bix-resize-nw" aria-hidden="true" />
     {panel === 'menu' && <section className="bix-fan" aria-label="Действия Бикса">
       {ACTIONS.map((action, index) => <button key={action.id} className={`bix-action bix-action-${index}`} onClick={() => choose(action)}>
         <b>{action.icon}</b><span>{action.label}</span>
@@ -1015,7 +1084,7 @@ export default function BixWidget() {
     </section>}
 
     {panel && panel !== 'menu' && <section ref={panelRef} className="bix-panel" style={{ transform: `translate3d(${panelOffset.x}px, ${panelOffset.y}px, 0)` }}>
-      <div className="bix-panel-drag" aria-hidden="true" onPointerDown={beginPanelDrag} onPointerMove={movePanel} onPointerUp={endPanelDrag} onPointerCancel={endPanelDrag}><span>⠿⠿</span> Перетащить карточку</div>
+      <div className="bix-panel-drag" aria-hidden="true" onPointerDown={beginPanelDrag} onPointerMove={movePanel} onPointerUp={endPanelDrag} onPointerCancel={endPanelDrag}><span>⠿⠿</span> Перетащить карточку · размер меняется за край окна</div>
       <button className="bix-panel-close" onClick={() => setPanel(null)} aria-label="Закрыть">×</button>
       {panel === 'ai' && <><small>СПРОСИТЬ БИКСА</small><h2>Общая история BX.</h2><p className="bix-panel-hint">Здесь отображается последний диалог основного AI-консультанта. Новые ответы сохраняются в ту же историю.</p>{aiMessages.length > 0 && <div className="bix-ai-history">{aiMessages.map((item, index) => <p key={`${item.role}-${index}`} className={`bix-ai-message ${item.role}`}>{item.content}</p>)}</div>}<textarea value={aiQuestion} onChange={event => setAiQuestion(event.target.value)} placeholder="Например: что проверить перед сдачей отчёта?" autoFocus /><button className="bix-primary" disabled={!aiQuestion.trim() || askingAi} onClick={() => void askBix()}>{askingAi ? 'Думаю…' : 'Спросить'}</button>{aiAnswer && <div className="bix-inline-actions"><button onClick={() => setPanel('accuracy')}>Сообщить о неточности</button></div>}<div className="bix-inline-actions"><button onClick={() => openApp('/ai')}>Открыть полный диалог ↗</button></div></>}
       {panel === 'accuracy' && <><small>ПРОВЕРКА ОТВЕТА BX</small><h2>Что именно неточно?</h2><p className="bix-panel-hint">Вопрос и ответ прикладываются автоматически. Обращение попадёт в отдельную очередь AI-проверок у администраторов.</p><label className="bix-field">Тип неточности<select value={accuracyKind} onChange={event => setAccuracyKind(event.target.value as AccuracyKind)}><option value="fact">Ошибка в факте или расчёте</option><option value="outdated">Устаревшая информация</option><option value="unclear">Непонятный ответ</option><option value="unsafe">Рискованная рекомендация</option><option value="other">Другое</option></select></label><label className="bix-field">Что показалось неверным<textarea value={accuracyDetails} onChange={event => setAccuracyDetails(event.target.value)} placeholder="Опишите конкретную фразу или расчёт…" autoFocus /></label><label className="bix-field">Как должно быть, если знаете<textarea value={accuracyExpected} onChange={event => setAccuracyExpected(event.target.value)} placeholder="Необязательно" /></label><div className="bix-inline-actions"><button onClick={() => setPanel('ai')}>Назад</button><button className="accent" disabled={!accuracyDetails.trim() || reportingAi} onClick={() => void reportAiAnswer()}>{reportingAi ? 'Отправляю…' : 'Отправить на проверку'}</button></div></>}
@@ -1032,9 +1101,10 @@ export default function BixWidget() {
       </>}
       {panel === 'currency' && <><small>КУРСЫ ЦБ РУЗ</small><h2>Валюты прямо в виджете.</h2><div className="bix-rates">{ratesLoading ? <p>Обновляю курсы…</p> : rates.map(rate => <article key={rate.code}><span>{rate.flag}</span><div><b>{rate.code}</b><small>{rate.date}</small></div><strong>{rate.value.toLocaleString('ru-RU')}</strong><em className={rate.diff >= 0 ? 'up' : 'down'}>{rate.diff >= 0 ? '+' : ''}{rate.diff.toLocaleString('ru-RU')}</em></article>)}</div><div className="bix-inline-actions"><button onClick={() => void loadRates()}>Обновить</button><button onClick={() => openApp('/currency')}>Полный раздел ↗</button></div></>}
       {panel === 'tools' && <><small>УТИЛИТЫ BX</small><h2>Быстрые действия здесь</h2><p className="bix-panel-hint">1С, E-Imzo и кэш выбранного сайта работают внутри карточки. Очистка сайта не затрагивает другие домены и сохраняет авторизацию.</p><div className="bix-quick-tools"><button disabled={utilityBusy} onClick={() => void scanCacheFromWidget()}>🧹 Проверить кэш 1С</button>{cacheScan?.entries.length ? <button disabled={utilityBusy} className="accent" onClick={() => void cleanCacheFromWidget()}>Очистить {cacheScan.entries.length} папок</button> : null}<button disabled={utilityBusy} onClick={() => void scanProcessesFromWidget()}>⚡ Процессы 1С</button>{onecProcesses.length ? <button disabled={utilityBusy} className="danger" onClick={() => void stopProcessesFromWidget()}>Завершить {onecProcesses.length} процессов</button> : null}<button disabled={utilityBusy} onClick={() => void checkEimzoFromWidget()}>🔏 Проверить E-Imzo</button></div><section className="bix-site-cache"><b>Кэш выбранного сайта</b><input value={siteUrl} onChange={event => setSiteUrl(event.target.value)} placeholder="https://my.soliq.uz" /><div className="bix-inline-actions"><button disabled={utilityBusy || !siteUrl.trim()} onClick={() => void openSelectedSite()}>Открыть в BX</button><button className="accent" disabled={utilityBusy || !siteUrl.trim()} onClick={() => void resetSelectedSiteCache()}>Очистить кэш</button></div></section>{utilityStatus && <p className="bix-utility-status">{utilityStatus}</p>}<div className="bix-tools">{TOOL_ACTIONS.slice(2).filter(([label]) => !label.includes('E‑Imzo')).map(([label, route]) => <button key={label} onClick={() => { openApp(route); setPanel(null) }}><span>{label}</span><b>Полный режим ↗</b></button>)}</div></>}
-      {panel === 'home' && <><div className="bix-home-head"><div><small>ДОМИК БИКСА · {plan}</small><h2>{bix.coins} <em>монет</em></h2></div><span className="bix-coin">●</span></div><div className="bix-needs">{[['Сытость', bix.needs.food], ['Настроение', bix.needs.mood], ['Энергия', bix.needs.energy]].map(([label, value]) => <label key={String(label)}><span>{label}</span><i><b style={{ width: `${value}%` }} /></i><strong>{value}%</strong></label>)}</div><div className="bix-care"><button onClick={() => void useCare('food')}>🥣<span>Корм</span><small>2 ●</small></button><button onClick={() => void useCare('mood')}>🧶<span>Игрушка</span><small>2 ●</small></button><button onClick={() => setPanel('wardrobe')}>♜<span>Гардероб</span><small>{collection.catalog.length - chestItems.length || '—'} в магазине</small></button><button onClick={() => setPanel('chest')}>◈<span>Сундук</span><small>{chestItems.length} куплено</small></button><button onClick={() => setPanel('animation')}>▷<span>Анимации</span><small>{TOTAL_FRAME_COUNT} кадров</small></button><button onClick={() => setPanel('settings')}>⚙<span>Настройки</span><small>виджет</small></button></div></>}
+      {panel === 'home' && <><div className="bix-home-head"><div><small>ДОМИК БИКСА · {plan}</small><h2>{bix.coins} <em>монет</em></h2></div><span className="bix-coin">●</span></div><div className="bix-needs">{[['Сытость', bix.needs.food], ['Настроение', bix.needs.mood], ['Энергия', bix.needs.energy]].map(([label, value]) => <label key={String(label)}><span>{label}</span><i><b style={{ width: `${value}%` }} /></i><strong>{value}%</strong></label>)}</div><div className="bix-care"><button onClick={() => void useCare('food')}>🥣<span>Корм</span><small>2 ●</small></button><button onClick={() => void useCare('mood')}>🧶<span>Игрушка</span><small>2 ●</small></button><button onClick={() => setPanel('wardrobe')}>♜<span>Гардероб</span><small>{collection.catalog.length - chestItems.length || '—'} в магазине</small></button><button onClick={() => setPanel('chest')}>◈<span>Сундук</span><small>{chestItems.length} куплено</small></button><button onClick={() => setPanel('achievements')}>★<span>Достижения</span><small>{collection.achievements.length}/{collection.achievementCatalog.length || '—'}</small></button><button onClick={() => setPanel('animation')}>▷<span>Анимации</span><small>{TOTAL_FRAME_COUNT} кадров</small></button><button onClick={() => setPanel('settings')}>⚙<span>Настройки</span><small>виджет</small></button></div></>}
       {panel === 'wardrobe' && <><small>ГАРДЕРОБ БИКСА</small><h2>Магазин образов.</h2><p className="bix-panel-hint">Покупка сразу отправляет вещь в Сундук. Там её можно надеть или снять с Бикса.</p><div className="bix-wardrobe-toolbar"><span>{collection.catalog.length ? `${collection.catalog.length - chestItems.length} доступно в магазине` : 'Войдите в BX, чтобы загрузить гардероб'}</span><button onClick={() => void refreshCollection()} disabled={collectionLoading}>↻ Обновить</button></div>{collection.catalog.length ? <><div className="bix-wardrobe-tabs" role="tablist" aria-label="Раздел гардероба"><button role="tab" aria-selected={wardrobeSection === 'outfits'} className={wardrobeSection === 'outfits' ? 'active' : ''} onClick={() => setWardrobeSection('outfits')}>Образы Бикса</button><button role="tab" aria-selected={wardrobeSection === 'accessories'} className={wardrobeSection === 'accessories' ? 'active' : ''} onClick={() => setWardrobeSection('accessories')}>Аксессуары и шляпы</button></div>{wardrobeItems.length ? <div className="bix-wardrobe-grid">{wardrobeItems.map(item => renderCollectionCard(item, 'wardrobe'))}</div> : <p className="bix-wardrobe-empty">Все вещи этого раздела уже лежат в Сундуке.</p>}</> : <p className="bix-wardrobe-empty">Гардероб загрузится после входа в BX.</p>}</>}
       {panel === 'chest' && <><small>СУНДУК БИКСА</small><h2>Купленные вещи.</h2><p className="bix-panel-hint">Здесь хранится всё, что уже куплено. Нажмите на вещь, чтобы надеть её; на надетую — чтобы снять.</p><div className="bix-wardrobe-toolbar"><span>{chestItems.length ? `${chestItems.length} вещей в Сундуке` : 'Сундук пока пуст'}</span><span className="bix-wardrobe-actions"><button onClick={() => void refreshCollection()} disabled={collectionLoading}>↻ Обновить</button>{equippedItemCount > 0 && <button className="bix-wardrobe-reset" onClick={() => void unequipAll()} disabled={collectionLoading}>Снять всё</button>}</span></div>{chestItems.length ? <div className="bix-chest-sections">{chestOutfits.length > 0 && <section><h3>Образы Бикса</h3><div className="bix-wardrobe-grid">{chestOutfits.map(item => renderCollectionCard(item, 'chest'))}</div></section>}{chestAccessories.length > 0 && <section><h3>Аксессуары и шляпы</h3><div className="bix-wardrobe-grid">{chestAccessories.map(item => renderCollectionCard(item, 'chest'))}</div></section>}</div> : <p className="bix-wardrobe-empty">Купите первый образ или шляпу в Гардеробе — вещь появится здесь.</p>}</>}
+      {panel === 'achievements' && <><small>ДОСТИЖЕНИЯ БИКСА</small><h2>Награды за реальные дела.</h2><p className="bix-panel-hint">Прогресс считается на сервере по задачам, завершённым делам, вопросам AI, коллекции и заботе о Биксе. Награда начисляется только один раз.</p><div className="bix-achievement-summary"><strong>{collection.achievements.length}/{collection.achievementCatalog.length}</strong><span>получено</span><button onClick={() => void refreshCollection()} disabled={collectionLoading}>↻ Проверить</button></div><div className="bix-achievement-list">{collection.achievementCatalog.map(item => { const unlocked = collection.achievements.includes(item.code); const progress = achievementProgress.get(item.code); const value = Math.min(progress?.value || 0, item.target); return <article key={item.code} className={unlocked ? 'unlocked' : ''}><span className="bix-achievement-icon">{unlocked ? '★' : '☆'}</span><div><b>{item.title}</b><p>{item.description}</p><i><span style={{ width: `${Math.min(100, value / item.target * 100)}%` }} /></i><small>{unlocked ? 'Получено' : `${value}/${item.target}`} · +{item.rewardCoins} монет</small></div></article> })}</div></>}
       {panel === 'animation' && <><small>АНИМАЦИИ БИКСА</small><h2>Состояния и события.</h2><p className="bix-panel-hint">Каждый финальный цикл рассчитан на 24 отдельных прозрачных PNG. Базовый, Деловой, Аналитик и Ночной Бикс имеют независимые наборы кадров.</p><div className="bix-animation-variants" role="tablist" aria-label="Образ анимации">{([['base', 'Базовый'], ['business', 'Деловой'], ['analyst', 'Аналитик'], ['night', 'Ночной']] as const).map(([variant, title]) => <button key={variant} role="tab" aria-selected={storyboardVariant === variant} className={storyboardVariant === variant ? 'active' : ''} onClick={() => setStoryboardVariant(variant)}>{title}</button>)}</div><div className="bix-wardrobe-tabs bix-animation-tabs" role="tablist" aria-label="Состояние анимации">{STORYBOARD_STATES.map(({ state, title }) => <button key={state} role="tab" aria-selected={storyboardState === state} className={storyboardState === state ? 'active' : ''} onClick={() => setStoryboardState(state)}>{title}</button>)}</div><div className="bix-animation-storyboard"><div><b>{STORYBOARD_STATES.find(item => item.state === storyboardState)?.title}</b><small>{storyboardFrames.length} кадров · {storyboardVariant === 'base' ? 'базовый образ' : storyboardVariant}</small></div><div className="bix-storyboard-frames">{storyboardFrames.map((frame, index) => <img key={`${frame}-${index}`} src={frame} alt={`${STORYBOARD_STATES.find(item => item.state === storyboardState)?.title}, кадр ${index + 1}`} />)}</div><p>Runtime принимает только новую серию frame_001…frame_024 либо исправленные прозрачные кадры *_5. При отсутствии цикла образ остаётся статичным, поэтому чужие кадры и одежда не смешиваются.</p></div></>}
       {panel === 'settings' && <><small>НАСТРОЙКИ БИКСА</small><h2>Тихо, бережно, по делу.</h2><div className="bix-settings"><label><span>Шутки</span><input type="checkbox" checked={settings.jokesEnabled} onChange={event => setSettings(value => ({ ...value, jokesEnabled: event.target.checked }))} /></label><label><span>Частота шуток</span><select value={settings.jokeFrequency} disabled={!settings.jokesEnabled} onChange={event => setSettings(value => ({ ...value, jokeFrequency: event.target.value as JokeFrequency }))}><option value="often">часто — раз в 2 минуты</option><option value="normal">обычно — раз в 5 минут</option><option value="rare">редко — раз в 10 минут</option></select></label><label><span>Скорость анимации</span><select value={settings.animationSpeed} disabled={settings.reducedMotion} onChange={event => setSettings(value => ({ ...value, animationSpeed: event.target.value as AnimationSpeed }))}><option value="calm">спокойная</option><option value="slow">медленная</option><option value="normal">обычная</option><option value="fast">быстрая</option><option value="turbo">турбо</option></select></label><label><span>Уведомления Windows</span><input type="checkbox" checked={settings.notificationsEnabled !== false} onChange={event => setSettings(value => ({ ...value, notificationsEnabled: event.target.checked }))} /></label><label><span>Тихие часы</span><input type="checkbox" checked={settings.quietHours} onChange={event => setSettings(value => ({ ...value, quietHours: event.target.checked }))} /></label>{settings.quietHours && <label className="bix-setting-time"><span>Не беспокоить</span><input type="time" value={settings.quietFrom} onChange={event => setSettings(value => ({ ...value, quietFrom: event.target.value }))} /><b>—</b><input type="time" value={settings.quietTo} onChange={event => setSettings(value => ({ ...value, quietTo: event.target.value }))} /></label>}<label><span>Скрывать названия задач</span><input type="checkbox" checked={settings.privateReminders} onChange={event => setSettings(value => ({ ...value, privateReminders: event.target.checked }))} /></label><label><span>Уменьшить анимацию</span><input type="checkbox" checked={settings.reducedMotion} onChange={event => setSettings(value => ({ ...value, reducedMotion: event.target.checked }))} /></label></div><p className="bix-settings-note">Системный режим Windows «Не беспокоить» пока не считывается автоматически.</p></>}
     </section>}

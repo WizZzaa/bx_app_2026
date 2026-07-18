@@ -1,7 +1,7 @@
 {
   "main.ts": {
-    "mtime": 1784371463.8625906,
-    "ast_hash": "1381aebc5656702b4a12daa9f0d6f620",
+    "mtime": 1784379400.7383816,
+    "ast_hash": "c8a2ed290564add26e736ee279842761",
     "semantic_hash": ""
   },
   "main/ipc.ts": {
@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "renderer/lib/notifications.ts": {
-    "mtime": 1784371464.6476128,
-    "ast_hash": "710959178b1143263b50f037134af202",
+    "mtime": 1784379400.7375665,
+    "ast_hash": "315884d5fa42ffec1bef8a0e45061805",
     "semantic_hash": ""
   },
   "renderer/lib/numToWords.ts": {
@@ -1120,8 +1120,8 @@
     "semantic_hash": ""
   },
   "shared/version.ts": {
-    "mtime": 1784372194.5321062,
-    "ast_hash": "840af99606be7581db79d8a9f3b852d9",
+    "mtime": 1784379794.7483978,
+    "ast_hash": "9f47ace5fdd19ce2fad015e46553515c",
     "semantic_hash": ""
   },
   "renderer/assets/widgets/horoscope.png": {
@@ -1310,8 +1310,8 @@
     "semantic_hash": ""
   },
   "renderer/pages/BixWidget.tsx": {
-    "mtime": 1784371857.1754835,
-    "ast_hash": "491e7c8f153b53065da0c421648ab5b0",
+    "mtime": 1784379978.8607502,
+    "ast_hash": "e9e8287bd826ba56baddb3609b3c19b1",
     "semantic_hash": ""
   },
   "renderer/pages/calc/RegimeCompareCalc.test.ts": {
@@ -1757,6 +1757,21 @@
   "renderer/assets/mascot/hats/hat-wizard.png": {
     "mtime": 1784371464.6108546,
     "ast_hash": "58361f4be5ea8d0ba57807e8721184f3",
+    "semantic_hash": ""
+  },
+  "renderer/lib/bixEconomy.test.ts": {
+    "mtime": 1784379978.8594937,
+    "ast_hash": "f3ecf3e2427bb69093c89cff8f56a5c6",
+    "semantic_hash": ""
+  },
+  "renderer/lib/bixEconomy.ts": {
+    "mtime": 1784379978.8590517,
+    "ast_hash": "2fbd2075ac89334818016a8e5c80bb73",
+    "semantic_hash": ""
+  },
+  "renderer/lib/notifications.reminder-routing.test.ts": {
+    "mtime": 1784379464.0880814,
+    "ast_hash": "6f2ae3d65f8001a8b4b43e689017f92a",
     "semantic_hash": ""
   }
 }

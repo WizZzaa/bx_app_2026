@@ -396,7 +396,13 @@ const constrainTrayWindowToDisplay = () => {
   if (!trayWindow) return null
   const bounds = trayWindow.getBounds()
   const display = screen.getDisplayNearestPoint({ x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 })
-  return constrainTrayPosition(bounds.x, bounds.y, bounds.width, bounds.height, display.workArea)
+  const width = Math.min(bounds.width, display.workArea.width)
+  const height = Math.min(bounds.height, display.workArea.height)
+  return {
+    ...constrainTrayPosition(bounds.x, bounds.y, width, height, display.workArea),
+    width,
+    height,
+  }
 }
 
 const navigateMainWindow = (route: string) => {
@@ -476,7 +482,8 @@ const createTrayWindow = () => {
     show: true,
     frame: false,
     fullscreenable: false,
-    resizable: false,
+    resizable: true,
+    thickFrame: process.platform === 'win32',
     skipTaskbar: true,
     alwaysOnTop: true,
     transparent: true,
@@ -509,22 +516,35 @@ const createTrayWindow = () => {
     if (!trayWindow || suppressTrayMove) return
     const constrained = constrainTrayWindowToDisplay()
     if (!constrained) return
-    const [currentX, currentY] = trayWindow.getPosition()
-    const { x, y } = constrained
-    if (x !== currentX || y !== currentY) {
+    const current = trayWindow.getBounds()
+    const { x, y, width, height } = constrained
+    if (x !== current.x || y !== current.y || width !== current.width || height !== current.height) {
       suppressTrayMove = true
-      trayWindow.setPosition(x, y, false)
+      suppressTrayResize = true
+      trayWindow.setBounds(constrained, false)
       setTimeout(() => { suppressTrayMove = false }, 150)
+      setTimeout(() => { suppressTrayResize = false }, 150)
     }
-    trayState.x = x; trayState.y = y; trayState.custom = true
+    trayState = { ...trayState, x, y, width, height, custom: true }
     if (moveTimer) clearTimeout(moveTimer)
     moveTimer = setTimeout(saveTrayState, 400)
   })
 
   trayWindow.on('resize', () => {
     if (!trayWindow || suppressTrayResize) return
-    const { width, height } = trayWindow.getBounds()
-    trayState.width = width; trayState.height = height
+    const bounds = trayWindow.getBounds()
+    const constrained = constrainTrayWindowToDisplay()
+    if (!constrained) return
+    if (bounds.x !== constrained.x || bounds.y !== constrained.y || bounds.width !== constrained.width || bounds.height !== constrained.height) {
+      suppressTrayMove = true
+      suppressTrayResize = true
+      trayWindow.setBounds(constrained, false)
+      setTimeout(() => {
+        suppressTrayMove = false
+        suppressTrayResize = false
+      }, 150)
+    }
+    trayState = { ...trayState, ...constrained }
     if (!trayState.custom) dockTrayWindow()
     else saveTrayState()
   })
@@ -543,8 +563,12 @@ const createTrayWindow = () => {
     if (constrained) {
       trayState = { ...trayState, ...constrained }
       suppressTrayMove = true
-      trayWindow.setPosition(constrained.x, constrained.y, false)
-      setTimeout(() => { suppressTrayMove = false }, 150)
+      suppressTrayResize = true
+      trayWindow.setBounds(constrained, false)
+      setTimeout(() => {
+        suppressTrayMove = false
+        suppressTrayResize = false
+      }, 150)
       saveTrayState()
     }
   }
