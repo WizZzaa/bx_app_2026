@@ -18,7 +18,13 @@ html.bix-widget-window,body.bix-widget-window,#root.bix-widget-window,html:has(.
 .bix-state-success .bix-frame{filter:drop-shadow(0 0 9px rgba(183,245,0,.7))}.bix-state-error .bix-frame{filter:saturate(.76)}.bix-state-sleepy .bix-frame{filter:brightness(.78) saturate(.8)}.bix-reduced-motion .bix-action,.bix-reduced-motion .bix-home-button{animation:none!important;transition:none!important}
 .bix-hat{position:absolute;z-index:4;left:20px;top:-40px;width:138px;height:150px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 5px 5px rgba(0,0,0,.32));transform:rotate(-1deg);transform-origin:center bottom}
 .bix-hat-main{left:9px;top:-68px;width:112px;height:122px}
-.bix-hat-main.bix-hat-hat_lime_cap{top:-50px}
+.bix-hat-main.bix-hat-hat_lime_cap{left:9px;top:-50px;width:112px;height:122px;transform:rotate(-1deg)}
+.bix-hat-main.bix-hat-hat_top_hat{left:6px;top:-59px;width:112px;height:122px;transform:rotate(0)}
+.bix-hat-main.bix-hat-hat_fedora{left:9px;top:-56px;width:112px;height:122px;transform:rotate(-1deg)}
+.bix-hat-main.bix-hat-hat_cowboy{left:7px;top:-56px;width:116px;height:122px;transform:rotate(0)}
+.bix-hat-main.bix-hat-hat_party{left:9px;top:-65px;width:112px;height:124px;transform:rotate(-1deg)}
+.bix-hat-main.bix-hat-hat_wizard{left:9px;top:-68px;width:114px;height:124px;transform:rotate(-1deg)}
+.bix-hat-main.bix-hat-hat_sailor{left:11px;top:-58px;width:112px;height:122px;transform:rotate(0)}
 .bix-current-frame{z-index:2}
 @media (prefers-reduced-motion:reduce){.bix-eye b,.bix-action,.bix-home-button{transition:none}}
 .bix-care{grid-template-columns:repeat(2,1fr)}
