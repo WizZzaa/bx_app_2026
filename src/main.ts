@@ -378,6 +378,27 @@ let suppressTrayMove = false
 // окажется под панелью задач после открытия встроенной панели.
 let suppressTrayResize = false
 
+// Electron не ограничивает frameless-окно рабочей областью Windows сам.
+// Поэтому при расширении панели или ручном перетаскивании правый край мог
+// оказаться за экраном вместе с Биксом. Оставляем всё окно внутри workArea.
+const constrainTrayPosition = (
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  workArea: { x: number; y: number; width: number; height: number },
+) => ({
+  x: Math.min(workArea.x + Math.max(0, workArea.width - width), Math.max(workArea.x, Math.round(x))),
+  y: Math.min(workArea.y + Math.max(0, workArea.height - height), Math.max(workArea.y, Math.round(y))),
+})
+
+const constrainTrayWindowToDisplay = () => {
+  if (!trayWindow) return null
+  const bounds = trayWindow.getBounds()
+  const display = screen.getDisplayNearestPoint({ x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 })
+  return constrainTrayPosition(bounds.x, bounds.y, bounds.width, bounds.height, display.workArea)
+}
+
 const navigateMainWindow = (route: string) => {
   if (!mainWindow) return
   const hash = route.startsWith('/') ? route : `/${route}`
@@ -395,8 +416,13 @@ const dockTrayWindow = () => {
   const bounds = trayWindow.getBounds()
   const display = screen.getDisplayNearestPoint({ x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 })
   const { workArea } = display
-  const x = workArea.x + workArea.width - bounds.width - 18
-  const y = workArea.y + workArea.height - bounds.height
+  const { x, y } = constrainTrayPosition(
+    workArea.x + workArea.width - bounds.width - 18,
+    workArea.y + workArea.height - bounds.height,
+    bounds.width,
+    bounds.height,
+    workArea,
+  )
   trayState = { ...trayState, x, y, custom: false, pinned: true }
   trayPinned = true
   suppressTrayMove = true
@@ -423,10 +449,10 @@ const resizeTrayWindow = (requestedWidth: number, requestedHeight: number) => {
   // раскрытии любой панели растим окно только вверх, никогда не пересчитывая
   // его нижнюю координату от workArea Windows.
   const bottom = current.y + current.height
-  const x = trayState.custom ? current.x : workArea.x + workArea.width - width - 18
+  const requestedX = trayState.custom ? current.x : workArea.x + workArea.width - width - 18
   // На очень маленьком экране или при ручном расположении виджета сверху не
   // выпускаем верхнюю часть панели за границу видимой рабочей области.
-  const y = Math.max(workArea.y, bottom - height)
+  const { x, y } = constrainTrayPosition(requestedX, bottom - height, width, height, workArea)
   suppressTrayMove = true
   suppressTrayResize = true
   trayWindow.setBounds({ x, y, width, height }, false)
@@ -481,7 +507,15 @@ const createTrayWindow = () => {
   let moveTimer: ReturnType<typeof setTimeout> | null = null
   trayWindow.on('move', () => {
     if (!trayWindow || suppressTrayMove) return
-    const [x, y] = trayWindow.getPosition()
+    const constrained = constrainTrayWindowToDisplay()
+    if (!constrained) return
+    const [currentX, currentY] = trayWindow.getPosition()
+    const { x, y } = constrained
+    if (x !== currentX || y !== currentY) {
+      suppressTrayMove = true
+      trayWindow.setPosition(x, y, false)
+      setTimeout(() => { suppressTrayMove = false }, 150)
+    }
     trayState.x = x; trayState.y = y; trayState.custom = true
     if (moveTimer) clearTimeout(moveTimer)
     moveTimer = setTimeout(saveTrayState, 400)
@@ -503,6 +537,16 @@ const createTrayWindow = () => {
   // при разных масштабах и на нескольких мониторах.
   if (!trayState.custom) {
     dockTrayWindow()
+  } else {
+    // Координаты могли сохраниться с другого монитора или до раскрытия панели.
+    const constrained = constrainTrayWindowToDisplay()
+    if (constrained) {
+      trayState = { ...trayState, ...constrained }
+      suppressTrayMove = true
+      trayWindow.setPosition(constrained.x, constrained.y, false)
+      setTimeout(() => { suppressTrayMove = false }, 150)
+      saveTrayState()
+    }
   }
 }
 
@@ -517,8 +561,12 @@ const toggleTrayWindow = () => {
   // Если пользователь сам перетащил окно — показываем на его позиции,
   // не «прыгаем» к иконке трея.
   if (trayState.custom && typeof trayState.x === 'number' && typeof trayState.y === 'number') {
+    const bounds = trayWindow.getBounds()
+    const display = screen.getDisplayNearestPoint({ x: trayState.x + bounds.width / 2, y: trayState.y + bounds.height / 2 })
+    const position = constrainTrayPosition(trayState.x, trayState.y, bounds.width, bounds.height, display.workArea)
     suppressTrayMove = true
-    trayWindow.setPosition(trayState.x, trayState.y, false)
+    trayWindow.setPosition(position.x, position.y, false)
+    trayState = { ...trayState, ...position }
     setTimeout(() => { suppressTrayMove = false }, 150)
     trayWindow.show()
     trayWindow.focus()
