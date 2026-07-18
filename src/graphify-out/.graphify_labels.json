@@ -59,7 +59,6 @@
   "57": "Transliterate.tsx",
   "58": "EimzoDiag.tsx",
   "59": "PcCleaner.tsx",
-  "60": "logger.ts",
   "61": "uzHolidays.ts",
   "62": "ToolStub.tsx",
   "63": "vite-env.d.ts",
@@ -73,6 +72,8 @@
   "71": "newsFeed.ts",
   "72": "DocumentViewModeSwitch.tsx",
   "73": "DailyTasksModal.tsx",
-  "74": "ecpParser.ts",
-  "75": "QuickNotes.tsx"
+  "75": "QuickNotes.tsx",
+  "76": "Sidebar.tsx",
+  "77": "TxModal.tsx",
+  "78": "SystemTaskBoard.tsx"
 }
