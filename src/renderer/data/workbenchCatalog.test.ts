@@ -24,4 +24,9 @@ describe('workbench proposals', () => {
       expect(getWorkbenchProposal(item.id)).toBe(item)
     }
   })
+
+  it('contains at least sixteen utility concepts with a clear purpose', () => {
+    expect(UTILITY_PROPOSALS.length).toBeGreaterThanOrEqual(16)
+    expect(UTILITY_PROPOSALS.every(item => item.value.length > 45)).toBe(true)
+  })
 })
