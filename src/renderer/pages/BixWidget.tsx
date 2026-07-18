@@ -37,16 +37,27 @@ type WidgetTranslation = { id: string; source: string; result: string; plain?: s
 type BixAnimationState = 'idle' | 'thinking' | 'working' | 'success' | 'error' | 'sleep'
 
 // Сортируем по исходному пути, а не по собранному URL: после production-build
-// у URL есть hash, из-за которого кадры могли идти не в хронологическом порядке.
-const loadBixFrames = (modules: Record<string, unknown>): string[] => Object.entries(modules)
-  .sort(([first], [second]) => first.localeCompare(second, undefined, { numeric: true }))
+// у URL есть hash. Промежуточный image_1_5 должен идти после image_1, а не до него.
+const loadBixFrames = (modules: Record<string, unknown>, include = (_path: string) => true): string[] => Object.entries(modules)
+  .filter(([path]) => include(path))
+  .sort(([first], [second]) => {
+    const readOrder = (path: string) => {
+      const match = path.match(/image_(\d+)(?:_(\d+))?\.png$/)
+      return [Number(match?.[1] || 0), match?.[2] ? 1 : 0] as const
+    }
+    const [firstKey, firstPhase] = readOrder(first)
+    const [secondKey, secondPhase] = readOrder(second)
+    return firstKey - secondKey || firstPhase - secondPhase
+  })
   .map(([, source]) => source as string)
 
 const bixFrames = {
   idle: loadBixFrames(import.meta.glob('../assets/mascot/frames/idle/*.png', { eager: true, import: 'default', query: '?url' })),
   thinking: loadBixFrames(import.meta.glob('../assets/mascot/frames/thinking/*.png', { eager: true, import: 'default', query: '?url' })),
   working: loadBixFrames(import.meta.glob('../assets/mascot/frames/working/*.png', { eager: true, import: 'default', query: '?url' })),
-  success: loadBixFrames(import.meta.glob('../assets/mascot/frames/success/*.png', { eager: true, import: 'default', query: '?url' })),
+  // Улыбка остаётся, но у трёх ключевых поз веки были почти полностью закрыты
+  // и на маленьком виджете это выглядело как пустые чёрные глаза.
+  success: loadBixFrames(import.meta.glob('../assets/mascot/frames/success/*.png', { eager: true, import: 'default', query: '?url' }), path => !/image_[135]\.png$/.test(path)),
   error: loadBixFrames(import.meta.glob('../assets/mascot/frames/error/*.png', { eager: true, import: 'default', query: '?url' })),
   sleep: loadBixFrames(import.meta.glob('../assets/mascot/frames/sleep/*.png', { eager: true, import: 'default', query: '?url' })),
 } satisfies Record<BixAnimationState, string[]>
