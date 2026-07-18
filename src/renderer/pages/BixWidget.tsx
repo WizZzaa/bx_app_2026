@@ -7,12 +7,9 @@ import bixNightMascot from '../assets/mascot/bix-night.png'
 import hatLimeCap from '../assets/mascot/hats/hat-lime-cap.png'
 import hatTopHat from '../assets/mascot/hats/hat-top-hat.png'
 import hatFedora from '../assets/mascot/hats/hat-fedora.png'
-import hatUshanka from '../assets/mascot/hats/hat-ushanka.png'
-import hatChef from '../assets/mascot/hats/hat-chef.png'
 import hatCowboy from '../assets/mascot/hats/hat-cowboy.png'
 import hatParty from '../assets/mascot/hats/hat-party.png'
 import hatWizard from '../assets/mascot/hats/hat-wizard.png'
-import hatCrown from '../assets/mascot/hats/hat-crown.png'
 import hatSailor from '../assets/mascot/hats/hat-sailor.png'
 import { usePlan } from '../lib/plan'
 import { createCanonicalEvent } from './planner/eventRepository'
@@ -140,8 +137,8 @@ const BIX_PHRASES = {
 const WARDROBE_ICONS: Record<string, string> = { business: '💼', analyst: '📊', night: '🌙' }
 const WARDROBE_VISUALS: Record<string, string> = { business: bixBusinessMascot, analyst: bixAnalystMascot, night: bixNightMascot }
 const HAT_VISUALS: Record<string, string> = {
-  hat_lime_cap: hatLimeCap, hat_top_hat: hatTopHat, hat_fedora: hatFedora, hat_ushanka: hatUshanka, hat_chef: hatChef,
-  hat_cowboy: hatCowboy, hat_party: hatParty, hat_wizard: hatWizard, hat_crown: hatCrown, hat_sailor: hatSailor,
+  hat_lime_cap: hatLimeCap, hat_top_hat: hatTopHat, hat_fedora: hatFedora, hat_cowboy: hatCowboy,
+  hat_party: hatParty, hat_wizard: hatWizard, hat_sailor: hatSailor,
 }
 
 function pickPhrase(phrases: readonly string[]) {
