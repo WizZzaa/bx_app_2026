@@ -93,13 +93,19 @@ describe('D1 base UI components', () => {
     expect(document.activeElement).toBe(first)
   })
 
-  it('lets the mobile Back event close a sheet without writing history', () => {
-    const onClose = vi.fn()
+  it('lets the mobile Back event close dialogs and sheets without writing history', () => {
+    const dialogClose = vi.fn()
+    render(<Dialog open onClose={dialogClose} title="Подтверждение">Содержимое</Dialog>)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+    expect(dialogClose).toHaveBeenCalledTimes(1)
+    cleanup()
+
+    const sheetClose = vi.fn()
     const pushState = vi.spyOn(window.history, 'pushState')
-    render(<Sheet open onClose={onClose} title="Фильтры">Содержимое</Sheet>)
+    render(<Sheet open onClose={sheetClose} title="Фильтры">Содержимое</Sheet>)
 
     window.dispatchEvent(new PopStateEvent('popstate'))
-    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(sheetClose).toHaveBeenCalledTimes(1)
     expect(pushState).not.toHaveBeenCalled()
   })
 
