@@ -76,6 +76,12 @@ describe('BX semantic design tokens', () => {
     expect(themes.light.get('--bx-font-sans')).toBe('"Geist Variable", Geist, Inter, "Segoe UI", Roboto, Arial, sans-serif')
   })
 
+  it('uses the ultrawide workspace canvas without stretching reading content', () => {
+    expect(themes.light.get('--bx-workspace-max')).toBe('100rem')
+    expect(themes.light.get('--bx-content-max')).toBe('var(--bx-workspace-max)')
+    expect(themes.light.get('--bx-reading-max')).toBe('72ch')
+  })
+
   it('defines each custom property only once inside every canonical theme block', () => {
     for (const [name, selector] of [
       ['light', ":root[data-bx-design='d1'] {"],

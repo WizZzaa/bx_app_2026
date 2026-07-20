@@ -6,7 +6,8 @@
   --sidebar-width: 220px;
   --bx-font-scale: 1;
   --bx-root-font-size: 16px;
-  --bx-content-max: 1600px;
+  --bx-workspace-max: 1600px;
+  --bx-content-max: var(--bx-workspace-max);
   --bx-reading-max: 1180px;
   color-scheme: dark;
 

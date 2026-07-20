@@ -91,7 +91,11 @@
   --bx-z-dialog: 50;
   --bx-z-toast: 60;
 
-  --bx-content-max: 75rem;
+  /* Dense product workspaces can use an ultrawide canvas; prose keeps its
+     own readable measure below. Keep --bx-content-max as a compatibility
+     alias while route families migrate to the semantic workspace token. */
+  --bx-workspace-max: 100rem;
+  --bx-content-max: var(--bx-workspace-max);
   --bx-reading-max: 72ch;
 
   /* Compatibility aliases for the current renderer during later adoption. */
