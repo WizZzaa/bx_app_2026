@@ -10,6 +10,8 @@ import { BxMotion } from '../lib/ui/BxMotion'
 import { parseUsageSnapshot, type UsageSnapshot } from '../lib/usageSnapshot'
 import { widgetsApi } from '../lib/widgetsApi'
 import { BentoGrid } from '../components/ui/BentoGrid'
+import WeatherWidget from '../components/widgets/WeatherWidget'
+import TaxCalendar from '../components/dashboard/TaxCalendar'
 import { Skeleton, SkeletonGroup } from '../components/ui/Skeleton'
 import { StatePanel } from '../components/ui/StatePanel'
 import type { CurrencyRate } from '../../shared/types'
@@ -49,6 +51,7 @@ export interface DashboardD1ViewProps {
   onRetryAi: () => void
   onCreateCompany: () => void
   onEditCompany: () => void
+  showLiveWidgets?: boolean
 }
 
 const dateLabel = (date: string): string => new Date(`${date}T12:00:00`).toLocaleDateString('ru-RU', {
@@ -360,11 +363,19 @@ export function DashboardD1View(props: DashboardD1ViewProps) {
   const companyCard = <CompanyCard key="company" company={props.activeCompany} companyCount={props.companyCount} plan={props.plan} planLoading={props.planLoading} limits={props.limits} onCreate={props.onCreateCompany} onEdit={props.onEditCompany} onUpgrade={() => props.onNavigate('/account')} />
   const toolsCard = <DailyToolsCard key="tools" rates={props.rates} today={props.today} onNavigate={route => props.onNavigate(route)} onRetry={props.onRetryRates} />
   const aiCard = <AiCard key="ai" ai={props.ai} question={question} setQuestion={setQuestion} onAsk={askAi} onOpen={() => props.onNavigate('/ai')} onRetry={props.onRetryAi} />
-  const cards = viewport === 'mobile'
-    ? [todayCard, aiCard, toolsCard, companyCard]
-    : viewport === 'tablet'
-      ? [todayCard, companyCard, aiCard, toolsCard]
-      : [todayCard, companyCard, toolsCard, aiCard]
+  const weatherCard = props.showLiveWidgets ? <div key="weather" className="bx-d1-dashboard-live bx-d1-dashboard-live--weather"><WeatherWidget /></div> : null
+  const taxCalendarCard = props.showLiveWidgets ? <section key="tax-calendar" className="bx-d1-dashboard-card bx-d1-dashboard-card--tax-calendar" aria-label="Бухгалтерский календарь"><TaxCalendar onPickDeadline={(date, deadline) => props.onNavigate('/planner', { newTask: { title: deadline.title, note: `Срок из бухгалтерского календаря BX · ${deadline.kind === 'payment' ? 'уплата' : 'отчётность'}`, date } })} /></section> : null
+  const cards = props.showLiveWidgets
+    ? viewport === 'mobile'
+      ? [todayCard, taxCalendarCard, weatherCard, aiCard, toolsCard, companyCard]
+      : viewport === 'tablet'
+        ? [todayCard, weatherCard, taxCalendarCard, companyCard, aiCard, toolsCard]
+        : [todayCard, weatherCard, taxCalendarCard, toolsCard, companyCard, aiCard]
+    : viewport === 'mobile'
+      ? [todayCard, aiCard, toolsCard, companyCard]
+      : viewport === 'tablet'
+        ? [todayCard, companyCard, aiCard, toolsCard]
+        : [todayCard, companyCard, toolsCard, aiCard]
 
   return (
     <div className="bx-d1-dashboard" data-testid="dashboard-d1">
@@ -454,6 +465,7 @@ export default function DashboardD1() {
       onRetryAi={() => void loadAi()}
       onCreateCompany={() => startCompanyCreation()}
       onEditCompany={() => { if (active) startCompanyEdit(active) }}
+      showLiveWidgets
     />
   )
 }

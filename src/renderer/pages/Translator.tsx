@@ -7,6 +7,7 @@ import { useDocuments } from '../lib/useDocuments'
 import { usePlan } from '../lib/plan'
 import { useToast } from '../lib/ui/ToastContext'
 import { primaryActionClass, secondaryActionClass } from '../components/workspace/ResourceWorkspace'
+import { TranslatorTutorial } from '../components/TranslatorTutorial'
 import { TARIFF_MATRIX } from '../../shared/tariffs'
 import { parseUsageSnapshot, type UsageSnapshot } from '../lib/usageSnapshot'
 import { loadMammoth, loadPdfJsWithInlineWorker, loadXlsx } from '../lib/documentDependencyLoaders'
@@ -35,6 +36,7 @@ interface TranslationHistoryItem {
 
 const HISTORY_KEY = 'bx_translation_history'
 const HISTORY_ENABLED_KEY = 'bx_translation_history_enabled'
+const TUTORIAL_KEY = 'bx_translator_tutorial_v2'
 const DOCUMENT_CATEGORIES = ['Договор', 'Акт', 'Устав', 'Справка', 'Другое']
 
 function loadHistory(): TranslationHistoryItem[] {
@@ -103,6 +105,7 @@ export default function Translator() {
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
   const [historyEnabled, setHistoryEnabled] = useState(() => localStorage.getItem(HISTORY_ENABLED_KEY) === 'true')
+  const [tutorialEnabled, setTutorialEnabled] = useState(() => localStorage.getItem(TUTORIAL_KEY) !== 'hidden')
   const [consentedText, setConsentedText] = useState('')
   const [resultExported, setResultExported] = useState(true)
   const [mobilePane, setMobilePane] = useState<'source' | 'result'>('source')
@@ -310,6 +313,12 @@ export default function Translator() {
     localStorage.setItem(HISTORY_ENABLED_KEY, String(next))
   }
 
+  const toggleTutorial = () => {
+    const next = !tutorialEnabled
+    setTutorialEnabled(next)
+    localStorage.setItem(TUTORIAL_KEY, next ? 'shown' : 'hidden')
+  }
+
   const restoreHistory = (item: TranslationHistoryItem) => {
     setSource(item.source); setTarget(item.target); setMode(item.mode); setSourceText(item.sourceText); setResultText(item.resultText); setPlainText(''); setFileName(item.title); setActiveResult('translation'); setConsentedText(''); setResultExported(true)
   }
@@ -321,7 +330,14 @@ export default function Translator() {
   return (
     <div className="custom-scrollbar flex-1 overflow-y-auto bg-bx-bg text-bx-text">
       <div className="bx-page-container space-y-5 px-4 py-5 sm:px-5 lg:px-6 lg:py-6">
-        <header><p className="text-xs font-black uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Переводчик</p><h1 className="mt-1 text-2xl font-black">Перевод документов и текста</h1><p className="mt-1 text-sm text-bx-muted">Файл обрабатывается на этом устройстве; внешнему AI передаётся только извлечённый текст после отдельного согласия.</p></header>
+        <header><p className="text-xs font-black uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Переводчик BX</p><h1 className="mt-1 text-2xl font-black">Сначала текст — затем готовый документ</h1><p className="mt-2 max-w-3xl text-sm leading-relaxed text-bx-muted">Выберите языки, добавьте текст или файл и проверьте результат. Файл разбирается на устройстве; внешнему AI уходит только извлечённый текст после вашего согласия.</p></header>
+
+        <TranslatorTutorial
+          enabled={tutorialEnabled}
+          literalActive={mode === 'literal'}
+          onToggle={toggleTutorial}
+          onChooseLiteral={() => setMode('literal')}
+        />
 
         <section className="grid gap-3 lg:grid-cols-[1fr_auto_1fr]" aria-label="Направление перевода">
           <LanguageSelect label="Исходный язык" value={source} onChange={setSourceLanguage} />

@@ -290,19 +290,20 @@ export default function Ai() {
 
       <section className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 rounded-full bg-violet-500/[0.06] blur-3xl" />
-        <header className="z-10 flex flex-wrap items-center gap-3 border-b border-bx-border bg-bx-surface/90 px-5 py-3 backdrop-blur">
+        <header className="z-10 flex flex-wrap items-center gap-3 border-b border-bx-border bg-bx-surface/90 px-4 py-4 backdrop-blur sm:px-5">
           <button type="button" onClick={() => setHistoryOpen(true)} className="grid h-11 w-11 place-items-center rounded-xl border border-bx-border bg-bx-bg text-bx-muted hover:text-bx-text" aria-label="Открыть историю AI-диалогов"><Icon name="menu" className="h-5 w-5" /></button>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <h2 className="text-sm font-extrabold text-bx-text">BX Intelligence</h2>
+              <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+              <p className="text-xs font-black text-violet-600 dark:text-violet-300">BX Intelligence</p>
             </div>
-            <p className="mt-0.5 text-sm font-medium text-bx-muted">База знаний РУз + доступный контекст компании</p>
+            <h1 className="mt-1 text-xl font-black tracking-tight text-bx-text">AI-консультант</h1>
+            <p className="mt-1 text-sm font-medium text-bx-muted">Ответ, источники и следующее действие — в одном рабочем потоке.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-bx-border bg-bx-bg px-3 text-sm font-bold text-bx-muted">
               <Icon name="building" className="h-3.5 w-3.5" />
-              Контекст предприятия
+              Контекст компании
             </span>
             <span className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 text-sm font-bold text-emerald-700 dark:text-emerald-300">
               <Icon name="check" className="h-3.5 w-3.5" />
@@ -313,20 +314,21 @@ export default function Ai() {
 
         <div ref={scrollRef} className="custom-scrollbar z-10 flex-1 overflow-y-auto">
           {messages.length === 0 && !sending ? (
-            <div className="mx-auto flex min-h-full max-w-4xl flex-col justify-center px-6 py-10">
-              <div className="rounded-[28px] border border-bx-border bg-bx-surface p-6 shadow-sm sm:p-8">
+            <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col justify-center px-4 py-8 sm:px-6">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(17rem,0.75fr)]">
+              <section className="rounded-[28px] border border-bx-border bg-bx-surface p-6 shadow-sm sm:p-8" aria-labelledby="ai-start-title">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-                  <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-500/15">
+                  <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-500/15">
                     <Icon name="ai" className="h-7 w-7" />
                   </span>
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-violet-700 dark:text-violet-300">Рабочий AI для бухгалтера</p>
-                    <h2 className="mt-2 max-w-2xl text-2xl font-black tracking-tight text-bx-text">Разберите вопрос, проверьте изменение или превратите ответ в задачу</h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-bx-muted">BX использует встроенную базу знаний и доступные вам данные компании. Для юридически значимых решений сверяйте ответ с lex.uz и soliq.uz.</p>
+                    <h2 id="ai-start-title" className="mt-2 max-w-2xl text-2xl font-black tracking-tight text-bx-text">Задайте один конкретный рабочий вопрос</h2>
+                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-bx-muted">BX найдёт релевантные материалы, отделит вывод от источников и позволит сразу превратить результат в задачу.</p>
                   </div>
                 </div>
 
-                <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
+                <div className="mt-6 grid gap-2.5 sm:grid-cols-2" aria-label="Готовые вопросы">
                   {QUICK_QUESTIONS.slice(0, 3).map((question, index) => (
                     <button key={question} onClick={() => void ask(question)} className="group flex min-h-16 items-center gap-3 rounded-2xl border border-bx-border bg-bx-bg px-4 text-left text-sm font-semibold leading-snug text-bx-text outline-none transition-colors hover:border-violet-500/35 hover:bg-violet-500/[0.04] focus-visible:ring-2 focus-visible:ring-violet-500">
                       <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
@@ -337,6 +339,11 @@ export default function Ai() {
                     </button>
                 ))}
                 </div>
+              </section>
+              <aside className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1" aria-label="Как работает AI-консультант">
+                <section className="rounded-[24px] border border-violet-500/20 bg-violet-500/[0.07] p-5"><span className="grid h-10 w-10 place-items-center rounded-xl bg-violet-600 text-white"><Icon name="reference" className="h-4 w-4" /></span><h2 className="mt-4 text-lg font-black text-bx-text">Ответ с опорой</h2><p className="mt-2 text-sm leading-relaxed text-bx-muted">В ответе видны ссылки на доступные материалы. Дата проверки остаётся частью рабочего контекста.</p></section>
+                <section className="rounded-[24px] border border-bx-border bg-bx-surface p-5"><span className="grid h-10 w-10 place-items-center rounded-xl bg-bx-surface-2 text-violet-600 dark:text-violet-300"><Icon name="shield" className="h-4 w-4" /></span><h2 className="mt-4 text-lg font-black text-bx-text">Проверяйте решение</h2><ol className="mt-3 space-y-3 text-sm text-bx-muted"><li className="flex gap-2"><strong className="text-bx-text">1.</strong>Сверьте дату и источник.</li><li className="flex gap-2"><strong className="text-bx-text">2.</strong>Уточните контекст компании.</li><li className="flex gap-2"><strong className="text-bx-text">3.</strong>Добавьте действие в Планировщик.</li></ol></section>
+              </aside>
               </div>
             </div>
           ) : (

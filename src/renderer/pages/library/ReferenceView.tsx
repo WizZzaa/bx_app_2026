@@ -26,9 +26,14 @@ export default function ReferenceView({ initialTab }: { initialTab?: RefTabId })
   const { plan } = usePlan()
   const [paywall, setPaywall] = useState(false)
   const [active, setActive] = useState<RefTabId>(initialTab ?? 'finance')
+  const [search, setSearch] = useState('')
   useEffect(() => { if (initialTab) setActive(initialTab) }, [initialTab])
 
   const selected = tabs.find(tab => tab.id === active) ?? tabs[0]
+  const normalizedSearch = search.trim().toLocaleLowerCase('ru-RU')
+  const visibleTabs = normalizedSearch
+    ? tabs.filter(tab => `${tab.label} ${tab.short}`.toLocaleLowerCase('ru-RU').includes(normalizedSearch))
+    : tabs
   const handleTabClick = (tabId: RefTabId) => {
     if (plan === 'free') { setPaywall(true); return }
     setActive(tabId)
@@ -39,6 +44,10 @@ export default function ReferenceView({ initialTab }: { initialTab?: RefTabId })
       icon="reference"
       title="Справочники"
       subtitle="Нормативы Республики Узбекистан"
+      search={search}
+      searchPlaceholder="Налог, БРВ, счёт, штраф…"
+      onSearch={setSearch}
+      onClear={() => setSearch('')}
       label="Разделы данных"
       footer={(
         <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-3 text-[10px] font-semibold leading-relaxed text-amber-950 dark:text-amber-100">
@@ -47,7 +56,8 @@ export default function ReferenceView({ initialTab }: { initialTab?: RefTabId })
         </div>
       )}
     >
-      {tabs.map(tab => <ResourceNavItem key={tab.id} icon={tab.icon} label={tab.label} description={active === tab.id ? tab.short : undefined} active={active === tab.id} onClick={() => handleTabClick(tab.id)} />)}
+      {visibleTabs.map(tab => <ResourceNavItem key={tab.id} icon={tab.icon} label={tab.label} description={active === tab.id ? tab.short : undefined} active={active === tab.id} onClick={() => handleTabClick(tab.id)} />)}
+      {visibleTabs.length === 0 && <div className="rounded-xl border border-dashed border-bx-border p-4 text-center text-xs leading-relaxed text-bx-muted">Подходящего раздела нет. Попробуйте «налоги», «учёт» или «штрафы».</div>}
     </ResourceSidebar>
   )
 
@@ -55,9 +65,9 @@ export default function ReferenceView({ initialTab }: { initialTab?: RefTabId })
     <ResourceLayout sidebar={sidebar}>
       <div className="space-y-5">
         <ResourceHero
-          eyebrow="Нормативная опора бухгалтера"
+          eyebrow="Поиск по нормативным данным"
           title={selected.label}
-          description={`${selected.short}. Важные показатели отделены от справочных записей, а статус проверки виден до использования значения в работе.`}
+          description={`${selected.short}. Сначала найдите нужный раздел, затем сверяйте значение, дату проверки и официальный источник.`}
           icon={selected.icon}
           stats={[
             { value: '03.07.2026', label: 'последняя сверка' },

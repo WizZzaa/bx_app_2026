@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { deadlinesForMonth, summarizeTaxDeadlineCatalog, TaxDeadline } from '../../data/taxCalendar';
+import Icon from '../../lib/ui/Icon';
 
 const TAX_DEADLINE_CATALOG = summarizeTaxDeadlineCatalog();
 
@@ -50,18 +51,28 @@ export default function TaxCalendar({ onPickDeadline }: Props) {
 
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const selectedDeadlines = selected ? deadlines.get(selected) ?? [] : [];
+  const deadlineDates = [...deadlines.keys()].sort();
+  const nearestDate = deadlineDates.find(date => date >= todayStr) ?? deadlineDates[0] ?? null;
+
+  function showToday() {
+    setYear(now.getFullYear());
+    setMonth(now.getMonth());
+    setSelected(todayStr);
+  }
 
   return (
-    <div className="rounded-xl border border-bx-border bg-bx-surface p-4">
+    <div className="bx-tax-calendar h-full">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-medium text-bx-text">📅 Налоговый календарь</h2>
-        <div className="flex items-center gap-1">
-          <button onClick={prev} className="w-6 h-6 rounded hover:bg-bx-surface-2 text-bx-muted text-xs">‹</button>
-          <span className="text-xs text-bx-text w-28 text-center">{MONTHS[month]} {year}</span>
-          <button onClick={next} className="w-6 h-6 rounded hover:bg-bx-surface-2 text-bx-muted text-xs">›</button>
+      <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3"><span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-300"><Icon name="planner" className="h-5 w-5" /></span><div><p className="text-xs font-black text-violet-600 dark:text-violet-300">Бухгалтерский календарь</p><h2 className="mt-1 text-lg font-black text-bx-text">Сроки месяца</h2><p className="mt-1 text-xs text-bx-muted">Нажмите день, чтобы увидеть срок и добавить его в задачи.</p></div></div>
+        <div className="flex items-center gap-1 rounded-xl border border-bx-border bg-bx-bg p-1">
+          <button type="button" onClick={prev} aria-label="Предыдущий месяц" className="grid h-10 w-10 place-items-center rounded-lg text-bx-muted hover:bg-bx-surface hover:text-bx-text"><Icon name="arrowL" className="h-4 w-4" /></button>
+          <span className="min-w-32 text-center text-sm font-black text-bx-text">{MONTHS[month]} {year}</span>
+          <button type="button" onClick={next} aria-label="Следующий месяц" className="grid h-10 w-10 place-items-center rounded-lg text-bx-muted hover:bg-bx-surface hover:text-bx-text"><Icon name="arrowR" className="h-4 w-4" /></button>
         </div>
       </div>
+
+      <div className="mb-4 flex flex-wrap gap-2"><button type="button" onClick={showToday} className="min-h-10 rounded-xl border border-bx-border bg-bx-bg px-3 text-xs font-black text-bx-text hover:border-violet-500/30">Сегодня</button>{nearestDate && <button type="button" onClick={() => setSelected(nearestDate)} className="min-h-10 rounded-xl border border-violet-500/20 bg-violet-500/[0.07] px-3 text-xs font-black text-violet-700 dark:text-violet-300">Ближайший срок · {new Date(`${nearestDate}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</button>}</div>
 
       {TAX_DEADLINE_CATALOG.ready === 0 && TAX_DEADLINE_CATALOG.needsReview > 0 && (
         <p className="mb-3 rounded-lg border border-amber-500/25 bg-amber-500/[0.07] px-3 py-2 text-[10px] leading-relaxed text-amber-700 dark:text-amber-300">
@@ -70,8 +81,8 @@ export default function TaxCalendar({ onPickDeadline }: Props) {
       )}
 
       {/* Weekdays */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {WEEKDAYS.map(w => <div key={w} className="text-[10px] text-bx-muted text-center">{w}</div>)}
+      <div className="mb-1 grid grid-cols-7 gap-1">
+        {WEEKDAYS.map(w => <div key={w} className="py-1 text-center text-xs font-bold text-bx-muted">{w}</div>)}
       </div>
 
       {/* Grid */}
@@ -86,14 +97,15 @@ export default function TaxCalendar({ onPickDeadline }: Props) {
             <button
               key={i}
               onClick={() => setSelected(isSel ? null : ds)}
-              className={`relative h-8 rounded text-xs transition-colors ${
-                isSel ? 'bg-blue-600 text-white'
-                : isToday ? 'bg-blue-500/20 text-blue-300'
+              aria-label={`${d} ${MONTHS[month]}${has ? ', есть бухгалтерский срок' : ''}`}
+              className={`relative min-h-11 rounded-xl border text-sm font-bold transition-colors ${
+                isSel ? 'border-violet-600 bg-violet-600 text-white'
+                : isToday ? 'border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300'
                 : 'text-bx-muted hover:bg-bx-surface-2'
               }`}
             >
               {d}
-              {has && <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${isSel ? 'bg-white' : 'bg-amber-400'}`} />}
+              {has && <span className={`absolute bottom-1 left-1/2 h-1 w-3 -translate-x-1/2 rounded-full ${isSel ? 'bg-white' : 'bg-amber-500'}`} />}
             </button>
           );
         })}
@@ -103,18 +115,18 @@ export default function TaxCalendar({ onPickDeadline }: Props) {
       {selected && (
         <div className="mt-3 pt-3 border-t border-bx-border">
           {selectedDeadlines.length === 0 ? (
-            <p className="text-xs text-bx-muted">На {selected} нет дедлайнов</p>
+            <p className="text-sm text-bx-muted">На {new Date(`${selected}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} нет общих сроков. Персональную задачу можно создать в Планировщике.</p>
           ) : (
             <div className="space-y-1.5">
               {selectedDeadlines.map(dl => (
-                <div key={dl.id} className="flex items-center gap-2 text-xs">
-                  <span className={`w-1.5 h-1.5 rounded-full ${dl.kind === 'payment' ? 'bg-red-400' : 'bg-blue-400'}`} />
-                  <span className="text-bx-text flex-1">{dl.title}</span>
+                <div key={dl.id} className="flex flex-col gap-3 rounded-xl border border-bx-border bg-bx-bg p-3 text-sm sm:flex-row sm:items-center">
+                  <span className={`h-2 w-2 flex-shrink-0 rounded-full ${dl.kind === 'payment' ? 'bg-amber-500' : 'bg-violet-500'}`} />
+                  <span className="flex-1 font-bold text-bx-text">{dl.title}</span>
                   <button
                     onClick={() => onPickDeadline(selected, dl)}
-                    className="text-[11px] text-blue-400 hover:text-blue-300"
+                    className="min-h-10 rounded-xl bg-violet-600 px-3 text-xs font-black text-white hover:bg-violet-700"
                   >
-                    + в задачи
+                    Добавить в задачи
                   </button>
                 </div>
               ))}

@@ -566,7 +566,7 @@ export default function Templates() {
     return (
       <div className="flex flex-1 overflow-y-auto bg-bx-bg text-bx-text custom-scrollbar">
         <div className="bx-page-container w-full space-y-5 py-5">
-          <DocumentsTabs current="templates" />
+          <DocumentsTabs current="templates" stage={2} />
           <header className="rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex min-w-0 items-start gap-3">
@@ -661,7 +661,7 @@ export default function Templates() {
   return (
     <ResourceLayout sidebar={sidebar}>
       <div className="space-y-6">
-        <DocumentsTabs current="templates" />
+        <DocumentsTabs current="templates" stage={1} />
         <ResourceHero eyebrow="Шаблоны документов" title="Бланки, которые не приходится собирать заново" description="Выберите документ, подставьте реквизиты, проверьте поля и сохраните готовый результат в Мои документы." icon="templates" stats={[{ value: allTemplates.length, label: 'шаблонов' }, { value: customTpls.length, label: 'создано вами' }, { value: filtered.length, label: search ? 'найдено' : 'в категории' }]} actions={<button type="button" onClick={() => setCreatingTpl(true)} className={primaryActionClass}><Icon name="plus" className="h-4 w-4" />Создать шаблон</button>} />
         <section className="space-y-3.5">
           <ResourceSectionTitle headingLevel="h2" title={search.trim() ? `Результаты по запросу «${search.trim()}»` : category === 'Все' ? 'Все шаблоны' : category} subtitle={simpleView ? undefined : 'Откройте бланк, заполните реквизиты и проверьте предпросмотр перед выгрузкой'} count={filtered.length} action={search.trim() ? <button type="button" onClick={() => setSearch('')} className={secondaryActionClass}>Очистить поиск</button> : undefined} />

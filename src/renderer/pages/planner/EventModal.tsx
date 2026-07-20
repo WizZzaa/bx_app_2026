@@ -3,6 +3,7 @@ import type { BxEvent, EventType, EventStatus, EventPriority, EventRecurrence, N
 import { COMPANY_ROLE_LABELS, type CompanyMember } from './useCompanyMembers';
 import { todayISO } from '../../lib/dates';
 import { EventActivityTimeline } from './EventActivityTimeline';
+import Icon from '../../lib/ui/Icon';
 
 interface Props {
   event?: BxEvent | null;
@@ -17,10 +18,10 @@ interface Props {
 }
 
 const TYPE_LABELS: Record<EventType, string> = {
-  task: '✅ Задача',
-  tax_deadline: '📋 Дедлайн',
-  reminder: '🔔 Напоминание',
-  event: '📅 Событие',
+  task: 'Задача',
+  tax_deadline: 'Дедлайн',
+  reminder: 'Напоминание',
+  event: 'Событие',
 };
 
 const STATUS_LABELS: Record<EventStatus, string> = {
@@ -31,9 +32,9 @@ const STATUS_LABELS: Record<EventStatus, string> = {
 };
 
 const PRIORITY_LABELS: Record<EventPriority, string> = {
-  high: '🔴 Высокий',
-  normal: '🟡 Средний',
-  low: '🟢 Низкий',
+  high: 'Высокий',
+  normal: 'Обычный',
+  low: 'Низкий',
 };
 
 const TAX_TAGS = ['НДС','НДФЛ','Прибыль','Оборот','Имущество','Земля','Вода','Таможня','ЗП','Дивиденды'];
@@ -124,198 +125,44 @@ export default function EventModal({ event, defaultDate, defaultType, defaultEve
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-bx-surface border border-bx-border-2 rounded-2xl w-[480px] max-h-[90vh] overflow-y-auto shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-bx-border">
-          <div>
-            <h2 className="text-base font-semibold text-bx-text">{isEdit ? 'Редактировать задачу' : 'Новая задача или событие'}</h2>
-            <p className="text-[10px] text-bx-muted mt-0.5">Компания, исполнитель, срок и напоминание — в одном окне</p>
+    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={e => { e.preventDefault(); save(); }} role="dialog" aria-modal="true" aria-labelledby="planner-event-title" className="flex max-h-[96vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] border border-bx-border bg-bx-surface shadow-2xl sm:max-h-[92vh] sm:rounded-[28px]">
+        <header className="flex items-start justify-between gap-4 border-b border-bx-border bg-gradient-to-br from-bx-surface to-violet-500/[0.07] px-5 py-5 sm:px-6">
+          <div className="flex min-w-0 items-start gap-3"><span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-2xl bg-violet-600 text-white shadow-md shadow-violet-600/20"><Icon name={isEdit ? 'planner' : 'plus'} className="h-5 w-5" /></span><div><p className="text-xs font-black text-violet-600 dark:text-violet-300">{isEdit ? 'Редактирование' : 'Быстрое добавление'}</p><h2 id="planner-event-title" className="mt-1 text-xl font-black text-bx-text">{isEdit ? 'Задача или событие' : 'Новая задача или событие'}</h2><p className="mt-1 text-sm leading-relaxed text-bx-muted">Сначала главное. Повторение, теги и напоминание — в дополнительных настройках.</p></div></div>
+          <button type="button" onClick={onClose} aria-label="Закрыть" className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-xl border border-bx-border bg-bx-surface text-bx-muted hover:text-bx-text"><Icon name="crossSmall" className="h-4 w-4" /></button>
+        </header>
+
+        <div className="custom-scrollbar flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
+          <fieldset><legend className="mb-2 text-sm font-black text-bx-text">Что вы добавляете</legend><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{(Object.keys(TYPE_LABELS) as EventType[]).map(t => <button type="button" key={t} onClick={() => setType(t)} aria-pressed={type === t} className={`min-h-11 rounded-xl border px-3 text-sm font-black transition-colors ${type === t ? 'border-violet-600 bg-violet-600 text-white' : 'border-bx-border bg-bx-bg text-bx-muted hover:border-violet-500/30 hover:text-bx-text'}`}>{TYPE_LABELS[t]}</button>)}</div></fieldset>
+
+          <label className="block text-sm font-black text-bx-text">Название *<input autoFocus required value={title} onChange={e => setTitle(e.target.value)} placeholder="Например: отправить отчёт по НДС" className="mt-2 min-h-12 w-full rounded-xl border border-bx-border bg-bx-bg px-4 text-base font-semibold text-bx-text outline-none focus:border-violet-500" /></label>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-black text-bx-text">Дата<input type="date" value={date} onChange={e => setDate(e.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-bx-border bg-bx-bg px-4 text-sm text-bx-text outline-none focus:border-violet-500" /></label>
+            <label className="text-sm font-black text-bx-text">Крайний срок <span className="font-medium text-bx-muted">· необязательно</span><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-bx-border bg-bx-bg px-4 text-sm text-bx-text outline-none focus:border-violet-500" /></label>
+            <label className="text-sm font-black text-bx-text">Статус<select value={status} onChange={e => setStatus(e.target.value as EventStatus)} className="mt-2 min-h-12 w-full rounded-xl border border-bx-border bg-bx-bg px-4 text-sm text-bx-text outline-none focus:border-violet-500">{(Object.keys(STATUS_LABELS) as EventStatus[]).map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}</select></label>
+            <label className="text-sm font-black text-bx-text">Приоритет<select value={priority} onChange={e => setPriority(e.target.value as EventPriority)} className="mt-2 min-h-12 w-full rounded-xl border border-bx-border bg-bx-bg px-4 text-sm text-bx-text outline-none focus:border-violet-500">{(Object.keys(PRIORITY_LABELS) as EventPriority[]).map(p => <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>)}</select></label>
           </div>
-          <button onClick={onClose} className="text-bx-muted hover:text-bx-text text-lg leading-none">✕</button>
+
+          <label className="block text-sm font-black text-bx-text">Исполнитель<select value={assigneeId} onChange={e => setAssigneeId(e.target.value)} disabled={membersLoading} className="mt-2 min-h-12 w-full rounded-xl border border-bx-border bg-bx-bg px-4 text-sm text-bx-text outline-none focus:border-violet-500 disabled:opacity-60"><option value="">Не назначен</option>{members.map(member => <option key={member.id} value={member.user_id}>{member.invited_email} · {COMPANY_ROLE_LABELS[member.role]}</option>)}</select><span className="mt-1.5 block text-xs font-medium leading-relaxed text-bx-muted">{membersLoading ? 'Загружаем команду…' : members.length > 0 ? 'Показываем активных участников выбранной компании.' : 'Участников можно пригласить в Настройки → Моя команда.'}</span></label>
+
+          <details className="group rounded-2xl border border-bx-border bg-bx-bg">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 font-black text-bx-text outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 [&::-webkit-details-marker]:hidden"><span className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-300"><Icon name="settings" className="h-4 w-4" /></span>Дополнительные настройки</span><Icon name="arrowR" className="h-4 w-4 rotate-90 text-bx-muted transition-transform group-open:-rotate-90" /></summary>
+            <div className="space-y-5 border-t border-bx-border p-4">
+              <label className="block text-sm font-black text-bx-text">Повторение<select value={recurrence ?? 'none'} onChange={e => setRecurrence(e.target.value === 'none' ? null : e.target.value as Exclude<EventRecurrence, null>)} className="mt-2 min-h-12 w-full rounded-xl border border-bx-border bg-bx-surface px-4 text-sm text-bx-text outline-none focus:border-violet-500">{(Object.keys(RECURRENCE_LABELS) as (keyof typeof RECURRENCE_LABELS)[]).map(r => <option key={r} value={r}>{RECURRENCE_LABELS[r]}</option>)}</select>{recurrence && <span className="mt-1.5 block text-xs font-medium text-bx-muted">После завершения будет создана следующая задача: {RECURRENCE_LABELS[recurrence].toLowerCase()}.</span>}</label>
+              <fieldset><legend className="mb-2 text-sm font-black text-bx-text">Налоговые метки</legend><div className="flex flex-wrap gap-2">{TAX_TAGS.map(t => <button type="button" key={t} onClick={() => toggleTag(t)} aria-pressed={tags.includes(t)} className={`min-h-10 rounded-xl border px-3 text-xs font-black ${tags.includes(t) ? 'border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300' : 'border-bx-border bg-bx-surface text-bx-muted'}`}>#{t}</button>)}</div></fieldset>
+              <label className="block text-sm font-black text-bx-text">Заметка<textarea value={note} onChange={e => setNote(e.target.value)} rows={3} placeholder="Контекст, ссылка или ожидаемый результат" className="mt-2 w-full resize-y rounded-xl border border-bx-border bg-bx-surface px-4 py-3 text-sm text-bx-text outline-none focus:border-violet-500" /></label>
+              {dueDate && <div className="rounded-xl border border-bx-border bg-bx-surface p-4"><label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-black text-bx-text"><input type="checkbox" checked={remind} onChange={e => setRemind(e.target.checked)} className="h-5 w-5 accent-violet-600" />Напомнить о крайнем сроке</label>{remind && <div className="mt-3 grid gap-3 pl-8 sm:grid-cols-2"><label className="text-xs font-bold text-bx-muted">Когда<select value={remindDays} onChange={e => setRemindDays(Number(e.target.value))} className="mt-1.5 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-sm text-bx-text"><option value={0}>В день срока</option><option value={1}>За 1 день</option><option value={2}>За 2 дня</option><option value={3}>За 3 дня</option><option value={5}>За 5 дней</option><option value={7}>За 7 дней</option></select></label><label className="text-xs font-bold text-bx-muted">Время<input type="time" value={remindTime} onChange={e => setRemindTime(e.target.value)} className="mt-1.5 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-sm text-bx-text" /></label></div>}</div>}
+              {event && <EventActivityTimeline event={event} members={members} />}
+            </div>
+          </details>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
-          {/* Тип */}
-          <div>
-            <label className="text-xs text-bx-muted block mb-1.5">Тип</label>
-            <div className="flex gap-2 flex-wrap">
-              {(Object.keys(TYPE_LABELS) as EventType[]).map(t => (
-                <button key={t} onClick={() => setType(t)}
-                  className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${type === t ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}>
-                  {TYPE_LABELS[t]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Заголовок */}
-          <div>
-            <label className="text-xs text-bx-muted block mb-1.5">Заголовок</label>
-            <input autoFocus value={title} onChange={e => setTitle(e.target.value)}
-              placeholder="Что нужно сделать?"
-              className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm"
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) save(); }}
-            />
-          </div>
-
-          {/* Дата + Дедлайн */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-bx-muted block mb-1.5">Дата</label>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-bx-muted block mb-1.5">Дедлайн (опц.)</label>
-              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
-                className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
-            </div>
-          </div>
-
-          {/* Исполнитель */}
-          <div>
-            <label className="text-xs text-bx-muted block mb-1.5">Исполнитель</label>
-            <select
-              value={assigneeId}
-              onChange={e => setAssigneeId(e.target.value)}
-              disabled={membersLoading}
-              className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm disabled:opacity-60"
-            >
-              <option value="">Не назначен</option>
-              {members.map(member => (
-                <option key={member.id} value={member.user_id}>
-                  {member.invited_email} · {COMPANY_ROLE_LABELS[member.role]}
-                </option>
-              ))}
-            </select>
-            <p className="text-[10px] text-bx-muted mt-1">
-              {membersLoading
-                ? 'Загружаем команду…'
-                : members.length > 0
-                  ? 'В списке только активные участники выбранной компании.'
-                  : 'Пригласить участников можно в Настройки → Моя команда.'}
-            </p>
-          </div>
-
-          {/* Статус + Приоритет */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-bx-muted block mb-1.5">Статус</label>
-              <select value={status} onChange={e => setStatus(e.target.value as EventStatus)}
-                className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none text-sm">
-                {(Object.keys(STATUS_LABELS) as EventStatus[]).map(s => (
-                  <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-bx-muted block mb-1.5">Приоритет</label>
-              <select value={priority} onChange={e => setPriority(e.target.value as EventPriority)}
-                className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none text-sm">
-                {(Object.keys(PRIORITY_LABELS) as EventPriority[]).map(p => (
-                  <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Повторение */}
-          <div>
-            <label className="text-xs text-bx-muted block mb-1.5">Повторение</label>
-            <select value={recurrence ?? 'none'}
-              onChange={e => setRecurrence(e.target.value === 'none' ? null : e.target.value as Exclude<EventRecurrence, null>)}
-              className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none text-sm">
-              {(Object.keys(RECURRENCE_LABELS) as (keyof typeof RECURRENCE_LABELS)[]).map(r => (
-                <option key={r} value={r}>{RECURRENCE_LABELS[r]}</option>
-              ))}
-            </select>
-            {recurrence && (
-              <p className="text-[10px] text-bx-muted mt-1">При завершении задачи автоматически создастся следующая ({RECURRENCE_LABELS[recurrence].toLowerCase()}).</p>
-            )}
-          </div>
-
-          {/* Теги */}
-          <div>
-            <label className="text-xs text-bx-muted block mb-1.5">Теги</label>
-            <div className="flex flex-wrap gap-1.5">
-              {TAX_TAGS.map(t => (
-                <button key={t} onClick={() => toggleTag(t)}
-                  className={`px-2 py-0.5 text-[11px] rounded-md transition-colors ${tags.includes(t) ? 'bg-blue-600/30 text-blue-300 border border-blue-500/40' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-muted'}`}>
-                  #{t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Заметка */}
-          <div>
-            <label className="text-xs text-bx-muted block mb-1.5">Заметка</label>
-            <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
-              placeholder="Дополнительная информация..."
-              className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm resize-none" />
-          </div>
-
-          {/* Напоминание */}
-          {dueDate && (
-            <div className="space-y-2 border-t border-bx-border/40 pt-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={remind} onChange={e => setRemind(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded accent-blue-500" />
-                <span className="text-xs text-bx-text font-medium">Включить напоминание</span>
-              </label>
-              {remind && (
-                <div className="flex items-center gap-2 pl-5.5 text-xs text-bx-muted">
-                  <span>За</span>
-                  <select
-                    value={remindDays}
-                    onChange={e => setRemindDays(Number(e.target.value))}
-                    className="bg-bx-bg text-bx-text text-xs rounded border border-bx-border-2 px-1.5 py-1 focus:outline-none"
-                  >
-                    <option value={0}>день дедлайна (0 дн.)</option>
-                    <option value={1}>1 день</option>
-                    <option value={2}>2 дня</option>
-                    <option value={3}>3 дня</option>
-                    <option value={5}>5 дней</option>
-                    <option value={7}>7 дней</option>
-                  </select>
-                  <span>в</span>
-                  <input
-                    type="time"
-                    value={remindTime}
-                    onChange={e => setRemindTime(e.target.value)}
-                    className="bg-bx-bg text-bx-text text-xs rounded border border-bx-border-2 px-1.5 py-1 focus:outline-none w-18 text-center"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {event && <EventActivityTimeline event={event} members={members} />}
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-bx-border">
-          <div className="flex items-center gap-3">
-            {isEdit && onDelete && (
-              confirmDelete
-                ? <div className="flex items-center gap-2">
-                    <span className="text-xs text-red-400">Удалить?</span>
-                    <button onClick={onDelete} className="text-xs px-2 py-1 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30">Да</button>
-                    <button onClick={() => setConfirmDelete(false)} className="text-xs text-bx-muted hover:text-bx-text">Отмена</button>
-                  </div>
-                : <button onClick={() => setConfirmDelete(true)} className="text-xs text-bx-muted hover:text-red-400 transition-colors">Удалить</button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <button onClick={onClose} className="px-4 py-2 text-sm text-bx-muted hover:text-bx-text transition-colors">Отмена</button>
-            <button onClick={save} disabled={!title.trim()}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-sm font-medium rounded-lg transition-colors">
-              {isEdit ? 'Сохранить' : 'Создать'}
-            </button>
-          </div>
-        </div>
-      </div>
+        <footer className="flex flex-col-reverse gap-3 border-t border-bx-border bg-bx-surface px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div>{isEdit && onDelete && (confirmDelete ? <div className="flex items-center gap-2"><span className="text-sm font-bold text-red-600 dark:text-red-300">Удалить без восстановления?</span><button type="button" onClick={onDelete} className="min-h-10 rounded-xl bg-red-600 px-3 text-xs font-black text-white">Удалить</button><button type="button" onClick={() => setConfirmDelete(false)} className="min-h-10 px-2 text-xs font-black text-bx-muted">Отмена</button></div> : <button type="button" onClick={() => setConfirmDelete(true)} className="min-h-11 rounded-xl px-3 text-sm font-black text-red-600 hover:bg-red-500/10 dark:text-red-300">Удалить</button>)}</div>
+          <div className="grid grid-cols-2 gap-2 sm:flex"><button type="button" onClick={onClose} className="min-h-12 rounded-xl border border-bx-border px-5 text-sm font-black text-bx-text hover:bg-bx-bg">Отмена</button><button type="submit" disabled={!title.trim()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-black text-white shadow-md shadow-violet-600/20 hover:bg-violet-700 disabled:opacity-40"><Icon name={isEdit ? 'save' : 'plus'} className="h-4 w-4" />{isEdit ? 'Сохранить' : 'Создать'}</button></div>
+        </footer>
+      </form>
     </div>
   );
 }

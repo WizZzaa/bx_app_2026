@@ -371,6 +371,8 @@
   :root[data-bx-design='d1'] .bx-d1-dashboard-card--company,
   :root[data-bx-design='d1'] .bx-d1-dashboard-card--ai { grid-column: span 4; }
   :root[data-bx-design='d1'] .bx-d1-dashboard-card--tools { grid-column: 1 / -1; }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-live--weather,
+  :root[data-bx-design='d1'] .bx-d1-dashboard-card--tax-calendar { grid-column: span 4; }
   :root[data-bx-design='d1'] .bx-d1-dashboard-tools { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   :root[data-bx-design='d1'] .bx-d1-dashboard-tools strong { white-space: normal; }
 }
@@ -379,10 +381,15 @@
   :root[data-bx-design='d1'] .bx-d1-dashboard__container { padding: var(--bx-space-8); }
   :root[data-bx-design='d1'] .bx-d1-dashboard__grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
   :root[data-bx-design='d1'] .bx-d1-dashboard-card--today,
-  :root[data-bx-design='d1'] .bx-d1-dashboard-card--tools { grid-column: span 8; }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-card--ai { grid-column: span 8; }
   :root[data-bx-design='d1'] .bx-d1-dashboard-card--company,
-  :root[data-bx-design='d1'] .bx-d1-dashboard-card--ai { grid-column: span 4; }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-live--weather { grid-column: span 4; }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-card--tax-calendar { grid-column: span 7; }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-card--tools { grid-column: span 5; }
 }
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-live { min-width: 0; }
+:root[data-bx-design='d1'] .bx-d1-dashboard-card--tax-calendar { min-height: 24rem; }
 
 @media (max-width: 47.999rem) {
   :root[data-bx-design='d1'] .bx-d1-dashboard-card { min-height: 0; padding: var(--bx-space-4); }

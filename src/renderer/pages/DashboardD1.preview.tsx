@@ -99,6 +99,7 @@ const props: DashboardD1ViewProps = {
   onRetryAi: () => undefined,
   onCreateCompany: () => undefined,
   onEditCompany: () => undefined,
+  showLiveWidgets: true,
 }
 
 function WorkspacePreview() {
