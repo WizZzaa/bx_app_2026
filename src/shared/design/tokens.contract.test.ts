@@ -15,10 +15,10 @@ const declarations = (block: string) => Array.from(block.matchAll(/(--bx-[a-z0-9
 const declarationMap = (block: string) => new Map(declarations(block).map(match => [match[1], match[2].trim()]))
 
 const themes = {
-  light: declarationMap(blockAfter(':root {')),
-  dark: declarationMap(blockAfter(":root[data-theme='dark']")),
-  highContrast: declarationMap(blockAfter(":root[data-theme='high-contrast']")),
-  systemDark: declarationMap(blockAfter(":root[data-theme='system']")),
+  light: declarationMap(blockAfter(":root[data-bx-design='d1'] {")),
+  dark: declarationMap(blockAfter(":root[data-bx-design='d1'][data-theme='dark']")),
+  highContrast: declarationMap(blockAfter(":root[data-bx-design='d1'][data-theme='high-contrast']")),
+  systemDark: declarationMap(blockAfter(":root[data-bx-design='d1'][data-theme='system']")),
 }
 
 const colourTokens = [
@@ -73,15 +73,15 @@ const tokenValue = (theme: Map<string, string>, token: string) => {
 
 describe('BX semantic design tokens', () => {
   it('keeps self-hosted Geist first with a system-safe fallback stack', () => {
-    expect(themes.light.get('--bx-font-sans')).toBe('Geist, Inter, "Segoe UI", Roboto, Arial, sans-serif')
+    expect(themes.light.get('--bx-font-sans')).toBe('"Geist Variable", Geist, Inter, "Segoe UI", Roboto, Arial, sans-serif')
   })
 
   it('defines each custom property only once inside every canonical theme block', () => {
     for (const [name, selector] of [
-      ['light', ':root {'],
-      ['dark', ":root[data-theme='dark']"],
-      ['high-contrast', ":root[data-theme='high-contrast']"],
-      ['system-dark', ":root[data-theme='system']"],
+      ['light', ":root[data-bx-design='d1'] {"],
+      ['dark', ":root[data-bx-design='d1'][data-theme='dark']"],
+      ['high-contrast', ":root[data-bx-design='d1'][data-theme='high-contrast']"],
+      ['system-dark', ":root[data-bx-design='d1'][data-theme='system']"],
     ] as const) {
       const names = declarations(blockAfter(selector)).map(match => match[1])
       expect(new Set(names).size, `${name} contains a duplicate token`).toBe(names.length)
@@ -169,5 +169,11 @@ describe('BX semantic design tokens', () => {
     expect(themes.highContrast.get('--bx-scrim')).toBe('#000000')
     expect(themes.highContrast.get('--bx-shadow-sm')).toBe('none')
     expect(themes.highContrast.get('--bx-shadow-overlay')).toBe('none')
+  })
+
+  it('keeps every runtime theme scoped behind the D1 feature marker', () => {
+    expect(css).not.toMatch(/(^|\n):root\s*\{/)
+    expect(css).not.toMatch(/(^|\n):root\[data-theme=/)
+    expect(css.match(/:root\[data-bx-design='d1'\]/g)?.length).toBeGreaterThanOrEqual(6)
   })
 })

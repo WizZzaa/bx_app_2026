@@ -1,11 +1,11 @@
 /*
  * BX semantic design tokens.
  *
- * D1-A contract only: this file is intentionally not imported by a runtime
- * stylesheet yet. Theme integration follows after visual parity approval.
+ * Runtime adoption is guarded by data-bx-design="d1". Importing this file is
+ * therefore inert until the explicit build-time feature flag is enabled.
  */
 
-:root {
+:root[data-bx-design='d1'] {
   color-scheme: light;
 
   /* Semantic colour roles — light theme is the safe default. */
@@ -42,7 +42,7 @@
   --bx-on-brand-rgb: 255 255 255;
 
   /* Typography. User font scaling remains an independent runtime setting. */
-  --bx-font-sans: Geist, Inter, "Segoe UI", Roboto, Arial, sans-serif;
+  --bx-font-sans: "Geist Variable", Geist, Inter, "Segoe UI", Roboto, Arial, sans-serif;
   --bx-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --bx-font-size-xs: 0.75rem;
   --bx-font-size-sm: 0.875rem;
@@ -119,8 +119,8 @@
   --bx-on-accent-muted-rgb: var(--bx-on-brand-rgb);
 }
 
-:root[data-theme='dark'],
-:root.dark {
+:root[data-bx-design='d1'][data-theme='dark'],
+:root[data-bx-design='d1'].dark {
   color-scheme: dark;
   --bx-canvas: #111018;
   --bx-surface: #181621;
@@ -155,8 +155,8 @@
   --bx-shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.42);
 }
 
-:root[data-theme='high-contrast'],
-:root.high-contrast {
+:root[data-bx-design='d1'][data-theme='high-contrast'],
+:root[data-bx-design='d1'].high-contrast {
   color-scheme: dark;
   --bx-canvas: #000000;
   --bx-surface: #000000;
@@ -193,7 +193,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root[data-theme='system'] {
+  :root[data-bx-design='d1'][data-theme='system'] {
     color-scheme: dark;
     --bx-canvas: #111018;
     --bx-surface: #181621;
