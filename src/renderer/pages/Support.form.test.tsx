@@ -1,5 +1,6 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Support from './Support';
 
@@ -7,6 +8,10 @@ const toastError = vi.fn();
 const ticketMocks = vi.hoisted(() => ({
   createTicket: vi.fn(),
   openTicket: vi.fn(),
+}));
+const planMocks = vi.hoisted(() => ({
+  plan: undefined as 'free' | 'standard' | 'premium' | undefined,
+  isPro: true,
 }));
 
 vi.mock('./support/useTickets', () => ({
@@ -22,7 +27,7 @@ vi.mock('./support/useTickets', () => ({
   }),
 }));
 
-vi.mock('../lib/plan', () => ({ usePlan: () => ({ isPro: true }) }));
+vi.mock('../lib/plan', () => ({ usePlan: () => ({ plan: planMocks.plan, isPro: planMocks.isPro }) }));
 vi.mock('../lib/CompanyContext', () => ({
   useCompany: () => ({ active: { name: 'ООО Тест', inn: '123456789' } }),
 }));
@@ -37,6 +42,8 @@ afterEach(() => {
 });
 
 beforeEach(() => {
+  planMocks.plan = undefined;
+  planMocks.isPro = true;
   ticketMocks.createTicket.mockReset();
   ticketMocks.createTicket.mockResolvedValue('ticket-1');
   ticketMocks.openTicket.mockReset();
@@ -91,5 +98,50 @@ describe('Support new request form', () => {
       '123456789',
       undefined,
     );
+  });
+
+  it('preserves a stored draft when the current plan cannot submit it', async () => {
+    const draft = JSON.stringify({ subject: 'Не удалять', body: 'Этот черновик должен остать на устройстве' });
+    localStorage.setItem('bx_support_draft', draft);
+    planMocks.plan = 'free';
+    planMocks.isPro = false;
+
+    render(<MemoryRouter><Support /></MemoryRouter>);
+
+    await waitFor(() => expect(localStorage.getItem('bx_support_draft')).toBe(draft));
+    expect(ticketMocks.createTicket).not.toHaveBeenCalled();
+  });
+
+  it('loads a stored draft without deleting it and clears it only after successful creation', async () => {
+    const draft = JSON.stringify({ subject: 'Проблема с E-Imzo', body: 'E-Imzo не видит ключ после обновления Windows' });
+    localStorage.setItem('bx_support_draft', draft);
+    localStorage.setItem('bx_support_contact_phone', '+998 90 123-45-67');
+
+    render(<Support />);
+
+    expect(await screen.findByRole('heading', { name: 'Чем помочь?' })).toBeTruthy();
+    expect((screen.getByLabelText(/Что случилось/) as HTMLTextAreaElement).value).toBe('E-Imzo не видит ключ после обновления Windows');
+    expect(localStorage.getItem('bx_support_draft')).toBe(draft);
+
+    const submitButtons = screen.getAllByRole('button', { name: 'Отправить заявку' });
+    fireEvent.click(submitButtons[submitButtons.length - 1]);
+
+    await waitFor(() => expect(ticketMocks.createTicket).toHaveBeenCalled());
+    await waitFor(() => expect(localStorage.getItem('bx_support_draft')).toBeNull());
+  });
+
+  it('keeps the draft when ticket creation is not confirmed', async () => {
+    const draft = JSON.stringify({ subject: 'Не отправлено', body: 'Не удаётся отправить эту заявку в поддержку' });
+    localStorage.setItem('bx_support_draft', draft);
+    localStorage.setItem('bx_support_contact_phone', '+998 90 123-45-67');
+    ticketMocks.createTicket.mockResolvedValue(null);
+
+    render(<Support />);
+    expect(await screen.findByRole('heading', { name: 'Чем помочь?' })).toBeTruthy();
+    const submitButtons = screen.getAllByRole('button', { name: 'Отправить заявку' });
+    fireEvent.click(submitButtons[submitButtons.length - 1]);
+
+    await waitFor(() => expect(ticketMocks.createTicket).toHaveBeenCalled());
+    expect(localStorage.getItem('bx_support_draft')).toBe(draft);
   });
 });

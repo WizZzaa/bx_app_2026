@@ -64,9 +64,8 @@ export default function Support() {
     try {
       const draft = localStorage.getItem('bx_support_draft')
       if (!draft) return
-      const parsed = JSON.parse(draft) as { subject?: string; body?: string }
-      localStorage.removeItem('bx_support_draft')
       if (!hasSupport) { setPaywall(true); return }
+      const parsed = JSON.parse(draft) as { subject?: string; body?: string }
       setSubject(parsed.subject ?? '')
       setBody(parsed.body ?? '')
       setCreating(true)
@@ -97,6 +96,7 @@ export default function Support() {
       localStorage.setItem('bx_support_contact_name', contactName.trim())
       localStorage.setItem('bx_support_contact_phone', contactPhone.trim())
       localStorage.setItem('bx_support_remote_id', remoteId.trim())
+      localStorage.removeItem('bx_support_draft')
       setCreating(false); setSubject(''); setBody(''); setCategory('bx'); setImpact('normal'); setCreateAttempted(false); setBlurredFields(new Set())
       toast.success('Обращение отправлено — специалист ответит здесь')
       await openTicket(id)

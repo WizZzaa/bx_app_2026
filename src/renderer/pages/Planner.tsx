@@ -52,15 +52,6 @@ export default function Planner() {
   const [seedMsg, setSeedMsg] = useState('');
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-  // Одноразово убираем локальные кэши удалённой проектной подсистемы.
-  useEffect(() => {
-    localStorage.removeItem('bx_boards_cache_v1');
-    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
-      const key = localStorage.key(index);
-      if (key?.startsWith('bx_cards_cache_')) localStorage.removeItem(key);
-    }
-  }, []);
-
   async function handleDeleteEventDirect(id: string) {
     const removed = await remove(id);
     if (removed) toast.info('Событие удалено');
