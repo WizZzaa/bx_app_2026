@@ -9,11 +9,136 @@
   font-family: var(--bx-font-sans);
 }
 
+:root[data-bx-design='d1'] .bx-d1-dashboard::before {
+  position: fixed;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  width: min(42rem, 60vw);
+  height: 28rem;
+  background: radial-gradient(circle at 70% 10%, rgb(var(--bx-brand-rgb) / 0.12), transparent 68%);
+  content: '';
+  pointer-events: none;
+}
+
 :root[data-bx-design='d1'] .bx-d1-dashboard__container {
   width: min(100%, var(--bx-content-max));
   margin-inline: auto;
   padding: var(--bx-space-4);
+  padding-bottom: var(--bx-space-12);
 }
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero {
+  position: relative;
+  display: grid;
+  min-height: 20rem;
+  grid-template-columns: minmax(0, 1.45fr) minmax(17rem, 0.55fr);
+  gap: var(--bx-space-8);
+  align-items: stretch;
+  margin-bottom: var(--bx-space-4);
+  padding: clamp(var(--bx-space-6), 4vw, var(--bx-space-12));
+  overflow: hidden;
+  border: 1px solid var(--bx-border);
+  border-radius: calc(var(--bx-radius-card) + var(--bx-space-1));
+  background: linear-gradient(135deg, rgb(var(--bx-surface-rgb) / 0.98), rgb(var(--bx-brand-rgb) / 0.08)), var(--bx-surface);
+}
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero::after {
+  position: absolute;
+  right: -5rem;
+  bottom: -8rem;
+  width: 22rem;
+  height: 22rem;
+  border: 1px solid rgb(var(--bx-brand-rgb) / 0.22);
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__content {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  max-width: 46rem;
+}
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero h1 {
+  max-width: 42rem;
+  margin: var(--bx-space-3) 0 0;
+  font-size: clamp(2rem, 4.2vw, 3.35rem);
+  line-height: 0.98;
+  letter-spacing: -0.052em;
+}
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__lead {
+  max-width: 40rem;
+  margin: var(--bx-space-5) 0 0;
+  color: var(--bx-text-secondary);
+  font-size: var(--bx-font-size-md);
+  line-height: var(--bx-line-height-body);
+}
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bx-space-3);
+  margin-top: var(--bx-space-6);
+}
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__actions .bx-d1-action { margin-top: 0; }
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__summary {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: space-between;
+  gap: var(--bx-space-6);
+  padding: var(--bx-space-5);
+  border: 1px solid rgb(var(--bx-brand-rgb) / 0.18);
+  border-radius: var(--bx-radius-card);
+  background: rgb(var(--bx-surface-rgb) / 0.78);
+  backdrop-filter: blur(1rem);
+}
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__date {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--bx-space-3);
+  align-items: center;
+}
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__date > span {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: var(--bx-radius-md);
+  background: var(--bx-brand-soft);
+  color: var(--bx-brand-action);
+}
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__date svg { width: 1.25rem; height: 1.25rem; }
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__date div { display: grid; gap: var(--bx-space-1); }
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__date small { color: var(--bx-text-secondary); font-size: var(--bx-font-size-xs); }
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__date strong { font-size: var(--bx-font-size-sm); line-height: var(--bx-line-height-label); text-transform: capitalize; }
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__summary dl {
+  display: grid;
+  gap: var(--bx-space-3);
+  margin: 0;
+}
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__summary dl div {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--bx-space-4);
+  padding-top: var(--bx-space-3);
+  border-top: 1px solid var(--bx-border);
+}
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__summary dt { color: var(--bx-text-secondary); font-size: var(--bx-font-size-xs); }
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero__summary dd { margin: 0; font-size: var(--bx-font-size-md); font-weight: 720; text-align: right; }
 
 :root[data-bx-design='d1'] .bx-d1-dashboard__grid {
   grid-template-columns: minmax(0, 1fr);
@@ -26,12 +151,16 @@
   border: 1px solid var(--bx-border);
   border-radius: var(--bx-radius-card);
   background: var(--bx-surface);
-  box-shadow: var(--bx-shadow-sm);
+  box-shadow: none;
+  transition: border-color 180ms ease, transform 180ms ease;
 }
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-card:hover { border-color: rgb(var(--bx-brand-rgb) / 0.34); }
 
 :root[data-bx-design='d1'] .bx-d1-dashboard-card--today {
   min-height: 24rem;
-  background: linear-gradient(145deg, var(--bx-surface) 52%, var(--bx-brand-soft));
+  border-color: rgb(var(--bx-brand-rgb) / 0.24);
+  background: linear-gradient(145deg, var(--bx-surface) 58%, rgb(var(--bx-brand-rgb) / 0.1));
 }
 
 :root[data-bx-design='d1'] .bx-d1-dashboard-card__heading {
@@ -42,32 +171,35 @@
   gap: var(--bx-space-3);
 }
 
-:root[data-bx-design='d1'] .bx-d1-dashboard-card h1,
 :root[data-bx-design='d1'] .bx-d1-dashboard-card h2,
 :root[data-bx-design='d1'] .bx-d1-dashboard-card h3,
 :root[data-bx-design='d1'] .bx-d1-dashboard-card p {
   margin: 0;
 }
 
-:root[data-bx-design='d1'] .bx-d1-dashboard-card h1 {
+:root[data-bx-design='d1'] .bx-d1-dashboard-card__heading h2 {
   margin-top: var(--bx-space-1);
-  font-size: clamp(var(--bx-font-size-xl), 4vw, var(--bx-font-size-2xl));
+  font-size: clamp(var(--bx-font-size-lg), 2.2vw, var(--bx-font-size-xl));
   line-height: var(--bx-line-height-heading);
   letter-spacing: -0.025em;
 }
 
-:root[data-bx-design='d1'] .bx-d1-dashboard-card__heading h2 {
-  margin-top: var(--bx-space-1);
-  font-size: var(--bx-font-size-lg);
-  line-height: var(--bx-line-height-heading);
-}
-
 :root[data-bx-design='d1'] .bx-d1-dashboard-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--bx-space-2);
   color: var(--bx-brand-action);
   font-size: var(--bx-font-size-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+:root[data-bx-design='d1'] .bx-d1-dashboard-eyebrow > span {
+  width: 1.75rem;
+  height: 2px;
+  border-radius: var(--bx-radius-pill);
+  background: currentColor;
 }
 
 :root[data-bx-design='d1'] .bx-d1-dashboard-date,
@@ -112,8 +244,8 @@
   height: 1.25rem;
 }
 
-:root[data-bx-design='d1'] .bx-d1-dashboard-priority h2,
-:root[data-bx-design='d1'] .bx-d1-dashboard-empty h2,
+:root[data-bx-design='d1'] .bx-d1-dashboard-priority h3,
+:root[data-bx-design='d1'] .bx-d1-dashboard-empty h3,
 :root[data-bx-design='d1'] .bx-d1-dashboard-company h3 {
   margin-top: var(--bx-space-2);
   font-size: var(--bx-font-size-lg);
@@ -186,7 +318,10 @@
   font: inherit;
   font-size: var(--bx-font-size-sm);
   font-weight: 700;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
 }
+
+:root[data-bx-design='d1'] .bx-d1-action:active { transform: translateY(1px); }
 
 :root[data-bx-design='d1'] .bx-d1-action svg {
   width: 1rem;
@@ -208,6 +343,12 @@
 }
 
 :root[data-bx-design='d1'] .bx-d1-action--secondary:hover { background: var(--bx-surface-subtle); }
+
+:root[data-bx-design='d1'] .bx-d1-action--focus {
+  margin-top: var(--bx-space-6);
+  border-color: rgb(var(--bx-brand-rgb) / 0.34);
+  color: var(--bx-brand-action);
+}
 
 :root[data-bx-design='d1'] .bx-d1-dashboard-empty .bx-d1-action,
 :root[data-bx-design='d1'] .bx-d1-dashboard-company .bx-d1-action {
@@ -245,14 +386,14 @@
   padding: var(--bx-space-3);
   border: 1px solid var(--bx-border);
   border-radius: var(--bx-radius-md);
-  background: var(--bx-surface-subtle);
+  background: var(--bx-surface);
   color: var(--bx-text-primary);
   cursor: pointer;
   font: inherit;
   text-align: left;
 }
 
-:root[data-bx-design='d1'] .bx-d1-dashboard-tools button:hover { border-color: var(--bx-brand); }
+:root[data-bx-design='d1'] .bx-d1-dashboard-tools button:hover { border-color: var(--bx-brand); background: var(--bx-brand-soft); }
 :root[data-bx-design='d1'] .bx-d1-dashboard-tools button > span { grid-row: 1 / 3; color: var(--bx-brand-action); }
 :root[data-bx-design='d1'] .bx-d1-dashboard-tools svg { width: 1.25rem; height: 1.25rem; }
 :root[data-bx-design='d1'] .bx-d1-dashboard-tools strong { overflow: hidden; font-size: var(--bx-font-size-sm); text-overflow: ellipsis; white-space: nowrap; }
@@ -357,8 +498,138 @@
 
 :root[data-bx-design='d1'] .bx-d1-dashboard-sticky { display: none; }
 
+:root[data-bx-design='d1'] .bx-horoscope {
+  position: relative;
+  display: grid;
+  min-height: 34rem;
+  gap: var(--bx-space-4);
+  padding: var(--bx-space-5);
+  overflow: hidden;
+  border: 1px solid rgb(var(--bx-brand-rgb) / 0.22);
+  border-radius: var(--bx-radius-card);
+  background: linear-gradient(145deg, var(--bx-surface) 48%, rgb(var(--bx-brand-rgb) / 0.1));
+}
+
+:root[data-bx-design='d1'] .bx-horoscope__constellation { position: absolute; right: -3rem; bottom: -2rem; width: 20rem; height: 100%; color: var(--bx-brand-action); opacity: 0.1; pointer-events: none; }
+:root[data-bx-design='d1'] .bx-horoscope__header,
+:root[data-bx-design='d1'] .bx-horoscope__prediction,
+:root[data-bx-design='d1'] .bx-horoscope__warning,
+:root[data-bx-design='d1'] .bx-horoscope__facts,
+:root[data-bx-design='d1'] .bx-horoscope__footer { position: relative; z-index: 1; }
+:root[data-bx-design='d1'] .bx-horoscope__header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--bx-space-3); }
+:root[data-bx-design='d1'] .bx-horoscope__title { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--bx-space-3); align-items: center; }
+:root[data-bx-design='d1'] .bx-horoscope__title > span { display: grid; width: 2.75rem; height: 2.75rem; place-items: center; border-radius: var(--bx-radius-md); background: var(--bx-brand-soft); color: var(--bx-brand-action); }
+:root[data-bx-design='d1'] .bx-horoscope__title svg { width: 1.1rem; height: 1.1rem; }
+:root[data-bx-design='d1'] .bx-horoscope__title p,
+:root[data-bx-design='d1'] .bx-horoscope__title h2 { margin: 0; }
+:root[data-bx-design='d1'] .bx-horoscope__title p { color: var(--bx-brand-action); font-size: var(--bx-font-size-xs); font-weight: 750; }
+:root[data-bx-design='d1'] .bx-horoscope__title h2 { margin-top: var(--bx-space-1); font-size: var(--bx-font-size-lg); letter-spacing: -0.02em; }
+:root[data-bx-design='d1'] .bx-horoscope__date { padding: var(--bx-space-2) var(--bx-space-3); border: 1px solid var(--bx-border); border-radius: var(--bx-radius-pill); background: rgb(var(--bx-surface-rgb) / 0.72); color: var(--bx-text-secondary); font-size: var(--bx-font-size-xs); font-weight: 650; }
+
+:root[data-bx-design='d1'] .bx-horoscope__prediction { padding: var(--bx-space-4); border: 1px solid rgb(var(--bx-brand-rgb) / 0.16); border-radius: var(--bx-radius-md); background: rgb(var(--bx-surface-rgb) / 0.78); }
+:root[data-bx-design='d1'] .bx-horoscope__prediction small { color: var(--bx-brand-action); font-size: var(--bx-font-size-xs); font-weight: 750; }
+:root[data-bx-design='d1'] .bx-horoscope__prediction p { margin: var(--bx-space-2) 0 0; font-size: var(--bx-font-size-md); font-weight: 720; line-height: var(--bx-line-height-heading); }
+:root[data-bx-design='d1'] .bx-horoscope__prediction span { display: block; margin-top: var(--bx-space-3); color: var(--bx-text-secondary); font-size: var(--bx-font-size-sm); line-height: var(--bx-line-height-body); }
+
+:root[data-bx-design='d1'] .bx-horoscope__warning { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--bx-space-3); align-items: start; padding: var(--bx-space-3); border-radius: var(--bx-radius-md); background: color-mix(in srgb, var(--bx-warning) 8%, var(--bx-surface)); color: var(--bx-warning-text); }
+:root[data-bx-design='d1'] .bx-horoscope__warning svg { width: 1rem; height: 1rem; margin-top: 0.15rem; }
+:root[data-bx-design='d1'] .bx-horoscope__warning p { margin: 0; font-size: var(--bx-font-size-xs); line-height: var(--bx-line-height-body); }
+
+:root[data-bx-design='d1'] .bx-horoscope__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bx-space-2); margin: 0; }
+:root[data-bx-design='d1'] .bx-horoscope__facts div { min-width: 0; padding: var(--bx-space-3); border: 1px solid var(--bx-border); border-radius: var(--bx-radius-md); background: rgb(var(--bx-surface-rgb) / 0.7); }
+:root[data-bx-design='d1'] .bx-horoscope__facts dt { color: var(--bx-text-secondary); font-size: var(--bx-font-size-xs); }
+:root[data-bx-design='d1'] .bx-horoscope__facts dd { margin: var(--bx-space-1) 0 0; overflow: hidden; font-size: var(--bx-font-size-xs); font-weight: 700; line-height: var(--bx-line-height-label); text-overflow: ellipsis; }
+
+:root[data-bx-design='d1'] .bx-horoscope__footer { display: flex; flex-wrap: wrap; gap: var(--bx-space-2); align-items: center; }
+:root[data-bx-design='d1'] .bx-horoscope__footer button { display: inline-flex; min-height: var(--bx-target-min); align-items: center; justify-content: center; gap: var(--bx-space-2); padding: var(--bx-space-2) var(--bx-space-3); border: 1px solid var(--bx-border); border-radius: var(--bx-radius-sm); background: var(--bx-surface); color: var(--bx-text-primary); cursor: pointer; font: inherit; font-size: var(--bx-font-size-xs); font-weight: 700; }
+:root[data-bx-design='d1'] .bx-horoscope__footer button:first-child { border-color: rgb(var(--bx-brand-rgb) / 0.32); color: var(--bx-brand-action); }
+:root[data-bx-design='d1'] .bx-horoscope__footer button:hover { background: var(--bx-brand-soft); }
+:root[data-bx-design='d1'] .bx-horoscope__footer button svg { width: 1rem; height: 1rem; }
+:root[data-bx-design='d1'] .bx-horoscope__footer small { width: 100%; color: var(--bx-text-secondary); font-size: var(--bx-font-size-xs); line-height: var(--bx-line-height-label); }
+
+:root[data-bx-design='d1'] .bx-tax-calendar { display: grid; gap: var(--bx-space-4); height: 100%; }
+:root[data-bx-design='d1'] .bx-tax-calendar__header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--bx-space-4); }
+:root[data-bx-design='d1'] .bx-tax-calendar__title { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--bx-space-3); align-items: start; }
+:root[data-bx-design='d1'] .bx-tax-calendar__title > span {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: var(--bx-radius-md);
+  background: var(--bx-brand-soft);
+  color: var(--bx-brand-action);
+}
+:root[data-bx-design='d1'] .bx-tax-calendar__title svg { width: 1.25rem; height: 1.25rem; }
+:root[data-bx-design='d1'] .bx-tax-calendar__title p,
+:root[data-bx-design='d1'] .bx-tax-calendar__title h2,
+:root[data-bx-design='d1'] .bx-tax-calendar__title small { margin: 0; }
+:root[data-bx-design='d1'] .bx-tax-calendar__title p { color: var(--bx-brand-action); font-size: var(--bx-font-size-xs); font-weight: 750; }
+:root[data-bx-design='d1'] .bx-tax-calendar__title h2 { margin-top: var(--bx-space-1); font-size: var(--bx-font-size-lg); letter-spacing: -0.02em; }
+:root[data-bx-design='d1'] .bx-tax-calendar__title small { display: block; margin-top: var(--bx-space-1); color: var(--bx-text-secondary); font-size: var(--bx-font-size-xs); line-height: var(--bx-line-height-body); }
+
+:root[data-bx-design='d1'] .bx-tax-calendar__controls { display: grid; grid-template-columns: var(--bx-target-min) minmax(8.5rem, 1fr) var(--bx-target-min); align-items: center; padding: var(--bx-space-1); border: 1px solid var(--bx-border); border-radius: var(--bx-radius-md); background: var(--bx-surface-subtle); }
+:root[data-bx-design='d1'] .bx-tax-calendar__controls button,
+:root[data-bx-design='d1'] .bx-tax-calendar__details-heading button { display: grid; width: var(--bx-target-min); min-height: var(--bx-target-min); place-items: center; border: 0; border-radius: var(--bx-radius-sm); background: transparent; color: var(--bx-text-secondary); cursor: pointer; }
+:root[data-bx-design='d1'] .bx-tax-calendar__controls button:hover,
+:root[data-bx-design='d1'] .bx-tax-calendar__details-heading button:hover { background: var(--bx-surface); color: var(--bx-text-primary); }
+:root[data-bx-design='d1'] .bx-tax-calendar__controls svg,
+:root[data-bx-design='d1'] .bx-tax-calendar__details-heading svg { width: 1rem; height: 1rem; }
+:root[data-bx-design='d1'] .bx-tax-calendar__controls strong { font-size: var(--bx-font-size-sm); text-align: center; }
+:root[data-bx-design='d1'] .bx-tax-calendar__controls strong span { color: var(--bx-text-secondary); font-weight: 550; }
+
+:root[data-bx-design='d1'] .bx-tax-calendar__toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--bx-space-3); }
+:root[data-bx-design='d1'] .bx-tax-calendar__toolbar > button { min-height: var(--bx-target-min); padding: var(--bx-space-2) var(--bx-space-3); border: 1px solid var(--bx-border); border-radius: var(--bx-radius-sm); background: var(--bx-surface); color: var(--bx-text-primary); cursor: pointer; font: inherit; font-size: var(--bx-font-size-xs); font-weight: 700; }
+:root[data-bx-design='d1'] .bx-tax-calendar__toolbar > button:hover { border-color: var(--bx-brand); background: var(--bx-brand-soft); }
+:root[data-bx-design='d1'] .bx-tax-calendar__legend { display: flex; flex-wrap: wrap; gap: var(--bx-space-3); color: var(--bx-text-secondary); font-size: var(--bx-font-size-xs); }
+:root[data-bx-design='d1'] .bx-tax-calendar__legend span { display: inline-flex; gap: var(--bx-space-2); align-items: center; }
+:root[data-bx-design='d1'] .bx-tax-calendar__dot { display: inline-block; width: 0.45rem; height: 0.45rem; flex: none; border-radius: 50%; }
+:root[data-bx-design='d1'] .bx-tax-calendar__dot--report { background: var(--bx-brand-action); }
+:root[data-bx-design='d1'] .bx-tax-calendar__dot--payment { background: var(--bx-warning); }
+
+:root[data-bx-design='d1'] .bx-tax-calendar__nearest,
+:root[data-bx-design='d1'] .bx-tax-calendar__review { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--bx-space-3); align-items: center; min-height: 4.75rem; padding: var(--bx-space-3); border: 1px solid rgb(var(--bx-brand-rgb) / 0.24); border-radius: var(--bx-radius-md); background: var(--bx-brand-soft); color: var(--bx-text-primary); text-align: left; }
+:root[data-bx-design='d1'] .bx-tax-calendar__nearest { cursor: pointer; font: inherit; }
+:root[data-bx-design='d1'] .bx-tax-calendar__nearest:hover { border-color: var(--bx-brand); }
+:root[data-bx-design='d1'] .bx-tax-calendar__nearest > span,
+:root[data-bx-design='d1'] .bx-tax-calendar__review > span { display: grid; width: 2.5rem; height: 2.5rem; place-items: center; border-radius: var(--bx-radius-sm); background: var(--bx-surface); color: var(--bx-brand-action); }
+:root[data-bx-design='d1'] .bx-tax-calendar__nearest svg,
+:root[data-bx-design='d1'] .bx-tax-calendar__review svg { width: 1rem; height: 1rem; }
+:root[data-bx-design='d1'] .bx-tax-calendar__nearest > svg { color: var(--bx-brand-action); }
+:root[data-bx-design='d1'] .bx-tax-calendar__nearest div,
+:root[data-bx-design='d1'] .bx-tax-calendar__review div { display: grid; gap: var(--bx-space-1); }
+:root[data-bx-design='d1'] .bx-tax-calendar__nearest small { color: var(--bx-text-secondary); font-size: var(--bx-font-size-xs); }
+:root[data-bx-design='d1'] .bx-tax-calendar__nearest strong,
+:root[data-bx-design='d1'] .bx-tax-calendar__review strong { font-size: var(--bx-font-size-sm); line-height: var(--bx-line-height-label); }
+:root[data-bx-design='d1'] .bx-tax-calendar__review { grid-template-columns: auto minmax(0, 1fr); border-color: color-mix(in srgb, var(--bx-warning) 28%, var(--bx-border)); background: color-mix(in srgb, var(--bx-warning) 7%, var(--bx-surface)); }
+:root[data-bx-design='d1'] .bx-tax-calendar__review > span { color: var(--bx-warning-text); }
+:root[data-bx-design='d1'] .bx-tax-calendar__review p { margin: 0; color: var(--bx-text-secondary); font-size: var(--bx-font-size-xs); line-height: var(--bx-line-height-body); }
+
+:root[data-bx-design='d1'] .bx-tax-calendar__weekdays,
+:root[data-bx-design='d1'] .bx-tax-calendar__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--bx-space-1); }
+:root[data-bx-design='d1'] .bx-tax-calendar__weekdays span { padding-block: var(--bx-space-1); color: var(--bx-text-secondary); font-size: var(--bx-font-size-xs); font-weight: 650; text-align: center; }
+:root[data-bx-design='d1'] .bx-tax-calendar__grid > button { position: relative; display: grid; min-width: 0; min-height: var(--bx-target-min); place-items: center; padding: var(--bx-space-1); border: 1px solid transparent; border-radius: var(--bx-radius-sm); background: transparent; color: var(--bx-text-secondary); cursor: pointer; font: inherit; font-size: var(--bx-font-size-sm); font-weight: 650; }
+:root[data-bx-design='d1'] .bx-tax-calendar__grid > button:hover { border-color: var(--bx-border); background: var(--bx-surface-subtle); color: var(--bx-text-primary); }
+:root[data-bx-design='d1'] .bx-tax-calendar__grid > button.is-today { border-color: rgb(var(--bx-brand-rgb) / 0.35); color: var(--bx-brand-action); }
+:root[data-bx-design='d1'] .bx-tax-calendar__grid > button.is-selected { border-color: var(--bx-brand-action); background: var(--bx-brand-action); color: var(--bx-on-brand); }
+:root[data-bx-design='d1'] .bx-tax-calendar__grid > button > i { position: absolute; bottom: 0.25rem; display: flex; gap: 0.15rem; }
+:root[data-bx-design='d1'] .bx-tax-calendar__grid > button > i .bx-tax-calendar__dot { width: 0.3rem; height: 0.3rem; }
+:root[data-bx-design='d1'] .bx-tax-calendar__grid > button.is-selected .bx-tax-calendar__dot { background: var(--bx-on-brand); }
+
+:root[data-bx-design='d1'] .bx-tax-calendar__details { display: grid; gap: var(--bx-space-3); padding-top: var(--bx-space-4); border-top: 1px solid var(--bx-border); }
+:root[data-bx-design='d1'] .bx-tax-calendar__details-heading { display: flex; align-items: start; justify-content: space-between; gap: var(--bx-space-3); }
+:root[data-bx-design='d1'] .bx-tax-calendar__details-heading small { color: var(--bx-brand-action); font-size: var(--bx-font-size-xs); font-weight: 700; }
+:root[data-bx-design='d1'] .bx-tax-calendar__details-heading h3 { margin: var(--bx-space-1) 0 0; font-size: var(--bx-font-size-md); }
+:root[data-bx-design='d1'] .bx-tax-calendar__details > p { margin: 0; color: var(--bx-text-secondary); font-size: var(--bx-font-size-sm); line-height: var(--bx-line-height-body); }
+:root[data-bx-design='d1'] .bx-tax-calendar__details article { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--bx-space-3); align-items: center; padding: var(--bx-space-3); border: 1px solid var(--bx-border); border-radius: var(--bx-radius-md); background: var(--bx-surface-subtle); }
+:root[data-bx-design='d1'] .bx-tax-calendar__details article div { display: grid; gap: var(--bx-space-1); }
+:root[data-bx-design='d1'] .bx-tax-calendar__details article strong { font-size: var(--bx-font-size-sm); }
+:root[data-bx-design='d1'] .bx-tax-calendar__details article small { color: var(--bx-text-secondary); font-size: var(--bx-font-size-xs); }
+:root[data-bx-design='d1'] .bx-tax-calendar__details article button { display: inline-flex; min-height: var(--bx-target-min); align-items: center; gap: var(--bx-space-2); padding: var(--bx-space-2) var(--bx-space-3); border: 0; border-radius: var(--bx-radius-sm); background: var(--bx-brand-action); color: var(--bx-on-brand); cursor: pointer; font: inherit; font-size: var(--bx-font-size-xs); font-weight: 700; }
+:root[data-bx-design='d1'] .bx-tax-calendar__details article button svg { width: 1rem; height: 1rem; }
+
 :root[data-bx-design='d1'] .bx-d1-dashboard-card button:focus-visible,
 :root[data-bx-design='d1'] .bx-d1-dashboard-card input:focus-visible,
+:root[data-bx-design='d1'] .bx-d1-dashboard-hero button:focus-visible,
 :root[data-bx-design='d1'] .bx-d1-dashboard-sticky button:focus-visible {
   outline: var(--bx-focus-width) solid var(--bx-focus);
   outline-offset: var(--bx-focus-offset);
@@ -373,26 +644,54 @@
   :root[data-bx-design='d1'] .bx-d1-dashboard-card--tools { grid-column: 1 / -1; }
   :root[data-bx-design='d1'] .bx-d1-dashboard-live--weather,
   :root[data-bx-design='d1'] .bx-d1-dashboard-card--tax-calendar { grid-column: span 4; }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-live--horoscope { grid-column: 1 / -1; }
   :root[data-bx-design='d1'] .bx-d1-dashboard-tools { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   :root[data-bx-design='d1'] .bx-d1-dashboard-tools strong { white-space: normal; }
+}
+
+@media (max-width: 63.999rem) {
+  :root[data-bx-design='d1'] .bx-d1-dashboard-hero {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :root[data-bx-design='d1'] .bx-d1-dashboard-hero__summary {
+    grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.8fr);
+    align-items: center;
+  }
 }
 
 @media (min-width: 64rem) {
   :root[data-bx-design='d1'] .bx-d1-dashboard__container { padding: var(--bx-space-8); }
   :root[data-bx-design='d1'] .bx-d1-dashboard__grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
-  :root[data-bx-design='d1'] .bx-d1-dashboard-card--today,
-  :root[data-bx-design='d1'] .bx-d1-dashboard-card--ai { grid-column: span 8; }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-card--today { grid-column: span 8; }
   :root[data-bx-design='d1'] .bx-d1-dashboard-card--company,
-  :root[data-bx-design='d1'] .bx-d1-dashboard-live--weather { grid-column: span 4; }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-card--ai,
+  :root[data-bx-design='d1'] .bx-d1-dashboard-live--weather,
+  :root[data-bx-design='d1'] .bx-d1-dashboard-live--horoscope { grid-column: span 4; }
   :root[data-bx-design='d1'] .bx-d1-dashboard-card--tax-calendar { grid-column: span 7; }
   :root[data-bx-design='d1'] .bx-d1-dashboard-card--tools { grid-column: span 5; }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-card--tools .bx-d1-dashboard-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 :root[data-bx-design='d1'] .bx-d1-dashboard-live { min-width: 0; }
 :root[data-bx-design='d1'] .bx-d1-dashboard-card--tax-calendar { min-height: 24rem; }
 
 @media (max-width: 47.999rem) {
+  :root[data-bx-design='d1'] .bx-d1-dashboard::before { width: 100vw; height: 22rem; }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-hero { gap: var(--bx-space-5); padding: var(--bx-space-5); }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-hero h1 { font-size: 2rem; line-height: 1.03; }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-hero__lead { font-size: var(--bx-font-size-sm); }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-hero__actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-hero__actions .bx-d1-action { width: 100%; }
+  :root[data-bx-design='d1'] .bx-d1-dashboard-hero__summary { grid-template-columns: minmax(0, 1fr); }
   :root[data-bx-design='d1'] .bx-d1-dashboard-card { min-height: 0; padding: var(--bx-space-4); }
+  :root[data-bx-design='d1'] .bx-tax-calendar__header { display: grid; }
+  :root[data-bx-design='d1'] .bx-tax-calendar__controls { width: 100%; }
+  :root[data-bx-design='d1'] .bx-tax-calendar__weekdays,
+  :root[data-bx-design='d1'] .bx-tax-calendar__grid { gap: 2px; }
+  :root[data-bx-design='d1'] .bx-tax-calendar__details article { grid-template-columns: auto minmax(0, 1fr); }
+  :root[data-bx-design='d1'] .bx-tax-calendar__details article button { grid-column: 1 / -1; justify-content: center; }
   :root[data-bx-design='d1'] .bx-d1-dashboard-card--today { min-height: 22rem; }
   :root[data-bx-design='d1'] .bx-d1-dashboard-tools { grid-template-columns: minmax(0, 1fr); }
   :root[data-bx-design='d1'] .bx-d1-dashboard-tools button { min-height: var(--bx-control-height-touch); }
@@ -414,5 +713,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :root[data-bx-design='d1'] .bx-d1-dashboard-card,
+  :root[data-bx-design='d1'] .bx-d1-action { transition: none; }
   :root[data-bx-design='d1'] .bx-d1-dashboard-sticky { transition: none; }
 }
