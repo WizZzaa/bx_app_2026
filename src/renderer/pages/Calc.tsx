@@ -19,7 +19,7 @@ import { useToast } from '../lib/ui/ToastContext'
 import { CALCULATOR_PROPOSALS } from '../data/workbenchCatalog'
 import { ProposalWorkbench } from '../components/workspace/ProposalWorkbench'
 import { useWorkbenchFavorites } from '../lib/useWorkbenchFavorites'
-import { WorkbenchActions, WorkbenchCanvas, WorkbenchGuide, WorkbenchModeSwitch, WorkbenchTutorial, type WorkbenchView } from '../components/workspace/WorkbenchChrome'
+import { WorkbenchActions, WorkbenchCanvas, WorkbenchCatalogNav } from '../components/workspace/WorkbenchChrome'
 import { RegulatoryRateGate } from '../components/calculators/RegulatoryRateGate'
 import { calculatorRequiresManualConfirmation } from '../data/calculatorRegulatoryValues'
 import { todayISO } from '../lib/dates'
@@ -57,14 +57,14 @@ const PROPOSAL_TABS: Tab[] = CALCULATOR_PROPOSALS.map(proposal => ({
   id: proposal.id,
   icon: proposal.icon,
   label: proposal.title,
-  group: `${proposal.sector} · идеи`,
+  group: proposal.sector,
   desc: proposal.summary,
   component: <ProposalWorkbench proposal={proposal} />,
   status: 'proposal',
 }))
 
 const TABS: Tab[] = [...READY_TABS, ...PROPOSAL_TABS]
-const GROUPS = ['Налоги', 'Зарплата и кадры', 'Прочее', 'Документы и право · идеи', 'Агро · идеи', 'Строительство · идеи']
+const GROUPS = ['Налоги', 'Зарплата и кадры', 'Прочее', 'Документы и право', 'Агро', 'Строительство']
 
 const ACCENT = Object.fromEntries(GROUPS.map(group => [group, {
   text: 'text-violet-700 dark:text-violet-300',
@@ -75,8 +75,6 @@ const ACCENT = Object.fromEntries(GROUPS.map(group => [group, {
 }])) as Record<string, { text: string; chipBg: string; activeBg: string; iconBg: string; grad: string }>
 
 const LAST_CALC_KEY = 'bx_calc_last'
-const CALC_VIEW_KEY = 'bx_calc_view'
-const CALC_TUTORIAL_KEY = 'bx_calc_tutorial_v2'
 
 const Calc = () => {
   const [active, setActiveRaw] = useState(() => {
@@ -86,11 +84,6 @@ const Calc = () => {
     return last && TABS.some(t => t.id === last) ? last : 'vat'
   })
   const [search, setSearch] = useState('')
-  const [favoritesOnly, setFavoritesOnly] = useState(false)
-  const [catalog, setCatalog] = useState<'ready' | 'proposal'>(() => TABS.find(item => item.id === active)?.status === 'proposal' ? 'proposal' : 'ready')
-  const [view, setView] = useState<WorkbenchView>(() => localStorage.getItem(CALC_VIEW_KEY) === 'guided' ? 'guided' : 'compact')
-  const [showGuide, setShowGuide] = useState(() => localStorage.getItem(CALC_VIEW_KEY) === 'guided')
-  const [tutorialEnabled, setTutorialEnabled] = useState(() => localStorage.getItem(CALC_TUTORIAL_KEY) !== 'hidden')
   const [workspaceRevision, setWorkspaceRevision] = useState(0)
   const { favorites, toggleFavorite } = useWorkbenchFavorites('calculator')
   const tab = TABS.find(t => t.id === active) ?? TABS[0]
@@ -99,27 +92,6 @@ const Calc = () => {
     setActiveRaw(id)
     localStorage.setItem(LAST_CALC_KEY, id)
   }
-
-  const handleViewChange = (next: WorkbenchView) => {
-    setView(next)
-    setShowGuide(next === 'guided')
-    localStorage.setItem(CALC_VIEW_KEY, next)
-  }
-
-  const handleCatalogChange = (next: 'ready' | 'proposal') => {
-    setCatalog(next)
-    const activeMatches = next === 'proposal' ? tab.status === 'proposal' : tab.status !== 'proposal'
-    if (!activeMatches) {
-      const nextTab = next === 'proposal' ? PROPOSAL_TABS[0] : READY_TABS[0]
-      if (nextTab) handleSetActive(nextTab.id)
-    }
-  }
-
-  const toggleTutorial = () => setTutorialEnabled(current => {
-    const next = !current
-    localStorage.setItem(CALC_TUTORIAL_KEY, next ? 'shown' : 'hidden')
-    return next
-  })
 
   const toast = useToast()
 
@@ -172,9 +144,7 @@ const Calc = () => {
 
   const q = search.trim().toLowerCase()
   const visibleTabs = TABS.filter(t =>
-    (!q || t.label.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.group.toLowerCase().includes(q))
-    && (!favoritesOnly || favorites.includes(t.id))
-    && (catalog === 'proposal' ? t.status === 'proposal' : t.status !== 'proposal'))
+    !q || t.label.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.group.toLowerCase().includes(q))
 
   useEffect(() => {
     if (visibleTabs.length > 0 && !visibleTabs.some(item => item.id === active)) {
@@ -182,113 +152,32 @@ const Calc = () => {
       setActiveRaw(nextId)
       localStorage.setItem(LAST_CALC_KEY, nextId)
     }
-  }, [active, catalog, favorites, favoritesOnly, q])
+  }, [active, q])
 
   return (
     <div className="z-10 flex min-h-0 flex-1 flex-col overflow-hidden bg-bx-bg font-sans text-bx-text lg:flex-row">
-      {/* Левая панель — список калькуляторов */}
       <aside className="z-10 flex w-full flex-shrink-0 flex-col overflow-hidden border-b border-bx-border bg-bx-surface lg:w-[280px] lg:border-b-0 lg:border-r 2xl:w-[304px]">
-        <div className="px-5 pt-5 pb-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-700 dark:text-violet-300">Расчётный центр</p>
-          <h1 className="mt-1 text-xl font-black text-bx-text">Калькуляторы</h1>
-          <p className="mt-1 text-xs leading-relaxed text-bx-muted">Выберите результат, заполните исходные данные и проверьте статус ставки.</p>
-        </div>
-        
-        <div className="px-4 pb-3 flex-shrink-0">
-          <WorkbenchModeSwitch kind="calculator" view={view} onViewChange={handleViewChange} />
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bx-muted">
-              <Icon name="search" className="w-3.5 h-3.5" />
-            </span>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              aria-label="Поиск калькулятора"
-              placeholder="Поиск калькулятора..."
-              className="mt-2 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg pl-9 pr-3 text-sm font-semibold text-bx-text outline-none placeholder:text-bx-muted focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20"
-            />
-          </div>
-          <div className="mt-2 grid grid-cols-2 gap-1 rounded-xl border border-bx-border bg-bx-bg p-1" aria-label="Статус калькуляторов">
-            <button type="button" onClick={() => handleCatalogChange('ready')} aria-pressed={catalog === 'ready'} className={`min-h-9 rounded-lg px-2 text-[10px] font-bold transition-colors ${catalog === 'ready' ? 'bg-emerald-600 text-white' : 'text-bx-muted hover:bg-bx-surface hover:text-bx-text'}`}>Работают · {READY_TABS.length}</button>
-            <button type="button" onClick={() => handleCatalogChange('proposal')} aria-pressed={catalog === 'proposal'} className={`min-h-9 rounded-lg px-2 text-[10px] font-bold transition-colors ${catalog === 'proposal' ? 'bg-amber-500 text-slate-950' : 'text-bx-muted hover:bg-bx-surface hover:text-bx-text'}`}>Идеи · {PROPOSAL_TABS.length}</button>
-          </div>
-          <button
-            type="button"
-            onClick={() => setFavoritesOnly(value => !value)}
-            className={`mt-2 flex min-h-11 w-full items-center justify-between rounded-xl border px-3 text-xs font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500/40 ${favoritesOnly ? 'border-violet-600 bg-violet-600 text-white' : 'border-bx-border bg-bx-bg text-bx-muted hover:text-bx-text'}`}
-          >
-            <span>Избранные</span>
-            <span>{favorites.length}</span>
-          </button>
-          <label className="mt-2 block text-xs font-black text-bx-text lg:hidden">Открыть калькулятор<select value={active} onChange={event => handleSetActive(event.target.value)} className="mt-1.5 min-h-12 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-sm font-semibold text-bx-text outline-none focus:border-violet-500">{visibleTabs.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-        </div>
-
-        <nav className="custom-scrollbar hidden flex-1 space-y-3.5 overflow-y-auto px-2.5 pb-4 lg:block">
-          {visibleTabs.length === 0 && (
-            <div className="px-3 py-4 text-center">
-              <p className="text-xs text-bx-muted font-medium">Подходящих калькуляторов нет</p>
-              <button type="button" onClick={() => { setSearch(''); setFavoritesOnly(false) }} className="mt-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500/40 rounded">Сбросить фильтры</button>
-            </div>
-          )}
-          {GROUPS.map(g => {
-            const items = visibleTabs.filter(t => t.group === g)
-            if (items.length === 0) return null
-            const a = ACCENT[g]
-            return (
-              <div key={g} className="flex flex-col gap-0.5">
-                <p className={`px-3 mb-1 text-[9px] uppercase tracking-[0.12em] font-extrabold ${a.text}`}>{g}</p>
-                <div className="space-y-0.5">
-                  {items.map(t => {
-                    const isTabActive = active === t.id;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => handleSetActive(t.id)}
-                        className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-left transition-all border cursor-pointer ${
-                          isTabActive
-                            ? 'border-violet-600 bg-violet-600 text-white font-extrabold'
-                            : 'border-transparent text-bx-text hover:bg-violet-500/[0.07]'
-                        }`}
-                      >
-                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${isTabActive ? 'bg-white/20 text-white' : `${a.iconBg} border border-bx-border/50`}`}>
-                          <Icon name={t.icon} className="w-4 h-4" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className={`block text-xs font-bold leading-tight ${isTabActive ? 'text-white' : 'text-bx-text'}`}>{t.label}</span>
-                          {view === 'guided' && <span className={`block text-[9px] mt-0.5 leading-snug line-clamp-2 ${isTabActive ? 'text-white/85' : 'text-bx-muted'}`}>{t.desc}</span>}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )
-          })}
-        </nav>
+        <WorkbenchCatalogNav
+          ariaLabel="Категории калькуляторов"
+          activeId={active}
+          emptyText="Подходящих калькуляторов нет"
+          groups={GROUPS}
+          items={visibleTabs}
+          search={search}
+          searchLabel="Поиск калькулятора"
+          searchPlaceholder="Найти калькулятор…"
+          onSearchChange={setSearch}
+          onSelect={handleSetActive}
+        />
       </aside>
 
       {/* Правая панель — активный калькулятор */}
       <div className="flex-1 overflow-y-auto bg-bx-bg">
         <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 sm:py-6">
-          <WorkbenchTutorial kind="calculator" enabled={tutorialEnabled} onToggle={toggleTutorial} />
-          {view === 'guided' && <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-            <div className="rounded-2xl border border-bx-border bg-bx-surface px-4 py-3">
-              <p className="text-[10px] uppercase tracking-wider font-bold text-bx-muted">Готово сейчас</p>
-              <p className="text-xl font-black text-bx-text mt-1">{READY_TABS.length}</p>
-            </div>
-            <div className="rounded-2xl border border-bx-border bg-bx-surface px-4 py-3">
-              <p className="text-[10px] uppercase tracking-wider font-bold text-bx-muted">Отраслевые идеи</p>
-              <p className="text-xl font-black text-emerald-700 dark:text-emerald-400 mt-1">{PROPOSAL_TABS.length}</p>
-            </div>
-            <div className="rounded-2xl border border-bx-border bg-bx-surface px-4 py-3">
-              <p className="text-[10px] uppercase tracking-wider font-bold text-bx-muted">Результат</p>
-              <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">Копирование · PDF · TXT</p>
-            </div>
-          </div>}
           {/* Hero-шапка с акцентом группы */}
           <div className={`rounded-3xl bg-gradient-to-br ${ACCENT[tab.group].grad} via-transparent to-transparent border border-bx-border px-5 py-4.5 mb-5 bg-bx-surface shadow-sm`}>
-            <div className="flex items-center justify-between gap-3.5 flex-wrap">
-              <div className="flex items-center gap-3.5 flex-1 min-w-0">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex w-full min-w-0 items-start gap-3.5 sm:flex-1 sm:items-center">
                 <span className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${ACCENT[tab.group].iconBg} shadow-inner`}>
                   <Icon name={tab.icon} className="w-5 h-5" />
                 </span>
@@ -298,42 +187,27 @@ const Calc = () => {
                     <span className={`text-[9px] px-2 py-0.5 rounded-full border ${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-bold uppercase`}>
                       {tab.group}
                     </span>
-                    <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold uppercase ${tab.status === 'proposal' || calculatorRequiresManualConfirmation(tab.id, todayISO()) ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'}`}>
-                      {tab.status === 'proposal' ? 'На согласование' : calculatorRequiresManualConfirmation(tab.id, todayISO()) ? 'Сверка ставок' : 'Работает'}
-                    </span>
+                    {(tab.status === 'proposal' || calculatorRequiresManualConfirmation(tab.id, todayISO())) && (
+                      <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[9px] font-bold uppercase text-amber-700 dark:text-amber-400">
+                        {tab.status === 'proposal' ? 'На согласование' : 'Сверка ставок'}
+                      </span>
+                    )}
                   </div>
                   <p className="text-[11px] text-bx-muted mt-1">{tab.desc} · Законодательство РУз</p>
                 </div>
               </div>
-              <WorkbenchActions
-                isFavorite={favorites.includes(tab.id)}
-                onToggleFavorite={() => toggleFavorite(tab.id)}
-                onReset={() => setWorkspaceRevision(value => value + 1)}
-                onExport={tab.status !== 'proposal' ? handleExportPDF : undefined}
-                showGuide={showGuide}
-                onToggleGuide={() => setShowGuide(value => !value)}
-              />
-            </div>
-            {/* Быстрое переключение внутри группы */}
-            <div className="flex flex-wrap gap-1.5 mt-4">
-              {TABS.filter(t => t.group === tab.group).map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => handleSetActive(t.id)}
-                  className={`px-2.5 py-1 text-[11px] rounded-lg border transition-all cursor-pointer ${
-                    t.id === tab.id
-                      ? `${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-bold`
-                      : 'border-transparent text-bx-muted hover:text-bx-text hover:bg-bx-surface-2/40'
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
+              <div className="w-full sm:w-auto">
+                <WorkbenchActions
+                  isFavorite={favorites.includes(tab.id)}
+                  onToggleFavorite={() => toggleFavorite(tab.id)}
+                  onReset={() => setWorkspaceRevision(value => value + 1)}
+                  onExport={tab.status !== 'proposal' ? handleExportPDF : undefined}
+                />
+              </div>
             </div>
           </div>
 
           {/* Верстак калькулятора */}
-          {showGuide && <WorkbenchGuide kind="calculator" />}
           <div id="calc-content-to-export">
             <WorkbenchCanvas resetKey={`${tab.id}-${workspaceRevision}`}>
               <RegulatoryRateGate calculatorId={tab.id}>{tab.component}</RegulatoryRateGate>
