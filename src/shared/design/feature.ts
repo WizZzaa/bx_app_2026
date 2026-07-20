@@ -18,6 +18,11 @@ export const applyBxDesignFeature = (
   root.removeAttribute(BX_DESIGN_FEATURE_ATTRIBUTE)
 }
 
+export const isBxDesignFeatureEnabled = (
+  root: Pick<HTMLElement, 'getAttribute'> | null | undefined =
+    typeof document === 'undefined' ? undefined : document.documentElement,
+): boolean => root?.getAttribute(BX_DESIGN_FEATURE_ATTRIBUTE) === BX_DESIGN_FEATURE_VALUE
+
 export const loadBxDesignFont = async (enabled: boolean): Promise<void> => {
   if (!enabled) return
   await import('@fontsource-variable/geist')

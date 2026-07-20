@@ -1,11 +1,14 @@
-import React, { FormEvent, useEffect, useMemo, useState } from 'react'
+import React, { FormEvent, Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { KB_ARTICLES } from '../data/knowledge'
 import { todayISO } from '../lib/dates'
 import Icon from '../lib/ui/Icon'
 import { widgetsApi } from '../lib/widgetsApi'
+import { isBxDesignFeatureEnabled } from '../../shared/design/feature'
 import type { CurrencyRate } from '../../shared/types'
 import { useEvents } from './planner/useEvents'
+
+const DashboardD1 = lazy(() => import('./DashboardD1'))
 
 const FAVORITES = [
   { icon: 'ai', label: 'AI-консультант', route: '/ai' },
@@ -24,7 +27,7 @@ function greeting() {
   return 'Доброй ночи'
 }
 
-export default function Dashboard() {
+function LegacyDashboard() {
   const navigate = useNavigate()
   const today = todayISO()
   const { events, loading } = useEvents(null)
@@ -94,6 +97,29 @@ export default function Dashboard() {
           <div className="flex items-center justify-between"><h2 id="latest-materials-title" className="text-sm font-black">Последние проверенные материалы</h2><button onClick={() => navigate('/knowledge')} className="text-[10px] font-bold text-blue-600 dark:text-blue-300">Открыть базу</button></div>
           <div className="mt-3 divide-y divide-bx-border/70">{latestArticles.map(article => <button key={article.id} onClick={() => navigate(`/knowledge?id=${article.id}`)} className="flex w-full items-center gap-3 py-3 text-left first:pt-1 last:pb-1"><span className="min-w-0 flex-1"><span className="block truncate text-xs font-bold">{article.title}</span><span className="mt-1 block text-[10px] text-bx-muted">{article.category} · проверено {new Date(`${article.updated}T12:00:00`).toLocaleDateString('ru-RU')}</span></span><span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">Проверено</span></button>)}</div>
         </section>
+      </div>
+    </main>
+  )
+}
+
+export default function Dashboard() {
+  if (isBxDesignFeatureEnabled()) {
+    return (
+      <Suspense fallback={<DashboardD1Fallback />}>
+        <DashboardD1 />
+      </Suspense>
+    )
+  }
+
+  return <LegacyDashboard />
+}
+
+function DashboardD1Fallback() {
+  return (
+    <main className="z-10 flex-1 overflow-y-auto bg-bx-bg px-4 py-6 text-bx-text sm:px-6" aria-busy="true">
+      <div className="bx-page-container" role="status" aria-live="polite">
+        <span className="sr-only">Загрузка рабочего стола</span>
+        <div className="h-36 animate-pulse rounded-[var(--bx-radius-card)] bg-bx-surface-2" aria-hidden="true" />
       </div>
     </main>
   )

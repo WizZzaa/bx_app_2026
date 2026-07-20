@@ -3,6 +3,7 @@ import {
   applyBxDesignFeature,
   BX_DESIGN_FEATURE_ATTRIBUTE,
   BX_DESIGN_FEATURE_VALUE,
+  isBxDesignFeatureEnabled,
   parseBxDesignFeatureFlag,
 } from './feature'
 
@@ -26,9 +27,11 @@ describe('BX D1 feature gate', () => {
 
     applyBxDesignFeature(document.documentElement, true)
     expect(document.documentElement.getAttribute(BX_DESIGN_FEATURE_ATTRIBUTE)).toBe(BX_DESIGN_FEATURE_VALUE)
+    expect(isBxDesignFeatureEnabled()).toBe(true)
 
     applyBxDesignFeature(document.documentElement, false)
     expect(document.documentElement.hasAttribute(BX_DESIGN_FEATURE_ATTRIBUTE)).toBe(false)
+    expect(isBxDesignFeatureEnabled()).toBe(false)
     expect(storageWrite).not.toHaveBeenCalled()
   })
 })
