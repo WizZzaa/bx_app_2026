@@ -60,7 +60,7 @@ export const SIDEBAR_NAVIGATION_GROUPS: readonly SidebarNavigationGroup[] = [
     items: [APP_DESTINATIONS.planner, APP_DESTINATIONS.documentHub, APP_DESTINATIONS.counterparties, APP_DESTINATIONS.finance],
   },
   { id: 'assistants', label: 'Помощники', items: [APP_DESTINATIONS.ai, APP_DESTINATIONS.translator] },
-  { id: 'knowledge', label: 'Знания', items: [APP_DESTINATIONS.knowledge, APP_DESTINATIONS.reference] },
+  { id: 'knowledge', label: 'Знания', items: [APP_DESTINATIONS.knowledge, APP_DESTINATIONS.reference, APP_DESTINATIONS.news] },
   { id: 'more', label: 'Ещё', items: [APP_DESTINATIONS.functions] },
 ] as const
 

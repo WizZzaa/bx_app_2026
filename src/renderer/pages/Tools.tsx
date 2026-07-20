@@ -18,7 +18,7 @@ import Icon from '../lib/ui/Icon'
 import { UTILITY_PROPOSALS } from '../data/workbenchCatalog'
 import { ProposalWorkbench } from '../components/workspace/ProposalWorkbench'
 import { useWorkbenchFavorites } from '../lib/useWorkbenchFavorites'
-import { WorkbenchActions, WorkbenchCanvas, WorkbenchGuide, WorkbenchModeSwitch, type WorkbenchView } from '../components/workspace/WorkbenchChrome'
+import { WorkbenchActions, WorkbenchCanvas, WorkbenchGuide, WorkbenchModeSwitch, WorkbenchTutorial, type WorkbenchView } from '../components/workspace/WorkbenchChrome'
 
 const PdfCompress = React.lazy(() => import('./tools/PdfCompress'))
 const PdfConvert = React.lazy(() => import('./tools/PdfConvert'))
@@ -84,22 +84,19 @@ const PROPOSAL_SECTOR_COUNTS = UTILITY_PROPOSALS.reduce<Record<string, number>>(
 
 const GROUPS = ['Текст и проверки', 'Документы и PDF', '1С', 'Система', 'Заметки', 'Общее · идеи', 'Документы и право · идеи', 'Агро · идеи', 'Строительство · идеи']
 
-const ACCENT: Record<string, { text: string; chipBg: string; activeBg: string; iconBg: string; grad: string }> = {
-  '1С':                { text: 'text-amber-700 dark:text-amber-400',   chipBg: 'bg-amber-500/10 border-amber-500/20',     activeBg: 'bg-amber-500/10 border-amber-500/20',   iconBg: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',     grad: 'from-amber-500/5' },
-  'Текст и проверки': { text: 'text-purple-700 dark:text-purple-400',  chipBg: 'bg-purple-500/10 border-purple-500/20',   activeBg: 'bg-purple-500/10 border-purple-500/20',  iconBg: 'bg-purple-500/10 text-purple-700 dark:text-purple-400',   grad: 'from-purple-500/5' },
-  'Документы и PDF':   { text: 'text-rose-700 dark:text-rose-400',    chipBg: 'bg-rose-500/10 border-rose-500/20',       activeBg: 'bg-rose-500/10 border-rose-500/20',    iconBg: 'bg-rose-500/10 text-rose-700 dark:text-rose-400',       grad: 'from-rose-500/5' },
-  'Система':           { text: 'text-cyan-700 dark:text-cyan-400',    chipBg: 'bg-cyan-500/10 border-cyan-500/20',       activeBg: 'bg-cyan-500/10 border-cyan-500/20',    iconBg: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-400',       grad: 'from-cyan-500/5' },
-  'Заметки':           { text: 'text-emerald-700 dark:text-emerald-400', chipBg: 'bg-emerald-500/10 border-emerald-500/20', activeBg: 'bg-emerald-500/10 border-emerald-500/20', iconBg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400', grad: 'from-emerald-500/5' },
-  'Общее · идеи':      { text: 'text-blue-700 dark:text-blue-400', chipBg: 'bg-blue-500/10 border-blue-500/20', activeBg: 'bg-blue-500/10 border-blue-500/20', iconBg: 'bg-blue-500/10 text-blue-700 dark:text-blue-400', grad: 'from-blue-500/5' },
-  'Документы и право · идеи': { text: 'text-violet-700 dark:text-violet-400', chipBg: 'bg-violet-500/10 border-violet-500/20', activeBg: 'bg-violet-500/10 border-violet-500/20', iconBg: 'bg-violet-500/10 text-violet-700 dark:text-violet-400', grad: 'from-violet-500/5' },
-  'Агро · идеи':      { text: 'text-emerald-700 dark:text-emerald-400', chipBg: 'bg-emerald-500/10 border-emerald-500/20', activeBg: 'bg-emerald-500/10 border-emerald-500/20', iconBg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400', grad: 'from-emerald-500/5' },
-  'Строительство · идеи': { text: 'text-orange-700 dark:text-orange-400', chipBg: 'bg-orange-500/10 border-orange-500/20', activeBg: 'bg-orange-500/10 border-orange-500/20', iconBg: 'bg-orange-500/10 text-orange-700 dark:text-orange-400', grad: 'from-orange-500/5' },
-}
+const ACCENT = Object.fromEntries(GROUPS.map(group => [group, {
+  text: 'text-violet-700 dark:text-violet-300',
+  chipBg: 'bg-violet-500/10 border-violet-500/20',
+  activeBg: 'bg-violet-500/10 border-violet-500/20',
+  iconBg: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
+  grad: 'from-violet-500/[0.07]',
+}])) as Record<string, { text: string; chipBg: string; activeBg: string; iconBg: string; grad: string }>
 
 const FULL_HEIGHT_TOOLS = new Set(['notes', 'ecp', 'activex'])
 
 const LAST_TOOL_KEY = 'bx_tools_last'
 const TOOLS_VIEW_KEY = 'bx_tools_view'
+const TOOLS_TUTORIAL_KEY = 'bx_tools_tutorial_v2'
 
 const Tools = () => {
   const [active, setActiveRaw] = useState(() => {
@@ -113,6 +110,7 @@ const Tools = () => {
   const [catalog, setCatalog] = useState<'ready' | 'proposal'>(() => TOOLS.find(item => item.id === active)?.status === 'proposal' ? 'proposal' : 'ready')
   const [view, setView] = useState<WorkbenchView>(() => localStorage.getItem(TOOLS_VIEW_KEY) === 'guided' ? 'guided' : 'compact')
   const [showGuide, setShowGuide] = useState(() => localStorage.getItem(TOOLS_VIEW_KEY) === 'guided')
+  const [tutorialEnabled, setTutorialEnabled] = useState(() => localStorage.getItem(TOOLS_TUTORIAL_KEY) !== 'hidden')
   const [workspaceRevision, setWorkspaceRevision] = useState(0)
   const { favorites, toggleFavorite } = useWorkbenchFavorites('utility')
 
@@ -149,6 +147,12 @@ const Tools = () => {
     }
   }
 
+  const toggleTutorial = () => setTutorialEnabled(current => {
+    const next = !current
+    localStorage.setItem(TOOLS_TUTORIAL_KEY, next ? 'shown' : 'hidden')
+    return next
+  })
+
   const q = search.trim().toLowerCase()
   const visible = TOOLS.filter(t =>
     (!q || t.label.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.group.toLowerCase().includes(q))
@@ -168,12 +172,13 @@ const Tools = () => {
   const isFullHeight = FULL_HEIGHT_TOOLS.has(tool.id)
 
   return (
-    <div className="flex-1 flex overflow-hidden z-10 font-sans bg-bx-bg text-bx-text">
+    <div className="z-10 flex min-h-0 flex-1 flex-col overflow-hidden bg-bx-bg font-sans text-bx-text lg:flex-row">
       {/* Левая панель — список утилит */}
-      <aside className="w-[248px] flex-shrink-0 border-r border-bx-border bg-bx-surface-2/65 dark:bg-bx-surface flex flex-col z-10 overflow-hidden 2xl:w-[292px]">
+      <aside className="z-10 flex w-full flex-shrink-0 flex-col overflow-hidden border-b border-bx-border bg-bx-surface lg:w-[280px] lg:border-b-0 lg:border-r 2xl:w-[304px]">
         <div className="px-5 pt-5 pb-3 flex-shrink-0">
-          <h1 className="text-xs font-black text-bx-text uppercase tracking-wider">Утилиты</h1>
-          <p className="text-[10px] text-bx-muted mt-0.5">{READY_TOOLS.length} работают · {PROPOSAL_TOOLS.length} идей на согласование</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-700 dark:text-violet-300">Рабочий центр</p>
+          <h1 className="mt-1 text-xl font-black text-bx-text">Утилиты</h1>
+          <p className="mt-1 text-xs leading-relaxed text-bx-muted">Найдите задачу по действию, затем работайте только в одном выбранном модуле.</p>
         </div>
 
         <div className="px-4 pb-3 flex-shrink-0">
@@ -187,7 +192,7 @@ const Tools = () => {
               onChange={e => setSearch(e.target.value)}
               aria-label="Поиск утилиты"
               placeholder="Поиск утилиты..."
-              className="mt-2 w-full bg-bx-surface text-bx-text placeholder-bx-muted text-xs pl-9 pr-3 py-2 rounded-xl border border-bx-border focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 shadow-inner transition-all font-semibold"
+              className="mt-2 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg pl-9 pr-3 text-sm font-semibold text-bx-text outline-none placeholder:text-bx-muted focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20"
             />
           </div>
           <div className="mt-2 grid grid-cols-2 gap-1 rounded-xl border border-bx-border bg-bx-bg p-1" aria-label="Статус утилит">
@@ -197,14 +202,15 @@ const Tools = () => {
           <button
             type="button"
             onClick={() => setFavoritesOnly(value => !value)}
-            className={`mt-2 w-full min-h-11 rounded-xl border px-3 flex items-center justify-between text-xs font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${favoritesOnly ? 'bg-blue-600 border-blue-600 text-white' : 'bg-bx-surface border-bx-border text-bx-muted hover:text-bx-text'}`}
+            className={`mt-2 flex min-h-11 w-full items-center justify-between rounded-xl border px-3 text-xs font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500/40 ${favoritesOnly ? 'border-violet-600 bg-violet-600 text-white' : 'border-bx-border bg-bx-bg text-bx-muted hover:text-bx-text'}`}
           >
             <span>Избранные</span>
             <span>{favorites.length}</span>
           </button>
+          <label className="mt-2 block text-xs font-black text-bx-text lg:hidden">Открыть утилиту<select value={active} onChange={event => handleSetActive(event.target.value)} className="mt-1.5 min-h-12 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-sm font-semibold text-bx-text outline-none focus:border-violet-500">{visible.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         </div>
 
-        <nav className="flex-1 px-2.5 pb-4 space-y-3.5 overflow-y-auto custom-scrollbar">
+        <nav className="custom-scrollbar hidden flex-1 space-y-3.5 overflow-y-auto px-2.5 pb-4 lg:block">
           {visible.length === 0 && (
             <div className="px-3 py-4 text-center">
               <p className="text-xs text-bx-muted font-medium">Подходящих утилит нет</p>
@@ -227,8 +233,8 @@ const Tools = () => {
                         onClick={() => handleSetActive(t.id)}
                         className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-left transition-all border cursor-pointer ${
                           isToolActive 
-                            ? 'bg-blue-600 text-white font-extrabold border-transparent shadow-md' 
-                            : 'text-bx-text border-transparent hover:bg-bx-surface/80 hover:text-slate-900 dark:hover:text-white hover:translate-x-0.5'
+                            ? 'border-violet-600 bg-violet-600 text-white font-extrabold'
+                            : 'border-transparent text-bx-text hover:bg-violet-500/[0.07]'
                         }`}
                       >
                         <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${isToolActive ? 'bg-white/20 text-white' : `${ga.iconBg} border border-bx-border/50`}`}>
@@ -250,7 +256,8 @@ const Tools = () => {
 
       {/* Правая панель */}
       <div className={`flex-1 ${isFullHeight ? 'flex flex-col overflow-hidden bg-bx-bg' : 'overflow-y-auto bg-bx-bg'}`}>
-        <div className={isFullHeight ? 'px-6 pt-6 flex-shrink-0' : 'max-w-5xl mx-auto px-6 pt-6'}>
+        <div className={isFullHeight ? 'flex-shrink-0 px-4 pt-4 sm:px-6 sm:pt-6' : 'mx-auto max-w-5xl px-4 pt-4 sm:px-6 sm:pt-6'}>
+          <WorkbenchTutorial kind="utility" enabled={tutorialEnabled} onToggle={toggleTutorial} />
           {catalog === 'ready' && (
             <section
               aria-labelledby="utility-ideas-title"

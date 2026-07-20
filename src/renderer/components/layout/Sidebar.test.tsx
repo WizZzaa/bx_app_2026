@@ -44,7 +44,7 @@ describe('Sidebar', () => {
   it('uses the grouped daily-work information architecture', () => {
     render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
     const links = screen.getAllByRole('link').map(link => link.getAttribute('aria-label')).filter(Boolean)
-    expect(links).toEqual(['Главная', 'Календарь', 'Документы', 'Организации', 'Контроль оплат', 'AI-консультант', 'Переводчик', 'База знаний', 'Справочники', 'Все функции'])
+    expect(links).toEqual(['Главная', 'Календарь', 'Документы', 'Организации', 'Контроль оплат', 'AI-консультант', 'Переводчик', 'База знаний', 'Справочники', 'Новости', 'Все функции'])
     expect(screen.getByRole('region', { name: 'Работа' })).toBeTruthy()
   })
 

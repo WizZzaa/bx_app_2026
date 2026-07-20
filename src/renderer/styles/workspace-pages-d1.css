@@ -315,6 +315,11 @@
     border-bottom: 1px solid var(--bx-border);
   }
 
+  :root[data-bx-design='d1'] .bx-workspace-route:is([data-bx-route='/tools'], [data-bx-route='/calc']) > div > aside {
+    max-height: none;
+    overflow: visible;
+  }
+
   :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/ai'] section > header {
     align-items: flex-start;
     padding: 0.875rem;

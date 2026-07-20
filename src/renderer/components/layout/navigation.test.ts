@@ -10,10 +10,10 @@ import {
 
 describe('canonical application navigation', () => {
   it('keeps the daily desktop workflow grouped and links to the complete catalog', () => {
-    expect(PRIMARY_NAVIGATION).toHaveLength(10)
+    expect(PRIMARY_NAVIGATION).toHaveLength(11)
     expect(PRIMARY_NAVIGATION.at(-1)).toMatchObject({ to: '/functions', label: 'Все функции' })
     expect(SIDEBAR_NAVIGATION_GROUPS.map(group => group.label)).toEqual(['Обзор', 'Работа', 'Помощники', 'Знания', 'Ещё'])
-    expect(PRIMARY_NAVIGATION.map(item => item.to)).toEqual(expect.arrayContaining(['/documents', '/counterparties', '/finance']))
+    expect(PRIMARY_NAVIGATION.map(item => item.to)).toEqual(expect.arrayContaining(['/documents', '/counterparties', '/finance', '/news']))
   })
 
   it('keeps four top-level mobile destinations plus More', () => {
