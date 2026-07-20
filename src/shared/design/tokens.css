@@ -1,8 +1,8 @@
 /*
  * BX semantic design tokens.
  *
- * Runtime adoption is guarded by data-bx-design="d1". Importing this file is
- * therefore inert until the explicit build-time feature flag is enabled.
+ * Runtime adoption is guarded by data-bx-design="d1". D1 is enabled by
+ * default; VITE_BX_D1_UI=off remains an explicit emergency rollback switch.
  */
 
 :root[data-bx-design='d1'] {
@@ -91,7 +91,11 @@
   --bx-z-dialog: 50;
   --bx-z-toast: 60;
 
-  --bx-content-max: 75rem;
+  /* Dense product workspaces can use an ultrawide canvas; prose keeps its
+     own readable measure below. Keep --bx-content-max as a compatibility
+     alias while route families migrate to the semantic workspace token. */
+  --bx-workspace-max: 100rem;
+  --bx-content-max: var(--bx-workspace-max);
   --bx-reading-max: 72ch;
 
   /* Compatibility aliases for the current renderer during later adoption. */
@@ -117,6 +121,21 @@
   --bx-accent-rgb: var(--bx-brand-rgb);
   --bx-on-accent-rgb: var(--bx-on-brand-rgb);
   --bx-on-accent-muted-rgb: var(--bx-on-brand-rgb);
+
+  /* Legacy Tailwind blue utilities are semantic BX lavender in D1. This
+     keeps every existing page on the same palette without changing its
+     business logic or introducing route-by-route hardcoded colours. */
+  --bx-blue-50-rgb: 247 246 252;
+  --bx-blue-100-rgb: 238 234 251;
+  --bx-blue-200-rgb: 221 214 245;
+  --bx-blue-300-rgb: 196 185 236;
+  --bx-blue-400-rgb: 159 145 225;
+  --bx-blue-500-rgb: 117 104 216;
+  --bx-blue-600-rgb: 102 89 200;
+  --bx-blue-700-rgb: 84 72 174;
+  --bx-blue-800-rgb: 67 57 137;
+  --bx-blue-900-rgb: 48 40 77;
+  --bx-blue-950-rgb: 35 29 58;
 }
 
 :root[data-bx-design='d1'][data-theme='dark'],

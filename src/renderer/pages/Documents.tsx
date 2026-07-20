@@ -136,7 +136,7 @@ export default function Documents() {
 
   return <ResourceLayout sidebar={sidebar}>
     <div className="space-y-6">
-      <DocumentsTabs current="documents" />
+      <DocumentsTabs current="documents" stage={3} />
       <ResourceHero eyebrow="Мои документы" title="Готовые файлы в одном архиве" description="Создайте документ из шаблона или загрузите готовый файл. Каждый документ привязан к организации, категории и поисковым меткам." icon="note" stats={[{ value: documents.length, label: 'всего файлов' }, { value: filteredDocs.length, label: 'видно сейчас' }, { value: Number.isFinite(limits.documentsMax) ? `${usedPercent}%` : 'Без лимита', label: 'занято по тарифу' }]} actions={<><button type="button" onClick={() => navigate('/documents/templates')} className={primaryActionClass}><Icon name="templates" className="h-4 w-4" />Создать по шаблону</button><button type="button" onClick={() => setUploadOpen(true)} className={secondaryActionClass}><Icon name="download" className="h-4 w-4 rotate-180" />Загрузить готовый</button></>} />
 
       {uploadOpen && <form onSubmit={handleUpload} className="rounded-[22px] border border-blue-500/20 bg-bx-surface p-5 shadow-sm">

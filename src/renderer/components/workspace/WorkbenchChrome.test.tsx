@@ -1,47 +1,58 @@
 import React, { useState } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { WorkbenchActions, WorkbenchGuide, WorkbenchModeSwitch } from './WorkbenchChrome'
+import { WorkbenchActions, WorkbenchCatalogNav } from './WorkbenchChrome'
 
 describe('WorkbenchChrome', () => {
-  it('switches between compact and guided views', () => {
+  it('keeps tools nested under categories and filters them with one search field', () => {
     function Example() {
-      const [view, setView] = useState<'compact' | 'guided'>('compact')
-      return <WorkbenchModeSwitch kind="utility" view={view} onViewChange={setView} />
+      const [search, setSearch] = useState('')
+      const items = [
+        { id: 'vat', icon: 'percent', label: 'НДС', group: 'Налоги', desc: 'Расчёт НДС' },
+        { id: 'salary', icon: 'hr', label: 'Зарплата', group: 'Кадры', desc: 'Расчёт зарплаты' },
+      ].filter(item => item.label.toLowerCase().includes(search.toLowerCase()))
+
+      return (
+        <WorkbenchCatalogNav
+          ariaLabel="Категории калькуляторов"
+          activeId="vat"
+          emptyText="Ничего не найдено"
+          groups={['Налоги', 'Кадры']}
+          items={items}
+          search={search}
+          searchLabel="Поиск калькулятора"
+          searchPlaceholder="Найти калькулятор…"
+          onSearchChange={setSearch}
+          onSelect={vi.fn()}
+        />
+      )
     }
 
     render(<Example />)
-    const compact = screen.getByRole('button', { name: 'Компактно' })
-    const guided = screen.getByRole('button', { name: 'С подсказками' })
+    expect(screen.getByRole('heading', { name: 'Налоги' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'НДС' }).getAttribute('aria-current')).toBe('page')
 
-    expect(compact.getAttribute('aria-pressed')).toBe('true')
-    fireEvent.click(guided)
-    expect(guided.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.change(screen.getByRole('textbox', { name: 'Поиск калькулятора' }), { target: { value: 'зар' } })
+    expect(screen.queryByRole('button', { name: 'НДС' })).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Кадры' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Зарплата' })).toBeTruthy()
   })
 
-  it('exposes productive module actions and concise instructions', () => {
+  it('exposes only productive module actions', () => {
     const onReset = vi.fn()
-    const onToggleGuide = vi.fn()
 
     render(
-      <>
-        <WorkbenchActions
-          isFavorite={false}
-          onToggleFavorite={vi.fn()}
-          onReset={onReset}
-          showGuide={false}
-          onToggleGuide={onToggleGuide}
-        />
-        <WorkbenchGuide kind="calculator" />
-      </>,
+      <WorkbenchActions
+        isFavorite={false}
+        onToggleFavorite={vi.fn()}
+        onReset={onReset}
+      />,
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Сбросить' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Как работать' }))
 
     expect(onReset).toHaveBeenCalledOnce()
-    expect(onToggleGuide).toHaveBeenCalledOnce()
-    expect(screen.getByText('Введите исходные данные')).toBeTruthy()
-    expect(screen.getByText('Заберите расчёт')).toBeTruthy()
+    expect(screen.getByRole('button', { name: '☆ Избранное' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Как работать' })).toBeNull()
   })
 })

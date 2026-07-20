@@ -54,9 +54,9 @@ const MONTHS = [
 
 const TYPE_META: Record<BxEvent['type'], { label: string; dot: string; chip: string }> = {
   task: { label: 'Задача', dot: 'bg-emerald-500', chip: 'border-emerald-500/25 bg-emerald-500/10' },
-  tax_deadline: { label: 'Дедлайн', dot: 'bg-blue-500', chip: 'border-blue-500/25 bg-blue-500/10' },
+  tax_deadline: { label: 'Дедлайн', dot: 'bg-bx-accent', chip: 'border-bx-accent/25 bg-bx-accent/10' },
   reminder: { label: 'Напоминание', dot: 'bg-amber-500', chip: 'border-amber-500/25 bg-amber-500/10' },
-  event: { label: 'Событие', dot: 'bg-purple-500', chip: 'border-purple-500/25 bg-purple-500/10' },
+  event: { label: 'Событие', dot: 'bg-cyan-600', chip: 'border-cyan-600/25 bg-cyan-600/10' },
 }
 
 const STATUS_LABEL: Record<BxEvent['status'], string> = {
@@ -107,6 +107,17 @@ const formatCalendarDate = (date: Date): string => date.toLocaleDateString('ru-R
 const formatShortDate = (dateISO: string): string => {
   const [year, month, day] = dateISO.split('-').map(Number)
   return new Date(year, month - 1, day).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}
+
+const formatTaskCount = (count: number): string => {
+  const mod100 = count % 100
+  const mod10 = count % 10
+  const suffix = mod10 === 1 && mod100 !== 11
+    ? 'задача'
+    : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
+      ? 'задачи'
+      : 'задач'
+  return `${count} ${suffix}`
 }
 
 const specialDateISO = (year: number, special: SpecialDay): string =>
@@ -373,7 +384,7 @@ export default function CalendarView({
         onKeyDown={keyboardEvent => openContextMenuFromButton(keyboardEvent, event)}
         title={`${event.title}. Перетащите, чтобы изменить срок. Правый клик — быстрый статус`}
         aria-haspopup="menu"
-        className={`flex w-full items-center gap-1.5 border text-left leading-tight text-bx-text transition-colors hover:border-blue-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${roomy ? 'min-h-10 rounded-lg px-2.5 py-2 text-xs' : 'min-h-6 rounded-md px-1.5 py-1 text-[11px]'} ${meta.chip} ${event.status === 'done' ? 'opacity-60 line-through' : ''}`}
+        className={`bx-calendar-focus-ring flex w-full items-center gap-1.5 border text-left leading-tight text-bx-text transition-colors hover:border-bx-accent/50 focus-visible:outline-none ${roomy ? 'min-h-10 rounded-lg px-2.5 py-2 text-xs' : 'min-h-6 rounded-md px-1.5 py-1 text-[11px]'} ${meta.chip} ${event.status === 'done' ? 'opacity-60 line-through' : ''}`}
       >
         <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${meta.dot}`} />
         <span className="truncate">{event.title}</span>
@@ -393,7 +404,7 @@ export default function CalendarView({
         }}
         onClick={clickEvent => { clickEvent.stopPropagation(); onCardClick?.(card.id) }}
         title={`${card.title}. Карточка доски`}
-        className={`flex w-full items-center gap-1.5 border text-left leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${roomy ? 'min-h-10 rounded-lg px-2.5 py-2 text-xs' : 'min-h-6 rounded-md px-1.5 py-1 text-[11px]'} ${
+        className={`bx-calendar-focus-ring flex w-full items-center gap-1.5 border text-left leading-tight transition-colors focus-visible:outline-none ${roomy ? 'min-h-10 rounded-lg px-2.5 py-2 text-xs' : 'min-h-6 rounded-md px-1.5 py-1 text-[11px]'} ${
           done
             ? 'border-emerald-500/20 bg-emerald-500/[0.06] text-bx-muted line-through opacity-60'
             : 'border-cyan-500/25 bg-cyan-500/10 text-bx-text hover:border-cyan-500/50'
@@ -426,19 +437,20 @@ export default function CalendarView({
         key={date}
         data-calendar-date={date}
         data-selected={isSelected ? 'true' : undefined}
+        data-today={isToday ? 'true' : undefined}
         onClick={() => selectDate(day)}
         onMouseEnter={() => previewDateWithIntent(day)}
         onMouseLeave={cancelPreviewChange}
         onFocus={() => showDate(day)}
         onDragOver={event => event.preventDefault()}
         onDrop={event => handleDrop(event, date)}
-        className={`group/day relative flex cursor-pointer flex-col rounded-xl border bg-bx-surface p-2 text-left transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+        className={`bx-calendar-day bx-calendar-focus-ring group/day relative flex cursor-pointer flex-col rounded-xl border p-2 text-left transition-colors duration-200 focus-visible:outline-none ${
           layout === 'month' ? 'min-h-[112px]' : 'min-h-[360px]'
         } ${
           isSelected
-            ? 'border-blue-600 bg-blue-500/[0.11] ring-2 ring-blue-500/45 ring-offset-1 ring-offset-bx-bg shadow-sm'
+            ? 'is-selected'
             : isPreviewed
-              ? 'border-blue-500/50 bg-blue-500/[0.06]'
+              ? 'is-previewed'
             : specialMeta
               ? specialMeta.box
               : isRegularWeekend
@@ -457,14 +469,14 @@ export default function CalendarView({
                 onClick={event => { event.stopPropagation(); selectDate(day); onDayClick(date) }}
                 aria-label={`Открыть ${formatFullDate(day)}. ${dayEvents.length} задач, ${deadlineCount} бухгалтерских сроков`}
                 aria-pressed={isSelected}
-                className={`grid h-8 w-8 flex-shrink-0 place-items-center rounded-full text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                isToday || isSelected ? 'bg-blue-600 text-white shadow-sm' : isRegularWeekend ? 'text-rose-700 dark:text-rose-300' : 'text-bx-text'
+                className={`bx-calendar-focus-ring grid h-8 w-8 flex-shrink-0 place-items-center rounded-full text-sm font-bold transition-colors focus-visible:outline-none ${
+                isToday ? 'bg-bx-accent text-bx-on-accent shadow-sm' : isSelected ? 'text-bx-accent' : isRegularWeekend ? 'text-rose-700 dark:text-rose-300' : 'text-bx-text'
               }`}
               >
                 {day.getDate()}
               </button>
               {layout === 'week' && <span className="text-xs font-semibold uppercase text-bx-muted">{WEEKDAYS[weekdayIndex]}</span>}
-              {isSelected && <span className="rounded-md bg-blue-600/12 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wide text-blue-700 dark:text-blue-300">Выбрано</span>}
+              {isSelected && <span className="bx-calendar-selected-label rounded-md px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wide">Выбрано</span>}
               {isRegularWeekend && !special && (
                 <span className="line-clamp-2 text-[9px] font-bold uppercase leading-tight tracking-wide text-rose-700 dark:text-rose-300">
                   {weekdayIndex === 5 ? 'выходной · 5-дн.' : 'выходной'}
@@ -483,15 +495,15 @@ export default function CalendarView({
             onClick={event => { event.stopPropagation(); selectDate(day); onAddEvent(date) }}
             aria-label={`Добавить задачу на ${formatFullDate(day)}`}
             title="Добавить задачу"
-            className={`grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${isSelected ? 'border-blue-600 bg-blue-600 text-white shadow-sm' : 'border-bx-border bg-bx-surface-2 text-bx-muted opacity-60 hover:border-blue-500 hover:bg-blue-600 hover:text-white hover:opacity-100 group-focus-within/day:opacity-100'}`}
+            className="bx-calendar-add-day bx-calendar-focus-ring grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg border transition-all focus-visible:outline-none opacity-70 hover:opacity-100 group-focus-within/day:opacity-100"
           >
             <Icon name="plus" className="h-4 w-4" />
           </button>
         </div>
 
         {deadlineCount > 0 && (
-          <div className="mb-1.5 flex items-center gap-1.5 rounded-md bg-blue-500/10 px-1.5 py-1 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+          <div className="bx-calendar-deadline-chip mb-1.5 flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[10px] font-semibold">
+            <span className="h-1.5 w-1.5 rounded-full bg-bx-accent" />
             {deadlineCount} бух. {deadlineCount === 1 ? 'срок' : 'срока'}
           </div>
         )}
@@ -504,6 +516,54 @@ export default function CalendarView({
             <span className="block px-1 text-[10px] font-semibold text-bx-muted">Ещё {hiddenCount} — наведите или откройте день</span>
           )}
         </div>
+      </div>
+    )
+  }
+
+  const renderMobileDay = (day: Date) => {
+    const date = toISO(day)
+    const dayEvents = eventsByDate.get(date) ?? []
+    const dayDeadlines = deadlinesByDate.get(date) ?? []
+    const special = getSpecialDay(day)
+    const isSelected = date === selectedDate
+    const isToday = date === todayISO
+    const openCount = dayEvents.filter(event => event.status !== 'done').length
+
+    return (
+      <div
+        key={`mobile-${date}`}
+        className={`bx-calendar-mobile-day ${isSelected ? 'is-selected' : ''}`}
+        data-calendar-mobile-date={date}
+        data-today={isToday ? 'true' : undefined}
+      >
+        <button
+          type="button"
+          className="bx-calendar-mobile-day__date bx-calendar-focus-ring"
+          onClick={() => selectDate(day)}
+          aria-label={`Выбрать ${formatFullDate(day)}`}
+          aria-pressed={isSelected}
+        >
+          {day.getDate()}
+        </button>
+        <button
+          type="button"
+          className="bx-calendar-focus-ring min-w-0 text-left"
+          onClick={() => { selectDate(day); onDayClick(date) }}
+          aria-label={`Открыть повестку: ${formatFullDate(day)}`}
+        >
+          <span className="block truncate text-sm font-extrabold capitalize text-bx-text">{formatWeekday(day)}{isToday ? ' · сегодня' : ''}</span>
+          <span className="mt-1 block truncate text-xs text-bx-muted">
+            {special?.name ?? (openCount || dayDeadlines.length ? `${formatTaskCount(openCount)} · ${dayDeadlines.length} бух. сроков` : 'Свободный день')}
+          </span>
+        </button>
+        <button
+          type="button"
+          className="bx-calendar-add-day bx-calendar-focus-ring grid h-11 w-11 place-items-center rounded-xl border"
+          onClick={() => { selectDate(day); onAddEvent(date) }}
+          aria-label={`Добавить задачу на ${formatFullDate(day)}`}
+        >
+          <Icon name="plus" className="h-4 w-4" />
+        </button>
       </div>
     )
   }
@@ -537,9 +597,9 @@ export default function CalendarView({
         onDrop={event => handleDrop(event, date)}
         className={`relative grid overflow-hidden rounded-2xl border transition-colors sm:grid-cols-[150px_minmax(0,1fr)] ${
           isSelected
-            ? 'border-blue-600 bg-blue-500/[0.1] ring-2 ring-blue-500/35 shadow-sm'
+            ? 'border-bx-accent/45 bg-bx-accent/10 ring-1 ring-bx-accent/20 shadow-sm'
             : isPreviewed
-              ? 'border-blue-500/55 bg-blue-500/[0.06] ring-1 ring-blue-500/10'
+              ? 'border-bx-accent/30 bg-bx-accent/[0.05]'
             : specialMeta
               ? specialMeta.box
               : isWeekend
@@ -554,9 +614,9 @@ export default function CalendarView({
             onClick={() => selectDate(day)}
             aria-label={`Показать справа ${formatFullDate(day)}`}
             aria-pressed={isSelected}
-            className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl text-left outline-none transition-colors hover:bg-bx-surface-2/70 focus-visible:ring-2 focus-visible:ring-blue-500 sm:px-2"
+            className="bx-calendar-focus-ring flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl text-left outline-none transition-colors hover:bg-bx-surface-2/70 sm:px-2"
           >
-            <span className={`grid h-11 w-11 flex-shrink-0 place-items-center rounded-xl text-lg font-black tabular-nums ${isToday || isSelected ? 'bg-blue-600 text-white shadow-sm' : 'bg-bx-surface-2 text-bx-text'}`}>{day.getDate()}</span>
+            <span className={`grid h-11 w-11 flex-shrink-0 place-items-center rounded-xl text-lg font-black tabular-nums ${isToday ? 'bg-bx-accent text-bx-on-accent shadow-sm' : isSelected ? 'bg-bx-accent/10 text-bx-accent' : 'bg-bx-surface-2 text-bx-text'}`}>{day.getDate()}</span>
             <span className="min-w-0">
               <span className="block text-xs font-extrabold uppercase tracking-wide text-bx-text">{formatWeekday(day)}</span>
               <span className="mt-0.5 block text-[10px] font-semibold text-bx-muted">{formatShortDate(date)}{isToday ? ' · сегодня' : ''}</span>
@@ -572,8 +632,8 @@ export default function CalendarView({
         <div className="min-w-0 p-3">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             {deadlines.length > 0 && (
-              <span className="inline-flex min-h-7 items-center gap-1.5 rounded-lg bg-blue-500/10 px-2 text-[10px] font-bold text-blue-700 dark:text-blue-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+              <span className="bx-calendar-deadline-chip inline-flex min-h-7 items-center gap-1.5 rounded-lg px-2 text-[10px] font-bold">
+                <span className="h-1.5 w-1.5 rounded-full bg-bx-accent" />
                 {deadlines.length} бух. {deadlines.length === 1 ? 'срок' : 'срока'}
               </span>
             )}
@@ -587,7 +647,7 @@ export default function CalendarView({
               <button
                 type="button"
                 onClick={() => { selectDateISO(date); onDayClick(date) }}
-                className="min-h-10 rounded-xl px-3 text-[11px] font-bold text-bx-muted outline-none transition-colors hover:bg-bx-surface-2 hover:text-bx-text focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="bx-calendar-focus-ring min-h-10 rounded-xl px-3 text-[11px] font-bold text-bx-muted outline-none transition-colors hover:bg-bx-surface-2 hover:text-bx-text"
               >
                 Открыть день
               </button>
@@ -595,7 +655,7 @@ export default function CalendarView({
                 type="button"
                 onClick={() => { selectDateISO(date); onAddEvent(date) }}
                 aria-label={`Добавить задачу на ${formatFullDate(day)}`}
-                className="grid h-10 w-10 place-items-center rounded-xl border border-bx-border bg-bx-surface-2 text-bx-muted outline-none transition-colors hover:border-blue-500 hover:bg-blue-600 hover:text-white focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="bx-calendar-add-day bx-calendar-focus-ring grid h-10 w-10 place-items-center rounded-xl border outline-none transition-colors"
               >
                 <Icon name="plus" className="h-4 w-4" />
               </button>
@@ -640,31 +700,31 @@ export default function CalendarView({
     <aside
       aria-label="Предпросмотр дня"
       onMouseEnter={cancelPreviewChange}
-      className="rounded-2xl border border-bx-border bg-bx-surface p-4 shadow-sm lg:sticky lg:top-0"
+      className="bx-calendar-day-panel rounded-2xl border p-4 lg:sticky lg:top-0"
     >
-      <div className="border-b border-bx-border pb-3">
+      <div className="bx-calendar-day-panel__head border-b border-bx-border pb-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-400">{previewDate === selectedDate ? 'Выбранный день' : 'Предпросмотр дня'}</p>
+            <p className="bx-calendar-eyebrow text-[11px] font-bold tracking-[0.14em]">{previewDate === selectedDate ? 'Повестка дня' : 'Предпросмотр дня'}</p>
             <h3 className="mt-1 leading-tight">
               <span className="block text-base font-bold capitalize text-bx-text">{formatWeekday(previewDay)}</span>
               <span className="mt-1 block text-sm font-semibold text-bx-muted">{formatCalendarDate(previewDay)}</span>
             </h3>
           </div>
-          <span className={`rounded-lg px-2 py-1 text-[9px] font-black uppercase tracking-wide ${previewDate === selectedDate ? 'bg-blue-600/12 text-blue-700 dark:text-blue-300' : 'bg-bx-surface-2 text-bx-muted'}`}>
+          <span className={`rounded-lg px-2 py-1 text-[9px] font-black uppercase tracking-wide ${previewDate === selectedDate ? 'bx-calendar-selected-label' : 'bg-bx-surface-2 text-bx-muted'}`}>
             {previewDate === selectedDate ? 'Выбрано' : 'Под курсором'}
           </span>
         </div>
-        <p className="mt-1.5 text-[10px] leading-relaxed text-bx-muted">Выбранная дата остаётся отмеченной синей рамкой. Наведение меняет только предпросмотр.</p>
+        <p className="mt-1.5 text-[10px] leading-relaxed text-bx-muted">Выбранная дата сохраняется в мягком лавандовом акценте. Наведение меняет только предпросмотр.</p>
         <button
           type="button"
           onClick={() => { selectDateISO(previewDate); onAddEvent(previewDate) }}
-          className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 text-xs font-black text-white shadow-sm transition-colors hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-bx-surface"
+          className="bx-calendar-primary bx-calendar-focus-ring mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-3 text-xs font-black transition-colors focus-visible:outline-none"
           aria-label={`Добавить задачу на ${formatFullDate(previewDay)}`}
         >
           <Icon name="plus" className="h-4 w-4" />
           <span>Добавить задачу</span>
-          <span className="font-semibold text-blue-100">· {formatShortDate(previewDate)}</span>
+          <span className="font-semibold opacity-80">· {formatShortDate(previewDate)}</span>
         </button>
       </div>
 
@@ -768,17 +828,17 @@ export default function CalendarView({
   )
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <header className="mb-3 flex flex-shrink-0 flex-wrap items-center gap-2 rounded-2xl border border-bx-border bg-bx-surface px-3 py-2.5">
+    <div className="bx-calendar flex h-full min-h-0 flex-col">
+      <header className="bx-calendar-toolbar mb-3 flex flex-shrink-0 flex-wrap items-center gap-2 rounded-2xl border">
         <div className="flex items-center gap-1">
-          <button type="button" onClick={handlePrev} aria-label="Предыдущий период" className="grid h-10 w-10 place-items-center rounded-xl text-bx-muted transition-colors hover:bg-bx-surface-2 hover:text-bx-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+          <button type="button" onClick={handlePrev} aria-label="Предыдущий период" className="bx-calendar-nav-button bx-calendar-focus-ring grid h-10 w-10 place-items-center rounded-xl transition-colors focus-visible:outline-none">
             <span aria-hidden="true" className="text-xl">‹</span>
           </button>
           <h2 className="min-w-[190px] text-center text-lg font-bold text-bx-text">{periodTitle}</h2>
-          <button type="button" onClick={handleNext} aria-label="Следующий период" className="grid h-10 w-10 place-items-center rounded-xl text-bx-muted transition-colors hover:bg-bx-surface-2 hover:text-bx-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+          <button type="button" onClick={handleNext} aria-label="Следующий период" className="bx-calendar-nav-button bx-calendar-focus-ring grid h-10 w-10 place-items-center rounded-xl transition-colors focus-visible:outline-none">
             <span aria-hidden="true" className="text-xl">›</span>
           </button>
-          <button type="button" onClick={handleGoToday} className="min-h-10 rounded-xl border border-bx-border px-3 text-xs font-semibold text-bx-muted transition-colors hover:border-blue-500/40 hover:text-bx-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Сегодня</button>
+          <button type="button" onClick={handleGoToday} className="bx-calendar-today-button bx-calendar-focus-ring min-h-10 rounded-xl border border-bx-border px-3 text-xs font-semibold transition-colors focus-visible:outline-none">Сегодня</button>
         </div>
 
         <div className="ml-auto flex rounded-xl border border-bx-border bg-bx-bg p-1">
@@ -788,7 +848,7 @@ export default function CalendarView({
               key={value}
               onClick={() => setMode(value)}
               aria-pressed={mode === value}
-              className={`min-h-8 rounded-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${mode === value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}
+              className={`bx-calendar-mode bx-calendar-focus-ring min-h-8 rounded-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-none ${mode === value ? 'is-active' : ''}`}
             >
               {label}
             </button>
@@ -821,10 +881,10 @@ export default function CalendarView({
             </div>
           )}
           <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <section aria-labelledby="week-agenda-title" className="min-w-0 rounded-2xl border border-bx-border bg-bx-bg p-3">
+            <section aria-labelledby="week-agenda-title" className="bx-calendar-surface min-w-0 rounded-2xl border p-3">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-bx-border pb-3">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-400">Семь дней без горизонтальной прокрутки</p>
+                  <p className="bx-calendar-eyebrow text-[10px] font-bold tracking-[0.14em]">Семь дней без горизонтальной прокрутки</p>
                   <h3 id="week-agenda-title" className="mt-1 text-base font-extrabold text-bx-text">Недельная повестка</h3>
                 </div>
                 <div className="flex items-center gap-2">
@@ -842,7 +902,7 @@ export default function CalendarView({
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           {norms && (
-            <section aria-label="Норма рабочего времени" className="mb-3 grid grid-cols-2 gap-2 rounded-2xl border border-bx-border bg-bx-surface p-3 text-xs sm:grid-cols-4">
+            <section aria-label="Норма рабочего времени" className="bx-calendar-metrics mb-3 grid grid-cols-2 gap-2 rounded-2xl border p-3 text-xs sm:grid-cols-4">
               <div><span className="block text-[10px] uppercase tracking-wide text-bx-muted">Рабочих дней · 5-дн.</span><strong className="mt-1 block text-base text-bx-text">{norms.workdays5}</strong></div>
               <div><span className="block text-[10px] uppercase tracking-wide text-bx-muted">Рабочих дней · 6-дн.</span><strong className="mt-1 block text-base text-bx-text">{norms.workdays6}</strong></div>
               <div><span className="block text-[10px] uppercase tracking-wide text-bx-muted">Норма · 40 ч</span><strong className="mt-1 block text-base text-bx-text">{norms.hours40_5} ч</strong></div>
@@ -858,16 +918,21 @@ export default function CalendarView({
           )}
 
           <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_310px]">
-            <section aria-label={`Календарь: ${periodTitle}`} className="min-w-0 rounded-2xl border border-bx-border bg-bx-bg p-2">
-              <div className="sticky top-0 z-10 grid grid-cols-7 gap-1 border-b border-bx-border bg-bx-bg/95 pb-1 backdrop-blur">
-                {WEEKDAYS.map((weekday, index) => (
-                  <div key={weekday} className={`rounded-lg py-2 text-center text-xs font-bold uppercase tracking-wide ${index >= 5 ? 'bg-rose-500/[0.07] text-rose-700 dark:bg-rose-500/10 dark:text-rose-300' : 'text-bx-muted'}`}>{weekday}</div>
-                ))}
+            <section aria-label={`Календарь: ${periodTitle}`} className="bx-calendar-surface min-w-0 rounded-2xl border p-2">
+              <div className="hidden md:block">
+                <div className="sticky top-0 z-10 grid grid-cols-7 gap-1 border-b border-bx-border bg-bx-surface/95 pb-1 backdrop-blur">
+                  {WEEKDAYS.map((weekday, index) => (
+                    <div key={weekday} className={`rounded-lg py-2 text-center text-xs font-bold uppercase tracking-wide ${index >= 5 ? 'bg-rose-500/[0.07] text-rose-700 dark:bg-rose-500/10 dark:text-rose-300' : 'text-bx-muted'}`}>{weekday}</div>
+                  ))}
+                </div>
+                <div className="mt-1 grid grid-cols-7 gap-1.5">
+                  {monthCells.map((day, index) => day
+                    ? renderDay(day, index % 7, 'month')
+                    : <div key={`empty-${index}`} aria-hidden="true" className="min-h-[124px] rounded-xl border border-transparent bg-bx-surface/30" />)}
+                </div>
               </div>
-              <div className="mt-1 grid grid-cols-7 gap-1.5">
-                {monthCells.map((day, index) => day
-                  ? renderDay(day, index % 7, 'month')
-                  : <div key={`empty-${index}`} aria-hidden="true" className="min-h-[112px] rounded-xl border border-transparent bg-bx-surface/30" />)}
+              <div className="space-y-2 md:hidden" aria-label={`Мобильная повестка: ${periodTitle}`}>
+                {monthCells.filter((day): day is Date => day !== null).map(renderMobileDay)}
               </div>
             </section>
             <PreviewPanel />
@@ -876,7 +941,7 @@ export default function CalendarView({
           <section className="mt-4 pb-6" aria-labelledby="month-dates-title">
             <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-400">Весь месяц одним списком</p>
+                <p className="bx-calendar-eyebrow text-[11px] font-bold tracking-[0.14em]">Весь месяц одним списком</p>
                 <h3 id="month-dates-title" className="mt-1 text-lg font-bold text-bx-text">Важные даты · {MONTHS[month].toLowerCase()} {year}</h3>
               </div>
               <p className="max-w-xl text-right text-[11px] leading-relaxed text-bx-muted">Список учитывает режим компании. Условные обязательства добавляйте только после проверки применимости.</p>

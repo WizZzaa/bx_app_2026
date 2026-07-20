@@ -41,10 +41,11 @@ describe('Sidebar', () => {
     expect(screen.getByRole('button', { name: 'Развернуть боковую панель' })).toBeTruthy()
   })
 
-  it('uses the canonical seven-section information architecture', () => {
+  it('uses the grouped daily-work information architecture', () => {
     render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
     const links = screen.getAllByRole('link').map(link => link.getAttribute('aria-label')).filter(Boolean)
-    expect(links).toEqual(['Главная', 'AI-консультант', 'База знаний', 'Справочники', 'Переводчик', 'Календарь', 'Все функции'])
+    expect(links).toEqual(['Главная', 'Календарь', 'Документы', 'Организации', 'Контроль оплат', 'AI-консультант', 'Переводчик', 'База знаний', 'Справочники', 'Новости', 'Все функции'])
+    expect(screen.getByRole('region', { name: 'Работа' })).toBeTruthy()
   })
 
   it('shows the document translator as a standalone destination', () => {
@@ -68,11 +69,12 @@ describe('Sidebar', () => {
     expect(screen.queryByText('Дашборд')).toBeNull()
   })
 
-  it('uses one semantic accent color for the brand and active navigation', () => {
+  it('uses the D1 semantic brand treatment and active navigation state', () => {
     render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
 
-    expect(screen.getByTestId('bx-brand-mark').className).toContain('bg-blue-600')
-    expect(screen.getByTestId('bx-brand-mark').className).not.toContain('from-blue-600')
+    expect(screen.getByTestId('bx-brand-mark').className).toContain('bx-app-brand-mark')
+    expect(screen.getByTestId('bx-brand-mark').className).not.toContain('bg-blue-600')
+    expect(screen.getByRole('link', { name: 'Главная' }).className).toContain('bx-app-nav-item--active')
     expect(screen.getByRole('link', { name: 'Главная' }).className).toContain('text-bx-on-accent')
   })
 })

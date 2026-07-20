@@ -10,6 +10,9 @@ import { BxMotion } from '../lib/ui/BxMotion'
 import { parseUsageSnapshot, type UsageSnapshot } from '../lib/usageSnapshot'
 import { widgetsApi } from '../lib/widgetsApi'
 import { BentoGrid } from '../components/ui/BentoGrid'
+import WeatherWidget from '../components/widgets/WeatherWidget'
+import HoroscopeWidget from '../components/widgets/HoroscopeWidget'
+import TaxCalendar from '../components/dashboard/TaxCalendar'
 import { Skeleton, SkeletonGroup } from '../components/ui/Skeleton'
 import { StatePanel } from '../components/ui/StatePanel'
 import type { CurrencyRate } from '../../shared/types'
@@ -49,6 +52,7 @@ export interface DashboardD1ViewProps {
   onRetryAi: () => void
   onCreateCompany: () => void
   onEditCompany: () => void
+  showLiveWidgets?: boolean
 }
 
 const dateLabel = (date: string): string => new Date(`${date}T12:00:00`).toLocaleDateString('ru-RU', {
@@ -107,6 +111,67 @@ function useDashboardViewport(): DashboardViewport {
   return viewport
 }
 
+function DashboardHeader({
+  today,
+  events,
+  eventsLoading,
+  activeCompany,
+  onNavigate,
+}: {
+  today: string
+  events: BxEvent[]
+  eventsLoading: boolean
+  activeCompany: Company | null
+  onNavigate: (route: string, state?: unknown) => void
+}) {
+  const summary = useMemo(() => summarizeDashboardTasks(events), [events])
+  const nearestDate = summary.nearest?.due_date || summary.nearest?.date
+  const fullDate = new Date(`${today}T12:00:00`).toLocaleDateString('ru-RU', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+
+  return (
+    <header className="bx-d1-dashboard-hero" aria-labelledby="bx-d1-dashboard-title">
+      <div className="bx-d1-dashboard-hero__content">
+        <p className="bx-d1-dashboard-eyebrow"><span aria-hidden="true" /> {fullDate}</p>
+        <h1 id="bx-d1-dashboard-title">Главное на сегодня</h1>
+        <p className="bx-d1-dashboard-hero__lead">
+          {activeCompany
+            ? `${activeCompany.name}: сроки, задачи и полезные сигналы — в одном рабочем поле.`
+            : 'Сроки, задачи и полезные сигналы — в одном рабочем поле.'}
+        </p>
+        <div className="bx-d1-dashboard-hero__actions">
+          <button type="button" className="bx-d1-action bx-d1-action--primary" onClick={() => onNavigate('/planner', { newTask: {} })}>
+            <Icon name="plus" /> Новая задача
+          </button>
+          <button type="button" className="bx-d1-action bx-d1-action--secondary" onClick={() => onNavigate('/functions')}>
+            Все функции <Icon name="arrowR" />
+          </button>
+        </div>
+      </div>
+
+      <aside className="bx-d1-dashboard-hero__summary" aria-label="Сводка дня">
+        <div className="bx-d1-dashboard-hero__date">
+          <span aria-hidden="true"><Icon name="planner" /></span>
+          <div><small>Рабочий ритм</small><strong>{summary.active.length ? 'Есть задачи в фокусе' : 'День можно спланировать'}</strong></div>
+        </div>
+        <dl>
+          <div>
+            <dt>Активные дела</dt>
+            <dd>{eventsLoading ? '—' : summary.active.length}</dd>
+          </div>
+          <div>
+            <dt>Ближайший срок</dt>
+            <dd>{eventsLoading ? 'Обновляем' : nearestDate ? dashboardDeadlineStatus(nearestDate, today) : 'Всё спокойно'}</dd>
+          </div>
+        </dl>
+      </aside>
+    </header>
+  )
+}
+
 function TodayCard({
   today,
   events,
@@ -131,10 +196,10 @@ function TodayCard({
     <section className="bx-d1-dashboard-card bx-d1-dashboard-card--today" aria-labelledby="bx-d1-today-title">
       <div className="bx-d1-dashboard-card__heading">
         <div>
-          <p className="bx-d1-dashboard-eyebrow">Сегодня</p>
-          <h1 id="bx-d1-today-title">Что требует внимания</h1>
+          <p className="bx-d1-dashboard-eyebrow">Фокус дня</p>
+          <h2 id="bx-d1-today-title">Что требует внимания</h2>
         </div>
-        <span className="bx-d1-dashboard-date">{new Date(`${today}T12:00:00`).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+        <span className="bx-d1-dashboard-chip">{loading ? 'Обновляем' : `${summary.active.length} активных`}</span>
       </div>
 
       {loading ? (
@@ -156,7 +221,7 @@ function TodayCard({
             <span className="bx-d1-dashboard-priority__icon" aria-hidden="true"><Icon name={nearest.type === 'tax_deadline' ? 'planner' : 'check'} /></span>
             <div>
               <p className="bx-d1-dashboard-priority__status"><Icon name="clock" />{dashboardDeadlineStatus(nearest.due_date || nearest.date, today)}</p>
-              <h2>{nearest.title}</h2>
+              <h3>{nearest.title}</h3>
               <p>{dateLabel(nearest.due_date || nearest.date)} · {nearest.type === 'tax_deadline' ? 'Налоговый срок' : 'Рабочая задача'}</p>
             </div>
           </div>
@@ -167,15 +232,15 @@ function TodayCard({
               ))}
             </ul>
           )}
-          <button ref={primaryRef} type="button" className="bx-d1-action bx-d1-action--primary" onClick={onPrimary}>
-            Открыть ближайшую задачу <Icon name="arrowR" />
+          <button ref={primaryRef} type="button" className="bx-d1-action bx-d1-action--secondary bx-d1-action--focus" onClick={onPrimary}>
+            Открыть план дня <Icon name="arrowR" />
           </button>
         </>
       ) : (
         <div className="bx-d1-dashboard-empty">
           <span className="bx-d1-dashboard-priority__icon" aria-hidden="true"><Icon name="check" /></span>
-          <div><h2>Срочных задач нет</h2><p>План на сегодня свободен. Можно добавить новую задачу в планировщике.</p></div>
-          <button ref={primaryRef} type="button" className="bx-d1-action bx-d1-action--primary" onClick={onPrimary}>Открыть планировщик <Icon name="arrowR" /></button>
+          <div><h3>Срочных задач нет</h3><p>План на сегодня свободен. Можно добавить новую задачу в планировщике.</p></div>
+          <button ref={primaryRef} type="button" className="bx-d1-action bx-d1-action--secondary bx-d1-action--focus" onClick={onPrimary}>Открыть планировщик <Icon name="arrowR" /></button>
         </div>
       )}
     </section>
@@ -360,11 +425,21 @@ export function DashboardD1View(props: DashboardD1ViewProps) {
   const companyCard = <CompanyCard key="company" company={props.activeCompany} companyCount={props.companyCount} plan={props.plan} planLoading={props.planLoading} limits={props.limits} onCreate={props.onCreateCompany} onEdit={props.onEditCompany} onUpgrade={() => props.onNavigate('/account')} />
   const toolsCard = <DailyToolsCard key="tools" rates={props.rates} today={props.today} onNavigate={route => props.onNavigate(route)} onRetry={props.onRetryRates} />
   const aiCard = <AiCard key="ai" ai={props.ai} question={question} setQuestion={setQuestion} onAsk={askAi} onOpen={() => props.onNavigate('/ai')} onRetry={props.onRetryAi} />
-  const cards = viewport === 'mobile'
-    ? [todayCard, aiCard, toolsCard, companyCard]
-    : viewport === 'tablet'
-      ? [todayCard, companyCard, aiCard, toolsCard]
-      : [todayCard, companyCard, toolsCard, aiCard]
+  const weatherCard = props.showLiveWidgets ? <div key="weather" className="bx-d1-dashboard-live bx-d1-dashboard-live--weather"><WeatherWidget /></div> : null
+  const horoscopeCard = props.showLiveWidgets ? <div key="horoscope" className="bx-d1-dashboard-live bx-d1-dashboard-live--horoscope"><HoroscopeWidget /></div> : null
+  const taxCalendarCard = props.showLiveWidgets ? <section key="tax-calendar" className="bx-d1-dashboard-card bx-d1-dashboard-card--tax-calendar" aria-label="Бухгалтерский календарь"><TaxCalendar onPickDeadline={(date, deadline) => props.onNavigate('/planner', { newTask: { title: deadline.title, note: `Срок из бухгалтерского календаря BX · ${deadline.kind === 'payment' ? 'уплата' : 'отчётность'}`, date } })} /></section> : null
+  const cards = props.showLiveWidgets
+    ? viewport === 'mobile'
+      ? [todayCard, taxCalendarCard, weatherCard, horoscopeCard, aiCard, toolsCard, companyCard]
+      : viewport === 'tablet'
+        ? [todayCard, weatherCard, taxCalendarCard, companyCard, aiCard, horoscopeCard, toolsCard]
+        : [todayCard, weatherCard, taxCalendarCard, toolsCard, companyCard, aiCard, horoscopeCard]
+    : viewport === 'mobile'
+      ? [todayCard, aiCard, toolsCard, companyCard]
+      : viewport === 'tablet'
+        ? [todayCard, companyCard, aiCard, toolsCard]
+        : [todayCard, companyCard, toolsCard, aiCard]
+  const useDesktopWorkspace = props.showLiveWidgets && viewport === 'desktop'
 
   return (
     <div className="bx-d1-dashboard" data-testid="dashboard-d1">
@@ -375,13 +450,38 @@ export function DashboardD1View(props: DashboardD1ViewProps) {
           </section>
         )}
         <BxMotion preset="raise">
-          <BentoGrid as="section" className="bx-d1-dashboard__grid" aria-label="Рабочий стол">
-            {cards}
-          </BentoGrid>
+          <DashboardHeader
+            today={props.today}
+            events={props.events}
+            eventsLoading={props.eventsLoading}
+            activeCompany={props.activeCompany}
+            onNavigate={props.onNavigate}
+          />
+        </BxMotion>
+        <BxMotion preset="raise">
+          {useDesktopWorkspace ? (
+            <section className="bx-d1-dashboard__workspace" aria-label="Рабочий стол">
+              <div className="bx-d1-dashboard__main-column">
+                {todayCard}
+                {taxCalendarCard}
+                {horoscopeCard}
+              </div>
+              <aside className="bx-d1-dashboard__signal-column" aria-label="Сигналы и быстрые действия">
+                {weatherCard}
+                {toolsCard}
+                {companyCard}
+                {aiCard}
+              </aside>
+            </section>
+          ) : (
+            <BentoGrid as="section" className="bx-d1-dashboard__grid" aria-label="Рабочий стол">
+              {cards}
+            </BentoGrid>
+          )}
         </BxMotion>
       </div>
       <div className={`bx-d1-dashboard-sticky ${stickyPrimary ? 'bx-d1-dashboard-sticky--visible' : ''}`} aria-hidden={!stickyPrimary}>
-        <button type="button" tabIndex={stickyPrimary ? 0 : -1} className="bx-d1-action bx-d1-action--primary" onClick={openPlanner}>Открыть ближайшую задачу <Icon name="arrowR" /></button>
+        <button type="button" tabIndex={stickyPrimary ? 0 : -1} className="bx-d1-action bx-d1-action--secondary bx-d1-action--focus" onClick={openPlanner}>Открыть план дня <Icon name="arrowR" /></button>
       </div>
     </div>
   )
@@ -454,6 +554,7 @@ export default function DashboardD1() {
       onRetryAi={() => void loadAi()}
       onCreateCompany={() => startCompanyCreation()}
       onEditCompany={() => { if (active) startCompanyEdit(active) }}
+      showLiveWidgets
     />
   )
 }

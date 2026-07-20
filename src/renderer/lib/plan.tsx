@@ -164,6 +164,30 @@ const Ctx = createContext<PlanCtx>({
   planExpiresAt: null, referralCode: null, refresh: async () => { /* переопределяется в PlanProvider */ },
 })
 
+/** Read-only entitlement fixture for the local auth-free visual QA entry.
+ * It never reads or writes Supabase, browser storage or production state. */
+export function PlanPreviewProvider({ children, plan = 'standard' }: { children: React.ReactNode; plan?: Plan }) {
+  return (
+    <Ctx.Provider value={{
+      plan,
+      isPro: plan === 'trial' || plan === 'standard' || plan === 'premium',
+      isPremium: plan === 'premium',
+      role: 'user',
+      isAdmin: false,
+      loading: false,
+      limits: DEFAULT_PLAN_LIMITS[plan],
+      allLimits: DEFAULT_PLAN_LIMITS,
+      isTrial: plan === 'trial',
+      trialDaysLeft: 0,
+      planExpiresAt: null,
+      referralCode: null,
+      refresh: async () => { /* static local preview */ },
+    }}>
+      {children}
+    </Ctx.Provider>
+  )
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000
 
 export function PlanProvider({ children }: { children: React.ReactNode }) {

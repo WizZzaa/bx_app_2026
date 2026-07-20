@@ -23,6 +23,14 @@ describe('D1 Dashboard contracts', () => {
     expect(css).not.toMatch(/min-width:\s*[4-9]\d\dpx/)
   })
 
+  it('keeps desktop dashboard modules on shared column axes instead of inherited bento spans', () => {
+    expect(view).toContain('useDesktopWorkspace')
+    expect(view).toContain('bx-d1-dashboard__main-column')
+    expect(view).toContain('bx-d1-dashboard__signal-column')
+    expect(css).toContain('.bx-d1-dashboard__main-column > *')
+    expect(css).toContain('grid-column: 1 / -1')
+  })
+
   it('keeps touch, focus, sticky safe-area and reduced-motion guarantees explicit', () => {
     expect(css).toContain('min-height: var(--bx-target-min)')
     expect(css).toContain('outline: var(--bx-focus-width) solid var(--bx-focus)')

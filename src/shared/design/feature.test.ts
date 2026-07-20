@@ -5,6 +5,7 @@ import {
   BX_DESIGN_FEATURE_VALUE,
   isBxDesignFeatureEnabled,
   parseBxDesignFeatureFlag,
+  resolveBxDesignFeatureFlag,
 } from './feature'
 
 describe('BX D1 feature gate', () => {
@@ -20,6 +21,18 @@ describe('BX D1 feature gate', () => {
     expect(parseBxDesignFeatureFlag('1')).toBe(true)
     expect(parseBxDesignFeatureFlag(' TRUE ')).toBe(true)
     expect(parseBxDesignFeatureFlag('on')).toBe(true)
+  })
+
+  it('uses D1 by default and keeps an explicit release rollback switch', () => {
+    expect(resolveBxDesignFeatureFlag(undefined)).toBe(true)
+    expect(resolveBxDesignFeatureFlag('')).toBe(true)
+    expect(resolveBxDesignFeatureFlag('unknown')).toBe(true)
+    expect(resolveBxDesignFeatureFlag('1')).toBe(true)
+    expect(resolveBxDesignFeatureFlag(' TRUE ')).toBe(true)
+    expect(resolveBxDesignFeatureFlag('0')).toBe(false)
+    expect(resolveBxDesignFeatureFlag('false')).toBe(false)
+    expect(resolveBxDesignFeatureFlag(' OFF ')).toBe(false)
+    expect(resolveBxDesignFeatureFlag(undefined, false)).toBe(false)
   })
 
   it('applies and removes only the document feature marker', () => {

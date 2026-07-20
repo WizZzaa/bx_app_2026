@@ -15,6 +15,8 @@ import { requestNotificationPermission, startReminderLoop, stopReminderLoop } fr
 import type { BxEvent, NewEvent, EventStatus } from './planner/useEvents';
 import { todayISO, nextRecurrenceISO } from '../lib/dates';
 import type { TaxDeadline } from '../data/taxCalendar';
+import Icon from '../lib/ui/Icon';
+import './planner/PlannerD1.css';
 
 type View = 'focus' | 'calendar' | 'board';
 
@@ -22,10 +24,10 @@ export const DEFAULT_PLANNER_VIEW: View = 'calendar';
 
 const TYPE_FILTERS = [
   { id: '',             label: 'Все' },
-  { id: 'task',         label: '✅ Задачи' },
-  { id: 'tax_deadline', label: '📋 Дедлайны' },
-  { id: 'reminder',     label: '🔔 Напомин.' },
-  { id: 'event',        label: '📅 События' },
+  { id: 'task',         label: 'Задачи' },
+  { id: 'tax_deadline', label: 'Дедлайны' },
+  { id: 'reminder',     label: 'Напоминания' },
+  { id: 'event',        label: 'События' },
 ];
 
 export default function Planner() {
@@ -49,15 +51,6 @@ export default function Planner() {
 
   const [seedMsg, setSeedMsg] = useState('');
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-
-  // Одноразово убираем локальные кэши удалённой проектной подсистемы.
-  useEffect(() => {
-    localStorage.removeItem('bx_boards_cache_v1');
-    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
-      const key = localStorage.key(index);
-      if (key?.startsWith('bx_cards_cache_')) localStorage.removeItem(key);
-    }
-  }, []);
 
   async function handleDeleteEventDirect(id: string) {
     const removed = await remove(id);
@@ -317,72 +310,66 @@ export default function Planner() {
     : filtered;
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden relative bg-bx-bg">
-      {/* Top bar */}
-      <div className="flex-shrink-0 border-b border-bx-border px-6 py-4 bg-bx-surface shadow-sm">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <h1 className="text-sm font-extrabold text-bx-text uppercase tracking-wider">Планировщик</h1>
+    <div className="bx-planner flex-1 flex flex-col overflow-hidden relative bg-bx-bg">
+      <header className="bx-planner-hero flex-shrink-0 border-b border-bx-border bg-bx-surface/90 px-4 py-4 shadow-sm backdrop-blur lg:px-6">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="bx-planner-hero__icon grid h-12 w-12 flex-shrink-0 place-items-center rounded-2xl"><Icon name="planner" className="h-5 w-5" /></span>
+            <div><p className="bx-planner-eyebrow text-xs font-black">Рабочий календарь BX</p><h1 className="mt-1 text-2xl font-black tracking-tight text-bx-text">Планировщик</h1><p className="mt-1 text-sm text-bx-muted">Один календарь для задач, событий и проверенных бухгалтерских сроков.</p></div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1.5 flex-wrap">
-              {todayCount > 0 && <span className="text-[10px] bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-bold px-2.5 py-0.5 rounded-full">Сегодня: {todayCount}</span>}
-              {overdueCount > 0 && <span className="text-[10px] bg-red-500/10 border border-red-500/20 text-red-500 dark:text-red-400 font-bold px-2.5 py-0.5 rounded-full">Просрочено: {overdueCount}</span>}
+              <span className="bx-planner-summary inline-flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs font-black"><Icon name="clock" className="h-4 w-4" />Сегодня: {todayCount}</span>
+              {overdueCount > 0 && <span className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 text-xs font-black text-red-600 dark:text-red-300"><Icon name="alert" className="h-4 w-4" />Просрочено: {overdueCount}</span>}
             </div>
             {seedMsg && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-bold">{seedMsg}</span>}
-          </div>
-
-          <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={handleForceSync}
               disabled={syncing}
-              className="px-3.5 py-2 bg-bx-surface hover:bg-bx-surface-2 text-bx-text hover:text-blue-500 text-xs font-bold rounded-xl transition-all border border-bx-border hover:border-blue-500/20 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm"
+              className="bx-planner-secondary inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-xs font-black disabled:opacity-50"
             >
-              <span>{syncing ? '⌛' : '🔄'}</span> Продлить горизонт
+              <Icon name={syncing ? 'clock' : 'exchange'} className={`h-4 w-4 ${syncing ? 'animate-pulse' : ''}`} /> Продлить горизонт
             </button>
 
             {/* Segmented Control */}
-            <div className="flex bg-bx-surface-2 border border-bx-border rounded-xl p-0.5">
+            <div className="flex rounded-xl border border-bx-border bg-bx-bg p-1" aria-label="Вид планировщика">
               {([['focus','Фокус'],['calendar','Календарь'],['board','Доска']] as const).map(([v,l]) => (
                 <button 
                   key={v} 
                   onClick={() => setView(v as View)}
-                  className={`px-3 py-1.5 text-xs rounded-lg transition-all font-semibold cursor-pointer ${
-                    view === v 
-                      ? 'bg-blue-600 text-white shadow-sm' 
-                      : 'text-bx-muted hover:text-bx-text'
-                  }`}
+                  aria-pressed={view === v}
+                  className={`bx-planner-view-tab min-h-10 rounded-lg px-3 text-xs font-black transition-colors ${view === v ? 'is-active' : ''}`}
                 >
                   {l}
                 </button>
               ))}
             </div>
 
-            <button onClick={() => openNewEvent()}
-              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer">
-              {view === 'board' ? '+ Задача' : '+ Добавить'}
+            <button type="button" onClick={() => openNewEvent()}
+              className="bx-planner-primary inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-xs font-black">
+              <Icon name="plus" className="h-4 w-4" />Новая задача
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+        <div className="bx-planner-filters mt-4 flex flex-wrap items-center gap-2 border-t border-bx-border pt-3" aria-label="Фильтр по типу">
           {TYPE_FILTERS.map(f => (
             <button
               key={f.id}
               onClick={() => setTypeF(f.id)}
-              className={`px-3 py-1 text-[11px] rounded-lg transition-all font-semibold ${
-                typeF === f.id
-                  ? 'bg-blue-600/10 border border-blue-500/20 text-blue-400'
-                  : 'text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-900/5 dark:hover:bg-white/[0.02] hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
+              aria-pressed={typeF === f.id}
+              className={`bx-planner-filter min-h-10 rounded-xl border px-3 text-xs font-bold transition-colors ${typeF === f.id ? 'is-active' : ''}`}
             >
               {f.label}
             </button>
           ))}
           {loading && <span className="text-[10px] text-slate-500 ml-auto italic animate-pulse">обновление...</span>}
         </div>
-      </div>
+      </header>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden p-4">
+      <div className="bx-planner-content flex-1 overflow-hidden p-4">
         {eventsError && (
           <div className="mb-3 px-3 py-2 text-xs text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl">
             Не удалось обновить события: {eventsError}

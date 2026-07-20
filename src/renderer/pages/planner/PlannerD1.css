@@ -1,0 +1,285 @@
+:root[data-bx-design='d1'] .bx-planner {
+  background:
+    linear-gradient(180deg, rgb(var(--bx-brand-rgb) / 0.035), transparent 22rem),
+    var(--bx-canvas);
+}
+
+:root[data-bx-design='d1'] .bx-planner-hero {
+  position: relative;
+  overflow: hidden;
+  background: rgb(var(--bx-surface-rgb) / 0.92);
+}
+
+:root[data-bx-design='d1'] .bx-planner-hero::after {
+  content: '';
+  position: absolute;
+  top: -7rem;
+  right: 12%;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 999px;
+  background: rgb(var(--bx-brand-rgb) / 0.08);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+:root[data-bx-design='d1'] .bx-planner-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-bx-design='d1'] .bx-planner-hero__icon {
+  border: 1px solid rgb(var(--bx-brand-rgb) / 0.18);
+  background: var(--bx-brand-soft);
+  color: var(--bx-brand-action);
+  box-shadow: inset 0 1px rgb(var(--bx-surface-rgb) / 0.82);
+}
+
+:root[data-bx-design='d1'] .bx-planner-eyebrow,
+:root[data-bx-design='d1'] .bx-calendar-eyebrow {
+  color: var(--bx-brand-action);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+:root[data-bx-design='d1'] .bx-planner-summary {
+  border-color: rgb(var(--bx-brand-rgb) / 0.2);
+  background: var(--bx-brand-soft);
+  color: var(--bx-brand-action);
+}
+
+:root[data-bx-design='d1'] .bx-planner-secondary {
+  border-color: var(--bx-border);
+  background: rgb(var(--bx-surface-subtle-rgb) / 0.72);
+  color: var(--bx-text-primary);
+}
+
+:root[data-bx-design='d1'] .bx-planner-secondary:hover {
+  border-color: rgb(var(--bx-brand-rgb) / 0.32);
+  background: var(--bx-brand-soft);
+  color: var(--bx-brand-action);
+}
+
+:root[data-bx-design='d1'] .bx-planner-view-tab,
+:root[data-bx-design='d1'] .bx-calendar-mode,
+:root[data-bx-design='d1'] .bx-planner-filter {
+  color: var(--bx-text-secondary);
+}
+
+:root[data-bx-design='d1'] .bx-planner-view-tab:hover,
+:root[data-bx-design='d1'] .bx-calendar-mode:hover,
+:root[data-bx-design='d1'] .bx-planner-filter:hover {
+  color: var(--bx-text-primary);
+}
+
+:root[data-bx-design='d1'] .bx-planner-view-tab.is-active,
+:root[data-bx-design='d1'] .bx-calendar-mode.is-active,
+:root[data-bx-design='d1'] .bx-planner-filter.is-active {
+  border-color: rgb(var(--bx-brand-rgb) / 0.2);
+  background: var(--bx-brand-soft);
+  color: var(--bx-brand-action);
+  box-shadow: inset 0 0 0 1px rgb(var(--bx-brand-rgb) / 0.08);
+}
+
+:root[data-bx-design='d1'] .bx-planner-filter:not(.is-active) {
+  border-color: transparent;
+}
+
+:root[data-bx-design='d1'] .bx-planner-primary,
+:root[data-bx-design='d1'] .bx-calendar-primary {
+  border: 1px solid transparent;
+  background: var(--bx-brand-action);
+  color: var(--bx-on-brand);
+  box-shadow: 0 8px 20px rgb(var(--bx-brand-rgb) / 0.18);
+}
+
+:root[data-bx-design='d1'] .bx-planner-primary:hover,
+:root[data-bx-design='d1'] .bx-calendar-primary:hover {
+  background: var(--bx-brand-hover);
+}
+
+:root[data-bx-design='d1'] .bx-planner-content {
+  background: linear-gradient(180deg, rgb(var(--bx-surface-subtle-rgb) / 0.38), transparent 18rem);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-toolbar,
+:root[data-bx-design='d1'] .bx-calendar-metrics,
+:root[data-bx-design='d1'] .bx-calendar-surface,
+:root[data-bx-design='d1'] .bx-calendar-day-panel {
+  border-color: rgb(var(--bx-border-rgb) / 0.9);
+  background: rgb(var(--bx-surface-rgb) / 0.93);
+  box-shadow: var(--bx-shadow-sm);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-toolbar {
+  padding: 0.75rem;
+}
+
+:root[data-bx-design='d1'] .bx-calendar-nav-button,
+:root[data-bx-design='d1'] .bx-calendar-today-button {
+  color: var(--bx-text-secondary);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-nav-button:hover,
+:root[data-bx-design='d1'] .bx-calendar-today-button:hover {
+  border-color: rgb(var(--bx-brand-rgb) / 0.3);
+  background: var(--bx-brand-soft);
+  color: var(--bx-brand-action);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-day {
+  min-height: 7.75rem;
+  border-color: var(--bx-border);
+  background: var(--bx-surface);
+  box-shadow: none;
+}
+
+:root[data-bx-design='d1'] .bx-calendar-day:hover,
+:root[data-bx-design='d1'] .bx-calendar-day.is-previewed {
+  border-color: rgb(var(--bx-brand-rgb) / 0.32);
+  background: rgb(var(--bx-brand-rgb) / 0.045);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-day.is-selected {
+  border-color: rgb(var(--bx-brand-rgb) / 0.48);
+  background: var(--bx-brand-soft);
+  box-shadow: inset 0 0 0 1px rgb(var(--bx-brand-rgb) / 0.08);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-day.is-selected [aria-pressed='true'] {
+  background: var(--bx-surface);
+  color: var(--bx-brand-action);
+  box-shadow: inset 0 0 0 1px rgb(var(--bx-brand-rgb) / 0.24);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-day[data-today='true'] [aria-pressed='true'] {
+  background: var(--bx-brand-action);
+  color: var(--bx-on-brand);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-add-day {
+  border-color: var(--bx-border);
+  background: var(--bx-surface-subtle);
+  color: var(--bx-text-secondary);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-add-day:hover,
+:root[data-bx-design='d1'] .bx-calendar-day.is-selected .bx-calendar-add-day {
+  border-color: rgb(var(--bx-brand-rgb) / 0.34);
+  background: var(--bx-surface);
+  color: var(--bx-brand-action);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-selected-label,
+:root[data-bx-design='d1'] .bx-calendar-deadline-chip {
+  background: rgb(var(--bx-brand-rgb) / 0.1);
+  color: var(--bx-brand-action);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-mobile-day {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 4.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--bx-border);
+  border-radius: var(--bx-radius-md);
+  background: var(--bx-surface);
+  text-align: left;
+}
+
+:root[data-bx-design='d1'] .bx-calendar-mobile-day.is-selected {
+  border-color: rgb(var(--bx-brand-rgb) / 0.42);
+  background: var(--bx-brand-soft);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-mobile-day__date {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: var(--bx-radius-sm);
+  background: var(--bx-surface-subtle);
+  color: var(--bx-text-primary);
+  font-weight: 800;
+}
+
+:root[data-bx-design='d1'] .bx-calendar-mobile-day[data-today='true'] .bx-calendar-mobile-day__date {
+  background: var(--bx-brand-action);
+  color: var(--bx-on-brand);
+}
+
+:root[data-bx-design='d1'] .bx-calendar-day-panel {
+  overflow: hidden;
+}
+
+:root[data-bx-design='d1'] .bx-calendar-day-panel__head {
+  margin: -1rem -1rem 0;
+  padding: 1rem;
+  background: linear-gradient(145deg, var(--bx-surface), var(--bx-brand-soft));
+}
+
+:root[data-bx-design='d1'] .bx-calendar-focus-ring:focus-visible {
+  outline: var(--bx-focus-width) solid var(--bx-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  :root[data-bx-design='d1'] .bx-planner {
+    overflow-y: auto;
+  }
+
+  :root[data-bx-design='d1'] .bx-planner-hero {
+    overflow: visible;
+  }
+
+  :root[data-bx-design='d1'] .bx-planner-content {
+    overflow: visible;
+    padding: 0.75rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-planner-filters {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  :root[data-bx-design='d1'] .bx-planner-filter {
+    padding-inline: 0.5rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-calendar-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: var(--bx-z-sticky);
+  }
+
+  :root[data-bx-design='d1'] .bx-calendar-toolbar > div:first-child {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  :root[data-bx-design='d1'] .bx-calendar-toolbar > div:first-child h2 {
+    min-width: 0;
+    flex: 1;
+    font-size: 1rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-calendar-toolbar > div:nth-child(2) {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  :root[data-bx-design='d1'] .bx-calendar-mode {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-bx-design='d1'] .bx-planner *,
+  :root[data-bx-design='d1'] .bx-planner *::before,
+  :root[data-bx-design='d1'] .bx-planner *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
