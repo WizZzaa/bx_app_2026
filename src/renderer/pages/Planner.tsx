@@ -16,6 +16,7 @@ import type { BxEvent, NewEvent, EventStatus } from './planner/useEvents';
 import { todayISO, nextRecurrenceISO } from '../lib/dates';
 import type { TaxDeadline } from '../data/taxCalendar';
 import Icon from '../lib/ui/Icon';
+import './planner/PlannerD1.css';
 
 type View = 'focus' | 'calendar' | 'board';
 
@@ -318,16 +319,16 @@ export default function Planner() {
     : filtered;
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden relative bg-bx-bg">
-      <header className="flex-shrink-0 border-b border-bx-border bg-bx-surface/90 px-4 py-4 shadow-sm backdrop-blur lg:px-6">
+    <div className="bx-planner flex-1 flex flex-col overflow-hidden relative bg-bx-bg">
+      <header className="bx-planner-hero flex-shrink-0 border-b border-bx-border bg-bx-surface/90 px-4 py-4 shadow-sm backdrop-blur lg:px-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="flex min-w-0 items-start gap-3">
-            <span className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-600/20"><Icon name="planner" className="h-5 w-5" /></span>
-            <div><p className="text-xs font-black text-violet-600 dark:text-violet-300">Единый рабочий календарь</p><h1 className="mt-1 text-2xl font-black tracking-tight text-bx-text">Планировщик</h1><p className="mt-1 text-sm text-bx-muted">Задачи, события и бухгалтерские сроки используют одни данные во всех видах.</p></div>
+            <span className="bx-planner-hero__icon grid h-12 w-12 flex-shrink-0 place-items-center rounded-2xl"><Icon name="planner" className="h-5 w-5" /></span>
+            <div><p className="bx-planner-eyebrow text-xs font-black">Рабочий календарь BX</p><h1 className="mt-1 text-2xl font-black tracking-tight text-bx-text">Планировщик</h1><p className="mt-1 text-sm text-bx-muted">Один календарь для задач, событий и проверенных бухгалтерских сроков.</p></div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1.5 flex-wrap">
-              {todayCount > 0 && <span className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/10 px-3 text-xs font-black text-violet-700 dark:text-violet-300"><Icon name="clock" className="h-4 w-4" />Сегодня: {todayCount}</span>}
+              <span className="bx-planner-summary inline-flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs font-black"><Icon name="clock" className="h-4 w-4" />Сегодня: {todayCount}</span>
               {overdueCount > 0 && <span className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 text-xs font-black text-red-600 dark:text-red-300"><Icon name="alert" className="h-4 w-4" />Просрочено: {overdueCount}</span>}
             </div>
             {seedMsg && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-bold">{seedMsg}</span>}
@@ -335,7 +336,7 @@ export default function Planner() {
               type="button"
               onClick={handleForceSync}
               disabled={syncing}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-bx-border bg-bx-bg px-3 text-xs font-black text-bx-text hover:border-violet-500/30 hover:text-violet-600 disabled:opacity-50"
+              className="bx-planner-secondary inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-xs font-black disabled:opacity-50"
             >
               <Icon name={syncing ? 'clock' : 'exchange'} className={`h-4 w-4 ${syncing ? 'animate-pulse' : ''}`} /> Продлить горизонт
             </button>
@@ -346,11 +347,8 @@ export default function Planner() {
                 <button 
                   key={v} 
                   onClick={() => setView(v as View)}
-                  className={`min-h-10 rounded-lg px-3 text-xs font-black transition-colors ${
-                    view === v
-                      ? 'bg-violet-600 text-white shadow-sm'
-                      : 'text-bx-muted hover:text-bx-text'
-                  }`}
+                  aria-pressed={view === v}
+                  className={`bx-planner-view-tab min-h-10 rounded-lg px-3 text-xs font-black transition-colors ${view === v ? 'is-active' : ''}`}
                 >
                   {l}
                 </button>
@@ -358,22 +356,19 @@ export default function Planner() {
             </div>
 
             <button type="button" onClick={() => openNewEvent()}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-black text-white shadow-md shadow-violet-600/20 hover:bg-violet-700">
-              <Icon name="plus" className="h-4 w-4" />{view === 'board' ? 'Новая задача' : 'Добавить'}
+              className="bx-planner-primary inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-xs font-black">
+              <Icon name="plus" className="h-4 w-4" />Новая задача
             </button>
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-bx-border pt-3" aria-label="Фильтр по типу">
+        <div className="bx-planner-filters mt-4 flex flex-wrap items-center gap-2 border-t border-bx-border pt-3" aria-label="Фильтр по типу">
           {TYPE_FILTERS.map(f => (
             <button
               key={f.id}
               onClick={() => setTypeF(f.id)}
-              className={`min-h-10 rounded-xl border px-3 text-xs font-bold transition-colors ${
-                typeF === f.id
-                  ? 'border-violet-500/25 bg-violet-500/10 text-violet-700 dark:text-violet-300'
-                  : 'border-transparent text-bx-muted hover:border-bx-border hover:bg-bx-bg hover:text-bx-text'
-              }`}
+              aria-pressed={typeF === f.id}
+              className={`bx-planner-filter min-h-10 rounded-xl border px-3 text-xs font-bold transition-colors ${typeF === f.id ? 'is-active' : ''}`}
             >
               {f.label}
             </button>
@@ -383,7 +378,7 @@ export default function Planner() {
       </header>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden p-4">
+      <div className="bx-planner-content flex-1 overflow-hidden p-4">
         {eventsError && (
           <div className="mb-3 px-3 py-2 text-xs text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl">
             Не удалось обновить события: {eventsError}

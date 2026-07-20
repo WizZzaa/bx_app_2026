@@ -214,6 +214,24 @@ describe('CalendarView', () => {
     expect(screen.getAllByRole('button', { name: 'Открыть день' })).toHaveLength(7)
   })
 
+  it('provides a task-first mobile month agenda without squeezing seven columns', () => {
+    render(
+      <CalendarView
+        events={[event]}
+        onDayClick={vi.fn()}
+        onAddEvent={vi.fn()}
+        onEventClick={vi.fn()}
+        companyId="company-1"
+        companyRegime="ОСН"
+      />,
+    )
+
+    const mobileAgenda = screen.getByLabelText('Мобильная повестка: Июль 2026')
+    expect(within(mobileAgenda).getAllByRole('button', { name: /^Выбрать / })).toHaveLength(31)
+    expect(within(mobileAgenda).getByRole('button', { name: 'Открыть повестку: среда, 22 июля 2026' })).toBeTruthy()
+    expect(within(mobileAgenda).getByText('1 задача · 0 бух. сроков')).toBeTruthy()
+  })
+
   it('changes a task status from the right-click menu in month and week modes', async () => {
     const onEventStatusChange = vi.fn().mockResolvedValue(undefined)
     const todayEvent = { ...event, date: '2026-07-16', due_date: '2026-07-16' }

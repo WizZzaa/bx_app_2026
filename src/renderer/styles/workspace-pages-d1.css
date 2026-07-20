@@ -147,6 +147,19 @@
   border-color: rgb(var(--bx-brand-rgb) / 0.28);
 }
 
+:root[data-bx-design='d1'] .bx-workspace-route :where([class~='bg-violet-600'], [class~='bg-violet-700'], [class~='bg-purple-600']) {
+  background-color: var(--bx-brand-action);
+  color: var(--bx-on-brand);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where([class~='hover:bg-violet-700'], [class~='hover:bg-purple-700']):hover {
+  background-color: var(--bx-brand-hover);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where([class~='border-violet-600'], [class~='border-purple-600']) {
+  border-color: var(--bx-brand-action);
+}
+
 /* Shared resource pages: companies, documents, templates, finance, support. */
 :root[data-bx-design='d1'] .bx-resource-sidebar {
   border-color: rgb(var(--bx-border-rgb) / 0.82);
