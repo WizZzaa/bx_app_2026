@@ -135,12 +135,12 @@ function DashboardHeader({
   return (
     <header className="bx-d1-dashboard-hero" aria-labelledby="bx-d1-dashboard-title">
       <div className="bx-d1-dashboard-hero__content">
-        <p className="bx-d1-dashboard-eyebrow"><span aria-hidden="true" /> Рабочий центр</p>
-        <h1 id="bx-d1-dashboard-title">Главное на сегодня — без лишнего шума</h1>
+        <p className="bx-d1-dashboard-eyebrow"><span aria-hidden="true" /> {fullDate}</p>
+        <h1 id="bx-d1-dashboard-title">Главное на сегодня</h1>
         <p className="bx-d1-dashboard-hero__lead">
           {activeCompany
-            ? `${activeCompany.name}: сроки, задачи и ежедневные инструменты собраны в одном месте.`
-            : 'Сроки, задачи и ежедневные инструменты собраны в одном месте.'}
+            ? `${activeCompany.name}: сроки, задачи и полезные сигналы — в одном рабочем поле.`
+            : 'Сроки, задачи и полезные сигналы — в одном рабочем поле.'}
         </p>
         <div className="bx-d1-dashboard-hero__actions">
           <button type="button" className="bx-d1-action bx-d1-action--primary" onClick={() => onNavigate('/planner', { newTask: {} })}>
@@ -155,7 +155,7 @@ function DashboardHeader({
       <aside className="bx-d1-dashboard-hero__summary" aria-label="Сводка дня">
         <div className="bx-d1-dashboard-hero__date">
           <span aria-hidden="true"><Icon name="planner" /></span>
-          <div><small>Сегодня</small><strong>{fullDate}</strong></div>
+          <div><small>Рабочий ритм</small><strong>{summary.active.length ? 'Есть задачи в фокусе' : 'День можно спланировать'}</strong></div>
         </div>
         <dl>
           <div>
@@ -439,6 +439,7 @@ export function DashboardD1View(props: DashboardD1ViewProps) {
       : viewport === 'tablet'
         ? [todayCard, companyCard, aiCard, toolsCard]
         : [todayCard, companyCard, toolsCard, aiCard]
+  const useDesktopWorkspace = props.showLiveWidgets && viewport === 'desktop'
 
   return (
     <div className="bx-d1-dashboard" data-testid="dashboard-d1">
@@ -458,9 +459,25 @@ export function DashboardD1View(props: DashboardD1ViewProps) {
           />
         </BxMotion>
         <BxMotion preset="raise">
-          <BentoGrid as="section" className="bx-d1-dashboard__grid" aria-label="Рабочий стол">
-            {cards}
-          </BentoGrid>
+          {useDesktopWorkspace ? (
+            <section className="bx-d1-dashboard__workspace" aria-label="Рабочий стол">
+              <div className="bx-d1-dashboard__main-column">
+                {todayCard}
+                {taxCalendarCard}
+                {horoscopeCard}
+              </div>
+              <aside className="bx-d1-dashboard__signal-column" aria-label="Сигналы и быстрые действия">
+                {weatherCard}
+                {toolsCard}
+                {companyCard}
+                {aiCard}
+              </aside>
+            </section>
+          ) : (
+            <BentoGrid as="section" className="bx-d1-dashboard__grid" aria-label="Рабочий стол">
+              {cards}
+            </BentoGrid>
+          )}
         </BxMotion>
       </div>
       <div className={`bx-d1-dashboard-sticky ${stickyPrimary ? 'bx-d1-dashboard-sticky--visible' : ''}`} aria-hidden={!stickyPrimary}>

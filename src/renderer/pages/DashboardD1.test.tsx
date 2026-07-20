@@ -95,7 +95,7 @@ describe('D1 Dashboard view', () => {
     expect(cards[1]).toContain('--company')
     expect(cards[2]).toContain('--tools')
     expect(cards[3]).toContain('--ai')
-    expect(screen.getByRole('heading', { level: 1, name: 'Главное на сегодня — без лишнего шума' })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 1, name: 'Главное на сегодня' })).toBeTruthy()
     expect(screen.getByText('1', { selector: '.bx-d1-dashboard-hero__summary dd' })).toBeTruthy()
     expect(screen.getAllByText('Срок завтра')).toHaveLength(2)
     expect(screen.getAllByRole('button', { name: /Открыть план дня/ })[0]).toBeTruthy()
