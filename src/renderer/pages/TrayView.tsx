@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useCallback, type CSSProperties } from 'react'
 import { supabase } from '../lib/db/supabase'
 import { createCanonicalEvent } from './planner/eventRepository'
 import { usePlan } from '../lib/plan'
@@ -13,9 +13,10 @@ interface Deadline { id: string; title: string; date: string; type: string }
 type Tab = 'overview' | 'alerts' | 'ai' | 'tools' | 'support'
 interface ChatMsg { role: 'user' | 'assistant'; content: string }
 
-const openApp = (route: string) => { (window as any).bx?.tray?.openApp?.(route) }
-const DRAG = { WebkitAppRegion: 'drag' } as any
-const NODRAG = { WebkitAppRegion: 'no-drag' } as any
+const openApp = (route: string) => { void window.bx?.tray?.openApp(route) }
+type AppRegionStyle = CSSProperties & { WebkitAppRegion: 'drag' | 'no-drag' }
+const DRAG: AppRegionStyle = { WebkitAppRegion: 'drag' }
+const NODRAG: AppRegionStyle = { WebkitAppRegion: 'no-drag' }
 
 const QUICK: { label: string; icon: string; route: string; hue: string }[] = [
   { label: 'Планировщик', icon: '📅', route: '/planner', hue: 'from-blue-500/25 to-blue-600/10 text-blue-300 border-blue-500/30' },
@@ -78,7 +79,7 @@ export default function TrayView() {
   const [ticketCreated, setTicketCreated] = useState(false)
   const [supportError, setSupportError] = useState('')
 
-  const togglePin = () => { const n = !pinned; setPinned(n); (window as any).bx?.tray?.setPinned(n) }
+  const togglePin = () => { const n = !pinned; setPinned(n); void window.bx?.tray?.setPinned(n) }
 
   const reloadDeadlines = useCallback(async () => {
     try {
@@ -130,7 +131,7 @@ export default function TrayView() {
     const loadRates = async () => {
       setRatesLoading(true)
       try {
-        const bridge = (window as any).bx?.widgets?.getRates
+        const bridge = window.bx?.widgets?.getRates
         if (bridge) setRates((await bridge(['USD', 'EUR', 'RUB'])) || [])
       } catch (err) { console.error('rates:', err) } finally { setRatesLoading(false) }
     }
@@ -166,7 +167,7 @@ export default function TrayView() {
         : data.error === 'NO_API_KEY' ? 'ИИ не настроен администратором.' : ('Ошибка: ' + (data.message || data.error))
       else answer = (data?.text || '').trim() || 'Пустой ответ.'
       setAiMsgs(prev => [...prev, { role: 'assistant', content: answer }])
-    } catch (e: any) {
+    } catch {
       setAiMsgs(prev => [...prev, { role: 'assistant', content: 'Не удалось связаться с ИИ.' }])
     } finally { setAiSending(false) }
   }

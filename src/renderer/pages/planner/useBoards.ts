@@ -115,9 +115,9 @@ export function useBoards(companyId?: string | null) {
       } else {
         setBoards(rows);
       }
-    } catch (e: any) {
-      console.error('[useBoards] load failed:', e?.message ?? e);
-      setError(e?.message ?? 'Не удалось загрузить доски');
+    } catch (error: unknown) {
+      console.error('[useBoards] load failed:', error instanceof Error ? error.message : error);
+      setError(error instanceof Error ? error.message : 'Не удалось загрузить доски');
       // Никогда не зависаем: кэш → локальные базовые
       const cached = readCache();
       const finalRows = cached.length ? cached : localBaseBoards();

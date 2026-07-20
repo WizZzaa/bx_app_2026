@@ -9,7 +9,7 @@ import ConflictModal from '../ConflictModal'
 import { currentTheme, nextTheme, saveTheme, subscribeToTheme, type BxTheme } from '../../lib/theme'
 import { useNotifications, type BxNotification } from '../../lib/useNotifications'
 
-export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
+export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded }: { onOpenSearch?: () => void; onToggleMenu?: () => void; menuExpanded?: boolean }) {
   const [query, setQuery] = useState('')
   const [items, setItems] = useState<SearchItem[]>([])
   const [results, setResults] = useState<SearchItem[]>([])
@@ -121,8 +121,9 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
   }
 
   return (
-    <header className="flex items-center gap-4 px-6 h-12 bg-bx-surface border-b border-bx-border flex-shrink-0">
-      <div className="flex-1 max-w-md relative" ref={boxRef}>
+    <header className="flex min-h-14 flex-shrink-0 items-center gap-3 border-b border-bx-border bg-bx-surface px-3 sm:px-4 lg:px-6">
+      {onToggleMenu && <button type="button" onClick={onToggleMenu} aria-label={menuExpanded ? 'Свернуть основное меню' : 'Развернуть основное меню'} aria-expanded={menuExpanded} className="hidden h-11 w-11 flex-none items-center justify-center rounded-xl border border-bx-border bg-bx-surface-2 text-bx-muted hover:text-bx-text md:flex"><Icon name="menu" className="h-5 w-5" /></button>}
+      <div className="relative min-w-0 max-w-md flex-1" ref={boxRef}>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bx-muted"><Icon name="search" className="w-4 h-4" /></span>
           <input
@@ -135,7 +136,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
           />
           {onOpenSearch && (
             <button onClick={onOpenSearch} title="Командная палитра (Ctrl+K)"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-bx-muted border border-bx-border-2 rounded px-1.5 py-0.5 hover:text-bx-text hover:border-bx-border-2 transition-colors">⌘K</button>
+              className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-bx-border-2 px-1.5 py-0.5 text-[10px] text-bx-muted transition-colors hover:border-bx-border-2 hover:text-bx-text sm:block">⌘K</button>
           )}
         </div>
 
@@ -174,7 +175,7 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
         )}
 
         {/* Индикатор сети и синхронизации */}
-        <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-bx-surface border border-bx-border">
+        <div className="hidden items-center gap-2 rounded-lg border border-bx-border bg-bx-surface px-2.5 py-1 xl:flex">
           <span className={`w-1.5 h-1.5 rounded-full ${
             queueLength > 0 
               ? isOnline ? 'bg-amber-500 animate-pulse' : 'bg-orange-500' 
@@ -197,12 +198,12 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
           )}
         </div>
 
-        <CompanySwitcher />
+        <div className="hidden lg:block"><CompanySwitcher /></div>
 
         {/* Быстрые заметки */}
         <button
           onClick={handleOpenNotes}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted transition-colors cursor-pointer"
+          className="hidden h-11 w-11 items-center justify-center rounded-lg bg-bx-surface-2 text-bx-muted transition-colors hover:bg-bx-border-2 xl:flex"
           title="Быстрые заметки"
         >
           <Icon name="note" className="w-4 h-4" />
@@ -211,15 +212,15 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
         {/* Переключатель темы */}
         <button
           onClick={handleToggleTheme}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted transition-colors cursor-pointer"
-          title={theme === 'light' ? 'Следующая тема: тёмная' : theme === 'dark' ? 'Следующая тема: графит и лайм' : theme === 'lime' ? 'Следующая тема: светлая и лаванда' : 'Следующая тема: светлая'}
+          className="hidden h-11 w-11 items-center justify-center rounded-lg bg-bx-surface-2 text-bx-muted transition-colors hover:bg-bx-border-2 lg:flex"
+          title={theme === 'system' ? 'Следующая тема: светлая' : theme === 'light' ? 'Следующая тема: тёмная' : theme === 'dark' ? 'Следующая тема: контрастная' : 'Следующая тема: как в системе'}
           aria-label="Сменить тему оформления"
         >
           {theme === 'dark' ? (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           ) : theme === 'light' ? (
             <Icon name="sun" className="w-4 h-4" />
-          ) : theme === 'lime' ? (
+          ) : theme === 'high-contrast' ? (
             <span aria-hidden="true" className="h-3.5 w-3.5 rounded-full bg-bx-accent shadow-[0_0_0_3px_rgb(var(--bx-accent-rgb)/0.14)]" />
           ) : (
             <span aria-hidden="true" className="h-3.5 w-3.5 rounded-full border border-bx-text/20 bg-bx-accent shadow-[0_0_0_3px_rgb(var(--bx-accent-rgb)/0.14)]" />
@@ -305,9 +306,18 @@ export default function Topbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
         </div>
 
         <button
+          onClick={() => navigate('/account')}
+          className="flex h-11 w-11 items-center justify-center rounded-lg bg-bx-surface-2 text-bx-muted transition-colors hover:bg-bx-border-2"
+          title="Личный кабинет"
+          aria-label="Открыть личный кабинет"
+        >
+          <Icon name="user" className="w-4 h-4" />
+        </button>
+        <button
           onClick={() => navigate('/settings')}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted transition-colors"
-          title="Настройки"
+          className="flex h-11 w-11 items-center justify-center rounded-lg bg-bx-surface-2 text-bx-muted transition-colors hover:bg-bx-border-2"
+          title="Настройки приложения"
+          aria-label="Открыть настройки приложения"
         >
           <Icon name="settings" className="w-4 h-4" />
         </button>

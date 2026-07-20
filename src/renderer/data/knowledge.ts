@@ -12,25 +12,42 @@ export interface KbArticle {
   tools?: { label: string; route: string }[]; // связки «Инструменты по теме»
 }
 
-export const KB_CATEGORIES = [
-  'Все',
-  'Налоги и взносы',
-  'Трудовое право',
-  'ВЭД и таможня',
-  'ЭДО и E-Imzo',
-  'Работа с 1С',
-  'Штрафы и санкции',
+export interface KbCategory {
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+// Офлайн-фолбэк повторяет серверный справочник bx_knowledge_categories.
+// В рабочем режиме интерфейс заменяет его актуальным списком с сервера.
+export const KB_CATEGORY_DIRECTORY: KbCategory[] = [
+  { slug: 'taxes', name: 'Налоги и взносы', description: 'НДС, НДФЛ, социальный налог, прибыль и дивиденды', icon: 'coins', color: 'blue', sortOrder: 10, isActive: true },
+  { slug: 'accounting', name: 'Учёт и бухгалтерия', description: 'Бухгалтерский учёт, проводки, отчётность и закрытие периода', icon: 'calculator', color: 'indigo', sortOrder: 20, isActive: true },
+  { slug: 'labor', name: 'Трудовое право', description: 'Приём, отпуск, больничные, увольнение и кадровые документы', icon: 'users', color: 'emerald', sortOrder: 30, isActive: true },
+  { slug: 'foreign-trade', name: 'ВЭД и таможня', description: 'Импорт, экспорт, таможня и валютный контроль', icon: 'globe', color: 'cyan', sortOrder: 40, isActive: true },
+  { slug: 'edo-eimzo', name: 'ЭДО и E-Imzo', description: 'ЭСФ, электронная подпись и обмен документами', icon: 'shield', color: 'purple', sortOrder: 50, isActive: true },
+  { slug: 'onec', name: 'Работа с 1С', description: 'Операции, ОСВ, обмен и типовые проводки', icon: 'database', color: 'amber', sortOrder: 60, isActive: true },
+  { slug: 'penalties', name: 'Штрафы и санкции', description: 'Ответственность, проверки, пени и обжалование', icon: 'alert', color: 'red', sortOrder: 70, isActive: true },
+  { slug: 'legal', name: 'Юридические вопросы', description: 'Договоры, корпоративные решения, претензии и правовые риски', icon: 'book', color: 'slate', sortOrder: 80, isActive: true },
 ];
+
+export const KB_CATEGORIES = ['Все', ...KB_CATEGORY_DIRECTORY.map(category => category.name)];
 
 // Метаданные категорий: иконка (ключ SVG), цвет, краткое описание
 export interface KbCategoryMeta { icon: string; color: string; desc: string }
 export const KB_CATEGORY_META: Record<string, KbCategoryMeta> = {
   'Налоги и взносы':  { icon: 'coins',    color: 'blue',    desc: 'НДС, НДФЛ, соцналог, прибыль, дивиденды' },
+  'Учёт и бухгалтерия': { icon: 'calculator', color: 'indigo', desc: 'Учёт, проводки, отчётность и закрытие периода' },
   'Трудовое право':   { icon: 'users',    color: 'emerald', desc: 'Приём, отпуск, больничные, увольнение' },
   'ВЭД и таможня':    { icon: 'globe',    color: 'cyan',    desc: 'Импорт, экспорт, валютный контроль' },
   'ЭДО и E-Imzo':     { icon: 'shield',   color: 'purple',  desc: 'ЭСФ, электронная подпись, DIDOX' },
   'Работа с 1С':      { icon: 'database', color: 'amber',   desc: 'Операции, ОСВ, типовые проводки' },
   'Штрафы и санкции': { icon: 'alert',    color: 'red',     desc: 'Ответственность по НК и КоАО' },
+  'Юридические вопросы': { icon: 'book', color: 'slate', desc: 'Договоры, претензии и корпоративное право' },
 };
 
 // Популярные статьи (карусель на главной Базы знаний)
@@ -497,6 +514,8 @@ E-Imzo — программное обеспечение для создания
 - Отчётности в my.soliq.uz
 - Документооборота через DIDOX, FAKTURA.UZ и др.
 
+> Важно: эти операции выполняет E-Imzo на официальном портале. BX только диагностирует доступность локальной службы и хранит безопасные метаданные сертификата для напоминаний; BX не подписывает документы, не хранит файл ключа и пароль.
+
 ## Системные требования
 
 - Windows 7 и выше
@@ -512,7 +531,7 @@ E-Imzo — программное обеспечение для создания
 
 ## Добавление ключа
 
-1. Получить файл ключа (.pfx или .p12) — см. «Менеджер ЭЦП»
+1. Получить файл ключа (.pfx или .p12) на официальном портале
 2. В трее (панель задач) → E-Imzo → «Управление ключами»
 3. «Добавить» → выбрать файл → ввести пароль ключа
 4. Проверить: ключ должен появиться в списке с корректным сроком
@@ -940,7 +959,7 @@ E-Imzo — программное обеспечение для создания
 > ⚠️ Список разрешённых видов и детали режима уточняйте на soliq.uz — правила периодически обновляются.`,
     tools: [
       { label: 'Сравнение налоговых режимов', route: '/calc' },
-      { label: 'Проверка ИНН', route: '/check-inn' },
+      { label: 'Проверка ИНН', route: '/tools' },
     ],
   },
   {
@@ -1061,9 +1080,9 @@ E-Imzo — программное обеспечение для создания
 
 Электронные документы хранятся в системе ЭДО; отдельно распечатывать не обязательно. Срок хранения — по НК и закону о бухучёте.
 
-> ⚠️ Для подписания нужен действующий ключ E-Imzo. Проверить и обновить ключи можно в разделе ЭЦП приложения.`,
+> ⚠️ Для подписания на портале нужен действующий сертификат E-Imzo. В BX можно проверить только срок и доступность локальной службы; подписание выполняет выбранный официальный сервис.`,
     tools: [
-      { label: 'Менеджер ЭЦП', route: '/ecp' },
+      { label: 'Сроки сертификатов ЭЦП', route: '/ecp' },
       { label: 'Шаблоны документов', route: '/templates' },
     ],
   },
@@ -1232,7 +1251,7 @@ E-Imzo — программное обеспечение для создания
 - Наличия оформленного одностороннего ЭСФ.`,
     tools: [
       { label: 'Калькулятор НДС', route: '/calc' },
-      { label: 'Валютный контроль в статьях', route: '/library?id=valyutny-kontrol' },
+      { label: 'Валютный контроль в статьях', route: '/knowledge?id=valyutny-kontrol' },
     ],
   },
   {
@@ -1266,8 +1285,8 @@ E-Imzo — программное обеспечение для создания
 - Отсутствие подписанного ЭАВР лишает покупателя права на вычет расходов по налогу на прибыль (расходы признаются документально неподтвержденными).
 - Дата подписания акта заказчиком определяет момент признания выручки у исполнителя и обязательств по НДС.`,
     tools: [
-      { label: 'Диагностика E-Imzo', route: '/eimzo' },
-      { label: 'ЭСФ и ЭДО в статьях', route: '/library?id=esf-didox' },
+      { label: 'Диагностика E-Imzo', route: '/tools' },
+      { label: 'ЭСФ и ЭДО в статьях', route: '/knowledge?id=esf-didox' },
     ],
   },
   {
@@ -1340,7 +1359,7 @@ E-Imzo — программное обеспечение для создания
   - Субсидии и льготы по аренде, льготные кредиты при первой регистрации бизнеса.`,
     tools: [
       { label: 'Калькулятор пеней и отсрочек', route: '/calc' },
-      { label: 'Налоговый календарь в статьях', route: '/library?id=nalogovy-kalendar' },
+      { label: 'Налоговый календарь в статьях', route: '/knowledge?id=nalogovy-kalendar' },
     ],
   },
 ];

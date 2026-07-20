@@ -38,13 +38,14 @@ export default function PcCleaner() {
   const [runningBrowsers, setRunningBrowsers] = useState<string[]>([]);
 
   async function checkActiveBrowsers(currentSelected: Set<string>) {
-    if (!isElectron || !(window as any).bx?.pc?.checkBrowsers) return
+    const pc = window.bx?.pc
+    if (!isElectron || !pc) return
     const selectedBrowserIds = [...currentSelected].filter(id => id.endsWith('_cache'))
     if (selectedBrowserIds.length === 0) {
       setRunningBrowsers([])
       return
     }
-    const active = await (window as any).bx.pc.checkBrowsers(selectedBrowserIds)
+    const active = await pc.checkBrowsers(selectedBrowserIds)
     setRunningBrowsers(active)
   }
 
@@ -54,8 +55,9 @@ export default function PcCleaner() {
     setSelected(new Set());
     await new Promise(r => setTimeout(r, 600));
     let scannedDirs = DEMO_DIRS;
-    if (isElectron && (window as any).bx?.pc?.scan) {
-      const data = await (window as any).bx.pc.scan();
+    const pc = window.bx?.pc;
+    if (isElectron && pc) {
+      const data = await pc.scan();
       setDirs(data);
       scannedDirs = data;
     } else {
@@ -75,8 +77,9 @@ export default function PcCleaner() {
     if (selected.size === 0) return;
     setState('cleaning');
     await new Promise(r => setTimeout(r, 800));
-    if (isElectron && (window as any).bx?.pc?.clean) {
-      const res = await (window as any).bx.pc.clean([...selected]);
+    const pc = window.bx?.pc;
+    if (isElectron && pc) {
+      const res = await pc.clean([...selected]);
       setResult(res);
     } else {
       const totalSize = dirs.filter(d => selected.has(d.id)).reduce((s, d) => s + d.sizeBytes, 0);

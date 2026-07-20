@@ -19,7 +19,7 @@ describe('Sidebar', () => {
 
     const sidebar = screen.getByTestId('app-sidebar')
     expect(sidebar.getAttribute('data-collapsed')).toBe('false')
-    expect(screen.getByText('Планировщик')).toBeTruthy()
+    expect(screen.getByText('Календарь')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Свернуть боковую панель' }))
 
@@ -28,7 +28,7 @@ describe('Sidebar', () => {
     expect(screen.getByTestId('sidebar-header').className).toContain('flex-col')
     expect(screen.getByRole('button', { name: 'Развернуть боковую панель' }).className).toContain('h-11')
     expect(localStorage.getItem('bx_sidebar_collapsed')).toBe('true')
-    expect(screen.getByRole('link', { name: 'Планировщик' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Календарь' })).toBeTruthy()
   })
 
   it('protects the working area on compact web and desktop windows', () => {
@@ -41,13 +41,10 @@ describe('Sidebar', () => {
     expect(screen.getByRole('button', { name: 'Развернуть боковую панель' })).toBeTruthy()
   })
 
-  it('keeps Documents and Templates next to each other in navigation', () => {
-    render(<MemoryRouter initialEntries={['/documents']}><Sidebar /></MemoryRouter>)
-
-    const links = screen.getAllByRole('link').map(link => link.getAttribute('aria-label'))
-    const documentsIndex = links.indexOf('Документы')
-    expect(documentsIndex).toBeGreaterThan(-1)
-    expect(links[documentsIndex + 1]).toBe('Шаблоны')
+  it('uses the canonical seven-section information architecture', () => {
+    render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
+    const links = screen.getAllByRole('link').map(link => link.getAttribute('aria-label')).filter(Boolean)
+    expect(links).toEqual(['Главная', 'AI-консультант', 'База знаний', 'Справочники', 'Переводчик', 'Календарь', 'Все сервисы'])
   })
 
   it('shows the document translator as a standalone destination', () => {
@@ -60,9 +57,9 @@ describe('Sidebar', () => {
     expect(screen.queryByRole('link', { name: 'Сотрудники' })).toBeNull()
   })
 
-  it('uses the accountant-friendly name for the home workspace', () => {
+  it('uses the canonical name for the home workspace', () => {
     render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
-    expect(screen.getByRole('link', { name: 'Рабочий стол' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Главная' })).toBeTruthy()
     expect(screen.queryByText('Дашборд')).toBeNull()
   })
 
@@ -71,6 +68,6 @@ describe('Sidebar', () => {
 
     expect(screen.getByTestId('bx-brand-mark').className).toContain('bg-blue-600')
     expect(screen.getByTestId('bx-brand-mark').className).not.toContain('from-blue-600')
-    expect(screen.getByRole('link', { name: 'Рабочий стол' }).className).toContain('text-bx-on-accent')
+    expect(screen.getByRole('link', { name: 'Главная' }).className).toContain('text-bx-on-accent')
   })
 })

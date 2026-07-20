@@ -132,7 +132,7 @@ export default function DateCalc() {
             <div className="bg-bx-bg rounded-xl border border-bx-border overflow-hidden">
               <div className="divide-y divide-bx-border">
                 <Row label="Календарных дней" value={`${Math.abs(calDays)} дн.${calDays < 0 ? ' (назад)' : ''}`} highlight />
-                <Row label="Рабочих дней (РУз)" value={`${Math.abs(workDays!)} раб. дн.`} highlight />
+                <Row label="Рабочих дней (РУз)" value={`${Math.abs(workDays ?? 0)} раб. дн.`} highlight />
                 <Row label="Полных недель" value={`${Math.floor(Math.abs(calDays) / 7)} нед. + ${Math.abs(calDays) % 7} дн.`} />
                 <Row label="Полных месяцев (прибл.)" value={`${(Math.abs(calDays) / 30.4).toFixed(1)} мес.`} />
               </div>

@@ -36,6 +36,23 @@ export interface BackupResult {
   error?: string;
 }
 
+export interface RestorePreflightCheck { id: string; label: string; ok: boolean; message: string }
+export interface RestoreResult {
+  success: boolean;
+  checks: RestorePreflightCheck[];
+  safetyCopyPath?: string;
+  error?: string;
+  rolledBack?: boolean;
+}
+
+export interface DeepCheckResult {
+  success: boolean;
+  checks: RestorePreflightCheck[];
+  durationMs: number;
+  logExcerpt?: string;
+  error?: string;
+}
+
 // Names of 1C processes we manage
 export const ONEC_PROCESS_NAMES = ['1cv8.exe', '1cv8c.exe', 'ragent.exe', 'rphost.exe'];
 

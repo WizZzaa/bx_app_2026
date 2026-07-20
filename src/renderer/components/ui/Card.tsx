@@ -1,22 +1,22 @@
 import React from 'react';
 
-interface Props {
+interface Props extends React.HTMLAttributes<HTMLElement> {
   title?: string;
-  icon?: string;
+  icon?: React.ReactNode;
   description?: string;
   children?: React.ReactNode;
   actions?: React.ReactNode;
 }
 
-export default function Card({ title, icon, description, children, actions }: Props) {
+export default function Card({ title, icon, description, children, actions, className = '', ...rest }: Props) {
   return (
-    <div className="rounded-xl border border-bx-border bg-bx-surface overflow-hidden">
+    <section className={`overflow-hidden rounded-2xl border border-bx-border bg-bx-surface shadow-sm ${className}`} {...rest}>
       {(title || actions) && (
         <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-bx-border">
           <div>
             {title && (
               <h2 className="text-sm font-semibold text-bx-text flex items-center gap-2">
-                {icon && <span className="text-base">{icon}</span>}
+                {icon && <span className="text-bx-muted" aria-hidden="true">{icon}</span>}
                 {title}
               </h2>
             )}
@@ -26,6 +26,6 @@ export default function Card({ title, icon, description, children, actions }: Pr
         </div>
       )}
       {children && <div className="p-5">{children}</div>}
-    </div>
+    </section>
   );
 }

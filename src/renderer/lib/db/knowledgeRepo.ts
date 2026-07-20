@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase';
-import { KB_ARTICLES, type KbArticle } from '../../data/knowledge';
+import { KB_ARTICLES, KB_CATEGORY_DIRECTORY, type KbArticle, type KbCategory } from '../../data/knowledge';
 
 // Статьи Базы знаний: локальный набор в бандле + опубликованные статьи из CMS
 // (bx_knowledge_articles, пишется админ-панелью). Облачный ответ кэшируется в
@@ -7,6 +7,47 @@ import { KB_ARTICLES, type KbArticle } from '../../data/knowledge';
 // а офлайн просто отдаёт последний успешный снимок.
 
 const CACHE_KEY = 'bx_kb_cloud_cache';
+const CATEGORY_CACHE_KEY = 'bx_kb_category_cache';
+
+function normalizeCategory(row: Record<string, unknown>): KbCategory | null {
+  const slug = typeof row.slug === 'string' ? row.slug.trim() : '';
+  const name = typeof row.name === 'string' ? row.name.trim() : '';
+  if (!slug || !name) return null;
+  return {
+    slug,
+    name,
+    description: typeof row.description === 'string' ? row.description : '',
+    icon: typeof row.icon === 'string' && row.icon ? row.icon : 'book',
+    color: typeof row.color === 'string' && row.color ? row.color : 'slate',
+    sortOrder: Number.isFinite(Number(row.sort_order ?? row.sortOrder)) ? Number(row.sort_order ?? row.sortOrder) : 100,
+    isActive: row.is_active !== false && row.isActive !== false,
+  };
+}
+
+export function getKnowledgeCategoriesSync(): KbCategory[] {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CATEGORY_CACHE_KEY) || '[]');
+    if (!Array.isArray(cached)) return KB_CATEGORY_DIRECTORY;
+    const categories = cached.map(row => normalizeCategory(row as Record<string, unknown>)).filter((row): row is KbCategory => Boolean(row));
+    return categories.length ? categories.sort((a, b) => a.sortOrder - b.sortOrder) : KB_CATEGORY_DIRECTORY;
+  } catch {
+    return KB_CATEGORY_DIRECTORY;
+  }
+}
+
+export async function refreshKnowledgeCategories(): Promise<KbCategory[]> {
+  if (!isSupabaseConfigured) return getKnowledgeCategoriesSync();
+  const { data, error } = await supabase
+    .from('bx_knowledge_categories')
+    .select('slug, name, description, icon, color, sort_order, is_active')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true });
+  if (error) throw error;
+  const categories = (data ?? []).map(row => normalizeCategory(row as Record<string, unknown>)).filter((row): row is KbCategory => Boolean(row));
+  if (!categories.length) return getKnowledgeCategoriesSync();
+  localStorage.setItem(CATEGORY_CACHE_KEY, JSON.stringify(categories));
+  return categories;
+}
 
 function readCloudCache(): KbArticle[] {
   try {

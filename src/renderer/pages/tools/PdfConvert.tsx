@@ -1,11 +1,5 @@
 import React, { useState, useRef } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
-import * as XLSX from 'xlsx';
-
-// eslint-disable-next-line import/no-unresolved
-import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+import { loadPdfJs, loadXlsx } from '../../lib/documentDependencyLoaders';
 
 type PdfTextItem = { str: string; transform: number[] };
 
@@ -67,6 +61,7 @@ export default function PdfConvert() {
 
     try {
       const arrayBuffer = await file.arrayBuffer();
+      const pdfjsLib = await loadPdfJs();
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
       const pagesTextList: string[][] = [];
@@ -91,15 +86,15 @@ export default function PdfConvert() {
       parsedPagesRef.current = pagesTextList;
       setResultReady(true);
       setStatus('Конвертация завершена! Нажмите «Скачать результат» ниже.');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setStatus('Ошибка анализа PDF: ' + (err.message || 'неизвестная ошибка'));
+      setStatus('Ошибка анализа PDF: ' + (err instanceof Error ? err.message : 'неизвестная ошибка'));
     } finally {
       setLoading(false);
     }
   };
 
-  const downloadResult = () => {
+  const downloadResult = async () => {
     if (parsedPagesRef.current.length === 0 || !file) return;
 
     const baseName = file.name.split('.')[0];
@@ -114,12 +109,19 @@ export default function PdfConvert() {
         wsData.push([]); // blank row between pages
       });
 
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'PDF_Data');
+      try {
+        setStatus('Подготовка Excel-файла...');
+        const XLSX = await loadXlsx();
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'PDF_Data');
 
-      // Trigger Excel download
-      XLSX.writeFile(wb, `${baseName}_converted.xlsx`);
+        // Trigger Excel download
+        XLSX.writeFile(wb, `${baseName}_converted.xlsx`);
+        setStatus('Excel-файл сохранён.');
+      } catch (error) {
+        setStatus('Ошибка создания Excel: ' + (error instanceof Error ? error.message : 'неизвестная ошибка'));
+      }
     } else {
       // 2. Convert to MS Word HTML wrapper
       const htmlContent = `

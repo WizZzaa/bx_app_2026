@@ -111,8 +111,14 @@ export const widgetsApi = {
   async getBankRates(codes = ['USD', 'EUR', 'RUB']): Promise<BankExchangeRate[]> {
     const b = bridge();
     if (b?.widgets) return b.widgets.getBankRates(codes);
-    const response = await fetch(`/__bx/bank-rates?codes=${encodeURIComponent(codes.join(','))}`);
+    const response = await fetch(`/api/bank-rates?codes=${encodeURIComponent(codes.join(','))}`, {
+      headers: { Accept: 'application/json' },
+    });
     if (!response.ok) throw new Error(`Bank rates ${response.status}`);
-    return response.json();
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.includes('application/json')) throw new Error('Bank rates returned a non-JSON response');
+    const data: unknown = await response.json();
+    if (!Array.isArray(data)) throw new Error('Bank rates returned an invalid payload');
+    return data as BankExchangeRate[];
   },
 };

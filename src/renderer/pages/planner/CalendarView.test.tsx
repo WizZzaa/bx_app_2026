@@ -156,7 +156,7 @@ describe('CalendarView', () => {
     expect(screen.getByText(/Весь месяц одним списком/)).toBeTruthy()
   })
 
-  it('keeps deadline actions readable and clickable when all companies are shown', () => {
+  it('does not expose task actions for deadline cards that still await editorial review', () => {
     const onAddDeadline = vi.fn()
     render(
       <CalendarView
@@ -170,17 +170,9 @@ describe('CalendarView', () => {
       />,
     )
 
-    const deadlineCell = screen.getByRole('button', { name: /^Открыть среда, 15 июля 2026/i }).closest('[data-calendar-date]')
-    if (!(deadlineCell instanceof HTMLElement)) throw new Error('Deadline day cell is missing')
-    fireEvent.mouseEnter(deadlineCell)
-    act(() => vi.advanceTimersByTime(180))
-
-    const preview = screen.getByRole('complementary', { name: 'Предпросмотр дня' })
-    const addButtons = within(preview).getAllByRole('button', { name: 'Добавить в задачи' })
-    expect(addButtons.length).toBeGreaterThan(0)
-    expect((addButtons[0] as HTMLButtonElement).disabled).toBe(false)
-    fireEvent.click(addButtons[0])
-    expect(onAddDeadline).toHaveBeenCalledOnce()
+    expect(screen.getByText(/35 карточек сроков временно скрыты до проверки официальных источников/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Добавить в задачи' })).toBeNull()
+    expect(onAddDeadline).not.toHaveBeenCalled()
   })
 
   it('marks ordinary weekends with a text label, not color alone', () => {

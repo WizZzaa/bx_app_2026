@@ -48,11 +48,8 @@ function pureDjb2(text: string): string {
 
 // ── Safe Storage (Electron) ──
 
-const hasSafeStorage = (): boolean =>
-  Boolean((window as any).bx?.safe)
-
 const safeEncrypt = async (value: string): Promise<string> => {
-  const bx = (window as any).bx
+  const bx = window.bx
   if (bx?.safe) {
     try {
       const available = await bx.safe.isAvailable()
@@ -63,7 +60,7 @@ const safeEncrypt = async (value: string): Promise<string> => {
 }
 
 const safeDecrypt = async (value: string): Promise<string> => {
-  const bx = (window as any).bx
+  const bx = window.bx
   if (bx?.safe) {
     try {
       const available = await bx.safe.isAvailable()

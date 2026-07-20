@@ -413,7 +413,7 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
             <div>
               <label className="text-[10px] font-medium text-bx-muted block mb-1">Повторение</label>
               <select value={recurrence ?? 'none'}
-                onChange={e => setRecurrence(e.target.value === 'none' ? null : e.target.value as any)}
+                onChange={e => setRecurrence(e.target.value === 'none' ? null : e.target.value as NonNullable<typeof recurrence>)}
                 className={`${inputCls} text-xs py-1.5`}>
                 <option value="none">Не повторять</option>
                 <option value="weekly">Еженедельно</option>

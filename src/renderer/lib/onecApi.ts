@@ -4,8 +4,15 @@ import type {
   ProcessEntry,
   KillResult,
   BackupResult,
+  RestoreResult,
+  DeepCheckResult,
+  WeatherData,
+  CurrencyRate,
 } from '../../shared/types';
 import type { UpdateSnapshot } from '../../main/services/updatePolicy'
+import type { BackupScheduleConfig } from '../../main/services/onecBackupScheduler'
+import type { TempDirInfo, PcCleanResult } from '../../main/services/pcClean'
+import type { ParsedEcpInfo } from '../../main/services/ecpParser'
 import type { SiteResetMode, SiteSessionResult } from '../../shared/siteSession'
 
 interface BxBridge {
@@ -18,17 +25,20 @@ interface BxBridge {
     pickDatabaseFile(): Promise<string | null>;
     pickBackupDir(): Promise<string | null>;
     backupDatabase(src: string, dest: string): Promise<BackupResult>;
-    getBackupConfig(): Promise<any>
-    saveBackupConfig(config: any): Promise<void>
+    restoreDatabase(source: string, target: string): Promise<RestoreResult>;
+    pickOnecExecutable(): Promise<string | null>;
+    deepCheckBackup(source: string, executable: string, workingDatabase: string): Promise<DeepCheckResult>;
+    getBackupConfig(): Promise<BackupScheduleConfig>
+    saveBackupConfig(config: BackupScheduleConfig): Promise<void>
   }
   widgets: {
-    getWeather(): Promise<any>
-    getRates(codes?: string[]): Promise<any[]>
-    getRateOnDate(code: string, date: string): Promise<any | null>
+    getWeather(): Promise<WeatherData>
+    getRates(codes?: string[]): Promise<CurrencyRate[]>
+    getRateOnDate(code: string, date: string): Promise<CurrencyRate | null>
   }
   pc: {
-    scan(): Promise<any[]>
-    clean(ids: string[]): Promise<any>
+    scan(): Promise<TempDirInfo[]>
+    clean(ids: string[]): Promise<PcCleanResult>
     checkBrowsers(ids: string[]): Promise<string[]>
   }
   siteSession: {
@@ -37,11 +47,7 @@ interface BxBridge {
   }
   ecp: {
     pickPfx(): Promise<string | null>
-    parsePfx(filePath: string, password: string): Promise<any>
-    pickFileToSign(): Promise<string | null>
-    pickSigFile(): Promise<string | null>
-    signFile(pfxPath: string, password: string, filePath: string): Promise<{ success: boolean; sigPath?: string; error?: string }>
-    verifySig(filePath: string, sigPath: string): Promise<{ success: boolean; signer?: string; signedAt?: string; error?: string }>
+    parsePfx(fileHandle: string, password: string): Promise<ParsedEcpInfo>
   }
   safe: {
     isAvailable(): Promise<boolean>
@@ -96,7 +102,11 @@ declare global {
 }
 
 /** True when running inside Electron (preload bridge present). */
-export const isElectron = typeof window !== 'undefined' && !!window.bx;
+export const isElectron = typeof window !== 'undefined' && Boolean(window.bx);
+
+function electronBridge(): BxBridge | undefined {
+  return typeof window === 'undefined' ? undefined : window.bx;
+}
 
 // --- Mock data for browser preview (no Electron) ---
 const mockCache: CacheScanResult = {
@@ -115,16 +125,18 @@ const mockProcs: ProcessEntry[] = [
 ];
 
 export const onecApi = {
-  platform: isElectron ? window.bx!.platform : 'browser',
+  platform: electronBridge()?.platform ?? 'browser',
 
   async scanCache(): Promise<CacheScanResult> {
-    if (isElectron) return window.bx!.onec.scanCache();
+    const bridge = electronBridge();
+    if (bridge) return bridge.onec.scanCache();
     await delay(600);
     return mockCache;
   },
 
   async cleanCache(paths: string[], backup?: boolean): Promise<CleanResult> {
-    if (isElectron) return window.bx!.onec.cleanCache(paths, backup);
+    const bridge = electronBridge();
+    if (bridge) return bridge.onec.cleanCache(paths, backup);
     await delay(800);
     const freed = mockCache.entries
       .filter(e => paths.includes(e.path))
@@ -133,42 +145,89 @@ export const onecApi = {
   },
 
   async listProcesses(): Promise<ProcessEntry[]> {
-    if (isElectron) return window.bx!.onec.listProcesses();
+    const bridge = electronBridge();
+    if (bridge) return bridge.onec.listProcesses();
     await delay(500);
     return mockProcs;
   },
 
   async killProcesses(pids: number[]): Promise<KillResult> {
-    if (isElectron) return window.bx!.onec.killProcesses(pids);
+    const bridge = electronBridge();
+    if (bridge) return bridge.onec.killProcesses(pids);
     await delay(500);
     return { killed: pids, failed: [] };
   },
 
   async pickDatabaseFile(): Promise<string | null> {
-    if (isElectron) return window.bx!.onec.pickDatabaseFile();
+    const bridge = electronBridge();
+    if (bridge) return bridge.onec.pickDatabaseFile();
     await delay(300);
     return 'C:/Bases/Buh/1Cv8.1CD';
   },
 
   async pickBackupDir(): Promise<string | null> {
-    if (isElectron) return window.bx!.onec.pickBackupDir();
+    const bridge = electronBridge();
+    if (bridge) return bridge.onec.pickBackupDir();
     await delay(300);
     return 'D:/Backups';
   },
 
   async backupDatabase(src: string, dest: string): Promise<BackupResult> {
-    if (isElectron) return window.bx!.onec.backupDatabase(src, dest);
+    const bridge = electronBridge();
+    if (bridge) return bridge.onec.backupDatabase(src, dest);
     await delay(1200);
     return { success: true, destPath: `${dest}/1Cv8_2026-06-19_12-00.1CD`, sizeBytes: 1_240_000_000 };
   },
 
-  async getBackupConfig(): Promise<any> {
-    if (isElectron) return (window.bx!.onec as any).getBackupConfig()
-    return { enabled: false, sourceFile: '', destDir: '', intervalHours: 24 }
+  async restoreDatabase(source: string, target: string): Promise<RestoreResult> {
+    const bridge = electronBridge();
+    if (bridge) return bridge.onec.restoreDatabase(source, target);
+    await delay(1200);
+    return {
+      success: true,
+      checks: [
+        { id: 'paths', label: 'Исходник и рабочая база', ok: true, message: 'Файлы различаются и имеют формат .1CD' },
+        { id: 'processes', label: 'Процессы 1С закрыты', ok: true, message: 'Активные процессы 1С не найдены' },
+        { id: 'safety', label: 'Страховочная копия', ok: true, message: 'Демонстрационный режим браузера' },
+        { id: 'final', label: 'Финальная проверка', ok: true, message: 'В Electron будет проверен SHA-256' },
+      ],
+      safetyCopyPath: target.replace(/\.1cd$/i, '_before_restore.1CD'),
+    };
   },
 
-  async saveBackupConfig(config: any): Promise<void> {
-    if (isElectron) return (window.bx!.onec as any).saveBackupConfig(config)
+  async pickOnecExecutable(): Promise<string | null> {
+    const bridge = electronBridge();
+    if (bridge) return bridge.onec.pickOnecExecutable()
+    await delay(300)
+    return 'C:/Program Files/1cv8/8.3.27/bin/1cv8.exe'
+  },
+
+  async deepCheckBackup(source: string, executable: string, workingDatabase: string): Promise<DeepCheckResult> {
+    const bridge = electronBridge();
+    if (bridge) return bridge.onec.deepCheckBackup(source, executable, workingDatabase)
+    await delay(1200)
+    return {
+      success: true,
+      durationMs: 1200,
+      checks: [
+        { id: 'selection', label: 'Изолированный источник', ok: source !== workingDatabase, message: 'Выбрана отдельная копия' },
+        { id: 'designer', label: 'Тест 1С Designer', ok: true, message: `Демонстрация -TestOnly через ${executable}` },
+        { id: 'immutable', label: 'Файлы не изменены', ok: true, message: 'SHA-256 не изменился' },
+        { id: 'cleanup', label: 'Временные данные удалены', ok: true, message: 'Временный каталог удалён' },
+      ],
+      logExcerpt: 'Демонстрационный режим браузера: реальная 1С не запускалась.',
+    }
+  },
+
+  async getBackupConfig(): Promise<BackupScheduleConfig> {
+    const bridge = electronBridge();
+    if (bridge) return bridge.onec.getBackupConfig()
+    return { version: 2, databaseLimit: 1, databases: [] }
+  },
+
+  async saveBackupConfig(config: BackupScheduleConfig): Promise<void> {
+    const bridge = electronBridge();
+    if (bridge) return bridge.onec.saveBackupConfig(config)
     console.log('Saved mock backup config:', config)
   }
 };

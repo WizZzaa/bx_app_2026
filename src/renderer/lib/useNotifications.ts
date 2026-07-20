@@ -3,7 +3,7 @@ import { supabase } from './db/supabase'
 import { useCompany } from './CompanyContext'
 import { usePlan } from './plan'
 
-type NotificationSource = 'global' | 'task_assignment'
+type NotificationSource = 'global' | 'task_assignment' | 'account'
 type NotificationTarget = 'all' | 'pro' | 'standard' | 'premium' | 'tin'
 
 export interface BxNotification {
@@ -29,6 +29,15 @@ interface GlobalNotificationRow {
   created_at: string
   send_at?: string | null
   expires_at?: string | null
+}
+
+interface AccountNotificationRow {
+  id: string
+  notification_type: string
+  title: string
+  body: string
+  created_at: string
+  read_at: string | null
 }
 
 export interface TaskNotificationRow {
@@ -119,6 +128,12 @@ export function useNotifications() {
         .update({ read_at: new Date().toISOString() })
         .eq('id', id)
       if (error) console.error('Не удалось отметить назначение прочитанным:', error)
+    } else if (item.source === 'account') {
+      const { error } = await supabase
+        .from('bx_account_notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', id)
+      if (error) console.error('Не удалось отметить уведомление аккаунта прочитанным:', error)
     } else {
       rememberGlobalRead(id)
     }
@@ -127,6 +142,9 @@ export function useNotifications() {
   const markAllAsRead = useCallback(async () => {
     const unreadTaskIds = notifications
       .filter(notification => notification.source === 'task_assignment' && !notification.read)
+      .map(notification => notification.id)
+    const unreadAccountIds = notifications
+      .filter(notification => notification.source === 'account' && !notification.read)
       .map(notification => notification.id)
 
     notifications
@@ -142,13 +160,20 @@ export function useNotifications() {
         .in('id', unreadTaskIds)
       if (error) console.error('Не удалось отметить назначения прочитанными:', error)
     }
+    if (unreadAccountIds.length > 0) {
+      const { error } = await supabase
+        .from('bx_account_notifications')
+        .update({ read_at: new Date().toISOString() })
+        .in('id', unreadAccountIds)
+      if (error) console.error('Не удалось отметить уведомления аккаунта прочитанными:', error)
+    }
   }, [notifications, rememberGlobalRead])
 
   const deleteNotification = useCallback(async (id: string) => {
     const item = notifications.find(notification => notification.id === id)
     setNotifications(previous => previous.filter(notification => notification.id !== id))
     if (!item) return
-    if (item.source === 'task_assignment') {
+    if (item.source === 'task_assignment' || item.source === 'account') {
       if (!item.read) await markAsRead(id)
     } else {
       rememberGlobalRead(id)
@@ -157,11 +182,20 @@ export function useNotifications() {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const [{ data: globalData, error: globalError }, { data: taskData, error: taskError }, { data: { session } }] = await Promise.all([
+      const [
+        { data: globalData, error: globalError },
+        { data: taskData, error: taskError },
+        { data: accountData, error: accountError },
+        { data: { session } },
+      ] = await Promise.all([
         supabase.from('bx_global_notifications').select('*').order('created_at', { ascending: false }),
         supabase
           .from('bx_task_notifications')
           .select('id, event_id, company_id, notification_type, event_title, company_name, due_date, details, created_at, read_at')
+          .order('created_at', { ascending: false })
+          .limit(100),
+        supabase.from('bx_account_notifications')
+          .select('id, notification_type, title, body, created_at, read_at')
           .order('created_at', { ascending: false })
           .limit(100),
         supabase.auth.getSession(),
@@ -169,6 +203,7 @@ export function useNotifications() {
 
       if (globalError) throw globalError
       if (taskError) throw taskError
+      if (accountError) throw accountError
 
       const readIds = getReadIds()
       const shownIdsData = localStorage.getItem('bx_shown_notification_ids')
@@ -204,8 +239,17 @@ export function useNotifications() {
         }))
 
       const taskNotifications = ((taskData ?? []) as TaskNotificationRow[]).map(buildTaskNotification)
+      const accountNotifications = ((accountData ?? []) as AccountNotificationRow[]).map<BxNotification>(item => ({
+        id: item.id,
+        title: item.title,
+        body: item.body,
+        target_type: 'all',
+        created_at: item.created_at,
+        read: Boolean(item.read_at),
+        source: 'account',
+      }))
 
-      const combined = [...taskNotifications, ...globalNotifications]
+      const combined = [...accountNotifications, ...taskNotifications, ...globalNotifications]
         .sort((left, right) => right.created_at.localeCompare(left.created_at))
 
       combined.forEach(notification => {
@@ -250,6 +294,16 @@ export function useNotifications() {
             event: 'INSERT',
             schema: 'public',
             table: 'bx_task_notifications',
+            filter: `recipient_id=eq.${user.id}`,
+          },
+          () => { void fetchNotifications() },
+        )
+        channel.on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'bx_account_notifications',
             filter: `recipient_id=eq.${user.id}`,
           },
           () => { void fetchNotifications() },

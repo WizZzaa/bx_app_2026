@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import CalcResult from './CalcResult';
 import MoneyInput from './MoneyInput';
 import { takeCalcPrefill, toMoneyString } from './prefill';
+import { useRegulatoryNumber } from '../../lib/calculatorRegulatory';
 
 // Отпускные РУз: средний заработок × количество дней отпуска
 // Среднедневной = (Сумма за 12 мес / 12) / среднее кол-во рабочих дней в месяце
@@ -12,6 +13,7 @@ function fmt(n: number) {
 }
 
 export default function VacationCalc() {
+  const NDFL_RATE = useRegulatoryNumber('tax.ndfl.standard');
   const [annualIncome, setAnnualIncome] = useState(() => {
     const pre = takeCalcPrefill('vacation');
     return pre?.annual ? toMoneyString(pre.annual) : '';
@@ -30,7 +32,7 @@ export default function VacationCalc() {
   const avgDaily = calcMethod === 'calendar' ? avgDailyCalendar : avgDailyWorking;
   const vacationPay = avgDaily * days;
 
-  const ndfl = vacationPay * 0.12;
+  const ndfl = vacationPay * (NDFL_RATE / 100);
   const net = vacationPay - ndfl;
 
   return (
@@ -74,7 +76,7 @@ export default function VacationCalc() {
           { label: 'Среднедневной заработок', value: `${fmt(avgDaily)} UZS` },
           { label: `Дней отпуска (${calcMethod === 'calendar' ? 'кал.' : 'раб.'})`, value: `${days} дн.` },
           { label: 'Начислено отпускных', value: `${fmt(vacationPay)} UZS`, highlight: true },
-          { label: 'НДФЛ (12%)', value: `${fmt(ndfl)} UZS` },
+          { label: `НДФЛ (${NDFL_RATE}%)`, value: `${fmt(ndfl)} UZS` },
           { label: 'К выплате (без НДФЛ)', value: `${fmt(net)} UZS` },
         ]}
       />

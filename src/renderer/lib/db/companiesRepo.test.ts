@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCompanyInsert } from './companiesRepo';
+import { buildCompanyArchiveUpdate, buildCompanyInsert } from './companiesRepo';
 
 describe('buildCompanyInsert', () => {
   it('оставляет владельца базе данных и не отправляет клиентский user_id', () => {
@@ -20,5 +20,11 @@ describe('buildCompanyInsert', () => {
 
     expect(payload).not.toHaveProperty('user_id');
     expect(payload).toMatchObject({ name: 'Новая компания', profile_status: 'confirmed' });
+  });
+});
+
+describe('buildCompanyArchiveUpdate', () => {
+  it('деактивирует компанию без запроса на удаление связанных данных', () => {
+    expect(buildCompanyArchiveUpdate()).toEqual({ is_active: false });
   });
 });

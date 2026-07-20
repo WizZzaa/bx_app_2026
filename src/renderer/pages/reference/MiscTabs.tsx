@@ -1,6 +1,8 @@
 import React from 'react';
 import { regions, vedItems, statItems, dutyItems, penaltyItems, travelNorms } from '../../data/reference/misc';
 import Icon from '../../lib/ui/Icon';
+import DataTable from '../../components/ui/DataTable';
+import ListPanel, { ListPanelItem } from '../../components/ui/ListPanel';
 
 function VerifyNote() {
   return <div className="flex items-center gap-2 rounded-xl border border-amber-500/15 bg-amber-500/[0.07] px-3 py-2.5 text-[11px] text-amber-800 dark:text-amber-300"><Icon name="alert" className="h-4 w-4 flex-shrink-0" />Раздел требует наполнения и сверки с официальными источниками.</div>;
@@ -11,8 +13,7 @@ export function GovTab() {
     <div className="space-y-4">
       <VerifyNote />
       <h2 className="text-sm font-black text-bx-text">Налоговые и статистические органы по регионам</h2>
-      <div className="rounded-xl border border-bx-border bg-bx-surface overflow-hidden">
-        <table className="w-full text-sm">
+      <DataTable label="Налоговые и статистические органы по регионам">
           <thead>
             <tr className="text-left text-xs text-bx-muted border-b border-bx-border">
               <th className="px-4 py-2.5 font-medium">Регион</th>
@@ -29,22 +30,21 @@ export function GovTab() {
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+      </DataTable>
     </div>
   );
 }
 
 function SimpleList({ rows }: { rows: { left: string; right: string; note?: string }[] }) {
   return (
-    <div className="rounded-xl border border-bx-border bg-bx-surface overflow-hidden">
+    <ListPanel label="Справочные значения">
       {rows.map((r, i) => (
-        <div key={i} className="flex items-center gap-3 px-4 py-2.5 text-sm border-b border-bx-border last:border-0 hover:bg-bx-surface-2">
+        <ListPanelItem key={i} className="flex items-center gap-3 text-sm hover:bg-bx-surface-2">
           <span className="text-bx-text flex-1">{r.left}{r.note && <span className="text-bx-muted text-xs"> · {r.note}</span>}</span>
           <span className="text-blue-400 text-xs font-mono">{r.right}</span>
-        </div>
+        </ListPanelItem>
       ))}
-    </div>
+    </ListPanel>
   );
 }
 
@@ -77,8 +77,7 @@ export function LawTab() {
     <div className="space-y-4">
       <VerifyNote />
       <h2 className="text-sm font-black text-bx-text">Штрафы и санкции</h2>
-      <div className="rounded-xl border border-bx-border bg-bx-surface overflow-hidden">
-        <table className="w-full text-sm">
+      <DataTable label="Штрафы и санкции">
           <thead>
             <tr className="text-left text-xs text-bx-muted border-b border-bx-border">
               <th className="px-4 py-2.5 font-medium">Нарушение</th>
@@ -95,8 +94,7 @@ export function LawTab() {
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+      </DataTable>
     </div>
   );
 }

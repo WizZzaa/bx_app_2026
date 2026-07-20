@@ -31,6 +31,8 @@ let availableVersion = ''
 let updateProgressPercent: number | null = null
 let updateDownloadedBytes = 0
 let updateTotalBytes = 0
+let isQuitting = false
+let trayNoticeShown = false
 const updateMode: UpdateMode = process.platform === 'win32'
   ? 'automatic'
   : process.platform === 'darwin'
@@ -195,13 +197,13 @@ const setupAutoUpdater = () => {
           updateStatus = 'installing'
           updateError = ''
           broadcastUpdateStatus()
-          ;(app as any).isQuitting = true
+          isQuitting = true
           setTimeout(() => autoUpdater.quitAndInstall(), 350)
         })
         notice.show()
       } catch { /* notification is optional */ }
     })
-    autoUpdater.on('before-quit-for-update', () => { (app as any).isQuitting = true })
+    autoUpdater.on('before-quit-for-update', () => { isQuitting = true })
     autoUpdater.on('error', error => {
       setUpdateStatus('error', error.message || 'Ошибка автоматического обновления')
       setTimeout(() => setUpdateStatus('idle'), 8000)
@@ -227,7 +229,7 @@ ipcMain.handle('app:install-update', async () => {
   if (updateStatus !== 'ready') return
   setUpdateStatus('installing')
   if (updateMode === 'automatic') {
-    (app as any).isQuitting = true
+    isQuitting = true
     setTimeout(() => autoUpdater.quitAndInstall(), 350)
     return
   }
@@ -630,7 +632,7 @@ const createTray = () => {
     { 
       label: 'Выйти', 
       click: () => {
-        (app as any).isQuitting = true
+        isQuitting = true
         app.quit()
       } 
     }
@@ -675,12 +677,12 @@ const createWindow = () => {
   }
 
   mainWindow.on('close', (e) => {
-    if (!(app as any).isQuitting) {
+    if (!isQuitting) {
       e.preventDefault()
       mainWindow?.hide()
       // Однократно за запуск подсказываем, что приложение свёрнуто в трей
-      if (!(app as any).trayNoticeShown) {
-        (app as any).trayNoticeShown = true
+      if (!trayNoticeShown) {
+        trayNoticeShown = true
         try {
           new Notification({
             title: 'BX работает в фоне',

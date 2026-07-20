@@ -12,7 +12,7 @@ export const parseBankStatement = (fileContent: string, companyInn: string | nul
   const lines = fileContent.split(/\r?\n/)
   const transactions: ParsedTransaction[] = []
 
-  let currentDoc: any = null
+  let currentDoc: Record<string, string> | null = null
   let inDocSection = false
 
   for (const line of lines) {

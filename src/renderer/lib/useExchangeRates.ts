@@ -28,7 +28,7 @@ export const useExchangeRates = () => {
         const parsedRates: Record<string, number> = { UZS: 1 }
         const list: ExchangeRate[] = []
 
-        data.forEach((item: any) => {
+        data.forEach((item) => {
           parsedRates[item.code] = item.value
           list.push({
             code: item.code,
@@ -47,9 +47,9 @@ export const useExchangeRates = () => {
       } else {
         throw new Error('Получены пустые курсы')
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn('Не удалось загрузить курсы валют из API, используем локальный кэш:', err)
-      setError(err?.message || 'Ошибка загрузки курсов')
+      setError(err instanceof Error ? err.message : 'Ошибка загрузки курсов')
       
       try {
         const cached = await db.exchange_rates.toArray()

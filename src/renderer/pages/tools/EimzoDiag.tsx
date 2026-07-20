@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { EIMZO_DIAGNOSTIC_BOUNDARY } from '../../lib/ecpProductBoundary';
 
 interface CheckItem {
   id: string;
@@ -10,7 +11,7 @@ interface CheckItem {
 
 const INITIAL: CheckItem[] = [
   { id: 'site', label: 'Сайт e-imzo.uz', desc: 'Доступность официального сайта', status: 'idle' },
-  { id: 'local', label: 'Локальный сервис E-Imzo', desc: 'localhost:64443 — служба подписи', status: 'idle' },
+  { id: 'local', label: 'Локальный сервис E-Imzo', desc: 'localhost:64443 — доступность для официальных порталов', status: 'idle' },
   { id: 'plugin', label: 'Плагин в браузере', desc: 'Расширение E-Imzo для Electron/Chrome', status: 'idle' },
   { id: 'myid', label: 'my.gov.uz (обновление ключей)', desc: 'Портал для онлайн-обновления DSK', status: 'idle' },
 ];
@@ -67,12 +68,13 @@ export default function EimzoDiag() {
     });
 
     // Плагин — проверяем window.CAPIWS или window.EIMZOClient
-    const hasPlugin = typeof (window as any).CAPIWS !== 'undefined' || typeof (window as any).EIMZOClient !== 'undefined';
+    const pluginWindow = window as unknown as { CAPIWS?: unknown; EIMZOClient?: unknown };
+    const hasPlugin = typeof pluginWindow.CAPIWS !== 'undefined' || typeof pluginWindow.EIMZOClient !== 'undefined';
     update('plugin', {
       status: hasPlugin ? 'ok' : 'warn',
       detail: hasPlugin
         ? 'Плагин E-Imzo обнаружен в окне браузера'
-        : 'Плагин не обнаружен (нормально для Electron — используется нативный клиент)',
+        : 'Плагин не обнаружен в окне BX; локальная служба проверяется отдельно',
     });
 
     setRunning(false);
@@ -105,6 +107,10 @@ export default function EimzoDiag() {
         >
           {running ? 'Проверяю…' : 'Диагностика'}
         </button>
+      </div>
+
+      <div className="rounded-lg border border-blue-500/20 bg-blue-500/[0.06] px-3 py-2.5 text-[11px] leading-relaxed text-bx-muted">
+        <strong className="text-bx-text">Граница BX:</strong> {EIMZO_DIAGNOSTIC_BOUNDARY}
       </div>
 
       <div className="space-y-1.5">

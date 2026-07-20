@@ -1,18 +1,17 @@
 export const FONT_SCALE_KEY = 'bx_font_scale'
 
-export type FontScale = '75' | '90' | '100' | '110' | '120' | '130'
+export type FontScale = '100' | '110' | '125'
 
 export const FONT_SCALE_OPTIONS: Array<{ value: FontScale; label: string; hint: string }> = [
-  { value: '75', label: 'Компактный', hint: '75%' },
-  { value: '90', label: 'Меньше', hint: '90%' },
   { value: '100', label: 'Обычный', hint: '100%' },
   { value: '110', label: 'Крупнее', hint: '110%' },
-  { value: '120', label: 'Крупный', hint: '120%' },
-  { value: '130', label: 'Максимум', hint: '130%' },
+  { value: '125', label: 'Крупный', hint: '125%' },
 ]
 
 export function normalizeFontScale(value: string | null | undefined): FontScale {
-  return FONT_SCALE_OPTIONS.some(option => option.value === value) ? value as FontScale : '100'
+  if (value === '110') return '110'
+  if (value === '120' || value === '125' || value === '130') return '125'
+  return '100'
 }
 
 export function currentFontScale(): FontScale {

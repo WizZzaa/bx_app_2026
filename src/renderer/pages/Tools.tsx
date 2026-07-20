@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { Suspense, useState } from 'react'
 import CacheCleaner from './tools/CacheCleaner'
 import ProcessKiller from './tools/ProcessKiller'
 import DatabaseBackup from './tools/DatabaseBackup'
@@ -10,9 +10,6 @@ import NumberToWords from './tools/NumberToWords'
 import Transliterate from './tools/Transliterate'
 import BankCheck from './tools/BankCheck'
 import InnCheckTool from './tools/InnCheckTool'
-import PdfCompress from './tools/PdfCompress'
-import PdfConvert from './tools/PdfConvert'
-import OcrTool from './tools/OcrTool'
 import EcpManager from './EcpManager'
 import ActiveXConfigurator from './tools/ActiveXConfigurator'
 import SiteSessionReset from './tools/SiteSessionReset'
@@ -22,6 +19,16 @@ import { UTILITY_PROPOSALS } from '../data/workbenchCatalog'
 import { ProposalWorkbench } from '../components/workspace/ProposalWorkbench'
 import { useWorkbenchFavorites } from '../lib/useWorkbenchFavorites'
 import { WorkbenchActions, WorkbenchCanvas, WorkbenchGuide, WorkbenchModeSwitch, type WorkbenchView } from '../components/workspace/WorkbenchChrome'
+
+const PdfCompress = React.lazy(() => import('./tools/PdfCompress'))
+const PdfConvert = React.lazy(() => import('./tools/PdfConvert'))
+const OcrTool = React.lazy(() => import('./tools/OcrTool'))
+
+const lazyTool = (tool: React.ReactNode) => (
+  <Suspense fallback={<div className="px-4 py-8 text-center text-xs font-semibold text-bx-muted">Загрузка инструмента…</div>}>
+    {tool}
+  </Suspense>
+)
 
 interface Tool {
   id: string
@@ -44,18 +51,18 @@ const READY_TOOLS: Tool[] = [
   { id: 'translit',  icon: 'languages', label: 'Транслитерация',        group: 'Текст и проверки', desc: 'Узбек кирилл ↔ латиница (2019)', component: <Transliterate /> },
   { id: 'bankcheck', icon: 'building',  label: 'Проверка счёта и МФО',  group: 'Текст и проверки', desc: 'Р/с 20 цифр + банк по МФО', component: <BankCheck /> },
   // Система
-  { id: 'ecp',       icon: 'ecp',      label: 'Менеджер ЭЦП',  group: 'Система', desc: 'Мониторинг ключей и статуса E-Imzo', component: <EcpManager /> },
+  { id: 'ecp',       icon: 'ecp',      label: 'Сроки сертификатов',  group: 'Система', desc: 'Метаданные, сроки и готовность E-Imzo', component: <EcpManager /> },
   { id: 'activex',   icon: 'settings', label: 'Настройка ActiveX', group: 'Система', desc: 'Авто-настройка IE для банк-клиентов РУз', component: <ActiveXConfigurator /> },
   { id: 'pccleaner', icon: 'monitor',  label: 'Очистка ПК',    group: 'Система', desc: 'TEMP Windows + кэши браузеров', component: <PcCleaner /> },
   { id: 'site-reset', icon: 'globe', label: 'Сброс веб-сервиса', group: 'Система', desc: 'Очистить кэш только выбранного сайта', component: <SiteSessionReset /> },
   { id: 'network',   icon: 'services', label: 'Проверка сети', group: 'Система', desc: 'Доступность госсайтов РУз', component: <NetworkChecker /> },
-  { id: 'eimzo',     icon: 'ecp',      label: 'Диагностика E-Imzo', group: 'Система', desc: 'Плагин и локальный сервис ЭЦП', component: <EimzoDiag /> },
+  { id: 'eimzo',     icon: 'ecp',      label: 'Диагностика E-Imzo', group: 'Система', desc: 'Доступность службы для официальных порталов', component: <EimzoDiag /> },
   // Заметки
   { id: 'notes', icon: 'note', label: 'Быстрые заметки', group: 'Заметки', desc: 'Буфер для текстов и реквизитов', component: <QuickNotes /> },
   // Документы и PDF
-  { id: 'pdfcompress', icon: 'recycle', label: 'Сжатие PDF', group: 'Документы и PDF', desc: 'Оптимизация и уменьшение веса PDF файлов', component: <PdfCompress /> },
-  { id: 'pdfconvert',  icon: 'exchange', label: 'Конвертер PDF', group: 'Документы и PDF', desc: 'Конвертация PDF в таблицы Excel или тексты Word', component: <PdfConvert /> },
-  { id: 'ocr',         icon: 'ai',       label: 'Распознавание текста (OCR)', group: 'Документы и PDF', desc: 'Извлечение текста из сканов и фото (PDF/JPEG) в Word', component: <OcrTool /> },
+  { id: 'pdfcompress', icon: 'recycle', label: 'Сжатие PDF', group: 'Документы и PDF', desc: 'Оптимизация и уменьшение веса PDF файлов', component: lazyTool(<PdfCompress />) },
+  { id: 'pdfconvert',  icon: 'exchange', label: 'Конвертер PDF', group: 'Документы и PDF', desc: 'Конвертация PDF в таблицы Excel или тексты Word', component: lazyTool(<PdfConvert />) },
+  { id: 'ocr',         icon: 'ai',       label: 'Распознавание текста (OCR)', group: 'Документы и PDF', desc: 'Извлечение текста из сканов и фото (PDF/JPEG) в Word', component: lazyTool(<OcrTool />) },
 ]
 
 const PROPOSAL_TOOLS: Tool[] = UTILITY_PROPOSALS.map(proposal => ({

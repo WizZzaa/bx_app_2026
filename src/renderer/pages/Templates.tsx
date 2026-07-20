@@ -5,8 +5,7 @@ import { useCompany } from '../lib/CompanyContext'
 import { useCounterparties } from '../lib/db/useCounterparties'
 import { useToast } from '../lib/ui/ToastContext'
 import Icon from '../lib/ui/Icon'
-import DocumentWorkflowBridge from '../components/documents/DocumentWorkflowBridge'
-import { DocumentViewModeSwitch, useDocumentViewMode } from '../components/documents/DocumentViewModeSwitch'
+import DocumentsTabs from '../components/documents/DocumentsTabs'
 import { TEMPLATES, TEMPLATE_CATEGORIES, type DocTemplate, type TemplateVar } from '../data/templates'
 import { toWordsRu } from '../lib/numToWords'
 import mammoth from 'mammoth'
@@ -179,7 +178,6 @@ export default function Templates() {
   const [copied,   setCopied]   = useState(false)
   const [selectedCompanyId, setSelectedCompanyId] = useState(active?.id ?? '')
   const [savingDocument, setSavingDocument] = useState(false)
-  const [viewMode, setViewMode] = useDocumentViewMode()
   
   // Custom templates states
   const [customTpls, setCustomTpls] = useState<DocTemplate[]>([])
@@ -334,7 +332,7 @@ export default function Templates() {
   const missingVars = useMemo(() => tpl ? getMissingVars(tpl, vals) : [], [tpl, vals])
   const fieldGroups = useMemo(() => tpl ? groupTemplateVars(tpl.vars) : [], [tpl])
   const guide = tpl ? getTemplateGuide(tpl) : null
-  const simpleView = viewMode === 'simple'
+  const simpleView = false
 
   const ensureComplete = () => {
     if (missingVars.length === 0) return true
@@ -568,7 +566,7 @@ export default function Templates() {
     return (
       <div className="flex flex-1 overflow-y-auto bg-bx-bg text-bx-text custom-scrollbar">
         <div className="bx-page-container w-full space-y-5 py-5">
-          <DocumentViewModeSwitch current="templates" value={viewMode} onChange={setViewMode} compact />
+          <DocumentsTabs current="templates" />
           <header className="rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex min-w-0 items-start gap-3">
@@ -602,7 +600,6 @@ export default function Templates() {
             </div>
           </header>
 
-          {!simpleView && <DocumentWorkflowBridge current="templates" />}
 
           <div className="grid items-start gap-5 xl:grid-cols-[minmax(420px,0.9fr)_minmax(560px,1.1fr)]">
             <div className="space-y-4">
@@ -641,7 +638,7 @@ export default function Templates() {
                   <button type="button" onClick={handleDownloadDoc} className={secondaryActionClass}><Icon name="word" className="h-4 w-4" />Word</button>
                   <button type="button" onClick={handlePrintDoc} className={secondaryActionClass}><Icon name="printer" className="h-4 w-4" />Печать</button>
                 </div>
-                <div className="mt-2 flex flex-wrap justify-between gap-2"><button type="button" onClick={handleCopyText} className="inline-flex min-h-10 items-center gap-2 px-2 text-[10px] font-black text-bx-muted hover:text-bx-text"><Icon name={copied ? 'check' : 'copy'} className="h-4 w-4" />{copied ? 'Текст скопирован' : 'Скопировать текст'}</button><button type="button" onClick={() => navigate('/documents')} className="inline-flex min-h-10 items-center gap-1 px-2 text-[10px] font-black text-blue-600 dark:text-blue-300">Открыть Документы <Icon name="arrowR" className="h-3.5 w-3.5" /></button></div>
+                <div className="mt-2 flex flex-wrap justify-between gap-2"><button type="button" onClick={handleCopyText} className="inline-flex min-h-10 items-center gap-2 px-2 text-[10px] font-black text-bx-muted hover:text-bx-text"><Icon name={copied ? 'check' : 'copy'} className="h-4 w-4" />{copied ? 'Текст скопирован' : 'Скопировать текст'}</button><button type="button" onClick={() => navigate('/documents/my')} className="inline-flex min-h-10 items-center gap-1 px-2 text-[10px] font-black text-blue-600 dark:text-blue-300">Открыть Мои документы <Icon name="arrowR" className="h-3.5 w-3.5" /></button></div>
                 {isCustom && <button type="button" onClick={() => handleDeleteCustom(tpl.id)} className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 text-xs font-bold text-red-600 hover:bg-red-500/15 dark:text-red-300"><Icon name="trash" className="h-4 w-4" />Удалить личный шаблон</button>}
               </section>
             </div>
@@ -663,9 +660,9 @@ export default function Templates() {
 
   return (
     <ResourceLayout sidebar={sidebar}>
-      <div className={simpleView ? 'space-y-4' : 'space-y-6'}>
-        <DocumentViewModeSwitch current="templates" value={viewMode} onChange={setViewMode} actions={simpleView ? <button type="button" onClick={() => setCreatingTpl(true)} className={primaryActionClass}><Icon name="plus" className="h-4 w-4" />Создать</button> : undefined} />
-        {!simpleView && <><ResourceHero eyebrow="Документ из реквизитов за несколько минут" title="Бланки, которые не приходится собирать заново" description="Выберите документ, подставьте свою компанию и контрагента, проверьте поля и выгрузите готовый результат. Личные шаблоны живут рядом со встроенными." icon="templates" stats={[{ value: allTemplates.length, label: 'шаблонов' }, { value: customTpls.length, label: 'создано вами' }, { value: filtered.length, label: search ? 'найдено' : 'в категории' }]} actions={<button type="button" onClick={() => setCreatingTpl(true)} className={primaryActionClass}><Icon name="plus" className="h-4 w-4" />Создать шаблон</button>} /><DocumentWorkflowBridge current="templates" /></>}
+      <div className="space-y-6">
+        <DocumentsTabs current="templates" />
+        <ResourceHero eyebrow="Шаблоны документов" title="Бланки, которые не приходится собирать заново" description="Выберите документ, подставьте реквизиты, проверьте поля и сохраните готовый результат в Мои документы." icon="templates" stats={[{ value: allTemplates.length, label: 'шаблонов' }, { value: customTpls.length, label: 'создано вами' }, { value: filtered.length, label: search ? 'найдено' : 'в категории' }]} actions={<button type="button" onClick={() => setCreatingTpl(true)} className={primaryActionClass}><Icon name="plus" className="h-4 w-4" />Создать шаблон</button>} />
         <section className="space-y-3.5">
           <ResourceSectionTitle headingLevel="h2" title={search.trim() ? `Результаты по запросу «${search.trim()}»` : category === 'Все' ? 'Все шаблоны' : category} subtitle={simpleView ? undefined : 'Откройте бланк, заполните реквизиты и проверьте предпросмотр перед выгрузкой'} count={filtered.length} action={search.trim() ? <button type="button" onClick={() => setSearch('')} className={secondaryActionClass}>Очистить поиск</button> : undefined} />
           {filtered.length > 0 ? (

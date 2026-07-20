@@ -8,9 +8,11 @@ import {
   UZ_PRODUCTION_CALENDAR_2026_SOURCES,
   type SpecialDay,
 } from '../../data/uzHolidays'
-import { deadlinesForMonth, type TaxDeadline } from '../../data/taxCalendar'
+import { deadlinesForMonth, summarizeTaxDeadlineCatalog, type TaxDeadline } from '../../data/taxCalendar'
 import type { BxEvent } from './useEvents'
 import type { CompanyMember } from './useCompanyMembers'
+
+const TAX_DEADLINE_CATALOG = summarizeTaxDeadlineCatalog()
 
 export interface CalCard {
   id: string
@@ -910,7 +912,11 @@ export default function CalendarView({
                     })}
                   </div>
                 ) : (
-                  <p className="rounded-xl border border-dashed border-bx-border p-4 text-center text-xs text-bx-muted">Для выбранного месяца нет подтверждённых сроков.</p>
+                  <p className={`rounded-xl border border-dashed p-4 text-center text-xs ${TAX_DEADLINE_CATALOG.ready === 0 && TAX_DEADLINE_CATALOG.needsReview > 0 ? 'border-amber-500/30 bg-amber-500/[0.06] text-amber-700 dark:text-amber-300' : 'border-bx-border text-bx-muted'}`}>
+                    {TAX_DEADLINE_CATALOG.ready === 0 && TAX_DEADLINE_CATALOG.needsReview > 0
+                      ? `${TAX_DEADLINE_CATALOG.needsReview} карточек сроков временно скрыты до проверки официальных источников. Ранее созданные задачи сохранены.`
+                      : 'Для выбранного месяца нет подтверждённых сроков.'}
+                  </p>
                 )}
               </div>
 

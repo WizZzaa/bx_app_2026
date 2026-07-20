@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useCompany } from '../lib/CompanyContext'
-import { useEvents, type BxEvent, type EventStatus } from './planner/useEvents'
-import { useCards, fetchDatedCards, fetchCardById, fetchBoardColumns, toggleCardDone, type DatedCard } from './planner/useCards'
-import { useBoards } from './planner/useBoards'
+import { useEvents, type BxEvent } from './planner/useEvents'
+import { useCards, fetchDatedCards, fetchCardById, fetchBoardColumns, toggleCardDone, type DatedCard, type BxCard } from './planner/useCards'
+import { useBoards, type BoardColumn } from './planner/useBoards'
 import { toLocalISO } from '../lib/dates'
-import { holidayName, getSpecialDay, dayTooltip, isPreHoliday, isNonWorkingSpecialDay, isTransferredWorkday, getMonthNorms, type SpecialDay } from '../data/uzHolidays'
+import { getSpecialDay, getMonthNorms, type SpecialDay } from '../data/uzHolidays'
 import { deadlinesForMonth, type TaxDeadline } from '../data/taxCalendar'
 import DailyTasksModal from './planner/DailyTasksModal'
 import EventModal from './planner/EventModal'
@@ -50,8 +50,8 @@ export default function CalendarPage() {
   const [defDate, setDefDate] = useState('')
 
   // Состояние выбранной карточки Kanban
-  const [activeCard, setActiveCard] = useState<any | null>(null)
-  const [activeCardColumns, setActiveCardColumns] = useState<any[]>([])
+  const [activeCard, setActiveCard] = useState<BxCard | null>(null)
+  const [activeCardColumns, setActiveCardColumns] = useState<BoardColumn[]>([])
 
   // Подключаем хук управления карточками
   const {
@@ -468,7 +468,7 @@ export default function CalendarPage() {
               const dayEvents = byDate[ds] ?? []
               const dayCards = cardsByDate[ds] ?? []
               const isWeekend = ci >= 5
-              const { borderClass, bgClass, isToday, special, hasDeadlines } = getDayClasses(day, ds, isWeekend)
+              const { borderClass, bgClass, isToday, hasDeadlines } = getDayClasses(day, ds, isWeekend)
               
               const filteredEvents = dayEvents.filter(e => {
                 if (e.type === 'tax_deadline' && !showTax) return false

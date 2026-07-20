@@ -3,13 +3,13 @@ import * as fs from 'fs'
 import { IPC } from '../shared/ipc-channels'
 import { scanCache, cleanCache } from './services/onecCache';
 import { listProcesses, killProcesses } from './services/onecProcess';
-import { pickDatabaseFile, pickBackupDir, backupDatabase } from './services/onecBackup';
+import { pickDatabaseFile, pickBackupDir, backupDatabase, restoreDatabase } from './services/onecBackup';
 import { fetchWeather } from './services/weather';
 import { fetchRates, fetchRateOnDate, fetchBankExchangeRates } from './services/currency';
 import { scanPcTemp, cleanPcTemp, checkRunningBrowsers } from './services/pcClean'
 import { pickPfxFile, parsePfx } from './services/ecpParser'
-import { signFile, verifySig, pickFileToSign, pickSigFile } from './services/ecpSigner'
-import { readBackupConfig, writeBackupConfig } from './services/onecBackupScheduler'
+import { readBackupConfig, writeBackupConfig, type BackupScheduleConfig } from './services/onecBackupScheduler'
+import { deepCheckBackup, pickOnecExecutable } from './services/onecDeepCheck'
 import { fetchTrader } from './services/innCheck'
 import { fetchNewsFeed } from './services/newsFeed'
 import { openSiteSession, resetSiteSession } from './services/siteSession'
@@ -29,7 +29,11 @@ export function registerIpcHandlers() {
   ipcMain.handle(IPC.BACKUP_PICK_DIR, () => pickBackupDir())
   ipcMain.handle(IPC.BACKUP_RUN, (_e, src: string, dest: string) => backupDatabase(src, dest))
   ipcMain.handle(IPC.BACKUP_GET_CONFIG, () => readBackupConfig())
-  ipcMain.handle(IPC.BACKUP_SAVE_CONFIG, (_e, config: any) => writeBackupConfig(config))
+  ipcMain.handle(IPC.BACKUP_SAVE_CONFIG, (_e, config: BackupScheduleConfig) => writeBackupConfig(config))
+  ipcMain.handle(IPC.BACKUP_RESTORE, (_e, source: string, target: string) => restoreDatabase(source, target))
+  ipcMain.handle(IPC.BACKUP_PICK_ONEC_EXE, () => pickOnecExecutable())
+  ipcMain.handle(IPC.BACKUP_DEEP_CHECK, (_e, source: string, executable: string, workingDatabase: string) =>
+    deepCheckBackup(source, executable, workingDatabase))
 
   // --- Widgets ---
   ipcMain.handle(IPC.WEATHER_GET, () => fetchWeather())
@@ -50,11 +54,7 @@ export function registerIpcHandlers() {
 
   // --- ECP / E-Imzo ---
   ipcMain.handle(IPC.ECP_PICK_PFX, () => pickPfxFile())
-  ipcMain.handle(IPC.ECP_PARSE_PFX, (_e, filePath: string, password: string) => parsePfx(filePath, password))
-  ipcMain.handle(IPC.ECP_PICK_FILE_TO_SIGN, () => pickFileToSign())
-  ipcMain.handle(IPC.ECP_PICK_SIG_FILE, () => pickSigFile())
-  ipcMain.handle(IPC.ECP_SIGN_FILE, (_e, pfxPath: string, password: string, filePath: string) => signFile(pfxPath, password, filePath))
-  ipcMain.handle(IPC.ECP_VERIFY_SIG, (_e, filePath: string, sigPath: string) => verifySig(filePath, sigPath))
+  ipcMain.handle(IPC.ECP_PARSE_PFX, (_e, fileHandle: string, password: string) => parsePfx(fileHandle, password))
 
   // --- safeStorage ---
   ipcMain.handle(IPC.SAFE_AVAILABLE, () => safeStorage.isEncryptionAvailable())

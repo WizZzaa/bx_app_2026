@@ -342,11 +342,11 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
               <div className="rounded-2xl border border-bx-border bg-bx-bg px-4 py-3 text-xs text-bx-muted">Форма: <b className="text-bx-text">{formLabel(profile.legal_form)}</b>. Показываем только применимые поля; банковские реквизиты можно заполнить позже.</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="space-y-1.5 md:col-span-2">
-                  <span className="text-[10px] font-bold uppercase text-bx-muted">Название компании</span>
+                  <span className="text-[10px] font-bold uppercase text-bx-muted">Ваша компания</span>
                   <input value={profile.name} onChange={event => setField('name', event.target.value)} className={inputCls} placeholder={profile.legal_form === 'ip' || profile.legal_form === 'self_employed' ? 'ФИО владельца или название деятельности' : 'Название компании'} />
                 </label>
                 <label className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase text-bx-muted">ИНН</span>
+                  <span className="text-[10px] font-bold uppercase text-bx-muted">ИНН вашей компании</span>
                   <input value={profile.inn ?? ''} onChange={event => setField('inn', event.target.value.replace(/\D/g, '').slice(0, 9) || null)} className={inputCls} placeholder="9 цифр" />
                 </label>
                 {(profile.legal_form === 'ip' || profile.legal_form === 'self_employed' || profile.legal_form === 'private_enterprise' || profile.legal_form === 'family_enterprise') && <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Владелец</span><input value={profile.profile_details.owner_name ?? ''} onChange={event => setDetail('owner_name', event.target.value)} className={inputCls} placeholder="ФИО владельца" /></label>}
@@ -466,6 +466,7 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
                           <span className="block text-xs font-bold text-bx-text">{rule.title}</span>
                           <span className="block text-[10px] text-bx-muted mt-1">{rule.taxType} · {rule.dates.length > 0 ? rule.dates.join(', ') : `следующий срок пока вне горизонта ${TAX_HORIZON_DAYS} дней`}</span>
                           <span className="mt-1.5 block text-[10px] leading-relaxed text-bx-muted">Рекомендация BX: {rule.recommendationReason}</span>
+                          {!rule.calendarEligible && <span className="mt-1.5 block text-[10px] font-semibold leading-relaxed text-amber-700 dark:text-amber-300">Выбор сохранится, но событие появится только после проверки источника редактором.</span>}
                         </span>
                         <div className="grid grid-cols-3 gap-1 rounded-xl border border-bx-border bg-bx-surface p-1" role="group" aria-label={`Применимость: ${rule.title}`}>
                           {([

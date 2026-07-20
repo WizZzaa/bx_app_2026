@@ -18,6 +18,10 @@ export interface PcCleanResult {
   errors: string[];
 }
 
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
 function getDirSizeSync(dirPath: string): { size: number; count: number } {
   let size = 0;
   let count = 0;
@@ -117,12 +121,12 @@ function rmDirContents(dirPath: string): { freed: number; deleted: number; error
           fs.unlinkSync(full);
           deleted++;
         }
-      } catch (e: any) {
-        errors.push(entry.name + ': ' + (e?.message ?? 'ошибка'));
+      } catch (error: unknown) {
+        errors.push(entry.name + ': ' + errorMessage(error, 'ошибка'));
       }
     }
-  } catch (e: any) {
-    errors.push(dirPath + ': ' + (e?.message ?? 'нет доступа'));
+  } catch (error: unknown) {
+    errors.push(dirPath + ': ' + errorMessage(error, 'нет доступа'));
   }
   return { freed, deleted, errors };
 }
@@ -153,7 +157,7 @@ export function checkRunningBrowsers(ids: string[]): Promise<string[]> {
     const active: string[] = []
     const cmd = process.platform === 'win32' ? 'tasklist' : 'ps ax'
     
-    exec(cmd, (err: any, stdout: string) => {
+    exec(cmd, (err, stdout) => {
       if (err) {
         return resolve([])
       }
@@ -177,4 +181,3 @@ export function checkRunningBrowsers(ids: string[]): Promise<string[]> {
     })
   })
 }
-

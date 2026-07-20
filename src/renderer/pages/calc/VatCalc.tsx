@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import CalcResult from './CalcResult';
 import MoneyInput from './MoneyInput';
-
-const VAT_RATE = 12;
+import { useRegulatoryNumber } from '../../lib/calculatorRegulatory';
 
 function fmt(n: number) {
   return n.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
 }
 
 export default function VatCalc() {
+  const VAT_RATE = useRegulatoryNumber('tax.vat.standard');
   const [mode, setMode] = useState<'add' | 'extract'>('add');
   const [amount, setAmount] = useState('');
 
@@ -53,7 +53,7 @@ export default function VatCalc() {
         ]}
       />
 
-      <p className="text-[11px] text-bx-muted">Ставка НДС в Узбекистане — 12% (ст. 258 НК РУз)</p>
+      <p className="text-[11px] text-bx-muted">Ставка НДС в Узбекистане — {VAT_RATE}% (ст. 258 НК РУз)</p>
     </div>
   );
 }

@@ -1,21 +1,43 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useAuth } from '../../lib/auth/useAuth'
 import { hasPin, setPin, verifyPin, clearPin, isPinEnabled, setPinEnabled } from '../../lib/auth/pin'
 import { useIdleLock } from '../../lib/auth/useIdleLock'
 import LoginScreen from './LoginScreen'
 import PinScreen from './PinScreen'
+import DeviceGateScreen from './DeviceGateScreen'
+import TelegramMigrationGate from './TelegramMigrationGate'
+import { registerCurrentDevice, type DeviceRegistrationStatus } from '../../lib/auth/device'
+import { publicContactEmail } from '../../lib/auth/accountIdentity'
 
 /**
  * Поток входа:
- * 1. Нет сессии → экран входа (email+пароль). Первый запуск на машине.
+ * 1. Нет сессии → основной Telegram-вход; email доступен только для переноса legacy-аккаунта.
  * 2. Есть сессия, нет PIN → установка PIN.
  * 3. Есть сессия и PIN, не разблокировано в этом запуске → ввод PIN.
  * 4. Разблокировано → приложение.
  *    + Автоблокировка по неактивности (если включена в настройках).
  */
 export default function AuthGate({ children }: { children: React.ReactNode }) {
-  const { loading, session, signIn, signUp, signOut, resetPassword, resendConfirmation } = useAuth()
+  const { loading, session, signInLegacy, signOut, resetLegacyPassword, signInWithTelegram, recoverWithCode } = useAuth()
   const [unlocked, setUnlocked] = useState(false)
+  const [deviceStatus, setDeviceStatus] = useState<DeviceRegistrationStatus | 'checking'>('checking')
+  const [telegramMigrationPending, setTelegramMigrationPending] = useState(false)
+
+  const checkDevice = useCallback(async () => {
+    setDeviceStatus('checking')
+    const result = await registerCurrentDevice()
+    setDeviceStatus(result.status)
+  }, [])
+
+  useEffect(() => {
+    if (session) {
+      setTelegramMigrationPending(localStorage.getItem('bx_needs_telegram_migration') === '1')
+      void checkDevice()
+    } else {
+      setDeviceStatus('checking')
+      setTelegramMigrationPending(false)
+    }
+  }, [session, checkDevice])
 
   const handleLock = useCallback(() => {
     setUnlocked(false)
@@ -35,11 +57,6 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     await signOut()
   }, [signOut])
 
-  // TEMP-DEV-BYPASS: локальное ревью тем/тарифов. НЕ КОММИТИТЬ.
-  if (typeof window !== 'undefined' && localStorage.getItem('bx_dev_bypass') === '1') {
-    return <>{children}</>
-  }
-
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-bx-bg">
@@ -48,16 +65,28 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Нет сессии → вход по паролю
+  // Нет сессии → Telegram-first. Действующие legacy-аккаунты не теряют доступ.
   if (!session) {
     return (
       <LoginScreen
-        onSignIn={signIn}
-        onSignUp={signUp}
-        onResetPassword={resetPassword}
-        onResendConfirmation={resendConfirmation}
+        onLegacySignIn={signInLegacy}
+        onResetPassword={resetLegacyPassword}
+        onTelegramSignIn={signInWithTelegram}
+        onRecoverWithCode={recoverWithCode}
       />
     )
+  }
+
+  if (telegramMigrationPending) {
+    return <TelegramMigrationGate onComplete={() => setTelegramMigrationPending(false)} onSignOut={signOut} />
+  }
+
+  if (deviceStatus === 'checking') {
+    return <div className="h-screen w-screen flex items-center justify-center bg-bx-bg"><span className="h-6 w-6 animate-spin rounded-full border-2 border-bx-border-2 border-t-blue-500" /></div>
+  }
+
+  if (deviceStatus !== 'trusted') {
+    return <DeviceGateScreen status={deviceStatus} onRetry={checkDevice} onSignOut={signOut} />
   }
 
   // PIN отключён пользователем → сразу в приложение
@@ -84,7 +113,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <PinScreen
         mode="unlock"
-        email={session.user.email ?? undefined}
+        email={publicContactEmail(session.user.email)}
         onSetPin={setPin}
         onVerifyPin={verifyPin}
         onSuccess={() => setUnlocked(true)}

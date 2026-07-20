@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import CalcResult from './CalcResult';
 import MoneyInput from './MoneyInput';
-import { useEconomicIndicators } from '../../lib/useEconomicIndicators';
 import { takeCalcPrefill, toMoneyString } from './prefill';
+import { useRegulatoryNumber } from '../../lib/calculatorRegulatory';
 
 // Больничные РУз: % от среднего заработка в зависимости от стажа
 // Ст. 284 ТК РУз + Положение о порядке назначения пособий
@@ -20,7 +20,8 @@ function fmt(n: number) {
 }
 
 export default function SickLeaveCalc() {
-  const { mrot } = useEconomicIndicators();
+  const NDFL_RATE = useRegulatoryNumber('tax.ndfl.standard');
+  const MROT = useRegulatoryNumber('indicator.mrot');
   const [annualIncome, setAnnualIncome] = useState(() => {
     const pre = takeCalcPrefill('sick');
     return pre?.annual ? toMoneyString(pre.annual) : '';
@@ -33,13 +34,13 @@ export default function SickLeaveCalc() {
   const rule = STAZH_RULES[stazh];
 
   const avgDaily = annual / 365;
-  const minDaily = mrot / 25.4;
+  const minDaily = MROT / 25.4;
 
   const rawBenefit = avgDaily * days * (rule.pct / 100);
   const minBenefit = minDaily * days;
   const benefit = Math.max(rawBenefit, minBenefit);
 
-  const ndfl = benefit * 0.12;
+  const ndfl = benefit * (NDFL_RATE / 100);
   const net = benefit - ndfl;
 
   return (
@@ -73,7 +74,7 @@ export default function SickLeaveCalc() {
           />
         </div>
         <div className="flex flex-col justify-end">
-          <p className="text-xs text-bx-muted">МРОТ (справочник): {fmt(mrot)} UZS</p>
+          <p className="text-xs text-bx-muted">МРОТ (версия ставки): {fmt(MROT)} UZS</p>
           <p className="text-xs text-bx-muted">Коэфф. стажа: {rule.pct}%</p>
         </div>
       </div>
@@ -86,7 +87,7 @@ export default function SickLeaveCalc() {
           { label: 'По среднему заработку', value: `${fmt(rawBenefit)} UZS` },
           { label: 'Минимальное пособие (МРОТ)', value: `${fmt(minBenefit)} UZS` },
           { label: 'Начислено пособия', value: `${fmt(benefit)} UZS`, highlight: true },
-          { label: 'НДФЛ (12%)', value: `${fmt(ndfl)} UZS` },
+          { label: `НДФЛ (${NDFL_RATE}%)`, value: `${fmt(ndfl)} UZS` },
           { label: 'К выплате', value: `${fmt(net)} UZS` },
         ]}
       />

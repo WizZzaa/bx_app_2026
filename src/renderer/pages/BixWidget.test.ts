@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { animationDelay, clampPanelOffset, isWithinQuietHours, jokeDelay, loadCycle, pickFrameCycle, taskReminderAt, widgetHeightForPanel } from './BixWidget'
+import { animationDelay, clampPanelOffset, collectBixVisualKeys, isWithinQuietHours, jokeDelay, loadCycle, pickFrameCycle, taskReminderAt, widgetHeightForPanel } from './BixWidget'
 
 const quietSettings = {
   jokesEnabled: true,
@@ -72,5 +72,12 @@ describe('Bix widget settings', () => {
     expect(pickFrameCycle(base, outfit, 'idle', 'business-static')).toEqual(['business-idle'])
     expect(pickFrameCycle(base, outfit, 'reminder', 'business-static')).toEqual(['business-thinking'])
     expect(pickFrameCycle(base, outfit, 'sleep', 'business-static')).toEqual(['business-static'])
+  })
+
+  it('loads wardrobe visuals only when equipped or when their panel opens', () => {
+    expect(collectBixVisualKeys(null, undefined, null, ['business', 'analyst'], ['hat_party'])).toEqual([])
+    expect(collectBixVisualKeys('business', undefined, null, ['analyst'], ['hat_party'])).toEqual(['business'])
+    expect(collectBixVisualKeys(null, undefined, 'wardrobe', ['business', 'analyst'], ['hat_party'])).toEqual(['business', 'analyst'])
+    expect(collectBixVisualKeys(null, 'hat_party', 'chest', ['business'], ['hat_party', 'night'])).toEqual(['hat_party', 'night'])
   })
 })

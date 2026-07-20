@@ -49,7 +49,6 @@ export function useDocuments() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Пользователь не авторизован');
 
-    const fileExt = file.name.split('.').pop();
     const cleanFileName = file.name.replace(/[^\w\dа-яА-Я._-]/g, '_');
     const filePath = `${user.id}/${Date.now()}_${cleanFileName}`;
 

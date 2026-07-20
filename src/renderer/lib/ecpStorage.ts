@@ -1,5 +1,6 @@
-// Единое хранилище записей ЭЦП-ключей.
-// В Electron записи шифруются через safeStorage ОС (мост window.bx.safe);
+// Единое хранилище безопасных метаданных сертификатов ЭЦП.
+// Файлы ключей и пароли сюда никогда не попадают. В Electron метаданные
+// шифруются через safeStorage ОС (мост window.bx.safe);
 // в веб-версии, где моста нет, остаётся открытый localStorage-фолбэк.
 // При первом чтении в Electron открытые записи мигрируются в зашифрованные.
 
@@ -16,6 +17,9 @@ export interface EcpKeyRecord {
   expiresAt: string;
   addedAt: string;
   org?: string;
+  serial?: string;
+  fingerprint?: string;
+  validFrom?: string;
 }
 
 type SafeBridge = {
@@ -46,12 +50,12 @@ export async function loadEcpKeys(): Promise<EcpKeyRecord[]> {
       return [];
     }
   } catch (err) {
-    logger.warn('ecpStorage', 'Не удалось расшифровать ключи ЭЦП, читаю открытое хранилище', err);
+    logger.warn('ecpStorage', 'Не удалось расшифровать метаданные сертификатов ЭЦП, читаю открытое хранилище', err);
   }
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
   } catch (err) {
-    logger.warn('ecpStorage', 'Повреждённое хранилище ключей ЭЦП, возвращаю пустой список', err);
+    logger.warn('ecpStorage', 'Повреждено хранилище метаданных сертификатов ЭЦП, возвращаю пустой список', err);
     return [];
   }
 }
@@ -66,7 +70,7 @@ export async function saveEcpKeys(keys: EcpKeyRecord[]): Promise<void> {
       return;
     }
   } catch (err) {
-    logger.warn('ecpStorage', 'Шифрование недоступно, ключи ЭЦП сохраняются в открытом виде', err);
+    logger.warn('ecpStorage', 'Шифрование недоступно, метаданные сертификатов ЭЦП сохраняются локально в открытом виде', err);
   }
   localStorage.setItem(STORAGE_KEY, json);
 }

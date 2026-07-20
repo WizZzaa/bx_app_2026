@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import CalcResult from './CalcResult';
 import MoneyInput from './MoneyInput';
 import { calcPayroll, DEFAULT_RATES } from '../hr/payroll';
+import { useRegulatoryNumber } from '../../lib/calculatorRegulatory';
 
 // Зарплата «в обе стороны»: начислено → на руки и на руки → начислено.
 // Общая расчётная математика хранится в hr/payroll.ts; отдельного HR-раздела в интерфейсе нет.
@@ -12,14 +13,20 @@ function fmt(n: number) {
 }
 
 export default function SalaryCalc() {
+  const rates = {
+    ...DEFAULT_RATES,
+    ndfl: useRegulatoryNumber('tax.ndfl.standard'),
+    inps: useRegulatoryNumber('payroll.inps'),
+    social: useRegulatoryNumber('tax.social.standard'),
+  };
   const [direction, setDirection] = useState<'gross2net' | 'net2gross'>('gross2net');
   const [amount, setAmount] = useState('');
 
   const val = parseFloat(amount.replace(/\s/g, '').replace(',', '.')) || 0;
 
   // Удержания линейны (всего ровно НДФЛ%), поэтому обратный расчёт — деление
-  const gross = direction === 'gross2net' ? val : val / (1 - DEFAULT_RATES.ndfl / 100);
-  const p = calcPayroll(gross);
+  const gross = direction === 'gross2net' ? val : val / (1 - rates.ndfl / 100);
+  const p = calcPayroll(gross, rates);
 
   return (
     <div className="space-y-5">
@@ -49,17 +56,17 @@ export default function SalaryCalc() {
         title={`Зарплата: ${direction === 'gross2net' ? 'начислено → на руки' : 'на руки → начислено'}`}
         rows={[
           { label: 'Начислено (gross)', value: `${fmt(p.gross)} UZS`, highlight: direction === 'net2gross' },
-          { label: `НДФЛ (${DEFAULT_RATES.ndfl}% с учётом ИНПС)`, value: `${fmt(p.ndfl)} UZS` },
-          { label: `ИНПС (${DEFAULT_RATES.inps}%)`, value: `${fmt(p.inps)} UZS` },
+          { label: `НДФЛ (${rates.ndfl}% с учётом ИНПС)`, value: `${fmt(p.ndfl)} UZS` },
+          { label: `ИНПС (${rates.inps}%)`, value: `${fmt(p.inps)} UZS` },
           { label: 'Удержано всего', value: `${fmt(p.totalWithheld)} UZS` },
           { label: 'На руки (net)', value: `${fmt(p.net)} UZS`, highlight: direction === 'gross2net' },
-          { label: `Соцналог работодателя (${DEFAULT_RATES.social}%)`, value: `${fmt(p.social)} UZS` },
+          { label: `Соцналог работодателя (${rates.social}%)`, value: `${fmt(p.social)} UZS` },
           { label: 'Полная стоимость для работодателя', value: `${fmt(p.employerCost)} UZS` },
         ]}
       />
 
       <p className="text-[11px] text-bx-muted">
-        НДФЛ 12% (ст. 366 НК РУз), ИНПС 0.1% вычитается из НДФЛ, соцналог 12% (бюджетные — 25%).
+        НДФЛ {rates.ndfl}% (ст. 366 НК РУз), ИНПС {rates.inps}% вычитается из НДФЛ, соцналог {rates.social}% (бюджетные организации проверяют отдельную ставку).
         Ориентировочная проверка начислений. Кадровый и зарплатный учёт ведите в 1С.
       </p>
     </div>

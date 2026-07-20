@@ -16,23 +16,37 @@ describe('settings backup', () => {
     expect(() => parseSettingsBackup(JSON.stringify({ version: '1', timestamp: 'now', templates: {} }))).toThrow('списком')
   })
 
-  it('accepts the graphite and lime theme in a backup', () => {
+  it('migrates the graphite and lime theme from a backup', () => {
     const backup = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', theme: 'lime' }))
-    expect(backup.theme).toBe('lime')
+    expect(backup.theme).toBe('high-contrast')
   })
 
   it('accepts the light lavender theme in a backup', () => {
     const backup = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', theme: 'lavender-light' }))
-    expect(backup.theme).toBe('lavender-light')
+    expect(backup.theme).toBe('light')
   })
 
-  it('accepts compact interface scales in a backup', () => {
+  it('migrates retired compact interface scales in a backup', () => {
     const backup = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', fontScale: '75' }))
-    expect(backup.fontScale).toBe('75')
+    expect(backup.fontScale).toBe('100')
+    const large = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', fontScale: '130' }))
+    expect(large.fontScale).toBe('125')
+  })
+
+  it('accepts both canonical density modes', () => {
+    expect(parseSettingsBackup(JSON.stringify({ version: '2.39.0', timestamp: 'now', density: 'compact' })).density).toBe('compact')
+    expect(parseSettingsBackup(JSON.stringify({ version: '2.39.0', timestamp: 'now', density: 'comfortable' })).density).toBe('comfortable')
   })
 
   it('migrates the retired light lime theme in an older backup', () => {
     const backup = parseSettingsBackup(JSON.stringify({ version: '2.30.0', timestamp: 'now', theme: 'lime-light' }))
-    expect(backup.theme).toBe('lavender-light')
+    expect(backup.theme).toBe('light')
+  })
+
+  it('accepts the four canonical themes in a backup', () => {
+    for (const theme of ['system', 'light', 'dark', 'high-contrast']) {
+      const backup = parseSettingsBackup(JSON.stringify({ version: '2.32.0', timestamp: 'now', theme }))
+      expect(backup.theme).toBe(theme)
+    }
   })
 })

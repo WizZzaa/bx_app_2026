@@ -25,12 +25,6 @@ const TYPE_ICON: Record<string, string> = {
   event: '📅',
 };
 
-const PRI_COLOR: Record<string, string> = {
-  high: 'text-red-400',
-  normal: 'text-yellow-500',
-  low: 'text-green-500',
-};
-
 export default function DailyTasksModal({
   date,
   events,

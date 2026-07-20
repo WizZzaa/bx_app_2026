@@ -16,8 +16,68 @@ export interface TaxDeadline {
   sourceUrl?: string
   verifiedAt?: string
   reviewedBy?: string
+  nextReviewAt?: string
   editorialStatus?: 'draft' | 'review' | 'approved' | 'archived'
   selectionPolicy?: 'core' | 'vat' | 'employees' | 'conditional'
+}
+
+function isValidISODate(value: string | undefined): value is string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const [year, month, day] = value.split('-').map(Number)
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+  return parsed.getUTCFullYear() === year
+    && parsed.getUTCMonth() === month - 1
+    && parsed.getUTCDate() === day
+}
+
+function localTodayISO(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export function isOfficialTaxSourceUrl(value: string | undefined): boolean {
+  if (!value) return false
+  try {
+    const host = new URL(value).hostname.toLowerCase()
+    return host === 'lex.uz'
+      || host.endsWith('.lex.uz')
+      || host === 'soliq.uz'
+      || host.endsWith('.soliq.uz')
+      || host === 'stat.uz'
+      || host.endsWith('.stat.uz')
+      || host === 'cbu.uz'
+      || host.endsWith('.cbu.uz')
+      || host === 'gov.uz'
+      || host.endsWith('.gov.uz')
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Возвращает причины, по которым карточка не может создавать или показывать
+ * налоговые сроки. Старый флаг verified сам по себе больше не является
+ * редакционным одобрением.
+ */
+export function taxDeadlineEditorialIssues(deadline: TaxDeadline, asOf = localTodayISO()): string[] {
+  const issues: string[] = []
+  if (!deadline.verified) issues.push('Содержание ещё не подтверждено')
+  if (!deadline.law?.trim()) issues.push('Не указано нормативное основание')
+  if (!isOfficialTaxSourceUrl(deadline.sourceUrl)) issues.push('Нет ссылки на официальный источник')
+  if (!isValidISODate(deadline.verifiedAt)) issues.push('Нет корректной даты редакционной проверки')
+  else if (deadline.verifiedAt > asOf) issues.push('Дата редакционной проверки находится в будущем')
+  if (!deadline.reviewedBy?.trim()) issues.push('Не указан ответственный редактор')
+  if (deadline.editorialStatus !== 'approved') issues.push('Карточка не одобрена редактором')
+  if (!isValidISODate(deadline.nextReviewAt)) issues.push('Не назначена следующая проверка')
+  else if (deadline.nextReviewAt < asOf) issues.push('Срок редакционной проверки истёк')
+  return issues
+}
+
+export function isTaxDeadlineCalendarEligible(deadline: TaxDeadline, asOf: string): boolean {
+  return taxDeadlineEditorialIssues(deadline, asOf).length === 0
 }
 
 export const taxDeadlines: TaxDeadline[] = [
@@ -300,12 +360,26 @@ export const taxDeadlines: TaxDeadline[] = [
   },
 ]
 
+export function summarizeTaxDeadlineCatalog(
+  asOf = localTodayISO(),
+  deadlines: TaxDeadline[] = taxDeadlines,
+): { total: number; ready: number; needsReview: number } {
+  const ready = deadlines.filter(deadline => isTaxDeadlineCalendarEligible(deadline, asOf)).length
+  return { total: deadlines.length, ready, needsReview: deadlines.length - ready }
+}
+
 /** Развернуть шаблоны в конкретные даты для заданного месяца (0-индексированный). */
-export const deadlinesForMonth = (year: number, month0: number, regime?: string): { date: string; deadline: TaxDeadline }[] => {
+export const deadlinesForMonth = (
+  year: number,
+  month0: number,
+  regime?: string,
+  asOf = localTodayISO(),
+): { date: string; deadline: TaxDeadline }[] => {
   const month1 = month0 + 1
   const out: { date: string; deadline: TaxDeadline }[] = []
 
   for (const d of taxDeadlines) {
+    if (!isTaxDeadlineCalendarEligible(d, asOf)) continue
     if (regime && regime !== 'все' && d.regime !== 'все' && d.regime !== regime) continue
 
     const matches = d.month === null || d.month === month1
