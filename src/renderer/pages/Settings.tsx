@@ -210,74 +210,6 @@ export default function Settings({ surface = 'settings' }: { surface?: SettingsS
     }
   }
 
-  const handleGenerateInvoice = () => {
-    const w = window.open('', '_blank')
-    if (!w) return
-    const html = `
-      <html>
-      <head>
-        <title>Счет на оплату № BX-${Date.now().toString().slice(-6)}</title>
-        <style>
-          body { font-family: 'Times New Roman', serif; padding: 40px; color: #333; line-height: 1.4; font-size: 14px; }
-          .title { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 20px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; }
-          th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-          th { background-color: #f2f2f2; font-weight: bold; }
-          .right { text-align: right; }
-          .bold { font-weight: bold; }
-          .footer-section { margin-top: 40px; display: flex; justify-content: space-between; }
-        </style>
-      </head>
-      <body>
-        <div class="title">СЧЕТ НА ОПЛАТУ № BX-${Date.now().toString().slice(-6)} от ${new Date().toLocaleDateString('ru-RU')} г.</div>
-        <p><strong>Поставщик:</strong> ООО «BX SOFTWARE», ИНН 309876543, р/с 20208000900123456001 в АКБ «Капиталбанк», МФО 00440, Адрес: г. Ташкент, ул. А. Темура, 45</p>
-        <p><strong>Покупатель:</strong> ${userEmail ? `Пользователь (${userEmail})` : 'Плательщик подписки BX'}</p>
-        <table>
-          <thead>
-            <tr>
-              <th>№</th>
-              <th>Наименование товара (услуги)</th>
-              <th>Кол-во</th>
-              <th>Ед. изм.</th>
-              <th>Цена, сум</th>
-              <th>Сумма, сум</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1</td>
-              <td>Лицензия на использование ПО "BX Помощник Бухгалтера" (тариф Premium на 12 месяцев)</td>
-              <td>1</td>
-              <td>шт</td>
-              <td>5 000 000</td>
-              <td>5 000 000</td>
-            </tr>
-            <tr class="bold">
-              <td colspan="5" class="right">Итого к оплате:</td>
-              <td>5 000 000</td>
-            </tr>
-          </tbody>
-        </table>
-        <p>Всего к оплате пять миллионов сум 00 тийин, без НДС.</p>
-        <div class="footer-section">
-          <div>
-            <p>Руководитель: ___________________ / Черников А. /</p>
-            <p class="bold">М.П.</p>
-          </div>
-          <div>
-            <p>Бухгалтер: ___________________ / Черников А. /</p>
-          </div>
-        </div>
-        <script>
-          window.onload = function() { window.print(); }
-        </script>
-      </body>
-      </html>
-    `
-    w.document.write(html)
-    w.document.close()
-  }
-
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUserEmail(publicContactEmail(data.user?.email) || '')
@@ -703,7 +635,7 @@ export default function Settings({ surface = 'settings' }: { surface?: SettingsS
             <div className="space-y-5">
               {plan === 'free' && <section className={`${card} p-5`}><h3 className="text-sm font-black">Попробовать Trial</h3><p className="mt-1 text-xs leading-relaxed text-bx-muted">7 дней, без карты и автопродления. Нужен подтверждённый собственный контакт Telegram; повторная активация по тому же телефону или Telegram ID запрещена.</p><button type="button" onClick={handleActivateTrial} disabled={identity.trialUsed} className={`${button} mt-4 bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-40`}>{identity.trialUsed ? 'Trial уже использован' : identity.telegramVerified ? 'Активировать 7 дней Trial' : 'Подтвердить Telegram для Trial'}</button></section>}
               <section className={`${card} overflow-hidden`}><div className="border-b border-bx-border bg-gradient-to-r from-blue-600/[0.12] to-transparent p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">Текущий план</p><h3 className="mt-1 text-2xl font-black">{plan === 'premium' ? 'Premium' : plan === 'standard' ? 'Standard' : plan === 'trial' ? 'Trial' : 'Free'}</h3><p className="mt-1 text-xs text-bx-muted">{isTrial && trialDaysLeft > 0 ? `Пробный период: осталось ${trialDaysLeft} дн.${planExpiresAt ? ` · до ${new Date(planExpiresAt).toLocaleDateString('ru-RU')}` : ''}` : isPro ? 'Профессиональный доступ активен' : 'Базовый доступ с ограничениями'}</p></div><div className="flex rounded-xl border border-bx-border bg-bx-bg p-1">{(['month', 'year'] as const).map(value => <button key={value} type="button" onClick={() => setBillingPeriod(value)} className={`${button} ${billingPeriod === value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}>{value === 'month' ? 'Месяц' : 'Год −17%'}</button>)}</div></div></div><div className="grid grid-cols-1 gap-3 p-5 md:grid-cols-3">{[{ name: 'Free', price: '0 сум', desc: 'Базовые инструменты' }, { name: 'Standard', price: billingPeriod === 'year' ? `${TARIFF_MATRIX.standard.priceUzs.year?.toLocaleString('ru-RU')} / год` : `${TARIFF_MATRIX.standard.priceUzs.month?.toLocaleString('ru-RU')} / мес`, desc: 'Для ежедневной работы' }, { name: 'Premium', price: billingPeriod === 'year' ? `${TARIFF_MATRIX.premium.priceUzs.year?.toLocaleString('ru-RU')} / год` : `${TARIFF_MATRIX.premium.priceUzs.month?.toLocaleString('ru-RU')} / мес`, desc: 'Команда и максимум возможностей' }].map(item => <div key={item.name} className={`rounded-2xl border p-4 ${item.name.toLowerCase() === plan ? 'border-blue-600 bg-blue-500/[0.06]' : 'border-bx-border bg-bx-bg'}`}><p className="text-sm font-black">{item.name}</p><p className="mt-2 text-lg font-black text-blue-600 dark:text-blue-400">{item.price}</p><p className="mt-1 text-xs text-bx-muted">{item.desc}</p></div>)}</div></section>
-              <div className="grid grid-cols-1 gap-5 2xl:grid-cols-2"><section className={`${card} p-5`}><h3 className="text-sm font-black">Оплата</h3><div className="mt-4 flex rounded-xl border border-bx-border bg-bx-bg p-1"><button type="button" onClick={() => setPayMethod('card')} className={`${button} flex-1 ${payMethod === 'card' ? 'bg-blue-600 text-white' : 'text-bx-muted'}`}>Payme / Click</button><button type="button" onClick={() => setPayMethod('invoice')} className={`${button} flex-1 ${payMethod === 'invoice' ? 'bg-blue-600 text-white' : 'text-bx-muted'}`}>Счёт юрлицу</button></div>{payMethod === 'card' ? <p className="mt-4 rounded-2xl border border-dashed border-bx-border bg-bx-bg p-5 text-center text-xs leading-relaxed text-bx-muted">Онлайн-оплата будет активирована после подключения платёжного провайдера. Сейчас используйте счёт для юридического лица.</p> : <button type="button" onClick={handleGenerateInvoice} className={`${button} mt-4 w-full bg-blue-600 text-white hover:bg-blue-700`}><span className="inline-flex items-center gap-2"><Icon name="receipt" className="h-4 w-4" />Открыть счёт на оплату</span></button>}</section><section className={`${card} p-5`}><h3 className="text-sm font-black">Промокод</h3><p className="mt-1 text-xs text-bx-muted">Срок активации добавится к текущему тарифу.</p><div className="mt-4 flex gap-2"><input value={promoCode} onChange={event => setPromoCode(event.target.value.toUpperCase())} onKeyDown={event => { if (event.key === 'Enter') handleRedeemPromo() }} placeholder="WELCOME30" aria-label="Промокод" className={input} /><button type="button" onClick={handleRedeemPromo} disabled={promoLoading || !promoCode.trim()} className={`${button} bg-blue-600 text-white disabled:opacity-40`}>{promoLoading ? 'Проверяю…' : 'Активировать'}</button></div>{referralCode && <div className="mt-5 border-t border-bx-border pt-4"><p className="text-xs font-black">Пригласить коллегу</p><div className="mt-2 flex gap-2"><input readOnly value={`https://bx.uz/?ref=${referralCode}`} onFocus={event => event.currentTarget.select()} aria-label="Реферальная ссылка" className={input} /><button type="button" onClick={() => { navigator.clipboard.writeText(`https://bx.uz/?ref=${referralCode}`); toast.success('Ссылка скопирована') }} className={`${button} border border-bx-border bg-bx-surface-2`}><Icon name="copy" className="h-4 w-4" /></button></div></div>}</section></div>
+              <div className="grid grid-cols-1 gap-5 2xl:grid-cols-2"><section className={`${card} p-5`}><h3 className="text-sm font-black">Оплата <span className="ml-2 rounded-full bg-violet-500/10 px-2 py-1 text-[9px] uppercase tracking-wider text-violet-700 dark:text-violet-300">Скоро</span></h3><div className="mt-4 flex rounded-xl border border-bx-border bg-bx-bg p-1"><button type="button" onClick={() => setPayMethod('card')} className={`${button} flex-1 ${payMethod === 'card' ? 'bg-blue-600 text-white' : 'text-bx-muted'}`}>Payme / Click</button><button type="button" onClick={() => setPayMethod('invoice')} className={`${button} flex-1 ${payMethod === 'invoice' ? 'bg-blue-600 text-white' : 'text-bx-muted'}`}>Счёт юрлицу</button></div>{payMethod === 'card' ? <p className="mt-4 rounded-2xl border border-dashed border-bx-border bg-bx-bg p-5 text-center text-xs leading-relaxed text-bx-muted">Визуальный preview будущей онлайн-оплаты. Payme и Click сейчас не принимают платежи через BX.</p> : <div className="mt-4 rounded-2xl border border-dashed border-bx-border bg-bx-bg p-5 text-center"><p className="text-xs leading-relaxed text-bx-muted">Выставление счетов пока не запущено. Здесь появится проверенный счёт после отдельного запуска оплаты.</p><button type="button" disabled aria-disabled="true" className={`${button} mt-4 w-full cursor-not-allowed border border-bx-border bg-bx-surface-2 text-bx-muted opacity-50`}><span className="inline-flex items-center gap-2"><Icon name="receipt" className="h-4 w-4" />Счёт пока недоступен</span></button></div>}</section><section className={`${card} p-5`}><h3 className="text-sm font-black">Промокод</h3><p className="mt-1 text-xs text-bx-muted">Срок активации добавится к текущему тарифу.</p><div className="mt-4 flex gap-2"><input value={promoCode} onChange={event => setPromoCode(event.target.value.toUpperCase())} onKeyDown={event => { if (event.key === 'Enter') handleRedeemPromo() }} placeholder="WELCOME30" aria-label="Промокод" className={input} /><button type="button" onClick={handleRedeemPromo} disabled={promoLoading || !promoCode.trim()} className={`${button} bg-blue-600 text-white disabled:opacity-40`}>{promoLoading ? 'Проверяю…' : 'Активировать'}</button></div>{referralCode && <div className="mt-5 border-t border-bx-border pt-4"><p className="text-xs font-black">Пригласить коллегу</p><div className="mt-2 flex gap-2"><input readOnly value={`https://bx.uz/?ref=${referralCode}`} onFocus={event => event.currentTarget.select()} aria-label="Реферальная ссылка" className={input} /><button type="button" onClick={() => { navigator.clipboard.writeText(`https://bx.uz/?ref=${referralCode}`); toast.success('Ссылка скопирована') }} className={`${button} border border-bx-border bg-bx-surface-2`}><Icon name="copy" className="h-4 w-4" /></button></div></div>}</section></div>
               <section className={`${card} p-5`}><h3 className="text-sm font-black">История платежей</h3><p className="mt-1 text-sm text-bx-muted">Последние операции Payme и Click этого аккаунта.</p>{paymentOrders.length ? <DataTable label="История платежей" className="mt-4"><thead><tr className="border-b border-bx-border text-sm text-bx-muted"><th className="px-4 py-3 font-semibold">Дата</th><th className="px-4 py-3 font-semibold">Способ</th><th className="px-4 py-3 text-right font-semibold">Сумма</th><th className="px-4 py-3 font-semibold">Статус</th></tr></thead><tbody>{paymentOrders.map(order => <tr key={order.id} className="border-b border-bx-border last:border-0"><td className="px-4 py-3">{new Date(order.paid_at || order.created_at).toLocaleDateString('ru-RU')}</td><td className="px-4 py-3 capitalize">{order.provider || '—'}</td><td className="px-4 py-3 text-right font-semibold">{Number(order.amount).toLocaleString('ru-RU')} сум</td><td className="px-4 py-3">{order.state === 'paid' ? 'Оплачен' : order.state === 'cancelled' ? 'Отменён' : order.state === 'waiting' ? 'Ожидает оплаты' : 'Создан'}</td></tr>)}</tbody></DataTable> : <p className="mt-4 rounded-2xl border border-dashed border-bx-border bg-bx-bg p-5 text-center text-sm text-bx-muted">Платежей пока нет.</p>}</section>
             </div>
           )}
