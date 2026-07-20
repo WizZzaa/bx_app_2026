@@ -183,11 +183,32 @@ export async function backupDatabase(sourceFile: string, destDir: string): Promi
     const ext = path.extname(sourceFile);
     const destPath = path.join(destDir, `${base}_${timestamp()}${ext}`);
     tempPath = `${destPath}.partial-${crypto.randomUUID()}`;
+    const processesBeforeCopy = await listProcesses().catch(() => null);
+    if (processesBeforeCopy === null) {
+      return { success: false, error: 'Не удалось проверить процессы 1С. Копирование не начато' };
+    }
+    if (processesBeforeCopy.length > 0) {
+      return { success: false, error: `Перед резервным копированием закройте 1С: ${processesBeforeCopy.map(item => item.name).join(', ')}` };
+    }
     const sourceStat = await fs.promises.stat(sourceFile);
+    if (!sourceStat.isFile() || sourceStat.size <= 0) return { success: false, error: 'Исходная база пуста или не является файлом' };
     const space = await fs.promises.statfs(destDir);
     if (space.bavail * space.bsize < sourceStat.size * 1.1) return { success: false, error: 'Недостаточно места для проверяемой копии' };
     await fs.promises.copyFile(sourceFile, tempPath, fs.constants.COPYFILE_EXCL);
-    const sizeBytes = await verifyCopiedFile(sourceFile, tempPath);
+    const processesAfterCopy = await listProcesses().catch(() => null);
+    if (processesAfterCopy === null) throw new Error('Не удалось повторно проверить процессы 1С. Непроверенная копия удалена');
+    if (processesAfterCopy.length > 0) {
+      throw new Error(`Во время копирования была запущена 1С: ${processesAfterCopy.map(item => item.name).join(', ')}`);
+    }
+    const sizeBytes = await verifyExactCopy(sourceFile, tempPath);
+    const sourceStatAfterCopy = await fs.promises.stat(sourceFile);
+    if (
+      sourceStatAfterCopy.size !== sourceStat.size
+      || sourceStatAfterCopy.mtimeMs !== sourceStat.mtimeMs
+      || sourceStatAfterCopy.ctimeMs !== sourceStat.ctimeMs
+    ) {
+      throw new Error('Рабочая база изменилась во время копирования. Непроверенная копия удалена');
+    }
     await fs.promises.rename(tempPath, destPath);
     tempPath = '';
     return { success: true, destPath, sizeBytes };

@@ -116,6 +116,38 @@ export function scheduledSlots(now: Date, scheduleTime = '20:00'): AutomaticBack
 const CONFIG_FILE = 'backup-schedule.json'
 const LEGACY_CONFIG_FILE = 'backup-schedule.legacy.json'
 
+type SchedulerOwnedField = 'lastBackupTime' | 'missedAt' | 'reminderAt' | 'reminderDate' | 'reminderCount'
+
+const SCHEDULER_OWNED_FIELDS: SchedulerOwnedField[] = [
+  'lastBackupTime',
+  'missedAt',
+  'reminderAt',
+  'reminderDate',
+  'reminderCount',
+]
+
+const DATABASE_FIELDS: Array<Exclude<keyof BackupDatabaseConfig, 'id' | 'history'>> = [
+  'name',
+  'enabled',
+  'sourceFile',
+  'destDir',
+  'scheduleTime',
+  'onecExecutablePath',
+  'lastBackupTime',
+  'missedAt',
+  'reminderAt',
+  'reminderDate',
+  'reminderCount',
+]
+
+let configMutationTail: Promise<void> = Promise.resolve()
+
+function serializeConfigMutation<T>(operation: () => Promise<T>): Promise<T> {
+  const result = configMutationTail.then(operation, operation)
+  configMutationTail = result.then(() => undefined, () => undefined)
+  return result
+}
+
 function getConfigPath(): string {
   return path.join(app.getPath('userData'), CONFIG_FILE)
 }
@@ -130,7 +162,7 @@ export async function readBackupConfig(): Promise<BackupScheduleConfig> {
   }
 }
 
-export async function writeBackupConfig(config: BackupScheduleConfig): Promise<void> {
+async function persistBackupConfig(config: BackupScheduleConfig): Promise<void> {
   const configPath = getConfigPath()
   const configDir = path.dirname(configPath)
   await fs.promises.mkdir(configDir, { recursive: true })
@@ -159,6 +191,110 @@ export async function writeBackupConfig(config: BackupScheduleConfig): Promise<v
   }
 }
 
+export function mergeSchedulerDatabaseChanges(
+  config: BackupScheduleConfig,
+  before: BackupDatabaseConfig,
+  after: BackupDatabaseConfig,
+): BackupScheduleConfig {
+  const index = config.databases.findIndex(database => database.id === before.id)
+  if (index < 0) return config
+
+  const current = config.databases[index]
+  if (current.sourceFile !== before.sourceFile || current.destDir !== before.destDir) return config
+
+  let merged = current
+  for (const field of SCHEDULER_OWNED_FIELDS) {
+    if (Object.is(before[field], after[field]) || !Object.is(current[field], before[field])) continue
+    merged = { ...merged }
+    if (after[field] === undefined) delete merged[field]
+    else Object.assign(merged, { [field]: after[field] })
+  }
+
+  const previousHistoryIds = new Set((before.history ?? []).map(entry => entry.id))
+  const newEntries = (after.history ?? []).filter(entry => !previousHistoryIds.has(entry.id))
+  if (newEntries.length > 0) {
+    const currentHistoryIds = new Set((merged.history ?? []).map(entry => entry.id))
+    const uniqueNewEntries = newEntries.filter(entry => !currentHistoryIds.has(entry.id))
+    if (uniqueNewEntries.length > 0) {
+      merged = { ...merged, history: [...uniqueNewEntries, ...(merged.history ?? [])].slice(0, 50) }
+    }
+  }
+
+  if (merged === current) return config
+  const databases = [...config.databases]
+  databases[index] = merged
+  return { ...config, databases }
+}
+
+export function mergeUserBackupConfigChanges(
+  currentConfig: BackupScheduleConfig,
+  baseConfig: BackupScheduleConfig,
+  requestedConfig: BackupScheduleConfig,
+): BackupScheduleConfig {
+  const current = normalizeBackupConfig(currentConfig)
+  const base = normalizeBackupConfig(baseConfig)
+  const requested = normalizeBackupConfig(requestedConfig)
+  const baseById = new Map(base.databases.map(database => [database.id, database]))
+  const currentById = new Map(current.databases.map(database => [database.id, database]))
+  const requestedIds = new Set(requested.databases.map(database => database.id))
+  const removedIds = new Set(base.databases.filter(database => !requestedIds.has(database.id)).map(database => database.id))
+  const mergedById = new Map(current.databases.filter(database => !removedIds.has(database.id)).map(database => [database.id, database]))
+
+  for (const requestedDatabase of requested.databases) {
+    const baseDatabase = baseById.get(requestedDatabase.id)
+    const currentDatabase = currentById.get(requestedDatabase.id)
+    if (!baseDatabase || !currentDatabase) {
+      mergedById.set(requestedDatabase.id, requestedDatabase)
+      continue
+    }
+
+    let merged = currentDatabase
+    for (const field of DATABASE_FIELDS) {
+      if (Object.is(baseDatabase[field], requestedDatabase[field])) continue
+      merged = { ...merged }
+      if (requestedDatabase[field] === undefined) delete merged[field]
+      else Object.assign(merged, { [field]: requestedDatabase[field] })
+    }
+
+    const baseHistoryIds = new Set((baseDatabase.history ?? []).map(entry => entry.id))
+    const currentHistoryIds = new Set((merged.history ?? []).map(entry => entry.id))
+    const userEntries = (requestedDatabase.history ?? [])
+      .filter(entry => !baseHistoryIds.has(entry.id) && !currentHistoryIds.has(entry.id))
+    if (userEntries.length > 0) {
+      merged = { ...merged, history: [...userEntries, ...(merged.history ?? [])].slice(0, 50) }
+    }
+    mergedById.set(requestedDatabase.id, merged)
+  }
+
+  const requestedOrder = requested.databases.map(database => database.id)
+  const remainingOrder = current.databases.map(database => database.id).filter(id => !requestedIds.has(id))
+  const databases = [...requestedOrder, ...remainingOrder]
+    .map(id => mergedById.get(id))
+    .filter((database): database is BackupDatabaseConfig => Boolean(database))
+  const databaseLimit = Object.is(base.databaseLimit, requested.databaseLimit)
+    ? current.databaseLimit
+    : requested.databaseLimit
+  return { version: 2, databaseLimit, databases }
+}
+
+export function writeBackupConfig(config: BackupScheduleConfig, baseConfig: BackupScheduleConfig): Promise<void> {
+  return serializeConfigMutation(async () => {
+    const current = await readBackupConfig()
+    await persistBackupConfig(mergeUserBackupConfigChanges(current, baseConfig, config))
+  })
+}
+
+async function writeSchedulerChanges(changes: Array<{ before: BackupDatabaseConfig; after: BackupDatabaseConfig }>): Promise<void> {
+  await serializeConfigMutation(async () => {
+    const current = await readBackupConfig()
+    const merged = changes.reduce(
+      (config, change) => mergeSchedulerDatabaseChanges(config, change.before, change.after),
+      current,
+    )
+    if (merged !== current) await persistBackupConfig(merged)
+  })
+}
+
 export function initBackupScheduler() {
   const CHECK_INTERVAL_MS = 10 * 60 * 1000
   let tickRunning = false
@@ -170,10 +306,12 @@ export function initBackupScheduler() {
       const config = await readBackupConfig()
       const now = new Date()
       const today = now.toLocaleDateString('en-CA')
-      let changed = false
+      const changes: Array<{ before: BackupDatabaseConfig; after: BackupDatabaseConfig }> = []
 
       for (let index = 0; index < config.databases.length; index += 1) {
-        let database = { ...config.databases[index] }
+        const before = config.databases[index]
+        let database = { ...before }
+        let databaseChanged = false
         if (index >= config.databaseLimit) continue
         if (!database.enabled || !database.sourceFile || !database.destDir) continue
 
@@ -186,7 +324,7 @@ export function initBackupScheduler() {
             }).show()
           }
           delete database.reminderAt
-          changed = true
+          databaseChanged = true
         }
 
         const dueSlots = scheduledSlots(now, database.scheduleTime)
@@ -197,7 +335,7 @@ export function initBackupScheduler() {
             shouldBackup = true
           } else if (diffHours >= 24 + (10 / 60) && !database.missedAt) {
             database.missedAt = now.toISOString()
-            changed = true
+            databaseChanged = true
             new Notification({
               title: `${database.name}: пропущена резервная копия`,
               body: 'Откройте BX и выберите: создать сейчас, напомнить позже или пропустить.',
@@ -224,12 +362,12 @@ export function initBackupScheduler() {
             })
             new Notification({ title: `${database.name}: ошибка копирования`, body: result.error || 'Резервная копия не создана.' }).show()
           }
-          changed = true
+          databaseChanged = true
         }
-        config.databases[index] = database
+        if (databaseChanged) changes.push({ before, after: database })
       }
 
-      if (changed) await writeBackupConfig(config)
+      if (changes.length > 0) await writeSchedulerChanges(changes)
     } catch (error) {
       console.error('[BackupScheduler] Ошибка планировщика:', error)
     } finally {

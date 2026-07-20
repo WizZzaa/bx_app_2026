@@ -29,7 +29,7 @@ interface BxBridge {
     pickOnecExecutable(): Promise<string | null>;
     deepCheckBackup(source: string, executable: string, workingDatabase: string): Promise<DeepCheckResult>;
     getBackupConfig(): Promise<BackupScheduleConfig>
-    saveBackupConfig(config: BackupScheduleConfig): Promise<void>
+    saveBackupConfig(config: BackupScheduleConfig, baseConfig: BackupScheduleConfig): Promise<void>
   }
   widgets: {
     getWeather(): Promise<WeatherData>
@@ -225,9 +225,9 @@ export const onecApi = {
     return { version: 2, databaseLimit: 1, databases: [] }
   },
 
-  async saveBackupConfig(config: BackupScheduleConfig): Promise<void> {
+  async saveBackupConfig(config: BackupScheduleConfig, baseConfig: BackupScheduleConfig): Promise<void> {
     const bridge = electronBridge();
-    if (bridge) return bridge.onec.saveBackupConfig(config)
+    if (bridge) return bridge.onec.saveBackupConfig(config, baseConfig)
     console.log('Saved mock backup config:', config)
   }
 };

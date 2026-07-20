@@ -29,7 +29,8 @@ export function registerIpcHandlers() {
   ipcMain.handle(IPC.BACKUP_PICK_DIR, () => pickBackupDir())
   ipcMain.handle(IPC.BACKUP_RUN, (_e, src: string, dest: string) => backupDatabase(src, dest))
   ipcMain.handle(IPC.BACKUP_GET_CONFIG, () => readBackupConfig())
-  ipcMain.handle(IPC.BACKUP_SAVE_CONFIG, (_e, config: BackupScheduleConfig) => writeBackupConfig(config))
+  ipcMain.handle(IPC.BACKUP_SAVE_CONFIG, (_e, config: BackupScheduleConfig, baseConfig: BackupScheduleConfig) =>
+    writeBackupConfig(config, baseConfig))
   ipcMain.handle(IPC.BACKUP_RESTORE, (_e, source: string, target: string) => restoreDatabase(source, target))
   ipcMain.handle(IPC.BACKUP_PICK_ONEC_EXE, () => pickOnecExecutable())
   ipcMain.handle(IPC.BACKUP_DEEP_CHECK, (_e, source: string, executable: string, workingDatabase: string) =>

@@ -14,17 +14,18 @@ function appendHistory(database: BackupDatabaseConfig, entry: BackupHistoryEntry
   return { ...database, history: [entry, ...(database.history ?? [])].slice(0, 50) }
 }
 
-function databaseStatus(database: BackupDatabaseConfig): { label: string; tone: string } {
+function databaseStatus(database: BackupDatabaseConfig, entitled = true): { label: string; tone: string } {
   if (database.missedAt) return { label: 'Требует решения', tone: 'text-amber-400' }
   const latest = database.history?.[0]
   if (latest?.status === 'error') return { label: 'Ошибка', tone: 'text-red-400' }
+  if (!entitled) return { label: 'Приостановлено тарифом', tone: 'text-bx-muted' }
   if (!database.enabled) return { label: 'Расписание выключено', tone: 'text-bx-muted' }
   if (database.lastBackupTime) return { label: 'Успешно', tone: 'text-emerald-400' }
   return { label: 'Ещё не запускалось', tone: 'text-bx-muted' }
 }
 
-function nextExecution(database: BackupDatabaseConfig): string {
-  if (!database.enabled) return '—'
+function nextExecution(database: BackupDatabaseConfig, entitled = true): string {
+  if (!entitled || !database.enabled) return '—'
   const [hours, minutes] = database.scheduleTime.split(':').map(Number)
   const next = new Date()
   next.setHours(hours, minutes, 0, 0)
@@ -62,12 +63,11 @@ export default function DatabaseBackup() {
           ...loaded,
           version: 2,
           databaseLimit,
-          databases: loaded.databases.map((database, index) => index < databaseLimit ? database : { ...database, enabled: false }),
         }
         if (cancelled) return
         setConfig(constrained)
         setSelectedId(current => current && constrained.databases.some(item => item.id === current) ? current : constrained.databases[0]?.id || '')
-        if (JSON.stringify(constrained) !== JSON.stringify(loaded)) await onecApi.saveBackupConfig(constrained)
+        if (JSON.stringify(constrained) !== JSON.stringify(loaded)) await onecApi.saveBackupConfig(constrained, loaded)
       } catch (error) {
         if (!cancelled) setSaveError((error as Error).message || 'Не удалось прочитать локальные настройки')
       } finally {
@@ -81,7 +81,7 @@ export default function DatabaseBackup() {
   const selectedIndex = config.databases.findIndex(item => item.id === selectedId)
   const selected = selectedIndex >= 0 ? config.databases[selectedIndex] : null
   const canOperate = selectedIndex >= 0 && selectedIndex < databaseLimit
-  const status = selected ? databaseStatus(selected) : null
+  const status = selected ? databaseStatus(selected, canOperate) : null
   const limitLabel = databaseLimit === 0 ? 'Недоступно' : `${config.databases.length} из ${databaseLimit}`
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export default function DatabaseBackup() {
     setSaveError('')
     setConfig(next)
     try {
-      await onecApi.saveBackupConfig(next)
+      await onecApi.saveBackupConfig(next, previous)
       return true
     } catch (error) {
       setConfig(previous)
@@ -265,7 +265,7 @@ export default function DatabaseBackup() {
     await persist({ ...config, databases: config.databases.map(item => item.id === selected.id ? updated : item) })
   }
 
-  const rows = useMemo(() => config.databases.map((database, index) => ({ database, index, status: databaseStatus(database) })), [config.databases])
+  const rows = useMemo(() => config.databases.map((database, index) => ({ database, index, status: databaseStatus(database, index < databaseLimit) })), [config.databases, databaseLimit])
 
   return (
     <Card title="Резервные копии баз 1С" icon="💾" description="Локальные копии остаются только в выбранных папках и никогда не загружаются на сервер BX.">
@@ -284,7 +284,7 @@ export default function DatabaseBackup() {
               <button key={database.id} type="button" role="listitem" onClick={() => setSelectedId(database.id)} className={`grid w-full grid-cols-1 gap-2 border-b border-bx-border px-4 py-3 text-left last:border-b-0 sm:grid-cols-[minmax(0,1.5fr)_1fr_1fr_1fr] ${database.id === selectedId ? 'bg-blue-500/10' : 'bg-bx-surface hover:bg-bx-bg'}`}>
                 <span className="min-w-0"><span className="block truncate text-sm font-black text-bx-text">{database.name}</span><span className="block truncate text-[10px] text-bx-muted">{database.sourceFile || 'Файл не выбран'}</span></span>
                 <span><span className="block text-[10px] font-bold text-bx-muted">Последняя успешная</span><span className="text-xs text-bx-text">{database.lastBackupTime ? new Date(database.lastBackupTime).toLocaleString('ru-RU') : '—'}</span></span>
-                <span><span className="block text-[10px] font-bold text-bx-muted">Следующая</span><span className="text-xs text-bx-text">{nextExecution(database)}</span></span>
+                <span><span className="block text-[10px] font-bold text-bx-muted">Следующая</span><span className="text-xs text-bx-text">{nextExecution(database, index < databaseLimit)}</span></span>
                 <span><span className="block text-[10px] font-bold text-bx-muted">Состояние</span><span className={`text-xs font-black ${rowStatus.tone}`}>{index >= databaseLimit ? 'Вне текущего тарифа' : rowStatus.label}</span></span>
               </button>
             ))}
@@ -301,7 +301,7 @@ export default function DatabaseBackup() {
             <div><label className="mb-1.5 block text-xs text-bx-muted">Рабочий файл 1Cv8.1CD</label><div className="flex gap-2"><div className="min-w-0 flex-1 truncate rounded-xl border border-bx-border bg-bx-bg px-3 py-2 text-sm text-bx-text">{selected.sourceFile || 'Файл не выбран'}</div><Button variant="ghost" disabled={!canOperate} onClick={() => void pickSource()}>Выбрать…</Button></div></div>
             <div><label className="mb-1.5 block text-xs text-bx-muted">Папка для копий</label><div className="flex gap-2"><div className="min-w-0 flex-1 truncate rounded-xl border border-bx-border bg-bx-bg px-3 py-2 text-sm text-bx-text">{selected.destDir || 'Папка не выбрана'}</div><Button variant="ghost" disabled={!canOperate} onClick={() => void pickDestination()}>Выбрать…</Button></div></div>
 
-            <div className="grid gap-3 rounded-xl border border-bx-border bg-bx-bg p-3 sm:grid-cols-2"><label className="flex min-h-11 items-center justify-between gap-3 text-xs font-bold text-bx-text"><span>Автоматическое расписание</span><input type="checkbox" checked={selected.enabled} disabled={!canOperate || !selected.sourceFile || !selected.destDir} onChange={event => void updateSelected({ enabled: event.target.checked })} /></label><label className="text-xs text-bx-muted">Время выполнения<input type="time" value={selected.scheduleTime} disabled={!canOperate} onChange={event => void updateSelected({ scheduleTime: event.target.value })} className="mt-1 block w-full rounded-lg border border-bx-border bg-bx-surface px-2 py-2 text-xs text-bx-text" /></label><p className="sm:col-span-2 text-[10px] text-bx-muted">Ежедневная копия; воскресная также становится недельной, копия первого числа — месячной. План действует только на этом устройстве.</p></div>
+            <div className="grid gap-3 rounded-xl border border-bx-border bg-bx-bg p-3 sm:grid-cols-2"><label className="flex min-h-11 items-center justify-between gap-3 text-xs font-bold text-bx-text"><span>Автоматическое расписание</span><input type="checkbox" checked={canOperate && selected.enabled} disabled={!canOperate || !selected.sourceFile || !selected.destDir} onChange={event => void updateSelected({ enabled: event.target.checked })} /></label><label className="text-xs text-bx-muted">Время выполнения<input type="time" value={selected.scheduleTime} disabled={!canOperate} onChange={event => void updateSelected({ scheduleTime: event.target.value })} className="mt-1 block w-full rounded-lg border border-bx-border bg-bx-surface px-2 py-2 text-xs text-bx-text" /></label><p className="sm:col-span-2 text-[10px] text-bx-muted">Ежедневная копия; воскресная также становится недельной, копия первого числа — месячной. План действует только на этом устройстве.</p></div>
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-bx-border pt-4"><span className="text-xs text-bx-muted">{saving ? 'Сохранение настроек…' : 'Содержимое базы не передаётся BX'}</span><Button variant="success" loading={running} disabled={!canOperate || !selected.sourceFile || !selected.destDir} onClick={() => void runBackup()}>Создать копию сейчас</Button></div>
             {result && <div className={`rounded-xl p-3 text-sm ${result.success ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>{result.success ? `Копия создана: ${result.destPath}${result.sizeBytes ? ` (${formatBytes(result.sizeBytes)})` : ''}` : `Ошибка: ${result.error}`}</div>}
 

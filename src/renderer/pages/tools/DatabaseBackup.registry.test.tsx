@@ -47,10 +47,10 @@ describe('DatabaseBackup registry', () => {
       version: 2,
       databaseLimit: 1,
       databases: [expect.objectContaining({ name: 'База 1С 1', enabled: false })],
-    })))
+    }), expect.any(Object)))
   })
 
-  it('keeps an existing record but pauses it when the current plan has no 1C entitlement', async () => {
+  it('pauses an existing record without losing the enabled intent when the plan has no 1C entitlement', async () => {
     mocks.plan = 'free'
     mocks.getBackupConfig.mockResolvedValue({
       version: 2,
@@ -60,10 +60,26 @@ describe('DatabaseBackup registry', () => {
     render(<MemoryRouter><DatabaseBackup /></MemoryRouter>)
     expect(await screen.findByText('Бухгалтерия')).toBeTruthy()
     expect(screen.getByText('Вне текущего тарифа')).toBeTruthy()
+    expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(false)
     await waitFor(() => expect(mocks.saveBackupConfig).toHaveBeenCalledWith(expect.objectContaining({
       databaseLimit: 0,
-      databases: [expect.objectContaining({ id: 'legacy', enabled: false })],
-    })))
+      databases: [expect.objectContaining({ id: 'legacy', enabled: true })],
+    }), expect.any(Object)))
+  })
+
+  it('restores the enabled schedule at runtime after entitlement returns', async () => {
+    mocks.getBackupConfig.mockResolvedValue({
+      version: 2,
+      databaseLimit: 0,
+      databases: [{ id: 'saved', name: 'Бухгалтерия', enabled: true, sourceFile: 'C:/Base/1Cv8.1CD', destDir: 'D:/Backup', scheduleTime: '20:00', history: [] }],
+    })
+    render(<MemoryRouter><DatabaseBackup /></MemoryRouter>)
+    expect(await screen.findByText('Бухгалтерия')).toBeTruthy()
+    expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(true)
+    await waitFor(() => expect(mocks.saveBackupConfig).toHaveBeenCalledWith(expect.objectContaining({
+      databaseLimit: 1,
+      databases: [expect.objectContaining({ id: 'saved', enabled: true })],
+    }), expect.any(Object)))
   })
 
   it('shows the isolated test-only flow for an entitled database', async () => {

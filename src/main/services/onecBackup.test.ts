@@ -2,8 +2,16 @@ import path from 'node:path'
 import os from 'node:os'
 import fs from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
-import { restoreDatabase, validateBackupSelection, validateRestoreSelection } from './onecBackup'
-import { appendBackupHistory, normalizeBackupConfig, scheduledSlots, type BackupDatabaseConfig } from './onecBackupScheduler'
+import { backupDatabase, restoreDatabase, validateBackupSelection, validateRestoreSelection, verifyExactCopy } from './onecBackup'
+import {
+  appendBackupHistory,
+  mergeSchedulerDatabaseChanges,
+  mergeUserBackupConfigChanges,
+  normalizeBackupConfig,
+  scheduledSlots,
+  type BackupDatabaseConfig,
+  type BackupScheduleConfig,
+} from './onecBackupScheduler'
 
 vi.mock('./onecProcess', () => ({ listProcesses: vi.fn().mockResolvedValue([]) }))
 
@@ -41,12 +49,148 @@ describe('validateRestoreSelection', () => {
   })
 })
 
+describe('verifyExactCopy', () => {
+  it('rejects same-sized files when only the middle of the copy is corrupted', async () => {
+    const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'bx-backup-integrity-test-'))
+    const source = path.join(tempDir, 'source.1CD')
+    const copied = path.join(tempDir, 'copy.1CD')
+    const content = Buffer.alloc(16 * 1024, 0x41)
+    try {
+      await fs.promises.writeFile(source, content)
+      await fs.promises.writeFile(copied, content)
+      const handle = await fs.promises.open(copied, 'r+')
+      try {
+        await handle.write(Buffer.from([0x42]), 0, 1, content.length / 2)
+      } finally {
+        await handle.close()
+      }
+
+      await expect(verifyExactCopy(source, copied)).rejects.toThrow('Контрольная сумма')
+    } finally {
+      await fs.promises.rm(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  it('makes the regular backup fail when the middle is corrupted during copying', async () => {
+    const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'bx-backup-flow-test-'))
+    const sourceDir = path.join(tempDir, 'base')
+    const destDir = path.join(tempDir, 'backups')
+    const source = path.join(sourceDir, '1Cv8.1CD')
+    await Promise.all([
+      fs.promises.mkdir(sourceDir),
+      fs.promises.mkdir(destDir),
+    ])
+    await fs.promises.writeFile(source, Buffer.alloc(16 * 1024, 0x41))
+    const copyFile = fs.promises.copyFile.bind(fs.promises)
+    const copySpy = vi.spyOn(fs.promises, 'copyFile').mockImplementationOnce(async (src, dest, mode) => {
+      await copyFile(src, dest, mode)
+      const handle = await fs.promises.open(dest, 'r+')
+      try {
+        await handle.write(Buffer.from([0x42]), 0, 1, 8 * 1024)
+      } finally {
+        await handle.close()
+      }
+    })
+    try {
+      const result = await backupDatabase(source, destDir)
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('Контрольная сумма')
+      expect(await fs.promises.readdir(destDir)).toEqual([])
+    } finally {
+      copySpy.mockRestore()
+      await fs.promises.rm(tempDir, { recursive: true, force: true })
+    }
+  })
+})
+
 describe('appendBackupHistory', () => {
   it('keeps the newest 50 technical events', () => {
     let database: BackupDatabaseConfig = { id: 'base-1', name: 'Бухгалтерия', enabled: true, sourceFile: 'a.1CD', destDir: '/tmp', scheduleTime: '20:00' }
     for (let index = 0; index < 55; index += 1) database = appendBackupHistory(database, { id: String(index), createdAt: String(index), status: 'success', message: 'ok' })
     expect(database.history).toHaveLength(50)
     expect(database.history?.[0].id).toBe('54')
+  })
+})
+
+describe('mergeSchedulerDatabaseChanges', () => {
+  it('merges scheduler results by id without overwriting concurrent UI changes', () => {
+    const before: BackupDatabaseConfig = {
+      id: 'base-1', name: 'Бухгалтерия', enabled: true, sourceFile: 'a.1CD', destDir: '/backups', scheduleTime: '20:00',
+      missedAt: '2026-07-20T10:00:00.000Z', reminderAt: '2026-07-20T12:00:00.000Z', history: [],
+    }
+    const after = appendBackupHistory({
+      ...before,
+      lastBackupTime: '2026-07-20T12:05:00.000Z',
+      missedAt: undefined,
+      reminderAt: undefined,
+    }, {
+      id: 'scheduler-entry', createdAt: '2026-07-20T12:05:00.000Z', status: 'success', message: 'Автоматическая копия',
+    })
+    const concurrent: BackupScheduleConfig = {
+      version: 2,
+      databaseLimit: 1,
+      databases: [{
+        ...before,
+        name: 'Новая бухгалтерия',
+        enabled: false,
+        scheduleTime: '21:30',
+        reminderAt: '2026-07-20T14:00:00.000Z',
+      }],
+    }
+
+    const merged = mergeSchedulerDatabaseChanges(concurrent, before, after)
+
+    expect(merged.databases[0]).toMatchObject({
+      name: 'Новая бухгалтерия',
+      enabled: false,
+      scheduleTime: '21:30',
+      lastBackupTime: '2026-07-20T12:05:00.000Z',
+      reminderAt: '2026-07-20T14:00:00.000Z',
+    })
+    expect(merged.databases[0].missedAt).toBeUndefined()
+    expect(merged.databases[0].history?.map(entry => entry.id)).toEqual(['scheduler-entry'])
+  })
+
+  it('does not attach a completed copy to a database whose paths changed concurrently', () => {
+    const before: BackupDatabaseConfig = {
+      id: 'base-1', name: 'База', enabled: true, sourceFile: 'old.1CD', destDir: '/old', scheduleTime: '20:00', history: [],
+    }
+    const after = appendBackupHistory({ ...before, lastBackupTime: '2026-07-20T12:05:00.000Z' }, {
+      id: 'old-copy', createdAt: '2026-07-20T12:05:00.000Z', status: 'success', message: 'Автоматическая копия',
+    })
+    const concurrent: BackupScheduleConfig = {
+      version: 2,
+      databaseLimit: 1,
+      databases: [{ ...before, sourceFile: 'new.1CD', destDir: '/new' }],
+    }
+
+    expect(mergeSchedulerDatabaseChanges(concurrent, before, after)).toBe(concurrent)
+  })
+
+  it('preserves scheduler data when a stale UI write is serialized after it', () => {
+    const baseDatabase: BackupDatabaseConfig = {
+      id: 'base-1', name: 'База', enabled: true, sourceFile: 'base.1CD', destDir: '/backups', scheduleTime: '20:00', history: [],
+    }
+    const base: BackupScheduleConfig = { version: 2, databaseLimit: 1, databases: [baseDatabase] }
+    const schedulerCurrent: BackupScheduleConfig = {
+      ...base,
+      databases: [appendBackupHistory({ ...baseDatabase, lastBackupTime: '2026-07-20T12:05:00.000Z' }, {
+        id: 'scheduler-copy', createdAt: '2026-07-20T12:05:00.000Z', status: 'success', message: 'Автоматическая копия',
+      })],
+    }
+    const staleUserRequest: BackupScheduleConfig = {
+      ...base,
+      databases: [{ ...baseDatabase, name: 'Главная база', scheduleTime: '21:30' }],
+    }
+
+    const merged = mergeUserBackupConfigChanges(schedulerCurrent, base, staleUserRequest)
+
+    expect(merged.databases[0]).toMatchObject({
+      name: 'Главная база',
+      scheduleTime: '21:30',
+      lastBackupTime: '2026-07-20T12:05:00.000Z',
+    })
+    expect(merged.databases[0].history?.map(entry => entry.id)).toEqual(['scheduler-copy'])
   })
 })
 

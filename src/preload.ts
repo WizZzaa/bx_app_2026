@@ -39,7 +39,8 @@ const api = {
     deepCheckBackup: (source: string, executable: string, workingDatabase: string): Promise<DeepCheckResult> =>
       ipcRenderer.invoke(IPC.BACKUP_DEEP_CHECK, source, executable, workingDatabase),
     getBackupConfig: (): Promise<BackupScheduleConfig> => ipcRenderer.invoke(IPC.BACKUP_GET_CONFIG),
-    saveBackupConfig: (config: BackupScheduleConfig): Promise<void> => ipcRenderer.invoke(IPC.BACKUP_SAVE_CONFIG, config)
+    saveBackupConfig: (config: BackupScheduleConfig, baseConfig: BackupScheduleConfig): Promise<void> =>
+      ipcRenderer.invoke(IPC.BACKUP_SAVE_CONFIG, config, baseConfig)
   },
   widgets: {
     getWeather: (): Promise<WeatherData> => ipcRenderer.invoke(IPC.WEATHER_GET),
