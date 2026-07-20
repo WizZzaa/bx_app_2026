@@ -16,6 +16,7 @@ import { logger } from './lib/logger';
 import { reportError } from './lib/errorReporter';
 import Icon from './lib/ui/Icon';
 import './styles/app-shell-d1.css';
+import './styles/workspace-pages-d1.css';
 
 const Tools = lazy(() => import('./pages/Tools'));
 const Library = lazy(() => import('./pages/library/Library'));
@@ -151,6 +152,7 @@ function EcpRedirect() {
 export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(initialSidebarCollapsed);
+  const location = useLocation();
 
   // Инициализация темы при первом рендере (единый ключ bx_theme + классы .light/.dark)
   useEffect(() => {
@@ -197,8 +199,9 @@ export default function App() {
               <Topbar onOpenSearch={() => setPaletteOpen(true)} onToggleMenu={() => setSidebarCollapsed(value => !value)} menuExpanded={!sidebarCollapsed} />
               <main id="bx-main-content" className={`bx-app-shell__content flex flex-1 overflow-hidden ${isWebRuntime ? 'pb-16 md:pb-0' : ''}`} aria-label="Основное содержимое">
                 <RouteFocusManager />
-                <LazyRouteBoundary>
-                  <Routes>
+                <div className="bx-workspace-route flex min-h-0 min-w-0 flex-1" data-bx-route={location.pathname} key={location.pathname}>
+                  <LazyRouteBoundary>
+                    <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/tools" element={<Tools />} />
@@ -229,10 +232,11 @@ export default function App() {
                     <Route path="/counterparties" element={<Counterparties />} />
                     <Route path="/counterparties/:id" element={<Counterparties />} />
                     <Route path="/companies/:id" element={<Counterparties />} />
-                    <Route path="/placeholder" element={<Placeholder icon="🚧" title="Страница в разработке" description="Этот раздел временно недоступен или находится на стадии проектирования." />} />
+                    <Route path="/placeholder" element={<Placeholder icon="tools" title="Страница в разработке" description="Этот раздел временно недоступен или находится на стадии проектирования." />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </LazyRouteBoundary>
+                    </Routes>
+                  </LazyRouteBoundary>
+                </div>
               </main>
             </div>
           </div>

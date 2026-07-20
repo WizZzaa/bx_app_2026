@@ -1,0 +1,356 @@
+/*
+ * Unified D1 workspace layer.
+ *
+ * Every Desktop and Web route is rendered inside .bx-workspace-route. The
+ * layer deliberately styles semantic surfaces and existing Tailwind tokens;
+ * it does not change repositories, forms, entitlements or storage contracts.
+ */
+
+:root[data-bx-design='d1'] .bx-workspace-route {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% -12%, rgb(var(--bx-brand-rgb) / 0.09), transparent 28rem),
+    radial-gradient(circle at 102% 110%, rgb(196 185 236 / 0.11), transparent 30rem),
+    var(--bx-canvas);
+  color: var(--bx-text-primary);
+  animation: bx-workspace-route-enter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgb(var(--bx-brand-rgb) / 0.025) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--bx-brand-rgb) / 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(to bottom, black, transparent 45%);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route > * {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route > [class~='bg-bx-bg'],
+:root[data-bx-design='d1'] .bx-workspace-route > main[class~='bg-bx-bg'],
+:root[data-bx-design='d1'] .bx-resource-layout {
+  background-color: transparent;
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where(h1, h2, h3) {
+  color: var(--bx-text-primary);
+  text-wrap: balance;
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where(h1) {
+  letter-spacing: -0.035em;
+}
+
+/* RouteFocusManager focuses the new page heading for screen readers. Because
+ * the target is tabindex=-1 it is never keyboard-tabbable and must not look
+ * like an editable control after programmatic navigation. */
+:root[data-bx-design='d1'] .bx-workspace-route :where(h1, [data-route-heading])[tabindex='-1']:focus {
+  outline: none;
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where(button, a, input, select, textarea, summary) {
+  touch-action: manipulation;
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where(button, [role='button'], input:not([type='checkbox']):not([type='radio']), select) {
+  min-height: var(--bx-target-min);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route button,
+:root[data-bx-design='d1'] .bx-workspace-route a {
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where(input, select, textarea) {
+  border-color: var(--bx-border);
+  border-radius: var(--bx-radius-sm);
+  background-color: rgb(var(--bx-surface-rgb) / 0.88);
+  color: var(--bx-text-primary);
+  box-shadow: inset 0 1px 0 rgb(var(--bx-surface-rgb) / 0.78);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where(input, select, textarea):focus {
+  border-color: rgb(var(--bx-brand-rgb) / 0.72);
+  box-shadow: 0 0 0 4px rgb(var(--bx-brand-rgb) / 0.11);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where(section, article, header, aside, div)[class*='border-bx-border'][class*='bg-bx-surface'] {
+  border-color: rgb(var(--bx-border-rgb) / 0.88);
+  box-shadow: var(--bx-shadow-sm);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where(section, article, header)[class*='rounded-[24px]'],
+:root[data-bx-design='d1'] .bx-workspace-route :where(section, article, header)[class*='rounded-[28px]'] {
+  box-shadow: 0 18px 48px rgb(39 36 47 / 0.07);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route details {
+  overflow: clip;
+  border-color: var(--bx-border);
+  background: rgb(var(--bx-surface-rgb) / 0.92);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route summary:hover {
+  background: var(--bx-brand-soft);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where(table, [role='table']) {
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where(th, [role='columnheader']) {
+  color: var(--bx-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where(tr, [role='row']) {
+  border-color: var(--bx-border);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where(tr, [role='row']):hover {
+  background: rgb(var(--bx-brand-rgb) / 0.045);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route [class~='text-[9px]'] { font-size: 0.6875rem; }
+:root[data-bx-design='d1'] .bx-workspace-route [class~='text-[10px]'] { font-size: 0.75rem; }
+
+/* Map remaining fixed violet utilities onto the semantic brand. */
+:root[data-bx-design='d1'] .bx-workspace-route :where([class~='text-violet-700'], [class~='text-violet-600'], [class~='text-violet-500'], [class~='text-violet-400'], [class~='text-purple-700'], [class~='text-purple-600']) {
+  color: var(--bx-brand);
+}
+
+:root[data-bx-design='d1'].dark .bx-workspace-route :where([class~='dark:text-violet-300'], [class~='dark:text-violet-400'], [class~='dark:text-purple-300'], [class~='dark:text-purple-400']) {
+  color: var(--bx-brand);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where([class~='bg-violet-500/10'], [class~='bg-violet-500/[0.06]'], [class~='bg-violet-500/[0.04]'], [class~='bg-purple-500/10']) {
+  background-color: rgb(var(--bx-brand-rgb) / 0.10);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route :where([class~='border-violet-500/20'], [class~='border-violet-500/30'], [class~='border-violet-500/35'], [class~='border-purple-500/20']) {
+  border-color: rgb(var(--bx-brand-rgb) / 0.28);
+}
+
+/* Shared resource pages: companies, documents, templates, finance, support. */
+:root[data-bx-design='d1'] .bx-resource-sidebar {
+  border-color: rgb(var(--bx-border-rgb) / 0.82);
+  background: rgb(var(--bx-surface-rgb) / 0.86);
+  box-shadow: 14px 0 38px rgb(39 36 47 / 0.035);
+  backdrop-filter: blur(18px);
+}
+
+:root[data-bx-design='d1'] .bx-resource-content {
+  background: linear-gradient(180deg, rgb(var(--bx-surface-subtle-rgb) / 0.34), transparent 18rem);
+}
+
+:root[data-bx-design='d1'] .bx-resource-hero {
+  border-color: rgb(var(--bx-brand-rgb) / 0.20);
+  background:
+    linear-gradient(145deg, rgb(var(--bx-surface-rgb) / 0.98), rgb(var(--bx-surface-subtle-rgb) / 0.72));
+  box-shadow: 0 20px 58px rgb(39 36 47 / 0.08);
+}
+
+:root[data-bx-design='d1'] .bx-resource-hero::after {
+  content: '';
+  position: absolute;
+  width: 15rem;
+  height: 15rem;
+  top: -10rem;
+  right: -5rem;
+  border-radius: 9999px;
+  background: rgb(var(--bx-brand-rgb) / 0.15);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+/* AI keeps a quiet reading canvas and a strong, source-oriented answer card. */
+:root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/ai'] > div {
+  background: transparent;
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/ai'] section > header {
+  background: rgb(var(--bx-surface-rgb) / 0.84);
+  backdrop-filter: blur(20px);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/ai'] article {
+  border-color: rgb(var(--bx-brand-rgb) / 0.18);
+  border-radius: var(--bx-radius-card);
+  box-shadow: 0 18px 50px rgb(39 36 47 / 0.075);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/ai'] section > div:last-child {
+  background: rgb(var(--bx-surface-rgb) / 0.92);
+  backdrop-filter: blur(18px);
+}
+
+/* Work surfaces receive an airy top region while retaining their dense tools. */
+:root[data-bx-design='d1'] .bx-workspace-route:is([data-bx-route='/translator'], [data-bx-route='/currency'], [data-bx-route='/news'], [data-bx-route='/functions']) > :where(div, main) {
+  background-color: transparent;
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/translator'] .bx-page-container > header,
+:root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/currency'] main > header,
+:root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/news'] main > header {
+  position: relative;
+  overflow: hidden;
+  padding: 1.5rem;
+  border: 1px solid rgb(var(--bx-brand-rgb) / 0.18);
+  border-radius: var(--bx-radius-lg);
+  background: linear-gradient(145deg, var(--bx-surface), var(--bx-brand-soft));
+  box-shadow: 0 18px 48px rgb(39 36 47 / 0.07);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/planner'] > div {
+  background: rgb(var(--bx-canvas-rgb) / 0.64);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/planner'] > div > header {
+  border-color: rgb(var(--bx-border-rgb) / 0.82);
+  background: rgb(var(--bx-surface-rgb) / 0.86);
+  box-shadow: 0 12px 36px rgb(39 36 47 / 0.045);
+  backdrop-filter: blur(18px);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route:is([data-bx-route='/tools'], [data-bx-route='/calc'], [data-bx-route='/settings'], [data-bx-route='/account']) > div > aside {
+  border-color: rgb(var(--bx-border-rgb) / 0.82);
+  background: rgb(var(--bx-surface-rgb) / 0.86);
+  box-shadow: 14px 0 38px rgb(39 36 47 / 0.035);
+  backdrop-filter: blur(18px);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route:is([data-bx-route='/tools'], [data-bx-route='/calc']) > div > main,
+:root[data-bx-design='d1'] .bx-workspace-route:is([data-bx-route='/tools'], [data-bx-route='/calc']) > div > section {
+  background: linear-gradient(180deg, rgb(var(--bx-surface-subtle-rgb) / 0.48), transparent 22rem);
+}
+
+/* Settings/account: navigation stays calm, current content has clear hierarchy. */
+:root[data-bx-design='d1'] .bx-workspace-route:is([data-bx-route='/settings'], [data-bx-route='/account']) nav[aria-label] button[aria-current='page'] {
+  border-color: rgb(var(--bx-brand-rgb) / 0.32);
+  background: var(--bx-brand-soft);
+  color: var(--bx-brand);
+  box-shadow: inset 3px 0 var(--bx-brand);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route:is([data-bx-route='/settings'], [data-bx-route='/account']) header {
+  border-color: rgb(var(--bx-brand-rgb) / 0.18);
+  background: linear-gradient(145deg, var(--bx-surface), var(--bx-brand-soft));
+}
+
+@media (max-width: 1023px) {
+  :root[data-bx-design='d1'] .bx-page-container,
+  :root[data-bx-design='d1'] .bx-reading-container {
+    max-width: 100%;
+  }
+
+  :root[data-bx-design='d1'] .bx-resource-sidebar {
+    width: 14rem;
+  }
+}
+
+@media (max-width: 767px) {
+  :root[data-bx-design='d1'] .bx-workspace-route {
+    overflow: auto;
+    background: var(--bx-canvas);
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route::before { display: none; }
+
+  :root[data-bx-design='d1'] .bx-resource-layout {
+    min-height: 100%;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  :root[data-bx-design='d1'] .bx-resource-sidebar {
+    width: 100%;
+    max-height: 17rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--bx-border);
+    box-shadow: 0 12px 34px rgb(39 36 47 / 0.05);
+  }
+
+  :root[data-bx-design='d1'] .bx-resource-content {
+    min-height: 35rem;
+    overflow: visible;
+  }
+
+  :root[data-bx-design='d1'] .bx-resource-content .bx-page-container,
+  :root[data-bx-design='d1'] .bx-workspace-route .bx-reading-container {
+    padding-inline: 0.875rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-resource-hero {
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route:is([data-bx-route='/tools'], [data-bx-route='/calc'], [data-bx-route='/settings'], [data-bx-route='/account']) > div {
+    min-height: 100%;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route:is([data-bx-route='/tools'], [data-bx-route='/calc'], [data-bx-route='/settings'], [data-bx-route='/account']) > div > aside {
+    width: 100%;
+    max-height: 18rem;
+    flex: none;
+    border-right: 0;
+    border-bottom: 1px solid var(--bx-border);
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/ai'] section > header {
+    align-items: flex-start;
+    padding: 0.875rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/ai'] section > header > div:last-child {
+    display: none;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/ai'] article {
+    border-radius: 1.125rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/translator'] .bx-page-container > header,
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/currency'] main > header,
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/news'] main > header {
+    margin-inline: 0;
+    padding: 1.25rem;
+    border-radius: 1.25rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route :where([class*='overflow-x-auto']) {
+    overscroll-behavior-inline: contain;
+  }
+}
+
+@keyframes bx-workspace-route-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-bx-design='d1'] .bx-workspace-route { animation: none; }
+}
+
+@media (forced-colors: active) {
+  :root[data-bx-design='d1'] .bx-workspace-route::before,
+  :root[data-bx-design='d1'] .bx-resource-hero::after { display: none; }
+}

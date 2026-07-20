@@ -3,9 +3,9 @@ import Icon from '../../lib/ui/Icon'
 
 export function ResourceLayout({ sidebar, children }: { sidebar: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="flex flex-1 min-w-0 overflow-hidden bg-bx-bg text-bx-text">
+    <div className="bx-resource-layout flex flex-1 min-w-0 overflow-hidden bg-bx-bg text-bx-text">
       {sidebar}
-      <div className="custom-scrollbar min-w-0 flex-1 overflow-y-auto">
+      <div className="bx-resource-content custom-scrollbar min-w-0 flex-1 overflow-y-auto">
         <div className="bx-page-container px-5 py-5 lg:px-7 lg:py-6">{children}</div>
       </div>
     </div>
@@ -27,7 +27,7 @@ interface ResourceSidebarProps {
 
 export function ResourceSidebar({ icon, title, subtitle, search, searchPlaceholder, onSearch, onClear, label, children, footer }: ResourceSidebarProps) {
   return (
-    <aside className="flex w-[244px] flex-shrink-0 flex-col border-r border-bx-border bg-bx-surface/70 2xl:w-[276px]" aria-label={label}>
+    <aside className="bx-resource-sidebar flex w-[244px] flex-shrink-0 flex-col border-r border-bx-border bg-bx-surface/70 2xl:w-[276px]" aria-label={label}>
       <div className="border-b border-bx-border px-4 pb-4 pt-5">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-2xl border border-blue-500/15 bg-blue-500/10 text-blue-600 dark:text-blue-300">
@@ -100,7 +100,7 @@ interface ResourceHeroProps {
 
 export function ResourceHero({ eyebrow, title, description, icon, stats = [], actions }: ResourceHeroProps) {
   return (
-    <header className="relative overflow-hidden rounded-[24px] border border-bx-border bg-bx-surface px-5 py-5 shadow-sm lg:px-6 lg:py-6">
+    <header className="bx-resource-hero relative overflow-hidden rounded-[24px] border border-bx-border bg-bx-surface px-5 py-5 shadow-sm lg:px-6 lg:py-6">
       <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" aria-hidden="true" />
       <div className="relative flex flex-col justify-between gap-5 2xl:flex-row 2xl:items-end">
         <div className="flex min-w-0 gap-4">
