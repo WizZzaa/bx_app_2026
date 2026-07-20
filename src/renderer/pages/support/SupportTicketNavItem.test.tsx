@@ -1,7 +1,7 @@
 import React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildSupportMessage } from './supportUi';
+import { buildSupportMessage, buildSupportSubject } from './supportUi';
 import { SupportTicketNavItem } from './SupportTicketNavItem';
 import type { BxTicket } from './useTickets';
 
@@ -30,5 +30,10 @@ describe('SupportTicketNavItem', () => {
   it('adds structured context to the first support message', () => {
     expect(buildSupportMessage('Не запускается подпись', 'eimzo', 'blocking')).toContain('Раздел: E-Imzo / ЭЦП');
     expect(buildSupportMessage('Не запускается подпись', 'eimzo', 'blocking')).toContain('Влияние на работу: Работа остановлена');
+  });
+
+  it('builds a concise ticket subject from the first meaningful line', () => {
+    expect(buildSupportSubject('\n1. E-Imzo не видит ключ\nПерезапуск не помог', 'eimzo')).toBe('E-Imzo не видит ключ');
+    expect(buildSupportSubject('А'.repeat(140), 'bx')).toHaveLength(118);
   });
 });

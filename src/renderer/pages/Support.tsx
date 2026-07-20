@@ -3,8 +3,8 @@ import { useTickets } from './support/useTickets'
 import { SupportTicketNavItem } from './support/SupportTicketNavItem'
 import {
   buildSupportMessage,
+  buildSupportSubject,
   SUPPORT_CATEGORIES,
-  SUPPORT_IMPACTS,
   TICKET_STATUS,
   type SupportCategory,
   type SupportImpact,
@@ -15,8 +15,6 @@ import { useToast } from '../lib/ui/ToastContext'
 import { useCompany } from '../lib/CompanyContext'
 import Icon from '../lib/ui/Icon'
 import {
-  ResourceEmpty,
-  ResourceHero,
   ResourceLayout,
   ResourceSidebar,
   primaryActionClass,
@@ -25,7 +23,7 @@ import {
 
 const fieldClass = 'min-h-12 w-full rounded-xl border border-bx-border-2 bg-bx-bg px-4 text-base text-bx-text outline-none transition-colors placeholder:text-bx-muted focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/15'
 const invalidFieldClass = 'border-red-500/60 focus:border-red-500 focus:ring-red-500/15'
-type SupportRequiredField = 'subject' | 'body' | 'contactName' | 'contactPhone'
+type SupportRequiredField = 'body' | 'contactPhone'
 
 export default function Support() {
   const { tickets, activeId, messages, loading, openTicket, createTicket, reply, closeTicket } = useTickets()
@@ -41,7 +39,6 @@ export default function Support() {
   const [remoteId, setRemoteId] = useState('')
   const [category, setCategory] = useState<SupportCategory>('bx')
   const [impact, setImpact] = useState<SupportImpact>('normal')
-  const [remoteExpanded, setRemoteExpanded] = useState(false)
   const [createAttempted, setCreateAttempted] = useState(false)
   const [blurredFields, setBlurredFields] = useState<Set<SupportRequiredField>>(() => new Set())
   const [replyText, setReplyText] = useState('')
@@ -49,14 +46,10 @@ export default function Support() {
   const [submitting, setSubmitting] = useState(false)
   const [sendingReply, setSendingReply] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const subjectRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
-  const contactNameRef = useRef<HTMLInputElement>(null)
   const contactPhoneRef = useRef<HTMLInputElement>(null)
   const active = tickets.find(ticket => ticket.id === activeId) ?? null
-  const subjectInvalid = !subject.trim()
   const bodyInvalid = body.trim().length < 20
-  const contactNameInvalid = !contactName.trim()
   const contactPhoneInvalid = !contactPhone.trim()
   const showFieldError = (field: SupportRequiredField, invalid: boolean) => invalid && (createAttempted || blurredFields.has(field))
   const markFieldBlurred = (field: SupportRequiredField) => setBlurredFields(current => new Set(current).add(field))
@@ -89,10 +82,8 @@ export default function Support() {
   const submitCreate = async () => {
     if (submitting) return
     setCreateAttempted(true)
-    if (subjectInvalid || bodyInvalid || contactNameInvalid || contactPhoneInvalid) {
-      if (subjectInvalid) subjectRef.current?.focus()
-      else if (bodyInvalid) bodyRef.current?.focus()
-      else if (contactNameInvalid) contactNameRef.current?.focus()
+    if (bodyInvalid || contactPhoneInvalid) {
+      if (bodyInvalid) bodyRef.current?.focus()
       else contactPhoneRef.current?.focus()
       toast.error('Проверьте обязательные поля формы')
       return
@@ -100,12 +91,13 @@ export default function Support() {
     setSubmitting(true)
     try {
       const messageBody = buildSupportMessage(body, category, impact)
-      const id = await createTicket(subject.trim(), messageBody, category, contactName.trim(), contactPhone.trim(), activeCompany?.name || undefined, activeCompany?.inn || undefined, remoteId.trim() || undefined)
+      const ticketSubject = subject.trim() || buildSupportSubject(body, category)
+      const id = await createTicket(ticketSubject, messageBody, category, contactName.trim() || undefined, contactPhone.trim(), activeCompany?.name || undefined, activeCompany?.inn || undefined, remoteId.trim() || undefined)
       if (!id) { toast.error('Не удалось создать обращение — проверьте вход в аккаунт'); return }
       localStorage.setItem('bx_support_contact_name', contactName.trim())
       localStorage.setItem('bx_support_contact_phone', contactPhone.trim())
       localStorage.setItem('bx_support_remote_id', remoteId.trim())
-      setCreating(false); setSubject(''); setBody(''); setCategory('bx'); setImpact('normal'); setRemoteExpanded(false); setCreateAttempted(false); setBlurredFields(new Set())
+      setCreating(false); setSubject(''); setBody(''); setCategory('bx'); setImpact('normal'); setCreateAttempted(false); setBlurredFields(new Set())
       toast.success('Обращение отправлено — специалист ответит здесь')
       await openTicket(id)
     } finally { setSubmitting(false) }
@@ -128,7 +120,7 @@ export default function Support() {
       title="Поддержка"
       subtitle="ПК, 1С, E-Imzo и BX"
       label="Мои обращения"
-      footer={<button type="button" onClick={startCreate} className={`${primaryActionClass} w-full`}><Icon name="plus" className="h-4 w-4" />Новое обращение</button>}
+      footer={<button type="button" onClick={startCreate} className={`${primaryActionClass} w-full`}><Icon name="plus" className="h-4 w-4" />Отправить заявку</button>}
     >
       {loading && <div className="px-3 py-6 text-center text-xs text-bx-muted">Загружаем обращения…</div>}
       {!loading && tickets.length === 0 && <div className="mx-1 rounded-xl border border-dashed border-bx-border p-4 text-center text-[10px] leading-relaxed text-bx-muted">Здесь появится история общения со специалистами BX.</div>}
@@ -139,35 +131,47 @@ export default function Support() {
   return (
     <ResourceLayout sidebar={sidebar}>
       {creating ? (
-        <div className="mx-auto max-w-5xl space-y-5">
-          <ResourceHero eyebrow="Новое обращение" title="Опишите проблему один раз — дальше вся работа останется здесь" description="Сначала выберите направление и опишите результат, который не получается. Контакты и безопасное удалённое подключение собраны отдельно." icon="message" stats={[{ value: activeCompany?.name ?? 'Не выбрана', label: 'организация' }, { value: 'до 1 рабочего дня', label: 'обычный ответ' }]} />
-          <section className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-            <div className="space-y-5 rounded-[24px] border border-bx-border bg-bx-surface p-5 lg:p-6">
-              <ol className="grid grid-cols-3 gap-2" aria-label="Этапы обращения">{[['1', 'Проблема'], ['2', 'Контакты'], ['3', 'Ответ здесь']].map(([number, label], index) => <li key={number} className={`rounded-xl border p-3 ${index === 0 ? 'border-violet-500/25 bg-violet-500/[0.07]' : 'border-bx-border bg-bx-bg'}`}><span className="text-[10px] font-black text-violet-700 dark:text-violet-300">{number}</span><span className="mt-1 block text-xs font-black text-bx-text">{label}</span></li>)}</ol>
-              <div><p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-700 dark:text-violet-300">Сначала направление</p><h2 className="mt-1 text-lg font-black text-bx-text">К чему относится обращение?</h2><p className="mt-1 text-xs leading-relaxed text-bx-muted">Выберите ближайший вариант. Ошибиться не страшно — специалист уточнит категорию.</p></div>
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3" role="group" aria-label="Раздел проблемы">
-                {SUPPORT_CATEGORIES.map(item => <button key={item.value} type="button" aria-pressed={category === item.value} onClick={() => setCategory(item.value)} className={`min-h-[82px] rounded-2xl border p-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${category === item.value ? 'border-violet-500/35 bg-violet-500/10 text-violet-800 dark:text-violet-200' : 'border-bx-border bg-bx-bg text-bx-text hover:border-violet-500/25 hover:bg-violet-500/[0.05]'}`}><span className="flex items-start gap-2.5"><span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${category === item.value ? 'bg-violet-600 text-white' : 'bg-bx-surface-2 text-bx-muted'}`}><Icon name={item.icon} className="h-4 w-4" /></span><span><span className="block text-xs font-black">{item.label}</span><span className={`mt-0.5 block text-[10px] leading-snug ${category === item.value ? 'text-violet-700/80 dark:text-violet-200/75' : 'text-bx-muted'}`}>{item.hint}</span></span></span></button>)}
-              </div>
-
-              <div className="border-t border-bx-border pt-5"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-700 dark:text-violet-300">Главное для специалиста</p><h2 className="mt-1 text-lg font-black text-bx-text">Что произошло?</h2><p className="mt-1 text-xs text-bx-muted">Точный текст ошибки и три последовательных шага обычно полезнее скриншота.</p></div>
-              <label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">Короткая тема <span className="text-red-500">*</span></span><input ref={subjectRef} value={subject} maxLength={120} aria-invalid={showFieldError('subject', subjectInvalid)} aria-describedby="support-subject-help" onBlur={() => markFieldBlurred('subject')} onChange={event => setSubject(event.target.value)} placeholder="Например: E-Imzo не видит ключ" className={`${fieldClass} ${showFieldError('subject', subjectInvalid) ? invalidFieldClass : ''}`} /><span id="support-subject-help" aria-live="polite" className={`flex justify-between text-[10px] ${showFieldError('subject', subjectInvalid) ? 'text-red-600 dark:text-red-300' : 'text-bx-muted'}`}><span>{showFieldError('subject', subjectInvalid) ? 'Напишите, что именно не работает.' : 'Одно предложение без длинного описания.'}</span><span className="tabular-nums">{subject.length}/120</span></span></label>
-              <label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">Подробное описание <span className="text-red-500">*</span></span><textarea ref={bodyRef} value={body} maxLength={4000} aria-invalid={showFieldError('body', bodyInvalid)} aria-describedby="support-body-help" onBlur={() => markFieldBlurred('body')} onChange={event => setBody(event.target.value)} rows={8} placeholder={'1. Что вы делали\n2. Что произошло или какой текст ошибки появился\n3. Какой результат ожидали'} className={`${fieldClass} h-auto min-h-44 resize-y py-3 leading-relaxed ${showFieldError('body', bodyInvalid) ? invalidFieldClass : ''}`} /><span id="support-body-help" aria-live="polite" className={`flex justify-between text-[10px] ${showFieldError('body', bodyInvalid) ? 'text-red-600 dark:text-red-300' : 'text-bx-muted'}`}><span>{showFieldError('body', bodyInvalid) ? 'Добавьте хотя бы 20 символов, чтобы специалист понял проблему.' : 'Полезнее всего точный текст ошибки и последовательность действий.'}</span><span className="tabular-nums">{body.length}/4000</span></span></label>
-
-              <fieldset className="border-t border-bx-border pt-5"><legend className="text-sm font-black text-bx-text">Как проблема влияет на работу?</legend><div className="mt-3 grid gap-2 sm:grid-cols-2">{(Object.entries(SUPPORT_IMPACTS) as Array<[SupportImpact, typeof SUPPORT_IMPACTS[SupportImpact]]>).map(([value, option]) => <button key={value} type="button" aria-pressed={impact === value} onClick={() => setImpact(value)} className={`min-h-[72px] rounded-2xl border px-4 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${impact === value ? value === 'blocking' ? 'border-amber-500/35 bg-amber-500/10' : 'border-violet-500/35 bg-violet-500/10' : 'border-bx-border bg-bx-bg hover:border-violet-500/25'}`}><span className="block text-xs font-black text-bx-text">{option.label}</span><span className="mt-1 block text-[10px] leading-snug text-bx-muted">{option.hint}</span></button>)}</div></fieldset>
-
-              <div className="flex flex-wrap gap-2 border-t border-bx-border pt-4"><button type="button" onClick={submitCreate} disabled={submitting} className={primaryActionClass}><Icon name="send" className={`h-4 w-4 ${submitting ? 'animate-pulse motion-reduce:animate-none' : ''}`} />{submitting ? 'Отправляем…' : 'Отправить обращение'}</button><button type="button" onClick={() => setCreating(false)} disabled={submitting} className={secondaryActionClass}>Отмена</button></div>
+        <div className="mx-auto max-w-3xl space-y-4">
+          <header className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">Поддержка BX</p>
+              <h1 className="mt-1 text-2xl font-black tracking-tight text-bx-text">Чем помочь?</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-bx-muted">Опишите проблему своими словами. Тему и обычные параметры BX заполнит сам.</p>
             </div>
-            <aside className="space-y-3 lg:sticky lg:top-6">
-              <div className={`rounded-2xl border p-4 ${activeCompany ? 'border-violet-500/20 bg-violet-500/[0.06]' : 'border-amber-500/20 bg-amber-500/[0.07]'}`}>
-                <p className="text-[9px] font-black uppercase tracking-[0.14em] text-bx-muted">Организация обращения</p>
-                <p className="mt-2 text-xs font-black text-bx-text">{activeCompany?.name ?? 'Организация не выбрана'}</p>
-                {activeCompany?.inn && <p className="mt-1 text-[10px] text-bx-muted">ИНН {activeCompany.inn}</p>}
-                {!activeCompany && <p className="mt-2 text-[10px] leading-relaxed text-bx-muted">Выберите компанию в верхней панели, если проблема относится к её данным.</p>}
+            <button type="button" onClick={() => setCreating(false)} disabled={submitting} className={secondaryActionClass}>К обращениям</button>
+          </header>
+
+          <section className="space-y-5 rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm sm:p-6">
+            <label className="block space-y-2">
+              <span className="text-sm font-black text-bx-text">Что случилось? <span className="text-red-500">*</span></span>
+              <textarea ref={bodyRef} value={body} required maxLength={4000} aria-invalid={showFieldError('body', bodyInvalid)} aria-describedby="support-body-help" onBlur={() => markFieldBlurred('body')} onChange={event => setBody(event.target.value)} rows={7} placeholder="Например: при подписании счёта E-Imzo пишет «ключ не найден». Перезапуск не помог." className={`${fieldClass} h-auto min-h-48 resize-y py-3 leading-relaxed ${showFieldError('body', bodyInvalid) ? invalidFieldClass : ''}`} />
+              <span id="support-body-help" aria-live="polite" className={`flex items-start justify-between gap-3 text-[11px] ${showFieldError('body', bodyInvalid) ? 'text-red-600 dark:text-red-300' : 'text-bx-muted'}`}><span>{showFieldError('body', bodyInvalid) ? 'Добавьте хотя бы 20 символов, чтобы специалист понял проблему.' : 'Если видите ошибку — скопируйте её текст сюда.'}</span><span className="shrink-0 tabular-nums">{body.length}/4000</span></span>
+            </label>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">Раздел</span><select value={category} onChange={event => setCategory(event.target.value as SupportCategory)} className={fieldClass}>{SUPPORT_CATEGORIES.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+              <label className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 ${impact === 'blocking' ? 'border-amber-500/35 bg-amber-500/10' : 'border-bx-border bg-bx-bg'}`}><input type="checkbox" checked={impact === 'blocking'} onChange={event => setImpact(event.target.checked ? 'blocking' : 'normal')} className="h-5 w-5 rounded border-bx-border-2 text-violet-600 focus:ring-violet-500" /><span><span className="block text-xs font-black text-bx-text">Работа остановлена</span><span className="mt-0.5 block text-[10px] text-bx-muted">Отметьте, только если нельзя продолжать работу</span></span></label>
+            </div>
+
+            <div className="rounded-2xl border border-violet-500/20 bg-violet-500/[0.05] p-4">
+              <div className="flex items-center gap-2"><Icon name="user" className="h-4 w-4 text-violet-700 dark:text-violet-300" /><h2 className="text-sm font-black text-bx-text">Куда ответить</h2></div>
+              <p className="mt-1 text-[11px] text-bx-muted">Контакты запомнятся на этом устройстве для следующих заявок.</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">Телефон <span className="text-red-500">*</span></span><input ref={contactPhoneRef} value={contactPhone} required maxLength={30} aria-invalid={showFieldError('contactPhone', contactPhoneInvalid)} aria-describedby="support-phone-error" onBlur={() => markFieldBlurred('contactPhone')} onChange={event => setContactPhone(event.target.value)} autoComplete="tel" inputMode="tel" placeholder="+998 90 123-45-67" className={`${fieldClass} ${showFieldError('contactPhone', contactPhoneInvalid) ? invalidFieldClass : ''}`} />{showFieldError('contactPhone', contactPhoneInvalid) && <span id="support-phone-error" role="alert" className="block text-[10px] text-red-600 dark:text-red-300">Оставьте номер для уточняющих вопросов.</span>}</label>
+                <label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">Как к вам обращаться <span className="font-normal text-bx-muted">· необязательно</span></span><input value={contactName} maxLength={100} onChange={event => setContactName(event.target.value)} autoComplete="name" placeholder="Имя" className={fieldClass} /></label>
               </div>
-              <section className="rounded-2xl border border-violet-500/20 bg-violet-500/[0.05] p-4"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-700 dark:text-violet-300">Контакты для ответа</p><p className="mt-1 text-[10px] leading-relaxed text-bx-muted">Заполним их автоматически при следующем обращении.</p><div className="mt-3 space-y-3"><label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">Ваше ФИО <span className="text-red-500">*</span></span><input ref={contactNameRef} value={contactName} maxLength={100} aria-invalid={showFieldError('contactName', contactNameInvalid)} onBlur={() => markFieldBlurred('contactName')} onChange={event => setContactName(event.target.value)} autoComplete="name" placeholder="Иван Иванов" className={`${fieldClass} ${showFieldError('contactName', contactNameInvalid) ? invalidFieldClass : ''}`} />{showFieldError('contactName', contactNameInvalid) && <span role="alert" className="block text-[10px] text-red-600 dark:text-red-300">Укажите, к кому обратиться.</span>}</label><label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">Телефон <span className="text-red-500">*</span></span><input ref={contactPhoneRef} value={contactPhone} maxLength={30} aria-invalid={showFieldError('contactPhone', contactPhoneInvalid)} onBlur={() => markFieldBlurred('contactPhone')} onChange={event => setContactPhone(event.target.value)} autoComplete="tel" inputMode="tel" placeholder="+998 (90) 123-45-67" className={`${fieldClass} ${showFieldError('contactPhone', contactPhoneInvalid) ? invalidFieldClass : ''}`} />{showFieldError('contactPhone', contactPhoneInvalid) && <span role="alert" className="block text-[10px] text-red-600 dark:text-red-300">Оставьте номер для уточняющих вопросов.</span>}</label></div></section>
-              <section className="overflow-hidden rounded-2xl border border-bx-border bg-bx-surface"><button type="button" aria-expanded={remoteExpanded} onClick={() => setRemoteExpanded(value => !value)} className="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left outline-none hover:bg-bx-bg focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-bx-surface-2 text-bx-muted"><Icon name="monitor" className="h-4 w-4" /></span><span className="min-w-0 flex-1"><span className="block text-xs font-bold text-bx-text">Удалённое подключение</span><span className="mt-0.5 block text-[10px] text-bx-muted">Только если специалист попросит · необязательно</span></span><Icon name="arrowR" className={`h-4 w-4 text-bx-muted transition-transform ${remoteExpanded ? 'rotate-90' : ''}`} /></button>{remoteExpanded && <div className="border-t border-bx-border p-4"><label className="block"><span className="text-[10px] leading-relaxed text-bx-muted">ID AnyDesk / RustDesk. Никогда не передавайте пароль постоянного доступа.</span><input value={remoteId} maxLength={80} onChange={event => setRemoteId(event.target.value)} placeholder="123 456 789" className={`${fieldClass} mt-3 font-mono tracking-wider`} /></label><div className="mt-3 flex gap-2"><a href="https://anydesk.com/download" target="_blank" rel="noreferrer" className={`${secondaryActionClass} flex-1 px-2`}>AnyDesk <Icon name="external" className="h-3.5 w-3.5" /></a><a href="https://rustdesk.com/download" target="_blank" rel="noreferrer" className={`${secondaryActionClass} flex-1 px-2`}>RustDesk <Icon name="external" className="h-3.5 w-3.5" /></a></div></div>}</section>
-              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.07] p-4"><p className="flex items-center gap-2 text-[10px] font-black text-emerald-800 dark:text-emerald-300"><Icon name="shield" className="h-4 w-4" />Перед отправкой</p><ul className="mt-2 space-y-1.5 text-[10px] leading-relaxed text-bx-muted"><li>• Не указывайте пароль от BX или почты</li><li>• Не отправляйте PIN-код и закрытый ключ ЭЦП</li><li>• Проверьте номер телефона</li></ul></div>
-            </aside>
+            </div>
+
+            <details className="rounded-2xl border border-bx-border bg-bx-bg">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 py-3 text-xs font-bold text-bx-text outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500"><Icon name="settings" className="h-4 w-4 text-bx-muted" /><span className="flex-1">Дополнительные сведения</span><span className="text-[10px] font-normal text-bx-muted">необязательно</span></summary>
+              <div className="grid gap-3 border-t border-bx-border p-4 sm:grid-cols-2">
+                <label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">Своя тема заявки</span><input value={subject} maxLength={120} onChange={event => setSubject(event.target.value)} placeholder="BX сформирует автоматически" className={fieldClass} /></label>
+                <label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">ID AnyDesk / RustDesk</span><input value={remoteId} maxLength={80} onChange={event => setRemoteId(event.target.value)} placeholder="Только если уже договорились" className={`${fieldClass} font-mono tracking-wider`} /></label>
+                <p className="text-[11px] leading-relaxed text-bx-muted sm:col-span-2">Организация: <strong className="text-bx-text">{activeCompany?.name ?? 'не выбрана'}</strong>{activeCompany?.inn ? ` · ИНН ${activeCompany.inn}` : ''}. Никогда не отправляйте пароль, PIN-код или закрытый ключ ЭЦП.</p>
+              </div>
+            </details>
+
+            <div className="flex flex-col gap-2 border-t border-bx-border pt-4 sm:flex-row sm:items-center"><button type="button" onClick={submitCreate} disabled={submitting} className={`${primaryActionClass} w-full sm:w-auto`}><Icon name="send" className={`h-4 w-4 ${submitting ? 'animate-pulse motion-reduce:animate-none' : ''}`} />{submitting ? 'Отправляем…' : 'Отправить заявку'}</button><button type="button" onClick={() => setCreating(false)} disabled={submitting} className={`${secondaryActionClass} w-full sm:w-auto`}>Отмена</button><p className="text-center text-[10px] text-bx-muted sm:ml-auto sm:text-right">Обычно отвечаем до 1 рабочего дня</p></div>
           </section>
         </div>
       ) : active ? (
@@ -191,10 +195,16 @@ export default function Support() {
           {active.status !== 'closed' && <div className="flex gap-2 border-t border-bx-border p-4"><label className="min-w-0 flex-1"><span className="sr-only">Дополнить обращение</span><input value={replyText} onChange={event => setReplyText(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') submitReply() }} placeholder="Дополнить обращение…" className={fieldClass} /></label><button type="button" onClick={submitReply} disabled={sendingReply || !replyText.trim()} className={primaryActionClass}><Icon name="send" className={`h-4 w-4 ${sendingReply ? 'animate-pulse motion-reduce:animate-none' : ''}`} />{sendingReply ? 'Отправляем…' : 'Отправить'}</button></div>}
         </div>
       ) : (
-        <div className="space-y-5">
-          <ResourceHero eyebrow="Поддержка BX" title="Сначала опишите проблему — ответ и история останутся рядом" description="Обращения по BX, 1С, E-Imzo и рабочему компьютеру. Никаких потерянных чатов: статус, уточнения и решение видны в одном рабочем потоке." icon="headset" stats={[{ value: tickets.filter(ticket => ticket.status === 'open').length, label: 'в работе' }, { value: tickets.filter(ticket => ticket.status === 'answered').length, label: 'ждут вашего ответа' }, { value: 'до 1 дня', label: 'обычный ответ' }]} actions={<button type="button" onClick={startCreate} className={primaryActionClass}><Icon name="plus" className="h-4 w-4" />Описать проблему</button>} />
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,.75fr)]"><ResourceEmpty icon="message" title="Выберите обращение или опишите новую проблему" description="Укажите, что делали, какой текст ошибки получили и какой результат ожидали." action={<button type="button" onClick={startCreate} className={primaryActionClass}>Новое обращение</button>} /><aside className="rounded-[24px] border border-violet-500/20 bg-violet-500/[0.06] p-5"><p className="text-xs font-black text-violet-700 dark:text-violet-300">Что будет дальше</p><ol className="mt-4 space-y-3">{['Специалист увидит контекст компании', 'Ответ и уточнения появятся здесь', 'После решения обращение можно закрыть'].map((text, index) => <li key={text} className="flex items-center gap-3 text-sm font-semibold"><span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg bg-bx-surface text-xs font-black text-violet-700">{index + 1}</span>{text}</li>)}</ol></aside></div>
-        </div>
+        <section className="mx-auto flex min-h-[calc(100vh-190px)] max-w-3xl items-center justify-center py-8">
+          <div className="w-full rounded-[28px] border border-violet-500/20 bg-gradient-to-br from-bx-surface to-violet-500/[0.06] p-7 text-center shadow-sm sm:p-10">
+            <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-600/20"><Icon name="headset" className="h-6 w-6" /></span>
+            <p className="mt-5 text-[10px] font-black uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">Поддержка BX</p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-bx-text">Чем помочь?</h1>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-bx-muted">Опишите проблему в одном сообщении. Ответ специалиста и вся переписка останутся здесь.</p>
+            <button type="button" onClick={startCreate} className={`${primaryActionClass} mt-6 w-full sm:w-auto`}><Icon name="send" className="h-4 w-4" />Отправить заявку</button>
+            <p className="mt-3 text-[10px] text-bx-muted">BX, 1С, E-Imzo, документы и рабочий компьютер · обычно до 1 рабочего дня</p>
+          </div>
+        </section>
       )}
       {paywall && <PaywallModal feature="Живой специалист — обращения в поддержку" onClose={() => setPaywall(false)} />}
     </ResourceLayout>

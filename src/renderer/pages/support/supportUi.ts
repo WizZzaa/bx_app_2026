@@ -49,3 +49,13 @@ export function buildSupportMessage(body: string, category: SupportCategory, imp
     `Влияние на работу: ${SUPPORT_IMPACTS[impact].label}`,
   ].join('\n');
 }
+
+export function buildSupportSubject(body: string, category: SupportCategory): string {
+  const categoryLabel = SUPPORT_CATEGORIES.find(item => item.value === category)?.label ?? 'Поддержка BX';
+  const firstMeaningfulLine = body
+    .split('\n')
+    .map(line => line.trim().replace(/^\d+[.)]\s*/, ''))
+    .find(Boolean);
+  const subject = firstMeaningfulLine || `Помощь: ${categoryLabel}`;
+  return subject.length > 120 ? `${subject.slice(0, 117).trimEnd()}…` : subject;
+}

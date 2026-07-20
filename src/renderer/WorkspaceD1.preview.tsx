@@ -23,7 +23,7 @@ createRoot(root).render(
       <HashRouter>
         <ToastProvider>
           <CalculatorRegulatoryProvider>
-            <App />
+            <App previewPlan="standard" />
           </CalculatorRegulatoryProvider>
         </ToastProvider>
       </HashRouter>

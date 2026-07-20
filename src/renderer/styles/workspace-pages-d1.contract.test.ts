@@ -70,7 +70,7 @@ describe('D1 workspace route contracts', () => {
   })
 
   it('keeps the auth-free QA preview isolated from the production entry point', () => {
-    expect(preview).toContain('<App />')
+    expect(preview).toContain('<App previewPlan="standard" />')
     expect(preview).not.toContain('AuthGate')
     expect(readFileSync(resolve(process.cwd(), 'vite.renderer.config.mts'), 'utf8')).not.toContain('workspace-preview.html')
   })

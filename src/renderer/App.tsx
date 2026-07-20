@@ -11,7 +11,7 @@ import Dashboard from './pages/Dashboard';
 import Placeholder from './pages/Placeholder';
 import { applyTheme, currentTheme } from './lib/theme';
 import { CompanyProvider } from './lib/CompanyContext';
-import { PlanProvider } from './lib/plan';
+import { PlanPreviewProvider, PlanProvider, type Plan } from './lib/plan';
 import { logger } from './lib/logger';
 import { reportError } from './lib/errorReporter';
 import Icon from './lib/ui/Icon';
@@ -149,7 +149,13 @@ function EcpRedirect() {
   return <Navigate to="/tools" replace />;
 }
 
-export default function App() {
+function AppPlanBoundary({ children, previewPlan }: { children: React.ReactNode; previewPlan?: Plan }) {
+  return previewPlan
+    ? <PlanPreviewProvider plan={previewPlan}>{children}</PlanPreviewProvider>
+    : <PlanProvider>{children}</PlanProvider>;
+}
+
+export default function App({ previewPlan }: { previewPlan?: Plan } = {}) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(initialSidebarCollapsed);
   const location = useLocation();
@@ -166,7 +172,7 @@ export default function App() {
   if (isCompact) {
     return (
       <CompanyProvider>
-        <PlanProvider>
+        <AppPlanBoundary previewPlan={previewPlan}>
           <div className="flex flex-col h-screen w-screen bg-transparent text-bx-text overflow-visible font-sans">
             <LazyRouteBoundary compact>
               <Routes>
@@ -175,14 +181,14 @@ export default function App() {
               </Routes>
             </LazyRouteBoundary>
           </div>
-        </PlanProvider>
+        </AppPlanBoundary>
       </CompanyProvider>
     );
   }
 
   return (
     <CompanyProvider>
-      <PlanProvider>
+      <AppPlanBoundary previewPlan={previewPlan}>
         <div className="bx-app-shell flex h-screen w-screen flex-col overflow-hidden bg-bx-bg text-bx-text relative">
           <a href="#bx-main-content" className="sr-only fixed left-3 top-3 z-[1000] rounded-xl bg-bx-accent px-4 py-3 font-semibold text-bx-on-accent focus:not-sr-only">
             К основному содержимому
@@ -246,7 +252,7 @@ export default function App() {
           <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
           <OnboardingWizard />
         </div>
-      </PlanProvider>
+      </AppPlanBoundary>
     </CompanyProvider>
   );
 }
