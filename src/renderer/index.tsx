@@ -10,9 +10,18 @@ import { applyFontScale, currentFontScale } from './lib/uiScale';
 import { applyUiDensity, currentUiDensity } from './lib/uiDensity';
 import { applyTheme, currentTheme } from './lib/theme';
 import { CalculatorRegulatoryProvider } from './lib/calculatorRegulatory';
+import {
+  applyBxDesignFeature,
+  loadBxDesignFont,
+  parseBxDesignFeatureFlag,
+} from '../shared/design/feature';
+import '../shared/design/tokens.css';
 import './styles/globals.css';
 
 installGlobalErrorReporting();
+const isD1DesignEnabled = parseBxDesignFeatureFlag(import.meta.env.VITE_BX_D1_UI);
+applyBxDesignFeature(document.documentElement, isD1DesignEnabled);
+void loadBxDesignFont(isD1DesignEnabled);
 applyFontScale(currentFontScale());
 applyUiDensity(currentUiDensity());
 applyTheme(currentTheme());
