@@ -23,6 +23,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Одиннадцать используемых Bix PNG уменьшены до 512×512 с alpha; общий runtime-объём снижен с 17,8 до 2,05 МБ, а гардероб загружается динамически.',
       'Production-сборки App и Web создают Vite manifest и автоматически проверяют initial, route, demand-chunk и worker budgets без новых зависимостей.',
       'Vite обновлён до 7.3.6, Vitest до 4.1.10; critical и moderate dev-аудит устранён, production audit остаётся чистым.',
+      'Резервные копии файловых баз 1С создаются только при закрытой 1С, подтверждаются полной контрольной суммой и не теряют настройки при одновременной работе планировщика.',
       'Подготовлена D1 UI/UX Pro Max спецификация токенов, Bento, Motion, reduced-motion, адаптивности, доступности и постепенного rollout.',
       'Миграция ip_profile остаётся закрытой: live browser snapshot и зашифрованная резервная копия не получены; значения PII не читались.',
       'Supabase, remote schema, deployments и пользовательские записи не изменялись.',
