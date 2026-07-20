@@ -14,6 +14,8 @@ import { CompanyProvider } from './lib/CompanyContext';
 import { PlanProvider } from './lib/plan';
 import { logger } from './lib/logger';
 import { reportError } from './lib/errorReporter';
+import Icon from './lib/ui/Icon';
+import './styles/app-shell-d1.css';
 
 const Tools = lazy(() => import('./pages/Tools'));
 const Library = lazy(() => import('./pages/library/Library'));
@@ -88,7 +90,7 @@ class RouteChunkErrorBoundary extends React.Component<RouteChunkErrorBoundaryPro
 
     return (
       <div className={`flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center ${this.props.compact ? 'bg-transparent' : 'bg-bx-bg'}`}>
-        <span className="text-3xl" aria-hidden="true">⚠️</span>
+        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[rgb(var(--bx-accent-rgb)/0.12)] text-bx-accent" aria-hidden="true"><Icon name="alert" className="h-6 w-6" /></span>
         <h2 className="text-base font-semibold text-bx-text">Не удалось загрузить раздел</h2>
         <p className="max-w-md text-sm text-bx-muted">
           Файл раздела временно недоступен. Можно вернуться на главную или повторить загрузку вручную.
@@ -179,22 +181,21 @@ export default function App() {
   return (
     <CompanyProvider>
       <PlanProvider>
-        <div className="flex flex-col h-screen w-screen overflow-hidden bg-bx-bg text-bx-text relative">
+        <div className="bx-app-shell flex h-screen w-screen flex-col overflow-hidden bg-bx-bg text-bx-text relative">
           <a href="#bx-main-content" className="sr-only fixed left-3 top-3 z-[1000] rounded-xl bg-bx-accent px-4 py-3 font-semibold text-bx-on-accent focus:not-sr-only">
             К основному содержимому
           </a>
           
-          {/* Background Glow Spheres for Depth */}
-          <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none z-0 hidden dark:block" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-purple-500/5 blur-[150px] pointer-events-none z-0 hidden dark:block" />
+          <div className="bx-app-shell__aura bx-app-shell__aura--start" aria-hidden="true" />
+          <div className="bx-app-shell__aura bx-app-shell__aura--end" aria-hidden="true" />
 
           <Titlebar />
-          <div className="flex flex-1 min-h-0 overflow-hidden relative z-10">
+          <div className="bx-app-shell__body flex flex-1 min-h-0 overflow-hidden relative z-10">
             <TrayNavigateListener />
             <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} webResponsive={isWebRuntime} />
-            <div className="flex flex-col flex-1 overflow-hidden">
+            <div className="bx-app-shell__workspace flex flex-1 flex-col overflow-hidden">
               <Topbar onOpenSearch={() => setPaletteOpen(true)} onToggleMenu={() => setSidebarCollapsed(value => !value)} menuExpanded={!sidebarCollapsed} />
-              <main id="bx-main-content" className={`flex flex-1 overflow-hidden ${isWebRuntime ? 'pb-16 md:pb-0' : ''}`} aria-label="Основное содержимое">
+              <main id="bx-main-content" className={`bx-app-shell__content flex flex-1 overflow-hidden ${isWebRuntime ? 'pb-16 md:pb-0' : ''}`} aria-label="Основное содержимое">
                 <RouteFocusManager />
                 <LazyRouteBoundary>
                   <Routes>

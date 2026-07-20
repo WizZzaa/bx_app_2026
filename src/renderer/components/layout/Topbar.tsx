@@ -9,7 +9,7 @@ import ConflictModal from '../ConflictModal'
 import { currentTheme, nextTheme, saveTheme, subscribeToTheme, type BxTheme } from '../../lib/theme'
 import { useNotifications, type BxNotification } from '../../lib/useNotifications'
 
-export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded }: { onOpenSearch?: () => void; onToggleMenu?: () => void; menuExpanded?: boolean }) {
+export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded, previewMode = false }: { onOpenSearch?: () => void; onToggleMenu?: () => void; menuExpanded?: boolean; previewMode?: boolean }) {
   const [query, setQuery] = useState('')
   const [items, setItems] = useState<SearchItem[]>([])
   const [results, setResults] = useState<SearchItem[]>([])
@@ -20,7 +20,7 @@ export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded }: { o
   const [conflictsCount, setConflictsCount] = useState(0)
   const [conflictModalOpen, setConflictModalOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
-  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications()
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications(!previewMode)
   
   const [theme, setTheme] = useState<BxTheme>(() => currentTheme())
   
@@ -121,9 +121,9 @@ export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded }: { o
   }
 
   return (
-    <header className="flex min-h-14 flex-shrink-0 items-center gap-3 border-b border-bx-border bg-bx-surface px-3 sm:px-4 lg:px-6">
-      {onToggleMenu && <button type="button" onClick={onToggleMenu} aria-label={menuExpanded ? 'Свернуть основное меню' : 'Развернуть основное меню'} aria-expanded={menuExpanded} className="hidden h-11 w-11 flex-none items-center justify-center rounded-xl border border-bx-border bg-bx-surface-2 text-bx-muted hover:text-bx-text md:flex"><Icon name="menu" className="h-5 w-5" /></button>}
-      <div className="relative min-w-0 max-w-md flex-1" ref={boxRef}>
+    <header data-testid="app-topbar" className="bx-app-topbar flex min-h-16 flex-shrink-0 items-center gap-3 border-b border-bx-border bg-bx-surface px-3 sm:px-4 lg:px-6">
+      {onToggleMenu && <button type="button" onClick={onToggleMenu} aria-label={menuExpanded ? 'Свернуть основное меню' : 'Развернуть основное меню'} aria-expanded={menuExpanded} className="bx-app-icon-button hidden h-11 w-11 flex-none items-center justify-center rounded-xl border border-bx-border bg-bx-surface-2 text-bx-muted md:flex"><Icon name="menu" className="h-5 w-5" /></button>}
+      <div className="bx-app-search relative min-w-0 max-w-lg flex-1" ref={boxRef}>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bx-muted"><Icon name="search" className="w-4 h-4" /></span>
           <input
@@ -132,16 +132,16 @@ export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded }: { o
             value={query}
             onChange={e => setQuery(e.target.value)}
             onFocus={() => query && setOpen(true)}
-            className="w-full bg-bx-surface-2 text-bx-text placeholder-slate-500 text-sm pl-9 pr-16 py-1.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 transition-colors"
+            className="bx-app-search__input w-full rounded-xl border border-bx-border-2 bg-bx-surface-2 py-1.5 pl-10 pr-16 text-sm text-bx-text transition-colors placeholder:text-bx-muted focus:outline-none"
           />
           {onOpenSearch && (
             <button onClick={onOpenSearch} title="Командная палитра (Ctrl+K)"
-              className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-bx-border-2 px-1.5 py-0.5 text-[10px] text-bx-muted transition-colors hover:border-bx-border-2 hover:text-bx-text sm:block">⌘K</button>
+              className="bx-app-search__shortcut absolute right-2 top-1/2 hidden min-h-0 -translate-y-1/2 rounded-lg border border-bx-border-2 px-2 py-1 text-[10px] text-bx-muted transition-colors hover:text-bx-text sm:block">⌘K</button>
           )}
         </div>
 
         {open && (
-          <div className="absolute top-full mt-1.5 w-full bg-bx-surface border border-bx-border-2 rounded-lg shadow-2xl max-h-96 overflow-y-auto z-50">
+          <div className="bx-app-popover absolute top-full z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-2xl border border-bx-border-2 bg-bx-surface shadow-2xl">
             {results.length === 0 ? (
               <div className="px-4 py-3 text-sm text-bx-muted">Ничего не найдено</div>
             ) : (
@@ -170,7 +170,7 @@ export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded }: { o
             onClick={() => setConflictModalOpen(true)}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-[11px] font-semibold animate-pulse cursor-pointer transition-colors"
           >
-            <span>⚠️ Конфликты ({conflictsCount})</span>
+                  <Icon name="alert" className="h-3.5 w-3.5" /><span>Конфликты ({conflictsCount})</span>
           </button>
         )}
 
@@ -203,7 +203,7 @@ export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded }: { o
         {/* Быстрые заметки */}
         <button
           onClick={handleOpenNotes}
-          className="hidden h-11 w-11 items-center justify-center rounded-lg bg-bx-surface-2 text-bx-muted transition-colors hover:bg-bx-border-2 xl:flex"
+          className="bx-app-icon-button hidden h-11 w-11 items-center justify-center rounded-xl bg-bx-surface-2 text-bx-muted transition-colors xl:flex"
           title="Быстрые заметки"
         >
           <Icon name="note" className="w-4 h-4" />
@@ -212,7 +212,7 @@ export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded }: { o
         {/* Переключатель темы */}
         <button
           onClick={handleToggleTheme}
-          className="hidden h-11 w-11 items-center justify-center rounded-lg bg-bx-surface-2 text-bx-muted transition-colors hover:bg-bx-border-2 lg:flex"
+          className="bx-app-icon-button hidden h-11 w-11 items-center justify-center rounded-xl bg-bx-surface-2 text-bx-muted transition-colors lg:flex"
           title={theme === 'system' ? 'Следующая тема: светлая' : theme === 'light' ? 'Следующая тема: тёмная' : theme === 'dark' ? 'Следующая тема: контрастная' : 'Следующая тема: как в системе'}
           aria-label="Сменить тему оформления"
         >
@@ -238,7 +238,7 @@ export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded }: { o
                 markAllAsRead()
               }
             }}
-            className="w-8 h-8 flex items-center justify-center rounded-lg bg-bx-surface-2 hover:bg-bx-border-2 text-bx-muted transition-colors relative cursor-pointer"
+            className="bx-app-icon-button relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-bx-surface-2 text-bx-muted transition-colors"
             title="Уведомления"
           >
             <Icon name="bell" className="w-4 h-4" />
@@ -250,7 +250,7 @@ export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded }: { o
           </button>
 
           {notifOpen && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-bx-surface border border-bx-border-2 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-[360px] text-xs">
+            <div className="bx-app-popover absolute right-0 top-full z-50 mt-2 flex max-h-[420px] w-80 flex-col overflow-hidden rounded-2xl border border-bx-border-2 bg-bx-surface text-xs shadow-2xl">
               <div className="px-3 py-2.5 border-b border-bx-border bg-bx-surface/40 flex items-center justify-between">
                 <span className="font-bold text-bx-text">Уведомления</span>
                 {unreadCount > 0 && (
@@ -307,7 +307,7 @@ export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded }: { o
 
         <button
           onClick={() => navigate('/account')}
-          className="flex h-11 w-11 items-center justify-center rounded-lg bg-bx-surface-2 text-bx-muted transition-colors hover:bg-bx-border-2"
+          className="bx-app-icon-button flex h-11 w-11 items-center justify-center rounded-xl bg-bx-surface-2 text-bx-muted transition-colors"
           title="Личный кабинет"
           aria-label="Открыть личный кабинет"
         >
@@ -315,7 +315,7 @@ export default function Topbar({ onOpenSearch, onToggleMenu, menuExpanded }: { o
         </button>
         <button
           onClick={() => navigate('/settings')}
-          className="flex h-11 w-11 items-center justify-center rounded-lg bg-bx-surface-2 text-bx-muted transition-colors hover:bg-bx-border-2"
+          className="bx-app-icon-button flex h-11 w-11 items-center justify-center rounded-xl bg-bx-surface-2 text-bx-muted transition-colors"
           title="Настройки приложения"
           aria-label="Открыть настройки приложения"
         >

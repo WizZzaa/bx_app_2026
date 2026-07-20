@@ -1,8 +1,8 @@
 /*
  * BX semantic design tokens.
  *
- * Runtime adoption is guarded by data-bx-design="d1". Importing this file is
- * therefore inert until the explicit build-time feature flag is enabled.
+ * Runtime adoption is guarded by data-bx-design="d1". D1 is enabled by
+ * default; VITE_BX_D1_UI=off remains an explicit emergency rollback switch.
  */
 
 :root[data-bx-design='d1'] {

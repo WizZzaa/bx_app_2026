@@ -91,7 +91,7 @@ export function buildTaskNotification(item: TaskNotificationRow): BxNotification
   }
 }
 
-export function useNotifications() {
+export function useNotifications(enabled = true) {
   const { companies } = useCompany()
   const { plan, isPro, isPremium } = usePlan()
   const [notifications, setNotifications] = useState<BxNotification[]>([])
@@ -271,6 +271,7 @@ export function useNotifications() {
   }, [companies, getReadIds, isPremium, isPro, plan])
 
   useEffect(() => {
+    if (!enabled) return undefined
     let active = true
     let channel: ReturnType<typeof supabase.channel> | null = null
 
@@ -320,7 +321,7 @@ export function useNotifications() {
       if (channel) void supabase.removeChannel(channel)
       window.clearInterval(interval)
     }
-  }, [fetchNotifications])
+  }, [enabled, fetchNotifications])
 
   useEffect(() => {
     setUnreadCount(notifications.filter(notification => !notification.read).length)

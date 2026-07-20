@@ -26,7 +26,7 @@ export default function MobileNavigation() {
       {moreOpen && (
         <>
           <button type="button" aria-label="Закрыть дополнительные разделы" onClick={() => setMoreOpen(false)} className="fixed inset-0 z-40 cursor-default bg-black/40 md:hidden" />
-          <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-50 max-h-[min(70dvh,36rem)] overflow-y-auto rounded-t-[24px] border border-bx-border bg-bx-surface p-3 pb-4 shadow-2xl md:hidden" role="menu" aria-label="Дополнительные разделы">
+          <div className="bx-mobile-more fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 max-h-[min(70dvh,36rem)] overflow-y-auto rounded-t-[28px] border border-bx-border bg-bx-surface p-3 pb-4 shadow-2xl md:hidden" role="menu" aria-label="Дополнительные разделы">
             <div className="mb-2 flex items-center justify-between gap-3 px-2 py-1">
               <div><p className="text-base font-bold text-bx-text">Ещё</p><p className="text-sm text-bx-muted">Все вторичные разделы BX</p></div>
               <button type="button" onClick={() => setMoreOpen(false)} aria-label="Закрыть меню Ещё" className="grid h-11 w-11 place-items-center rounded-xl border border-bx-border bg-bx-bg text-bx-muted"><Icon name="crossSmall" className="h-5 w-5" /></button>
@@ -37,9 +37,9 @@ export default function MobileNavigation() {
           </div>
         </>
       )}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid h-[calc(4rem+env(safe-area-inset-bottom))] grid-cols-5 border-t border-bx-border bg-bx-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden" aria-label="Мобильная навигация">
-        {MOBILE_NAVIGATION.map(item => <NavLink key={item.to} to={item.to} className={({ isActive }) => `flex min-h-11 flex-col items-center justify-center gap-1 px-1 text-[11px] font-semibold ${isActive ? 'text-bx-accent' : 'text-bx-muted'}`}><Icon name={item.icon} className="h-5 w-5" /><span>{item.shortLabel ?? item.label}</span></NavLink>)}
-        <button ref={moreButtonRef} type="button" onClick={() => setMoreOpen(value => !value)} aria-expanded={moreOpen} aria-haspopup="menu" className={`flex min-h-11 flex-col items-center justify-center gap-1 px-1 text-[11px] font-semibold ${moreOpen || MORE_NAVIGATION.some(item => isNavigationPathActive(pathname, item.to)) ? 'text-bx-accent' : 'text-bx-muted'}`}><Icon name="tools" className="h-5 w-5" /><span>Ещё</span></button>
+      <nav data-testid="app-mobile-navigation" className="bx-mobile-nav fixed inset-x-0 bottom-0 z-40 grid h-[calc(4.5rem+env(safe-area-inset-bottom))] grid-cols-5 border-t border-bx-border bg-bx-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden" aria-label="Мобильная навигация">
+        {MOBILE_NAVIGATION.map(item => <NavLink key={item.to} to={item.to} className={({ isActive }) => `bx-mobile-nav__item flex min-h-11 flex-col items-center justify-center gap-1 px-1 text-[11px] font-semibold ${isActive ? 'is-active text-bx-accent' : 'text-bx-muted'}`}><span className="bx-mobile-nav__icon"><Icon name={item.icon} className="h-5 w-5" /></span><span>{item.shortLabel ?? item.label}</span></NavLink>)}
+        <button ref={moreButtonRef} type="button" onClick={() => setMoreOpen(value => !value)} aria-expanded={moreOpen} aria-haspopup="menu" className={`bx-mobile-nav__item flex min-h-11 flex-col items-center justify-center gap-1 px-1 text-[11px] font-semibold ${moreOpen || MORE_NAVIGATION.some(item => isNavigationPathActive(pathname, item.to)) ? 'is-active text-bx-accent' : 'text-bx-muted'}`}><span className="bx-mobile-nav__icon"><Icon name="tools" className="h-5 w-5" /></span><span>Ещё</span></button>
       </nav>
     </>
   )

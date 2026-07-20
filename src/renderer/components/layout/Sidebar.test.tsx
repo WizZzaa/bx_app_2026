@@ -68,11 +68,12 @@ describe('Sidebar', () => {
     expect(screen.queryByText('Дашборд')).toBeNull()
   })
 
-  it('uses one semantic accent color for the brand and active navigation', () => {
+  it('uses the D1 semantic brand treatment and active navigation state', () => {
     render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
 
-    expect(screen.getByTestId('bx-brand-mark').className).toContain('bg-blue-600')
-    expect(screen.getByTestId('bx-brand-mark').className).not.toContain('from-blue-600')
+    expect(screen.getByTestId('bx-brand-mark').className).toContain('bx-app-brand-mark')
+    expect(screen.getByTestId('bx-brand-mark').className).not.toContain('bg-blue-600')
+    expect(screen.getByRole('link', { name: 'Главная' }).className).toContain('bx-app-nav-item--active')
     expect(screen.getByRole('link', { name: 'Главная' }).className).toContain('text-bx-on-accent')
   })
 })

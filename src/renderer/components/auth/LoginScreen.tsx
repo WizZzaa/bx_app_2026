@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { APP_VERSION, CHANGELOG } from '../../../shared/version'
 import { applyTheme, normalizeTheme } from '../../lib/theme'
 import type { UpdateStatus } from '../../../main/services/updatePolicy'
+import '../../styles/login-d1.css'
 
 interface Props {
   onLegacySignIn: (email: string, password: string) => Promise<string | null>
@@ -204,11 +205,27 @@ const LoginScreen: React.FC<Props> = ({ onLegacySignIn, onResetPassword, onTeleg
   }
 
   return (
-    <div className="min-h-screen w-full overflow-y-auto bg-bx-bg px-4 py-8 font-sans text-bx-text">
-      <div className="mx-auto w-full max-w-[440px] bx-animate-fade">
+    <div className="bx-login relative min-h-screen w-full overflow-y-auto bg-bx-bg px-4 py-6 font-sans text-bx-text sm:px-6 lg:px-10">
+      <div className="bx-login__aura bx-login__aura--one" aria-hidden="true" />
+      <div className="bx-login__aura bx-login__aura--two" aria-hidden="true" />
+      <div className="bx-login__layout relative z-10 mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-[1180px] items-center gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(400px,0.75fr)] lg:gap-14">
+        <aside className="bx-login__story hidden lg:flex" aria-label="Возможности BX">
+          <div className="bx-login__story-badge"><span className="bx-login__story-dot" aria-hidden="true" />Единое рабочее пространство</div>
+          <h2>Бухгалтерия, документы и сроки — в одном спокойном интерфейсе.</h2>
+          <p>BX помогает держать под контролем обязательства бизнеса, курсы валют и ежедневные задачи без перегруженных экранов.</p>
+          <div className="bx-login__bento" aria-hidden="true">
+            <div className="bx-login__bento-card bx-login__bento-card--wide"><span>Сегодня</span><strong>3 задачи</strong><small>Следующий срок — завтра</small></div>
+            <div className="bx-login__bento-card"><span>AI-лимит</span><strong>26</strong><small>запросов доступно</small></div>
+            <div className="bx-login__bento-card"><span>USD</span><strong>12 500</strong><small className="is-positive">+10 сум</small></div>
+          </div>
+          <div className="bx-login__trust"><span>Защищённый вход через Telegram</span><span>Данные компаний изолированы</span></div>
+        </aside>
+
+        <div className="bx-login__panel">
+          <div className="mx-auto w-full max-w-[460px] bx-animate-fade">
         {/* Logo & Header */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 flex items-center justify-center font-black text-white text-2xl shadow-xl shadow-blue-500/25 relative group overflow-hidden">
+          <div className="bx-login__brand-mark relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl text-2xl font-black text-bx-on-accent">
             <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             BX
           </div>
@@ -260,9 +277,9 @@ const LoginScreen: React.FC<Props> = ({ onLegacySignIn, onResetPassword, onTeleg
         )}
 
         {/* Telegram — единственный публичный сценарий входа и регистрации. */}
-        <section className="space-y-5 rounded-3xl border border-bx-border bg-bx-surface p-6 shadow-xl sm:p-8" aria-labelledby="telegram-login-title">
+        <section className="bx-login__card space-y-5 rounded-3xl border border-bx-border bg-bx-surface p-6 shadow-xl sm:p-8" aria-labelledby="telegram-login-title">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Без пароля BX</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-bx-accent">Без пароля BX</p>
             <h2 id="telegram-login-title" className="mt-2 text-xl font-black text-bx-text">Вход и создание аккаунта</h2>
             <p className="mt-2 text-sm leading-relaxed text-bx-muted">Откроется бот <b>@Tech_support_bx_bot</b>. В Telegram нажмите кнопку передачи собственного контакта — номер нельзя ввести вручную.</p>
           </div>
@@ -302,8 +319,8 @@ const LoginScreen: React.FC<Props> = ({ onLegacySignIn, onResetPassword, onTeleg
         </section>
 
         {/* ── Version badge + update check ── */}
-        <div className="mt-5 flex items-center justify-center gap-3">
-          <span className="text-[10px] text-slate-500 font-mono bg-slate-800/50 border border-slate-700/50 rounded-lg px-2.5 py-1">
+        <div className="bx-login__footer mt-5 flex items-center justify-center gap-3">
+          <span className="rounded-lg border border-bx-border bg-bx-surface-2 px-2.5 py-1 font-mono text-[10px] text-bx-muted">
             v{APP_VERSION}
           </span>
           <button
@@ -346,6 +363,8 @@ const LoginScreen: React.FC<Props> = ({ onLegacySignIn, onResetPassword, onTeleg
             {updateStatus === 'error' && 'Ошибка проверки'}
           </button>
         </div>
+          </div>
+        </div>
       </div>
 
       {/* ── Changelog modal ── */}
@@ -355,7 +374,7 @@ const LoginScreen: React.FC<Props> = ({ onLegacySignIn, onResetPassword, onTeleg
           onClick={() => setShowChangelog(false)}
         >
           <div
-            className="bg-[#111420] border border-bx-border rounded-2xl shadow-2xl w-[440px] max-h-[80vh] overflow-hidden bx-animate-fade"
+            className="bx-login__changelog max-h-[80vh] w-[440px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-bx-border bg-bx-surface shadow-2xl bx-animate-fade"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}

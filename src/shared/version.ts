@@ -14,6 +14,19 @@ export interface ChangelogEntry {
 // Новые версии — сверху.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.70.0',
+    date: '2026-07-20',
+    title: 'D1 по умолчанию и единая Bento-оболочка',
+    changes: [
+      'Новый D1 Dashboard больше не скрыт при обычном запуске: Desktop и Web включают его по умолчанию, а явный off-флаг оставлен для аварийного отката.',
+      'Sidebar, Topbar, поиск, уведомления, titlebar и мобильная навигация объединены в спокойную Geist/lavender Bento-оболочку с семантическими токенами.',
+      'Telegram-first вход получил адаптивную Bento-композицию для desktop и одноколоночный mobile layout без изменения сценария авторизации.',
+      'Интерактивные элементы оболочки имеют touch-friendly размеры, видимый focus и reduced-motion fallback; структурные emoji заменены SVG-иконками.',
+      'На ширине 390 px сайдбар скрывается, нижняя навигация включается и горизонтальный scroll отсутствует.',
+      'Supabase, Telegram Secrets, миграции, пользовательские данные, localStorage, Dexie и offline queue не изменялись.',
+    ],
+  },
+  {
     version: '2.69.0',
     date: '2026-07-20',
     title: 'Demand-loading, bundle budgets и D1-контракт',

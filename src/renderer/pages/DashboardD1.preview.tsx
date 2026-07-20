@@ -1,11 +1,18 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import { HashRouter } from 'react-router-dom'
 import '@fontsource-variable/geist'
 import '../../shared/design/tokens.css'
 import '../styles/globals.css'
-import { DEFAULT_PLAN_LIMITS } from '../lib/plan'
+import { DEFAULT_PLAN_LIMITS, PlanProvider } from '../lib/plan'
+import { CompanyProvider } from '../lib/CompanyContext'
+import { ToastProvider } from '../lib/ui/ToastContext'
+import Sidebar from '../components/layout/Sidebar'
+import Topbar from '../components/layout/Topbar'
+import MobileNavigation from '../components/layout/MobileNavigation'
 import type { BxEvent } from './planner/useEvents'
 import { DashboardD1View, type DashboardD1ViewProps } from './DashboardD1'
+import '../styles/app-shell-d1.css'
 
 const today = '2026-07-20'
 const params = new URLSearchParams(window.location.search)
@@ -94,11 +101,39 @@ const props: DashboardD1ViewProps = {
   onEditCompany: () => undefined,
 }
 
+function WorkspacePreview() {
+  const [collapsed, setCollapsed] = useState(false)
+  return (
+    <ToastProvider>
+      <CompanyProvider>
+        <PlanProvider>
+          <div className="bx-app-shell relative flex h-screen w-screen flex-col overflow-hidden bg-bx-bg text-bx-text">
+            <div className="bx-app-shell__aura bx-app-shell__aura--start" aria-hidden="true" />
+            <div className="bx-app-shell__aura bx-app-shell__aura--end" aria-hidden="true" />
+            <div className="bx-app-shell__body relative z-10 flex min-h-0 flex-1 overflow-hidden">
+              <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed} webResponsive />
+              <div className="bx-app-shell__workspace flex min-w-0 flex-1 flex-col overflow-hidden">
+                <Topbar onToggleMenu={() => setCollapsed(value => !value)} menuExpanded={!collapsed} previewMode />
+                <main className="bx-app-shell__content flex min-h-0 flex-1 overflow-hidden pb-16 md:pb-0" aria-label="Основное содержимое">
+                  <DashboardD1View {...props} />
+                </main>
+              </div>
+            </div>
+            <MobileNavigation />
+          </div>
+        </PlanProvider>
+      </CompanyProvider>
+    </ToastProvider>
+  )
+}
+
 const root = document.getElementById('root')
 if (!root) throw new Error('Preview root is missing')
 createRoot(root).render(
   <React.StrictMode>
-    <DashboardD1View {...props} />
-    <output id="preview-output" className="sr-only" aria-live="polite" />
+    <HashRouter>
+      <WorkspacePreview />
+      <output id="preview-output" className="sr-only" aria-live="polite" />
+    </HashRouter>
   </React.StrictMode>,
 )

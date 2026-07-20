@@ -49,12 +49,12 @@ export default function Titlebar() {
 
   return (
     <div 
-      className="flex items-center justify-between h-8 bg-[#0b0c10] border-b border-bx-border select-none w-full"
+      className="bx-app-titlebar flex h-8 w-full select-none items-center justify-between border-b border-bx-border bg-bx-surface"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
       {/* Логотип и заголовок */}
       <div className="flex items-center gap-2 pl-3">
-        <span className="w-4 h-4 rounded bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-[9px]">
+        <span className="bx-app-brand-mark flex h-4 w-4 items-center justify-center rounded text-[9px] font-black text-bx-on-accent">
           BX
         </span>
         <span className="text-[11px] font-semibold text-bx-text tracking-wide">
