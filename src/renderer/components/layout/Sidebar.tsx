@@ -4,7 +4,7 @@ import { APP_VERSION } from '../../../shared/version'
 import AboutModal from '../AboutModal'
 import Icon from '../../lib/ui/Icon'
 import { usePlan } from '../../lib/plan'
-import { PRIMARY_NAVIGATION } from './navigation'
+import { SIDEBAR_NAVIGATION_GROUPS } from './navigation'
 
 const STORAGE_KEY = 'bx_sidebar_collapsed'
 
@@ -75,8 +75,15 @@ export default function Sidebar({ collapsed: controlledCollapsed, onCollapsedCha
       </div>
 
       <nav className={`bx-app-sidebar__nav custom-scrollbar flex-1 overflow-y-auto overflow-x-hidden py-3 ${collapsed ? 'px-2' : 'px-2.5'}`} aria-label="Разделы приложения">
-        <div className="space-y-1">
-          {PRIMARY_NAVIGATION.map(item => <NavLink key={item.to} to={item.to} title={collapsed ? item.label : undefined} aria-label={item.label} className={({ isActive }) => navItemClass(isActive, collapsed)}>{({ isActive }) => <><NavIcon name={item.icon} active={isActive} collapsed={collapsed} />{!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}{isActive && !collapsed && <span className="h-1.5 w-1.5 rounded-full bg-bx-on-accent shadow-sm" aria-hidden="true" />}</>}</NavLink>)}
+        <div className="space-y-3">
+          {SIDEBAR_NAVIGATION_GROUPS.map((group, groupIndex) => (
+            <section key={group.id} aria-label={group.label} className={collapsed && groupIndex > 0 ? 'border-t border-bx-border pt-3' : undefined}>
+              {!collapsed && <p className="px-2.5 pb-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-bx-muted">{group.label}</p>}
+              <div className="space-y-1">
+                {group.items.map(item => <NavLink key={item.to} to={item.to} title={collapsed ? item.label : undefined} aria-label={item.label} className={({ isActive }) => navItemClass(isActive, collapsed)}>{({ isActive }) => <><NavIcon name={item.icon} active={isActive} collapsed={collapsed} />{!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}{isActive && !collapsed && <span className="h-1.5 w-1.5 rounded-full bg-bx-on-accent shadow-sm" aria-hidden="true" />}</>}</NavLink>)}
+              </div>
+            </section>
+          ))}
           {isAdmin && <a href="https://bx.uz/admin" onClick={openAdmin} className={navItemClass(false, collapsed)} title={collapsed ? 'Админка' : undefined} aria-label="Админка"><NavIcon name="settings" active={false} collapsed={collapsed} />{!collapsed && <span className="min-w-0 flex-1 truncate">Админка</span>}</a>}
         </div>
       </nav>
@@ -99,7 +106,7 @@ function navItemClass(active: boolean, collapsed: boolean) {
   const state = active
     ? 'bx-app-nav-item--active bg-bx-accent text-bx-on-accent'
     : 'text-[color:var(--bx-sidebar-text)] hover:bg-bx-bg hover:text-bx-text'
-  return `bx-app-nav-item group relative flex min-h-10 w-full cursor-pointer items-center rounded-xl text-xs font-bold outline-none transition-colors ${layout} ${state}`
+  return `bx-app-nav-item group relative flex min-h-11 w-full cursor-pointer items-center rounded-xl text-xs font-bold outline-none transition-colors ${layout} ${state}`
 }
 
 function NavIcon({ name, active, collapsed }: { name: string; active: boolean; collapsed: boolean }) {

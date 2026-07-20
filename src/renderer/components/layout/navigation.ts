@@ -19,6 +19,12 @@ export interface FunctionCatalogGroup {
   items: readonly AppNavigationItem[]
 }
 
+export interface SidebarNavigationGroup {
+  id: string
+  label: string
+  items: readonly AppNavigationItem[]
+}
+
 // Единый реестр маршрутов оболочки. Он не заменяет React Router, но не даёт
 // сайдбару, mobile More, каталогу и глобальному поиску расходиться в названиях.
 export const APP_DESTINATIONS = {
@@ -30,6 +36,7 @@ export const APP_DESTINATIONS = {
   planner: { id: 'planner', to: '/planner', icon: 'planner', label: 'Календарь', description: 'Задачи, налоговые сроки и напоминания.' },
   functions: { id: 'functions', to: '/functions', icon: 'tools', label: 'Все функции', description: 'Единый каталог внутренних разделов BX.' },
   counterparties: { id: 'counterparties', to: '/counterparties', icon: 'users', label: 'Организации', description: 'Карточки компаний, реквизиты и рабочий контекст.' },
+  documentHub: { id: 'document-hub', to: '/documents', icon: 'note', label: 'Документы', description: 'Шаблоны и готовые документы в одном рабочем разделе.' },
   documentTemplates: { id: 'document-templates', to: '/documents/templates', icon: 'templates', label: 'Шаблоны документов', description: 'Шаблоны для повседневной работы и договоров.' },
   documents: { id: 'documents', to: '/documents/my', icon: 'note', label: 'Мои документы', description: 'Созданные и сохранённые документы.' },
   finance: { id: 'finance', to: '/finance', icon: 'finance', label: 'Контроль оплат', description: 'Платежи, долги и финансовые операции.' },
@@ -43,17 +50,21 @@ export const APP_DESTINATIONS = {
   settings: { id: 'settings', to: '/settings', icon: 'settings', label: 'Настройки приложения', description: 'Тема, интерфейс, уведомления и локальные параметры.' },
 } as const satisfies Record<string, AppNavigationItem>
 
-// Каноническая информационная архитектура Windows и широкого Web.
-// Вторичные функции не удалены: они собраны на самостоятельной /functions.
-export const PRIMARY_NAVIGATION: readonly AppNavigationItem[] = [
-  APP_DESTINATIONS.dashboard,
-  APP_DESTINATIONS.ai,
-  APP_DESTINATIONS.knowledge,
-  APP_DESTINATIONS.reference,
-  APP_DESTINATIONS.translator,
-  APP_DESTINATIONS.planner,
-  APP_DESTINATIONS.functions,
+// Каноническая информационная архитектура Windows и широкого Web. В меню
+// остаются только ежедневные сценарии; редкие инструменты живут на /functions.
+export const SIDEBAR_NAVIGATION_GROUPS: readonly SidebarNavigationGroup[] = [
+  { id: 'overview', label: 'Обзор', items: [APP_DESTINATIONS.dashboard] },
+  {
+    id: 'work',
+    label: 'Работа',
+    items: [APP_DESTINATIONS.planner, APP_DESTINATIONS.documentHub, APP_DESTINATIONS.counterparties, APP_DESTINATIONS.finance],
+  },
+  { id: 'assistants', label: 'Помощники', items: [APP_DESTINATIONS.ai, APP_DESTINATIONS.translator] },
+  { id: 'knowledge', label: 'Знания', items: [APP_DESTINATIONS.knowledge, APP_DESTINATIONS.reference] },
+  { id: 'more', label: 'Ещё', items: [APP_DESTINATIONS.functions] },
 ] as const
+
+export const PRIMARY_NAVIGATION: readonly AppNavigationItem[] = SIDEBAR_NAVIGATION_GROUPS.flatMap(group => group.items)
 
 export const MOBILE_NAVIGATION: readonly AppNavigationItem[] = [
   APP_DESTINATIONS.dashboard,

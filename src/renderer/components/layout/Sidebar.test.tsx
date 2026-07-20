@@ -41,10 +41,11 @@ describe('Sidebar', () => {
     expect(screen.getByRole('button', { name: 'Развернуть боковую панель' })).toBeTruthy()
   })
 
-  it('uses the canonical seven-section information architecture', () => {
+  it('uses the grouped daily-work information architecture', () => {
     render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
     const links = screen.getAllByRole('link').map(link => link.getAttribute('aria-label')).filter(Boolean)
-    expect(links).toEqual(['Главная', 'AI-консультант', 'База знаний', 'Справочники', 'Переводчик', 'Календарь', 'Все функции'])
+    expect(links).toEqual(['Главная', 'Календарь', 'Документы', 'Организации', 'Контроль оплат', 'AI-консультант', 'Переводчик', 'База знаний', 'Справочники', 'Все функции'])
+    expect(screen.getByRole('region', { name: 'Работа' })).toBeTruthy()
   })
 
   it('shows the document translator as a standalone destination', () => {
