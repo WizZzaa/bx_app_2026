@@ -75,8 +75,8 @@ const InnCheckTool = () => {
     }
 
     try {
-      const data = isElectron
-        ? await window.bx!.inn.check(q)
+      const data = isElectron && window.bx
+        ? await window.bx.inn.check(q)
         : await fetch(`https://my.soliq.uz/roaming-dark-api/api/v1/einvoice/get-trader?tin=${q}`, {
             headers: { 'Content-Type': 'application/json' },
           }).then(res => (res.ok ? res.json() : null))

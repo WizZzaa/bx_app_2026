@@ -1,26 +1,35 @@
-// Единая точка применения темы.
-// Классы .light, .lime и .lavender-light включают свои CSS-переменные (globals.css),
-// класс .dark управляет Tailwind dark:-вариантами (darkMode: 'class').
-// Лаймовая тема остаётся тёмной по контрастной модели, поэтому получает
-// одновременно классы .dark и .lime.
+// Единая точка применения темы для Desktop и Web.
+// Пользовательский выбор хранится отдельно от фактически применённой светлой/
+// тёмной схемы, чтобы режим system мог следовать настройке ОС без потери выбора.
 
-export const BX_THEMES = ['light', 'dark', 'lime', 'lavender-light'] as const
+export const BX_THEMES = ['system', 'light', 'dark', 'high-contrast'] as const
 export type BxTheme = typeof BX_THEMES[number]
+export type ResolvedBxTheme = 'light' | 'dark' | 'high-contrast'
 export const THEME_KEY = 'bx_theme'
 export const THEME_CHANGE_EVENT = 'bx:theme-change'
+const SYSTEM_DARK_QUERY = '(prefers-color-scheme: dark)'
 
 export function normalizeTheme(value: unknown): BxTheme {
-  if (value === 'lime-light') return 'lavender-light'
-  return BX_THEMES.includes(value as BxTheme) ? value as BxTheme : 'dark'
+  // Миграция ранее выпущенных тем без сброса пользовательской настройки.
+  if (value === 'lime') return 'high-contrast'
+  if (value === 'lime-light' || value === 'lavender-light') return 'light'
+  return BX_THEMES.includes(value as BxTheme) ? value as BxTheme : 'light'
+}
+
+export function resolveTheme(theme: BxTheme): ResolvedBxTheme {
+  if (theme !== 'system') return theme
+  return window.matchMedia?.(SYSTEM_DARK_QUERY).matches ? 'dark' : 'light'
 }
 
 export function applyTheme(theme: BxTheme): void {
   const root = document.documentElement
-  root.classList.toggle('light', theme === 'light' || theme === 'lavender-light')
-  root.classList.toggle('dark', theme === 'dark' || theme === 'lime')
-  root.classList.toggle('lime', theme === 'lime')
-  root.classList.toggle('lavender-light', theme === 'lavender-light')
+  const resolved = resolveTheme(theme)
+  root.classList.toggle('light', resolved === 'light')
+  root.classList.toggle('dark', resolved === 'dark' || resolved === 'high-contrast')
+  root.classList.toggle('high-contrast', resolved === 'high-contrast')
+  root.classList.remove('lime', 'lavender-light')
   root.dataset.theme = theme
+  root.dataset.resolvedTheme = resolved
 }
 
 export function saveTheme(theme: BxTheme): void {
@@ -45,12 +54,21 @@ export function subscribeToTheme(listener: (theme: BxTheme) => void): () => void
     applyTheme(theme)
     listener(theme)
   }
+  const handleSystemThemeChange = () => {
+    const theme = currentTheme()
+    if (theme !== 'system') return
+    applyTheme(theme)
+    listener(theme)
+  }
+  const media = window.matchMedia?.(SYSTEM_DARK_QUERY)
 
   window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange)
   window.addEventListener('storage', handleStorageChange)
+  media?.addEventListener?.('change', handleSystemThemeChange)
   return () => {
     window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange)
     window.removeEventListener('storage', handleStorageChange)
+    media?.removeEventListener?.('change', handleSystemThemeChange)
   }
 }
 
@@ -61,7 +79,7 @@ export function currentTheme(): BxTheme {
     if (stored && stored !== normalized) localStorage.setItem(THEME_KEY, normalized)
     return normalized
   } catch {
-    return 'dark'
+    return 'light'
   }
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { getConflicts, resolveConflict } from '../lib/db/syncConflictResolver'
-import type { SyncConflict } from '../lib/db/localDb'
+import type { SyncConflict, SyncEntityData } from '../lib/db/localDb'
 import Button from './ui/Button'
 
 interface ConflictModalProps {
@@ -12,7 +12,7 @@ interface ConflictModalProps {
 export default function ConflictModal({ isOpen, onClose, onResolved }: ConflictModalProps) {
   const [conflicts, setConflicts] = useState<SyncConflict[]>([])
   const [activeIdx, setActiveIdx] = useState<number>(0)
-  const [customMerge, setCustomMerge] = useState<any>(null)
+  const [customMerge, setCustomMerge] = useState<SyncEntityData | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
 
   const load = async () => {
@@ -66,8 +66,8 @@ export default function ConflictModal({ isOpen, onClose, onResolved }: ConflictM
     setLoading(false)
   }
 
-  const handleFieldChange = (field: string, val: any) => {
-    setCustomMerge((prev: any) => {
+  const handleFieldChange = (field: string, val: unknown) => {
+    setCustomMerge((prev) => {
       const base = prev || { ...current.localData }
       return { ...base, [field]: val }
     })
@@ -179,10 +179,10 @@ export default function ConflictModal({ isOpen, onClose, onResolved }: ConflictM
 interface CompareFieldRowProps {
   label: string
   field: string
-  localVal: any
-  serverVal: any
-  mergeVal: any
-  onMerge: (field: string, val: any) => void
+  localVal: unknown
+  serverVal: unknown
+  mergeVal: unknown
+  onMerge: (field: string, val: unknown) => void
 }
 
 const CompareFieldRow = ({ label, field, localVal, serverVal, mergeVal, onMerge }: CompareFieldRowProps) => {

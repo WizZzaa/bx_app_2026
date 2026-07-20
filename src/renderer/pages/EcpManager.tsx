@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { uid } from '../lib/uid';
 import { todayISO } from '../lib/dates';
 import { loadEcpKeys, saveEcpKeys, EcpKeyRecord } from '../lib/ecpStorage';
+import { ECP_EXPIRY_CHECKPOINTS, ECP_PRODUCT_BOUNDARY } from '../lib/ecpProductBoundary';
 import Icon from '../lib/ui/Icon';
 
 type EcpKey = EcpKeyRecord;
@@ -33,14 +35,18 @@ const EMPTY_FORM: Omit<EcpKey, 'id' | 'addedAt'> = {
   inn: '',
   expiresAt: '',
   org: '',
+  serial: '',
+  fingerprint: '',
+  validFrom: '',
 };
 
 export default function EcpManager() {
+  const navigate = useNavigate();
   const [keys, setKeys] = useState<EcpKey[]>([]);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
-  const [pfxPassword, setPfxPassword] = useState('123456');
+  const [pfxPassword, setPfxPassword] = useState('');
   const [pfxError, setPfxError] = useState<string | null>(null);
   const [pfxSuccess, setPfxSuccess] = useState(false);
   const [eimzoStatus, setEimzoStatus] = useState<'checking' | 'active' | 'missing'>('checking');
@@ -90,39 +96,60 @@ export default function EcpManager() {
     setAdding(true);
     setPfxError(null);
     setPfxSuccess(false);
+    setPfxPassword('');
   }
 
   function startEdit(k: EcpKey) {
-    setForm({ name: k.name, owner: k.owner, inn: k.inn, expiresAt: k.expiresAt, org: k.org ?? '' });
+    setForm({
+      name: k.name,
+      owner: k.owner,
+      inn: k.inn,
+      expiresAt: k.expiresAt,
+      org: k.org ?? '',
+      serial: k.serial ?? '',
+      fingerprint: k.fingerprint ?? '',
+      validFrom: k.validFrom ?? '',
+    });
     setEditingId(k.id);
     setAdding(true);
     setPfxError(null);
     setPfxSuccess(false);
+    setPfxPassword('');
   }
 
   const handleImportPfx = async () => {
     setPfxError(null);
     setPfxSuccess(false);
     try {
-      const bx = (window as any).bx;
+      const bx = window.bx;
       if (!bx || !bx.ecp) {
         setPfxError('Служба ЭЦП недоступна в данной версии.');
         return;
       }
-      const filePath = await bx.ecp.pickPfx();
-      if (!filePath) return;
+      if (!pfxPassword) {
+        setPfxError('Введите пароль от файла ключа. BX не сохраняет пароль.');
+        return;
+      }
+      const fileHandle = await bx.ecp.pickPfx();
+      if (!fileHandle) return;
 
-      const info = await bx.ecp.parsePfx(filePath, pfxPassword);
+      const password = pfxPassword;
+      setPfxPassword('');
+      const info = await bx.ecp.parsePfx(fileHandle, password);
       setForm({
-        name: info.owner ? `ЭЦП — ${info.owner.split(' ')[0]}` : 'Новый ключ',
+        name: info.owner ? `Сертификат — ${info.owner.split(' ')[0]}` : 'Новый сертификат',
         owner: info.owner,
         inn: info.inn,
         expiresAt: info.expiresAt,
-        org: info.org
+        org: info.org,
+        serial: info.serial,
+        fingerprint: info.fingerprint,
+        validFrom: info.validFrom,
       });
       setPfxSuccess(true);
-    } catch (e: any) {
-      setPfxError(e?.message || 'Не удалось импортировать ключ. Проверьте пароль.');
+    } catch (error: unknown) {
+      setPfxPassword('');
+      setPfxError(error instanceof Error ? error.message : 'Не удалось прочитать метаданные сертификата. Проверьте пароль.');
     }
   };
 
@@ -143,12 +170,17 @@ export default function EcpManager() {
   }
 
   function remove(id: string) {
-    if (confirm('Вы уверены, что хотите удалить этот ключ из мониторинга?')) {
+    if (confirm('Удалить запись сертификата из мониторинга? Файл ключа это действие не затрагивает.')) {
       persist(keys.filter(k => k.id !== id));
     }
   }
 
-  const urgentCount = keys.filter(k => daysUntil(k.expiresAt) <= 14).length;
+  const expiredCount = keys.filter(k => daysUntil(k.expiresAt) < 0).length;
+  const urgentCount = keys.filter(k => {
+    const days = daysUntil(k.expiresAt);
+    return days >= 0 && days <= 14;
+  }).length;
+  const attentionCount = expiredCount + urgentCount;
   const sorted = [...keys].sort((a, b) => daysUntil(a.expiresAt) - daysUntil(b.expiresAt));
 
   return (
@@ -160,8 +192,8 @@ export default function EcpManager() {
           <div className="flex items-center gap-3">
             <span className="text-3xl">🔑</span>
             <div>
-              <h1 className="text-base font-extrabold text-bx-text uppercase tracking-wider">Менеджер ключей ЭЦП</h1>
-              <p className="text-xs text-bx-muted mt-0.5">Контроль сроков действия и мониторинг готовности E-Imzo</p>
+              <h1 className="text-base font-extrabold text-bx-text uppercase tracking-wider">Мониторинг сертификатов ЭЦП</h1>
+              <p className="text-xs text-bx-muted mt-0.5">Безопасные метаданные, сроки действия и готовность E-Imzo</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -172,9 +204,14 @@ export default function EcpManager() {
               onClick={startAdd}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-xl transition-all shadow-md cursor-pointer"
             >
-              ＋ Добавить ЭЦП
+              ＋ Добавить сертификат
             </button>
           </div>
+        </div>
+
+        <div className="flex items-start gap-3 rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] px-5 py-4 text-xs leading-relaxed text-bx-muted shadow-sm">
+          <Icon name="shield" className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-300" />
+          <p><strong className="text-bx-text">Что делает BX:</strong> {ECP_PRODUCT_BOUNDARY}</p>
         </div>
 
         {/* Статус E-Imzo */}
@@ -185,7 +222,7 @@ export default function EcpManager() {
         )}
         {eimzoStatus === 'active' && (
           <div className="text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 flex items-center gap-2.5 shadow-sm">
-            <span>🟢</span> <b>Модуль E-Imzo запущен на ПК:</b> Готов к работе с государственными порталами Узбекистана.
+            <span>🟢</span> <b>E-Imzo доступен на ПК:</b> официальные порталы смогут использовать локальную службу. BX подписание не запускает.
           </div>
         )}
         {eimzoStatus === 'missing' && (
@@ -200,16 +237,18 @@ export default function EcpManager() {
           </div>
         )}
 
-        {/* Предупреждение о скором окончании действия ключей */}
-        {urgentCount > 0 && (
+        {/* Предупреждение о скором окончании действия сертификатов */}
+        {attentionCount > 0 && (
           <div className="flex items-start gap-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-5 py-4 shadow-sm">
             <span className="text-2xl flex-shrink-0">⚠️</span>
             <div>
               <p className="text-xs font-black text-amber-800 dark:text-amber-400 uppercase tracking-wide">
-                Внимание: {urgentCount === 1 ? '1 ключ истекает' : `${urgentCount} ключа истекают`} в ближайшие 14 дней
+                Требуют внимания: {attentionCount} {attentionCount === 1 ? 'сертификат' : 'сертификата'}
               </p>
               <p className="text-xs text-bx-muted mt-1 leading-relaxed">
-                Своевременно обновите ключи через портал гос. услуг my.gov.uz или обратитесь лично в ЦЭКТТ во избежание сбоев в отправке бухгалтерской отчетности.
+                {expiredCount > 0 && <>Истекли: {expiredCount}. </>}
+                {urgentCount > 0 && <>Истекают в ближайшие 14 дней: {urgentCount}. </>}
+                BX напоминает на отметках {ECP_EXPIRY_CHECKPOINTS.join(', ')} день до окончания.
               </p>
             </div>
           </div>
@@ -219,20 +258,21 @@ export default function EcpManager() {
         {adding && (
           <div className="bg-bx-surface border border-bx-border rounded-2xl p-5 space-y-4 shadow-md">
             <h3 className="text-xs font-black text-bx-text uppercase tracking-wider">
-              {editingId ? '✏️ Редактирование ключа' : '⚡ Добавление ключа в реестр'}
+              {editingId ? '✏️ Редактирование метаданных' : '⚡ Добавление сертификата в мониторинг'}
             </h3>
             
             {/* Быстрый импорт из .pfx */}
             {!editingId && (
               <div className="bg-bx-surface-2 border border-bx-border rounded-xl p-4 space-y-2.5">
-                <p className="text-xs font-bold text-bx-text">Автозаполнение из файла ключа (.pfx / .p12)</p>
+                <p className="text-xs font-bold text-bx-text">Локально прочитать метаданные из .pfx / .p12</p>
                 <div className="flex gap-3 items-center flex-wrap sm:flex-nowrap">
                   <div className="flex-1 min-w-[200px]">
                     <input
                       type="password"
                       value={pfxPassword}
                       onChange={e => setPfxPassword(e.target.value)}
-                      placeholder="Пароль от ключа (по умолчанию 123456)"
+                      placeholder="Пароль от файла ключа"
+                      autoComplete="new-password"
                       className="w-full bg-bx-surface text-bx-text text-xs px-3.5 py-2.5 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/50"
                     />
                   </div>
@@ -244,14 +284,15 @@ export default function EcpManager() {
                     Выбрать .pfx / .p12
                   </button>
                 </div>
+                <p className="text-[10px] leading-relaxed text-bx-muted">Файл не копируется и не отправляется. Пароль используется один раз только для чтения разрешённых метаданных и сразу очищается.</p>
                 {pfxError && <p className="text-[10px] text-red-600 dark:text-red-400 font-bold">{pfxError}</p>}
-                {pfxSuccess && <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">✓ Данные ключа успешно извлечены и заполнены!</p>}
+                {pfxSuccess && <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">✓ Безопасные метаданные сертификата заполнены.</p>}
               </div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
-                <label className="block text-[10px] font-bold text-bx-muted uppercase tracking-wider mb-1.5">Понятное название ключа *</label>
+                <label className="block text-[10px] font-bold text-bx-muted uppercase tracking-wider mb-1.5">Понятное название сертификата *</label>
                 <input
                   value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   placeholder="например, «Альфа ООО — Директор» или «Личный ИП»"
@@ -259,7 +300,7 @@ export default function EcpManager() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-bx-muted uppercase tracking-wider mb-1.5">Владелец ключа (ФИО)</label>
+                <label className="block text-[10px] font-bold text-bx-muted uppercase tracking-wider mb-1.5">Владелец сертификата (ФИО)</label>
                 <input
                   value={form.owner} onChange={e => setForm(f => ({ ...f, owner: e.target.value }))}
                   placeholder="Иванов Иван Иванович"
@@ -289,12 +330,20 @@ export default function EcpManager() {
                   className="w-full bg-bx-surface-2 text-bx-text text-xs px-3.5 py-2.5 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/50 font-bold"
                 />
               </div>
+              {(form.serial || form.fingerprint || form.validFrom) && (
+                <div className="sm:col-span-2 rounded-xl border border-bx-border bg-bx-surface-2 px-3.5 py-3 text-[10px] text-bx-muted">
+                  <p className="font-bold text-bx-text">Метаданные из сертификата</p>
+                  {form.validFrom && <p className="mt-1">Действует с: {new Date(form.validFrom).toLocaleDateString('ru-RU')}</p>}
+                  {form.serial && <p className="mt-1 break-all font-mono">Серийный номер: {form.serial}</p>}
+                  {form.fingerprint && <p className="mt-1 break-all font-mono">SHA-256: {form.fingerprint}</p>}
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 pt-2 border-t border-bx-border">
               <button onClick={save} disabled={!form.name.trim() || !form.expiresAt}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer">
-                {editingId ? 'Сохранить изменения' : 'Добавить ЭЦП'}
+                {editingId ? 'Сохранить изменения' : 'Добавить в мониторинг'}
               </button>
               <button onClick={() => { setAdding(false); setEditingId(null); }}
                 className="px-4 py-2 bg-bx-surface-2 hover:bg-bx-surface-2 text-bx-text text-xs font-bold rounded-xl transition-all cursor-pointer">
@@ -304,13 +353,13 @@ export default function EcpManager() {
           </div>
         )}
 
-        {/* Список ключей */}
+        {/* Список сертификатов */}
         {sorted.length === 0 && !adding ? (
           <div className="bg-bx-surface border border-bx-border rounded-2xl p-12 text-center text-bx-muted shadow-sm">
             <div className="text-4xl mb-3">🔑</div>
-            <p className="text-sm font-bold text-bx-text">Список ключей пуст</p>
+            <p className="text-sm font-bold text-bx-text">Сертификаты не добавлены</p>
             <p className="text-xs mt-1 max-w-sm mx-auto leading-relaxed">
-              Добавьте ИНН и сроки действия ваших ЭЦП. BX Помощник будет автоматически предупреждать вас за 30 дней до дедлайна, чтобы вы успели перевыпустить ключ.
+              Добавьте только метаданные и срок действия сертификата. Файл ключа и пароль BX не хранит; напоминания появятся за 30, 14, 7 и 1 день.
             </p>
           </div>
         ) : (
@@ -332,6 +381,8 @@ export default function EcpManager() {
                       {k.owner && <p className="text-bx-text font-bold">👤 {k.owner}</p>}
                       {k.org && <p className="truncate font-semibold">🏢 {k.org}</p>}
                       {k.inn && <p className="font-mono">💼 ИНН: {k.inn}</p>}
+                      {k.serial && <p className="truncate font-mono" title={k.serial}>№ {k.serial}</p>}
+                      {k.fingerprint && <p className="truncate font-mono" title={k.fingerprint}>SHA-256: {k.fingerprint}</p>}
                     </div>
                   </div>
 
@@ -354,155 +405,19 @@ export default function EcpManager() {
           </div>
         )}
 
-        {/* Руководство по получению/продлению */}
-        <RenewalGuide />
-      </div>
-    </div>
-  );
-}
-
-function openLink(url: string) {
-  if (typeof window !== 'undefined' && (window as any).bx?.shell?.openExternal) {
-    (window as any).bx.shell.openExternal(url);
-  } else {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-}
-
-function LinkBtn({ url, label }: { url: string; label: string }) {
-  return (
-    <button
-      onClick={() => openLink(url)}
-      className="px-3.5 py-2 border border-bx-border bg-bx-surface hover:bg-bx-surface-2 text-bx-text hover:text-blue-500 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm"
-    >
-      {label} ↗
-    </button>
-  );
-}
-
-function RenewalGuide() {
-  const [tab, setTab] = React.useState<'online' | 'offline'>('online');
-
-  return (
-    <div className="bg-bx-surface border border-bx-border rounded-2xl overflow-hidden shadow-sm flex flex-col">
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-bx-border flex items-center justify-between flex-wrap gap-2">
-        <p className="text-xs font-black text-bx-text uppercase tracking-wider flex items-center gap-2">
-          <span>🛡️</span> Инструкция: как обновить ЭЦП
-        </p>
-        <div className="flex bg-bx-surface-2 border border-bx-border rounded-xl p-0.5">
-          <button onClick={() => setTab('online')}
-            className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer ${tab === 'online' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
-            Онлайн (my.gov.uz)
-          </button>
-          <button onClick={() => setTab('offline')}
-            className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer ${tab === 'offline' ? 'bg-blue-600 text-white' : 'text-bx-muted hover:text-bx-text'}`}>
-            В офисе ЦЭКТТ
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-bx-border bg-bx-surface px-5 py-4 shadow-sm">
+          <div>
+            <p className="text-xs font-black text-bx-text">Как установить или обновить E-Imzo</p>
+            <p className="mt-1 text-[11px] text-bx-muted">Пошаговая инструкция находится в Базе знаний и ведёт только на официальные ресурсы.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/knowledge?article=eimzo-setup')}
+            className="rounded-xl border border-bx-border bg-bx-surface-2 px-3.5 py-2 text-xs font-bold text-bx-text transition-colors hover:border-blue-500/30 hover:text-blue-600"
+          >
+            Открыть инструкцию →
           </button>
         </div>
-      </div>
-
-      {tab === 'online' && (
-        <div className="px-5 py-5 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button onClick={() => openLink('https://my.gov.uz')}
-              className="flex items-center gap-3 bg-blue-500/5 hover:bg-blue-500/10 border border-blue-500/10 rounded-xl px-4 py-3 transition-colors text-left cursor-pointer">
-              <span className="text-2xl">🏛️</span>
-              <div>
-                <p className="text-xs font-extrabold text-blue-600 dark:text-blue-400">my.gov.uz</p>
-                <p className="text-[10px] text-bx-muted mt-0.5">Единый портал гос. услуг</p>
-              </div>
-            </button>
-            <button onClick={() => openLink('https://e-imzo.uz')}
-              className="flex items-center gap-3 bg-bx-surface-2 hover:bg-bx-surface-2/65 border border-bx-border rounded-xl px-4 py-3 transition-colors text-left cursor-pointer">
-              <span className="text-2xl">🔑</span>
-              <div>
-                <p className="text-xs font-extrabold text-bx-text">e-imzo.uz</p>
-                <p className="text-[10px] text-bx-muted mt-0.5">Официальный дистрибьютор E-Imzo</p>
-              </div>
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-xs font-bold text-bx-text">Шаги для онлайн перевыпуска:</p>
-            {[
-              { n: '1', text: 'Авторизуйтесь на портале my.gov.uz через систему OneID.' },
-              { n: '2', text: 'Найдите услугу «Получить ключ электронной цифровой подписи».' },
-              { n: '3', text: 'Выберите тип владельца (Физическое лицо / Индивидуальный предприниматель).' },
-              { n: '4', text: 'Пройдите биометрическую идентификацию Face-ID с мобильного или веб-камеры.' },
-              { n: '5', text: 'Оплатите пошлину (для ИП бесплатно), задайте пароль и скачайте файл ключа (.pfx).' },
-              { n: '6', text: 'Запустите E-Imzo на компьютере, перейдите в «Установка ключей» и импортируйте файл.' },
-            ].map(s => (
-              <div key={s.n} className="flex gap-3">
-                <span className="w-5 h-5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-black flex items-center justify-center flex-shrink-0 mt-0.5 shadow-inner">{s.n}</span>
-                <p className="text-xs text-bx-muted leading-relaxed">{s.text}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="bg-bx-surface-2 border border-bx-border rounded-xl p-3.5 space-y-1.5 text-[11px] text-bx-muted shadow-inner">
-            <p><span className="text-emerald-600 dark:text-emerald-400 font-bold">✓ Срок действия ключа:</span> ровно 2 года со дня выпуска.</p>
-            <p><span className="text-blue-600 dark:text-blue-400 font-bold">⏱ Время оформления:</span> 5-10 минут при готовой OneID биометрии.</p>
-          </div>
-        </div>
-      )}
-
-      {tab === 'offline' && (
-        <div className="px-5 py-5 space-y-4">
-          <button onClick={() => openLink('https://e-imzo.uz')}
-            className="w-full flex items-center gap-3 bg-bx-surface-2 hover:bg-bx-surface-2/65 border border-bx-border rounded-xl px-4 py-3 transition-colors text-left cursor-pointer">
-            <span className="text-2xl">🏢</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-extrabold text-bx-text">Городские и областные отделения ЦЭКТТ</p>
-              <p className="text-[10px] text-bx-muted mt-0.5">Адреса и контакты операторов E-Imzo во всех регионах РУз</p>
-            </div>
-            <span className="text-xs text-blue-500 ml-auto">↗</span>
-          </button>
-
-          <div className="space-y-3">
-            <p className="text-xs font-bold text-bx-text">Что необходимо иметь с собой:</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              {[
-                { icon: '🪪', label: 'Оригинал паспорта / ID-карты', sub: 'для сверки биометрии' },
-                { icon: '📁', label: 'Свидетельство (гувохнома)', sub: 'для юрлиц и ИП' },
-                { icon: '💾', label: 'Флеш-накопитель (USB)', sub: 'для записи файла ключа' },
-                { icon: '💳', label: 'Средства оплаты', sub: 'терминал/перечисление' },
-              ].map(d => (
-                <div key={d.label} className="flex items-center gap-2.5 bg-bx-surface-2 border border-bx-border rounded-xl px-3.5 py-2.5">
-                  <span className="text-xl flex-shrink-0">{d.icon}</span>
-                  <div>
-                    <p className="font-bold text-bx-text leading-tight">{d.label}</p>
-                    <p className="text-[10px] text-bx-muted mt-0.5">{d.sub}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-xs font-bold text-bx-text">Порядок оформления в центре:</p>
-            {[
-              { n: '1', text: 'Посетите отделение ЦЭКТТ вашего района/города.' },
-              { n: '2', text: 'Заполните бумажную анкету-заявление у администратора.' },
-              { n: '3', text: 'Предоставьте оригиналы документов оператору для оцифровки.' },
-              { n: '4', text: 'Оплатите пошлину согласно прайс-листу ГНК.' },
-              { n: '5', text: 'Получите готовый файл .PFX на флешку и сохраните его резервную копию.' },
-            ].map(s => (
-              <div key={s.n} className="flex gap-3">
-                <span className="w-5 h-5 rounded-lg bg-bx-surface-2 border border-bx-border text-bx-muted text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.n}</span>
-                <p className="text-xs text-bx-muted leading-relaxed">{s.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Быстрые ссылки */}
-      <div className="px-5 py-3 border-t border-bx-border flex flex-wrap gap-2.5 bg-bx-surface-2/20">
-        <LinkBtn url="https://my.gov.uz" label="my.gov.uz" />
-        <LinkBtn url="https://e-imzo.uz" label="e-imzo.uz" />
-        <LinkBtn url="https://e-imzo.uz/main/downloads/" label="Скачать плагин E-Imzo" />
-        <LinkBtn url="https://soliq.uz" label="Soliq.uz" />
       </div>
     </div>
   );

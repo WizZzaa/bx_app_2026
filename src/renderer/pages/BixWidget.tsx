@@ -1,16 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import '../styles/bix-widget.css'
 import bixMascot from '../assets/mascot/bix-head-paws.png'
-import bixBusinessMascot from '../assets/mascot/bix-business.png'
-import bixAnalystMascot from '../assets/mascot/bix-analyst.png'
-import bixNightMascot from '../assets/mascot/bix-night.png'
-import hatLimeCap from '../assets/mascot/hats/hat-lime-cap.png'
-import hatTopHat from '../assets/mascot/hats/hat-top-hat.png'
-import hatFedora from '../assets/mascot/hats/hat-fedora.png'
-import hatCowboy from '../assets/mascot/hats/hat-cowboy.png'
-import hatParty from '../assets/mascot/hats/hat-party.png'
-import hatWizard from '../assets/mascot/hats/hat-wizard.png'
-import hatSailor from '../assets/mascot/hats/hat-sailor.png'
 import { usePlan } from '../lib/plan'
 import { createCanonicalEvent } from './planner/eventRepository'
 import { todayISO } from '../lib/dates'
@@ -102,7 +92,7 @@ const BIX_SETTINGS_KEY = 'bx_bix_settings_v1'
 const BIX_INTRO_KEY = 'bx_bix_intro_seen_v1'
 const QUICK_NOTES_KEY = 'bx_quick_notes'
 const WIDGET_TRANSLATION_HISTORY_KEY = 'bx_widget_translation_history'
-const DAILY_COINS = { free: 0, standard: 5, premium: 15 } as const
+const DAILY_COINS = { free: 0, trial: 0, standard: 5, premium: 15 } as const
 const DEFAULT_BIX_STATE: BixState = { coins: 30, needs: { food: 72, mood: 86, energy: 91 }, lastDailyClaim: null }
 const DEFAULT_BIX_SETTINGS: BixSettings = { jokesEnabled: true, jokeFrequency: 'normal', animationSpeed: 'normal', quietHours: true, quietFrom: '21:00', quietTo: '08:00', privateReminders: false, notificationsEnabled: true, reducedMotion: false }
 const EMPTY_COLLECTION: BixCollection = { catalog: [], inventory: [], achievements: [], achievementCatalog: [], achievementProgress: [] }
@@ -142,10 +132,35 @@ const BIX_PHRASES = {
   working: ['Работаю. Сейчас разложу всё по полочкам.', 'Проверяю данные — это займёт немного времени.', 'Секунду, Бикс уже занят делом.'],
 } as const
 const WARDROBE_ICONS: Record<string, string> = { business: '💼', analyst: '📊', night: '🌙' }
-const WARDROBE_VISUALS: Record<string, string> = { business: bixBusinessMascot, analyst: bixAnalystMascot, night: bixNightMascot }
-const HAT_VISUALS: Record<string, string> = {
-  hat_lime_cap: hatLimeCap, hat_top_hat: hatTopHat, hat_fedora: hatFedora, hat_cowboy: hatCowboy,
-  hat_party: hatParty, hat_wizard: hatWizard, hat_sailor: hatSailor,
+const WARDROBE_VISUAL_LOADERS: Record<string, () => Promise<{ default: string }>> = {
+  business: () => import('../assets/mascot/bix-business.png'),
+  analyst: () => import('../assets/mascot/bix-analyst.png'),
+  night: () => import('../assets/mascot/bix-night.png'),
+}
+const HAT_VISUAL_LOADERS: Record<string, () => Promise<{ default: string }>> = {
+  hat_lime_cap: () => import('../assets/mascot/hats/hat-lime-cap.png'),
+  hat_top_hat: () => import('../assets/mascot/hats/hat-top-hat.png'),
+  hat_fedora: () => import('../assets/mascot/hats/hat-fedora.png'),
+  hat_cowboy: () => import('../assets/mascot/hats/hat-cowboy.png'),
+  hat_party: () => import('../assets/mascot/hats/hat-party.png'),
+  hat_wizard: () => import('../assets/mascot/hats/hat-wizard.png'),
+  hat_sailor: () => import('../assets/mascot/hats/hat-sailor.png'),
+}
+const BIX_VISUAL_LOADERS = { ...WARDROBE_VISUAL_LOADERS, ...HAT_VISUAL_LOADERS }
+
+export function collectBixVisualKeys(
+  selectedOutfit: string | null,
+  selectedHat: string | undefined,
+  panel: Panel,
+  wardrobeVisualKeys: string[],
+  chestVisualKeys: string[],
+): string[] {
+  const keys = new Set<string>()
+  if (selectedOutfit) keys.add(selectedOutfit)
+  if (selectedHat) keys.add(selectedHat)
+  if (panel === 'wardrobe') wardrobeVisualKeys.forEach(key => keys.add(key))
+  if (panel === 'chest') chestVisualKeys.forEach(key => keys.add(key))
+  return [...keys]
 }
 
 function pickPhrase(phrases: readonly string[]) {
@@ -253,6 +268,7 @@ export default function BixWidget() {
   const [settings, setSettings] = useState<BixSettings>(loadBixSettings)
   const [collection, setCollection] = useState<BixCollection>(EMPTY_COLLECTION)
   const [collectionLoading, setCollectionLoading] = useState(false)
+  const [loadedVisuals, setLoadedVisuals] = useState<Record<string, string>>({})
   const [wardrobeSection, setWardrobeSection] = useState<'outfits' | 'accessories'>('outfits')
   const [introOpen, setIntroOpen] = useState(() => !localStorage.getItem(BIX_INTRO_KEY))
   const [pinned, setPinned] = useState(true)
@@ -676,7 +692,7 @@ export default function BixWidget() {
     setUtilityBusy(true); setActivity('working'); setUtilityStatus('Проверяю локальную службу E-Imzo…')
     try {
       await fetch('http://localhost:64443', { mode: 'no-cors', signal: AbortSignal.timeout(2_500) })
-      setUtilityStatus('E-Imzo отвечает на локальном порту 64443. Служба готова к работе.'); setActivity('success')
+      setUtilityStatus('E-Imzo отвечает на локальном порту 64443 и доступен официальным порталам. BX не выполняет подписание.'); setActivity('success')
     } catch {
       setUtilityStatus('E-Imzo не отвечает. Запустите локальную службу и повторите проверку.'); setActivity('error')
     } finally { setUtilityBusy(false) }
@@ -847,9 +863,7 @@ export default function BixWidget() {
     .map(item => collection.catalog.find(catalogItem => catalogItem.sku === item.sku)?.visual_key)
     .filter((visualKey): visualKey is string => Boolean(visualKey))), [collection])
   const selectedOutfit = equippedVisuals.has('business') ? 'business' : equippedVisuals.has('analyst') ? 'analyst' : equippedVisuals.has('night') ? 'night' : null
-  const selectedHat = [...equippedVisuals].find(visualKey => visualKey in HAT_VISUALS)
-  const selectedHatSource = selectedHat ? HAT_VISUALS[selectedHat] : null
-  const mascotSource = selectedOutfit ? WARDROBE_VISUALS[selectedOutfit] : bixMascot
+  const selectedHat = [...equippedVisuals].find(visualKey => visualKey in HAT_VISUAL_LOADERS)
   const ownedSkus = useMemo(() => new Set(collection.inventory.map(item => item.sku)), [collection.inventory])
   const wardrobeItems = useMemo(() => collection.catalog.filter(item => {
     if (ownedSkus.has(item.sku)) return false
@@ -859,11 +873,37 @@ export default function BixWidget() {
   const chestOutfits = useMemo(() => chestItems.filter(item => item.category === 'outfit'), [chestItems])
   const chestAccessories = useMemo(() => chestItems.filter(item => item.category !== 'outfit'), [chestItems])
   const achievementProgress = useMemo(() => new Map(collection.achievementProgress.map(item => [item.code, item])), [collection.achievementProgress])
+
+  useEffect(() => {
+    const visualKeys = collectBixVisualKeys(
+      selectedOutfit,
+      selectedHat,
+      panel,
+      wardrobeItems.map(item => item.visual_key),
+      chestItems.map(item => item.visual_key),
+    )
+    const missing = visualKeys.filter(visualKey => BIX_VISUAL_LOADERS[visualKey] && !loadedVisuals[visualKey])
+    if (!missing.length) return
+
+    let active = true
+    void Promise.all(missing.map(async visualKey => {
+      const module = await BIX_VISUAL_LOADERS[visualKey]()
+      return [visualKey, module.default] as const
+    })).then(entries => {
+      if (active) setLoadedVisuals(current => ({ ...current, ...Object.fromEntries(entries) }))
+    }).catch(() => {
+      // Icons remain as a safe preview fallback when an optional image cannot load.
+    })
+    return () => { active = false }
+  }, [chestItems, loadedVisuals, panel, selectedHat, selectedOutfit, wardrobeItems])
+
+  const selectedHatSource = selectedHat ? loadedVisuals[selectedHat] || null : null
+  const mascotSource = selectedOutfit ? loadedVisuals[selectedOutfit] || bixMascot : bixMascot
   const renderCollectionCard = (item: BixCatalogItem, location: 'wardrobe' | 'chest') => {
     const owned = collection.inventory.find(entry => entry.sku === item.sku)
     const equipped = owned?.equipped
     const locked = location === 'wardrobe' && (item.plan_required === 'standard' && plan === 'free' || item.plan_required === 'premium' && plan !== 'premium')
-    const preview = WARDROBE_VISUALS[item.visual_key] || HAT_VISUALS[item.visual_key]
+    const preview = loadedVisuals[item.visual_key]
     const type = item.category === 'outfit' ? 'образ Бикса' : item.category === 'headwear' ? 'головной убор' : 'аксессуар'
     const action = locked ? `${item.plan_required}+` : location === 'wardrobe' ? `${item.price} ●` : equipped ? 'снять' : 'надеть'
     return <button key={item.sku} className={`bix-wardrobe-card${equipped ? ' equipped' : ''}`} disabled={locked || collectionLoading} onClick={() => void buyOrEquip(item)}>

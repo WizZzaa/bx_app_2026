@@ -4,22 +4,24 @@ import { applyTheme, normalizeTheme } from '../../lib/theme'
 import type { UpdateStatus } from '../../../main/services/updatePolicy'
 
 interface Props {
-  onSignIn: (email: string, password: string) => Promise<string | null>
-  onSignUp: (email: string, password: string, referralCode?: string) => Promise<string | null>
+  onLegacySignIn: (email: string, password: string) => Promise<string | null>
   onResetPassword: (email: string) => Promise<string | null>
-  onResendConfirmation: (email: string) => Promise<string | null>
+  onTelegramSignIn: () => Promise<string | null>
+  onRecoverWithCode: (code: string) => Promise<string | null>
 }
 
-const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onResendConfirmation }) => {
-  const [mode, setMode] = useState<'in' | 'up' | 'reset'>('in')
+const LoginScreen: React.FC<Props> = ({ onLegacySignIn, onResetPassword, onTelegramSignIn, onRecoverWithCode }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [referralCode, setReferralCode] = useState('')
+  const [pendingReferral, setPendingReferral] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [showResend, setShowResend] = useState(false)
-  const [resending, setResending] = useState(false)
+  const [telegramLoading, setTelegramLoading] = useState(false)
+  const [recoveryCode, setRecoveryCode] = useState('')
+  const [recoveryLoading, setRecoveryLoading] = useState(false)
+  const [legacyLoading, setLegacyLoading] = useState(false)
+  const [showRecoveryOptions, setShowRecoveryOptions] = useState(false)
+  const [showLegacyLogin, setShowLegacyLogin] = useState(false)
   const [showChangelog, setShowChangelog] = useState(false)
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle')
   const [updateProgress, setUpdateProgress] = useState<number | null>(null)
@@ -27,22 +29,23 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
 
   const latestEntry = CHANGELOG[0]
 
-  // Код приглашения из ссылки (?ref=CODE) — в веб-версии сразу переводим в регистрацию.
+  // Telegram создаёт новый аккаунт при первом подтверждении. Реферал применит
+  // PlanProvider после появления сессии, как и в прежнем сценарии регистрации.
   React.useEffect(() => {
     try {
-      const ref = new URLSearchParams(window.location.search).get('ref')
-      if (ref) { setReferralCode(ref.toUpperCase()); setMode('up') }
+      const ref = (new URLSearchParams(window.location.search).get('ref') || '').trim().toUpperCase()
+      if (ref) {
+        localStorage.setItem('bx_pending_ref', ref)
+        setPendingReferral(ref)
+      }
     } catch { /* нет window.location — десктоп */ }
   }, [])
 
-  // Подписка на нативный autoUpdater из Electron
+  // Экран входа следует выбранной системной теме, как остальные поверхности BX.
   React.useEffect(() => {
     if (typeof document !== 'undefined') {
       const savedTheme = localStorage.getItem('bx_theme')
-      applyTheme('dark') // экран входа всегда тёмный
-      return () => {
-        applyTheme(normalizeTheme(savedTheme))
-      }
+      applyTheme(normalizeTheme(savedTheme))
     }
     return undefined
   }, [])
@@ -76,71 +79,74 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
     return undefined
   }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLegacySignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setInfo(null)
-    setShowResend(false)
-    setLoading(true)
-
-    if (mode === 'reset') {
-      const err = await onResetPassword(email)
-      setLoading(false)
+    setLegacyLoading(true)
+    localStorage.setItem('bx_needs_telegram_migration', '1')
+    try {
+      const err = await onLegacySignIn(email, password)
       if (err) {
+        localStorage.removeItem('bx_needs_telegram_migration')
         setError(err)
-        return
       }
-      setInfo('Ссылка для сброса пароля отправлена на ваш email. Проверьте почту.')
+    } catch {
+      localStorage.removeItem('bx_needs_telegram_migration')
+      setError('Не удалось проверить прежний аккаунт. Попробуйте ещё раз.')
+    } finally {
+      setLegacyLoading(false)
+    }
+  }
+
+  const handleLegacyReset = async () => {
+    setError(null)
+    setInfo(null)
+    if (!email.trim()) {
+      setError('Введите email ранее созданного аккаунта.')
       return
     }
+    setLegacyLoading(true)
+    try {
+      const err = await onResetPassword(email.trim())
+      if (err) setError(err)
+      else setInfo('Ссылка восстановления отправлена на контактный email старого аккаунта.')
+    } finally {
+      setLegacyLoading(false)
+    }
+  }
 
-    const err = mode === 'in' ? await onSignIn(email, password) : await onSignUp(email, password, referralCode)
-    setLoading(false)
-    if (err) {
-      setError(err)
-      // Детектируем «Email not confirmed»
-      if (err.toLowerCase().includes('email not confirmed') || err.toLowerCase().includes('не подтвержд')) {
-        setShowResend(true)
+  const handleTelegramSignIn = async () => {
+    setError(null)
+    setInfo('Подтвердите собственный контакт в Telegram и вернитесь в BX.')
+    setTelegramLoading(true)
+    try {
+      const err = await onTelegramSignIn()
+      if (err) {
+        setInfo(null)
+        setError(err)
       }
-      return
+    } catch {
+      setInfo(null)
+      setError('Не удалось открыть безопасный вход Telegram. Попробуйте ещё раз.')
+    } finally {
+      setTelegramLoading(false)
     }
-    if (mode === 'up') {
-      setInfo('Аккаунт создан. Если включено подтверждение — проверьте почту, затем войдите.')
+  }
+
+  const handleRecovery = async () => {
+    setError(null)
+    setInfo('Подтвердите номер аккаунта в Telegram и вернитесь в BX.')
+    setRecoveryLoading(true)
+    try {
+      const err = await onRecoverWithCode(recoveryCode.trim().toUpperCase())
+      if (err) { setInfo(null); setError(err) }
+    } catch {
+      setInfo(null)
+      setError('Не удалось начать восстановление. Попробуйте ещё раз.')
+    } finally {
+      setRecoveryLoading(false)
     }
-  }
-
-  const handleResend = async () => {
-    setResending(true)
-    const err = await onResendConfirmation(email)
-    setResending(false)
-    if (err) {
-      setError(err)
-      return
-    }
-    setShowResend(false)
-    setInfo('Письмо с подтверждением отправлено повторно. Проверьте почту.')
-    setError(null)
-  }
-
-  const handleToggleMode = () => {
-    setMode(prev => prev === 'in' ? 'up' : 'in')
-    setError(null)
-    setInfo(null)
-    setShowResend(false)
-  }
-
-  const handleForgotPassword = () => {
-    setMode('reset')
-    setError(null)
-    setInfo(null)
-    setShowResend(false)
-  }
-
-  const handleBackToLogin = () => {
-    setMode('in')
-    setError(null)
-    setInfo(null)
-    setShowResend(false)
   }
 
   const handleCheckUpdate = async () => {
@@ -197,30 +203,20 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
     }
   }
 
-  const modeLabel = mode === 'in'
-    ? 'Интеллектуальный вход'
-    : mode === 'up'
-      ? 'Создание аккаунта'
-      : 'Восстановление доступа'
-
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-[#07090e] overflow-hidden relative font-sans select-none">
-      {/* Background neon glow blobs */}
-      <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none animate-pulse duration-[8000ms]" />
-      <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none animate-pulse duration-[6000ms]" />
-
-      <div className="w-[400px] z-10 bx-animate-fade">
+    <div className="min-h-screen w-full overflow-y-auto bg-bx-bg px-4 py-8 font-sans text-bx-text">
+      <div className="mx-auto w-full max-w-[440px] bx-animate-fade">
         {/* Logo & Header */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 flex items-center justify-center font-black text-white text-2xl shadow-xl shadow-blue-500/25 relative group overflow-hidden">
             <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             BX
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-white mt-4 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
+          <h1 className="mt-4 text-2xl font-black tracking-tight text-bx-text">
             BX Помощник
           </h1>
-          <p className="text-[10px] text-slate-400 font-bold tracking-widest mt-1.5 uppercase">
-            {modeLabel}
+          <p className="mt-1.5 text-xs font-semibold text-bx-muted">
+            Один подтверждённый номер — один аккаунт
           </p>
         </div>
 
@@ -263,186 +259,47 @@ const LoginScreen: React.FC<Props> = ({ onSignIn, onSignUp, onResetPassword, onR
           </div>
         )}
 
-        {/* Card */}
-        <form onSubmit={handleSubmit} className="bg-[#111420]/80 backdrop-blur-xl border border-bx-border rounded-3xl p-8 space-y-5 shadow-2xl shadow-blue-950/20">
-          {/* Email */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Email</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </span>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full bg-[#0a0d14]/90 text-slate-200 text-sm pl-10 pr-4 py-3 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500 focus:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-all placeholder:text-slate-600"
-                placeholder="you@example.com"
-                tabIndex={0}
-                aria-label="Ввод адреса электронной почты"
-              />
-            </div>
+        {/* Telegram — единственный публичный сценарий входа и регистрации. */}
+        <section className="space-y-5 rounded-3xl border border-bx-border bg-bx-surface p-6 shadow-xl sm:p-8" aria-labelledby="telegram-login-title">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Без пароля BX</p>
+            <h2 id="telegram-login-title" className="mt-2 text-xl font-black text-bx-text">Вход и создание аккаунта</h2>
+            <p className="mt-2 text-sm leading-relaxed text-bx-muted">Откроется бот <b>@Tech_support_bx_bot</b>. В Telegram нажмите кнопку передачи собственного контакта — номер нельзя ввести вручную.</p>
           </div>
 
-          {/* Password — скрыт в режиме reset */}
-          {mode !== 'reset' && (
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Пароль</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </span>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="w-full bg-[#0a0d14]/90 text-slate-200 text-sm pl-10 pr-4 py-3 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500 focus:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-all placeholder:text-slate-600"
-                  placeholder="••••••••"
-                  tabIndex={0}
-                  aria-label="Ввод пароля"
-                />
-              </div>
-              {/* Forgot password link — только в режиме входа */}
-              {mode === 'in' && (
-                <div className="text-right">
-                  <button
-                    type="button"
-                    onClick={handleForgotPassword}
-                    className="text-[11px] text-slate-500 hover:text-blue-400 transition-colors focus:outline-none"
-                    tabIndex={0}
-                    aria-label="Забыли пароль? Восстановить доступ"
-                  >
-                    Забыли пароль?
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+          {pendingReferral && <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 px-3 py-2 text-xs text-bx-text">Код приглашения <b>{pendingReferral}</b> сохранён и применится после первого входа.</div>}
+          {error && <div role="alert" className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-xs text-red-700 dark:text-red-300">{error}</div>}
+          {info && <div role="status" className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-700 dark:text-emerald-300">{info}</div>}
 
-          {/* Код приглашения — только при регистрации, необязательно */}
-          {mode === 'up' && (
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Код приглашения <span className="text-slate-600 normal-case font-medium">(необязательно)</span></label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 010 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 010-4V7a2 2 0 00-2-2H5z" />
-                  </svg>
-                </span>
-                <input
-                  type="text"
-                  value={referralCode}
-                  onChange={e => setReferralCode(e.target.value.toUpperCase())}
-                  className="w-full bg-[#0a0d14]/90 text-slate-200 text-sm pl-10 pr-4 py-3 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500 focus:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-all placeholder:text-slate-600 tracking-wider"
-                  placeholder="Код друга (если есть)"
-                  tabIndex={0}
-                  aria-label="Код приглашения от друга"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Error */}
-          {error && (
-            <div className="text-xs text-red-400 bg-red-950/30 border border-red-500/20 rounded-xl px-4 py-2.5 flex items-start gap-2">
-              <svg className="w-4 h-4 mt-0.5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Resend confirmation button */}
-          {showResend && (
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={resending}
-              className="w-full text-xs text-blue-400 bg-blue-950/30 border border-blue-500/20 rounded-xl px-4 py-2.5 hover:bg-blue-950/50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              tabIndex={0}
-              aria-label="Отправить подтверждение повторно"
-            >
-              {resending ? (
-                <span className="w-3.5 h-3.5 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              )}
-              Отправить подтверждение повторно
-            </button>
-          )}
-
-          {/* Info message */}
-          {info && (
-            <div className="text-xs text-emerald-400 bg-emerald-950/30 border border-emerald-500/20 rounded-xl px-4 py-2.5 flex items-start gap-2">
-              <svg className="w-4 h-4 mt-0.5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{info}</span>
-            </div>
-          )}
-
-          {/* Submit button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.985] text-white text-sm font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
-            tabIndex={0}
-            aria-label={
-              mode === 'in' ? 'Войти в аккаунт'
-                : mode === 'up' ? 'Зарегистрировать новый аккаунт'
-                  : 'Отправить ссылку для сброса пароля'
-            }
-          >
-            {loading ? (
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                {mode === 'reset' ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                )}
-              </svg>
-            )}
-            {mode === 'in' ? 'Войти' : mode === 'up' ? 'Зарегистрироваться' : 'Отправить ссылку'}
+          <button type="button" onClick={handleTelegramSignIn} disabled={telegramLoading || recoveryLoading || legacyLoading} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#229ED9] px-4 text-sm font-black text-white transition-colors hover:bg-[#1d8fc4] focus:outline-none focus:ring-2 focus:ring-[#229ED9]/40 focus:ring-offset-2 focus:ring-offset-bx-surface disabled:cursor-wait disabled:opacity-55">
+            {telegramLoading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />}
+            {telegramLoading ? 'Ожидаю подтверждение в Telegram…' : 'Продолжить через Telegram'}
           </button>
+          <p className="text-center text-[10px] leading-relaxed text-bx-muted">Первое подтверждение создаёт аккаунт. Повторное открывает существующий. BX не получает пароль Telegram.</p>
 
-          {/* Footer links */}
-          <div className="text-center text-xs text-slate-500 pt-2 border-t border-slate-800/40 space-y-1.5">
-            {mode === 'reset' ? (
-              <button
-                type="button"
-                onClick={handleBackToLogin}
-                className="text-blue-400 hover:text-blue-300 font-semibold focus:outline-none focus:underline"
-                tabIndex={0}
-                aria-label="Вернуться ко входу"
-              >
-                ← Вернуться ко входу
-              </button>
-            ) : (
-              <div>
-                {mode === 'in' ? 'Нет аккаунта? ' : 'Уже есть аккаунт? '}
-                <button
-                  type="button"
-                  onClick={handleToggleMode}
-                  className="text-blue-400 hover:text-blue-300 font-semibold focus:outline-none focus:underline"
-                  tabIndex={0}
-                  aria-label={mode === 'in' ? 'Переключиться на создание аккаунта' : 'Переключиться на вход'}
-                >
-                  {mode === 'in' ? 'Создать' : 'Войти'}
-                </button>
+          <button type="button" aria-expanded={showRecoveryOptions} onClick={() => { setShowRecoveryOptions(value => !value); setError(null); setInfo(null) }} className="min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-4 text-xs font-bold text-bx-text hover:border-blue-500/40">Проблемы со входом?</button>
+
+          {showRecoveryOptions && <div className="space-y-4 border-t border-bx-border pt-4">
+            <div>
+              <p className="text-xs font-black text-bx-text">Одноразовый резервный код</p>
+              <p className="mt-1 text-[10px] leading-relaxed text-bx-muted">Используйте один из кодов, ранее полученных в Telegram. Для завершения всё равно потребуется подтвердить номер аккаунта.</p>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <input type="text" value={recoveryCode} onChange={event => setRecoveryCode(event.target.value.toUpperCase())} placeholder="XXXX-XXXX-XXXX-XXXX" aria-label="Резервный код восстановления" autoComplete="one-time-code" className="min-h-11 min-w-0 flex-1 rounded-xl border border-bx-border bg-bx-bg px-3 text-sm uppercase tracking-wider text-bx-text outline-none focus:border-blue-500" />
+                <button type="button" onClick={handleRecovery} disabled={recoveryLoading || recoveryCode.trim().length < 16} className="min-h-11 rounded-xl border border-blue-500/30 px-4 text-xs font-bold text-blue-600 hover:bg-blue-500/10 disabled:opacity-40 dark:text-blue-300">{recoveryLoading ? 'Ожидание…' : 'Восстановить'}</button>
               </div>
-            )}
-          </div>
-        </form>
+            </div>
+
+            <div className="rounded-2xl border border-amber-500/25 bg-amber-500/[0.06] p-3">
+              <button type="button" aria-expanded={showLegacyLogin} onClick={() => { setShowLegacyLogin(value => !value); setError(null); setInfo(null) }} className="flex min-h-11 w-full items-center justify-between gap-3 text-left text-xs font-black text-bx-text"><span>Ранее входили по email и паролю?</span><span aria-hidden="true">{showLegacyLogin ? '−' : '+'}</span></button>
+              {showLegacyLogin && <form onSubmit={handleLegacySignIn} className="mt-3 space-y-3 border-t border-amber-500/20 pt-3">
+                <p className="text-[10px] leading-relaxed text-bx-muted">Переходный вход сохраняет доступ к прежним данным. После входа подтвердите Telegram в «Личном кабинете → Telegram и безопасность». Новые аккаунты здесь не создаются.</p>
+                <label className="block text-[10px] font-bold text-bx-muted">Контактный email<input type="email" required autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} className="mt-1 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-sm text-bx-text outline-none focus:border-blue-500" /></label>
+                <label className="block text-[10px] font-bold text-bx-muted">Старый пароль<input type="password" required autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} className="mt-1 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-sm text-bx-text outline-none focus:border-blue-500" /></label>
+                <div className="flex flex-wrap justify-end gap-2"><button type="button" disabled={legacyLoading} onClick={() => void handleLegacyReset()} className="min-h-11 rounded-xl px-3 text-xs font-bold text-bx-muted hover:bg-bx-bg">Восстановить старый пароль</button><button type="submit" disabled={legacyLoading} className="min-h-11 rounded-xl bg-bx-text px-4 text-xs font-black text-bx-bg disabled:opacity-50">{legacyLoading ? 'Проверяю…' : 'Перенести вход'}</button></div>
+              </form>}
+            </div>
+          </div>}
+        </section>
 
         {/* ── Version badge + update check ── */}
         <div className="mt-5 flex items-center justify-center gap-3">

@@ -1,5 +1,6 @@
-import type { FontScale } from './uiScale'
-import type { BxTheme } from './theme'
+import { normalizeFontScale, type FontScale } from './uiScale'
+import { normalizeUiDensity, type UiDensity } from './uiDensity'
+import { normalizeTheme, type BxTheme } from './theme'
 
 export interface SettingsBackupPayload {
   version: string
@@ -11,6 +12,7 @@ export interface SettingsBackupPayload {
   idleLock?: 'off' | '5' | '10' | '30' | '60'
   pinEnabled?: boolean
   fontScale?: FontScale
+  density?: UiDensity
   templates?: unknown[]
   counterparties?: unknown[]
 }
@@ -24,10 +26,10 @@ export interface SettingsBackupSummary {
   counterparties: number
 }
 
-const VALID_THEME = new Set(['dark', 'light', 'lime', 'lavender-light', 'lime-light'])
+const VALID_THEME = new Set(['system', 'dark', 'light', 'high-contrast', 'lime', 'lavender-light', 'lime-light'])
 const VALID_NOTIFY = new Set(['1', '3', '7', 'off'])
 const VALID_IDLE = new Set(['off', '5', '10', '30', '60'])
-const VALID_SCALE = new Set(['75', '90', '100', '110', '120', '130'])
+const LEGACY_SCALE = new Set(['75', '90', '100', '110', '120', '125', '130'])
 
 export function parseSettingsBackup(text: string): SettingsBackupPayload {
   let value: unknown
@@ -44,10 +46,13 @@ export function parseSettingsBackup(text: string): SettingsBackupPayload {
     throw new Error('Не найдены версия или дата создания копии BX')
   }
   if (data.theme !== undefined && !VALID_THEME.has(String(data.theme))) throw new Error('Некорректная тема оформления')
-  if (data.theme === 'lime-light') data.theme = 'lavender-light'
+  if (data.theme !== undefined) data.theme = normalizeTheme(data.theme)
   if (data.notifyDays !== undefined && !VALID_NOTIFY.has(String(data.notifyDays))) throw new Error('Некорректный период уведомлений')
   if (data.idleLock !== undefined && !VALID_IDLE.has(String(data.idleLock))) throw new Error('Некорректный период автоблокировки')
-  if (data.fontScale !== undefined && !VALID_SCALE.has(String(data.fontScale))) throw new Error('Некорректный масштаб интерфейса')
+  if (data.fontScale !== undefined && !LEGACY_SCALE.has(String(data.fontScale))) throw new Error('Некорректный масштаб интерфейса')
+  if (data.fontScale !== undefined) data.fontScale = normalizeFontScale(String(data.fontScale))
+  if (data.density !== undefined && !['comfortable', 'compact'].includes(String(data.density))) throw new Error('Некорректная плотность интерфейса')
+  if (data.density !== undefined) data.density = normalizeUiDensity(data.density)
   for (const key of ['ecpKeys', 'localRequisites', 'templates', 'counterparties']) {
     if (data[key] !== undefined && !Array.isArray(data[key])) throw new Error(`Поле ${key} должно быть списком`)
   }

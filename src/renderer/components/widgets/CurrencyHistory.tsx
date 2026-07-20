@@ -38,9 +38,6 @@ function Sparkline({ points, color }: { points: RatePoint[]; color: string }) {
   const ys = vals.map(v => H - ((v - min) / range) * (H - 8) - 4);
   const path = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
   const area = `${path} L${W},${H} L0,${H} Z`;
-  const last = vals[vals.length - 1];
-  const first = vals[0];
-  const up = last >= first;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }}>
       <defs>

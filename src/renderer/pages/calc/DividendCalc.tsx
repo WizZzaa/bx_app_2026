@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import CalcResult from './CalcResult';
 import MoneyInput from './MoneyInput';
+import { useRegulatoryNumber } from '../../lib/calculatorRegulatory';
 
 // Дивиденды РУз: ст. 382 НК РУз
 // Резиденты: 5%  (физ. лица РУз)
@@ -10,34 +11,17 @@ function fmt(n: number) {
   return n.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
 }
 
-const TREATIES: Record<string, number> = {
-  none: 10,
-  russia: 10,
-  germany: 5,
-  china: 10,
-  usa: 10,
-  uk: 5,
-  france: 5,
-};
-
-const TREATY_LABELS: Record<string, string> = {
-  none: 'Без СИДН / стандарт',
-  russia: 'Россия (СИДН)',
-  germany: 'Германия (СИДН, 5%)',
-  china: 'Китай (СИДН)',
-  usa: 'США (СИДН)',
-  uk: 'Великобритания (5%)',
-  france: 'Франция (5%)',
-};
-
 export default function DividendCalc() {
+  const RESIDENT_RATE = useRegulatoryNumber('tax.dividend.resident');
+  const NONRESIDENT_RATE = useRegulatoryNumber('tax.dividend.nonresident');
   const [amount, setAmount] = useState('');
   const [resident, setResident] = useState(true);
-  const [treaty, setTreaty] = useState('none');
+  const [nonresidentRate, setNonresidentRate] = useState('');
 
   const val = parseFloat(amount.replace(/\s/g, '').replace(',', '.')) || 0;
 
-  const rate = resident ? 5 : TREATIES[treaty] ?? 10;
+  const manualNonresidentRate = Math.min(100, Math.max(0, Number(nonresidentRate.replace(',', '.')) || NONRESIDENT_RATE));
+  const rate = resident ? RESIDENT_RATE : manualNonresidentRate;
   const tax = val * (rate / 100);
   const net = val - tax;
 
@@ -48,13 +32,13 @@ export default function DividendCalc() {
           onClick={() => setResident(true)}
           className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${resident ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
         >
-          Резидент РУз (5%)
+          Резидент РУз ({RESIDENT_RATE}%)
         </button>
         <button
           onClick={() => setResident(false)}
           className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${!resident ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
         >
-          Нерезидент (5–10%)
+          Нерезидент (указать ставку)
         </button>
       </div>
 
@@ -65,21 +49,20 @@ export default function DividendCalc() {
 
       {!resident && (
         <div>
-          <label className="block text-xs text-bx-muted mb-1.5">Страна — применимое СИДН</label>
-          <select
-            value={treaty}
-            onChange={e => setTreaty(e.target.value)}
+          <label className="block text-xs text-bx-muted mb-1.5">Ставка по проверенному СИДН или НК (%)</label>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={nonresidentRate || String(NONRESIDENT_RATE)}
+            onChange={e => setNonresidentRate(e.target.value)}
             className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm"
-          >
-            {Object.entries(TREATY_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
+          />
+          <p className="mt-1 text-[10px] text-bx-muted">BX не подбирает СИДН автоматически: страна, статус получателя и право на льготу требуют отдельной проверки.</p>
         </div>
       )}
 
       <CalcResult
-        title={`Дивиденды — ${resident ? 'резидент 5%' : `нерезидент ${rate}%`}`}
+        title={`Дивиденды — ${resident ? `резидент ${RESIDENT_RATE}%` : `нерезидент ${rate}%`}`}
         rows={[
           { label: 'Сумма дивидендов', value: `${fmt(val)} UZS` },
           { label: 'Ставка налога', value: `${rate}%` },
@@ -89,7 +72,7 @@ export default function DividendCalc() {
       />
 
       <p className="text-[11px] text-bx-muted">
-        Ст. 382 НК РУз. Резиденты — 5%. Нерезиденты — 10% (или ставка СИДН, если она ниже).
+        Ст. 382 НК РУз. Базовые значения: резидент — {RESIDENT_RATE}%, нерезидент — {NONRESIDENT_RATE}% (или подтверждённая ставка СИДН).
         Налог удерживается у источника выплаты (ООО / АО).
       </p>
     </div>

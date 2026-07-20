@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { applyTheme, currentTheme, nextTheme, saveTheme, subscribeToTheme, THEME_KEY } from './theme'
+import { applyTheme, currentTheme, nextTheme, resolveTheme, saveTheme, subscribeToTheme, THEME_KEY } from './theme'
 
 describe('application themes', () => {
   beforeEach(() => {
@@ -8,64 +8,74 @@ describe('application themes', () => {
     delete document.documentElement.dataset.theme
   })
 
-  it('applies the graphite and lime palette as a dark theme', () => {
-    applyTheme('lime')
-    expect(document.documentElement.classList.contains('lime')).toBe(true)
+  it('applies the high contrast palette as a dark theme', () => {
+    applyTheme('high-contrast')
+    expect(document.documentElement.classList.contains('high-contrast')).toBe(true)
     expect(document.documentElement.classList.contains('dark')).toBe(true)
     expect(document.documentElement.classList.contains('light')).toBe(false)
-    expect(document.documentElement.dataset.theme).toBe('lime')
+    expect(document.documentElement.dataset.theme).toBe('high-contrast')
+    expect(document.documentElement.dataset.resolvedTheme).toBe('high-contrast')
   })
 
   it('reads only supported stored themes', () => {
-    localStorage.setItem(THEME_KEY, 'lime')
-    expect(currentTheme()).toBe('lime')
+    localStorage.setItem(THEME_KEY, 'high-contrast')
+    expect(currentTheme()).toBe('high-contrast')
     localStorage.setItem(THEME_KEY, 'unknown')
-    expect(currentTheme()).toBe('dark')
+    expect(currentTheme()).toBe('light')
   })
 
   it('cycles through all four themes', () => {
+    expect(nextTheme('system')).toBe('light')
     expect(nextTheme('light')).toBe('dark')
-    expect(nextTheme('dark')).toBe('lime')
-    expect(nextTheme('lime')).toBe('lavender-light')
-    expect(nextTheme('lavender-light')).toBe('light')
+    expect(nextTheme('dark')).toBe('high-contrast')
+    expect(nextTheme('high-contrast')).toBe('system')
   })
 
-  it('applies the light lavender palette without dark variants', () => {
-    applyTheme('lavender-light')
-    expect(document.documentElement.classList.contains('lavender-light')).toBe(true)
+  it('applies the light palette without dark variants', () => {
+    applyTheme('light')
     expect(document.documentElement.classList.contains('light')).toBe(true)
     expect(document.documentElement.classList.contains('dark')).toBe(false)
-    expect(document.documentElement.classList.contains('lime')).toBe(false)
+    expect(document.documentElement.classList.contains('high-contrast')).toBe(false)
   })
 
-  it('migrates the retired light lime theme to light lavender', () => {
-    localStorage.setItem(THEME_KEY, 'lime-light')
-    expect(currentTheme()).toBe('lavender-light')
-    expect(localStorage.getItem(THEME_KEY)).toBe('lavender-light')
+  it('migrates retired palettes to their canonical accessible equivalents', () => {
+    localStorage.setItem(THEME_KEY, 'lime')
+    expect(currentTheme()).toBe('high-contrast')
+    expect(localStorage.getItem(THEME_KEY)).toBe('high-contrast')
+    localStorage.setItem(THEME_KEY, 'lavender-light')
+    expect(currentTheme()).toBe('light')
+    expect(localStorage.getItem(THEME_KEY)).toBe('light')
+  })
+
+  it('resolves the system choice using the operating system preference', () => {
+    const original = window.matchMedia
+    window.matchMedia = (() => ({ matches: true })) as unknown as typeof window.matchMedia
+    expect(resolveTheme('system')).toBe('dark')
+    window.matchMedia = original
   })
 
   it('keeps theme controls synchronized in the same window', () => {
     const updates: string[] = []
     const unsubscribe = subscribeToTheme(theme => updates.push(theme))
 
-    saveTheme('lime')
+    saveTheme('high-contrast')
 
-    expect(localStorage.getItem(THEME_KEY)).toBe('lime')
-    expect(document.documentElement.dataset.theme).toBe('lime')
-    expect(updates).toEqual(['lime'])
+    expect(localStorage.getItem(THEME_KEY)).toBe('high-contrast')
+    expect(document.documentElement.dataset.theme).toBe('high-contrast')
+    expect(updates).toEqual(['high-contrast'])
     unsubscribe()
   })
 
   it('applies a theme changed in another browser tab', () => {
     const updates: string[] = []
     const unsubscribe = subscribeToTheme(theme => updates.push(theme))
-    localStorage.setItem(THEME_KEY, 'lavender-light')
+    localStorage.setItem(THEME_KEY, 'light')
 
-    window.dispatchEvent(new StorageEvent('storage', { key: THEME_KEY, newValue: 'lavender-light' }))
+    window.dispatchEvent(new StorageEvent('storage', { key: THEME_KEY, newValue: 'light' }))
 
-    expect(document.documentElement.dataset.theme).toBe('lavender-light')
+    expect(document.documentElement.dataset.theme).toBe('light')
     expect(document.documentElement.classList.contains('light')).toBe(true)
-    expect(updates).toEqual(['lavender-light'])
+    expect(updates).toEqual(['light'])
     unsubscribe()
   })
 })

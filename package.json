@@ -1,14 +1,15 @@
 {
   "name": "app",
   "productName": "BX Помощник Бухгалтера",
-  "version": "2.31.20",
+  "version": "2.69.0",
   "description": "BX — помощник бухгалтера Республики Узбекистан: планировщик, калькуляторы, справочники, AI-консультант",
   "main": ".vite/build/main.js",
   "private": true,
   "scripts": {
     "start": "electron-forge start",
     "build": "npm run build:web",
-    "build:web": "vite build --config vite.renderer.config.mts",
+    "build:web": "vite build --config vite.renderer.config.mts --manifest && npm run budget",
+    "budget": "node scripts/check-vite-bundle-budget.mjs --profile app",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
@@ -63,8 +64,8 @@
     "postcss": "^8.5.15",
     "tailwindcss": "^3.4.19",
     "typescript": "^6.0.3",
-    "vite": "^5.4.21",
-    "vitest": "^2.1.8"
+    "vite": "7.3.6",
+    "vitest": "4.1.10"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
@@ -78,6 +79,6 @@
     "react-router-dom": "^7.18.0",
     "tesseract.js": "^7.0.0",
     "update-electron-app": "^3.3.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }

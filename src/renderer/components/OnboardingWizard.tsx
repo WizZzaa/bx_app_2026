@@ -1,137 +1,154 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { useCompany } from '../lib/CompanyContext'
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/db/supabase'
+import { usePlan } from '../lib/plan'
 
-type OnboardingState = 'not_started' | 'deferred' | 'completed'
+type Locale = 'ru' | 'uz'
+type Interest = 'taxes' | 'documents' | 'payroll' | 'foreign_trade' | 'onec' | 'ecp'
+type Choice = 'free' | 'trial'
 
 interface OnboardingProfile {
-  company_onboarding_state: OnboardingState
-  company_onboarding_remind_at: string | null
+  product_onboarding_state: 'not_started' | 'completed'
+  product_locale: Locale | null
+  product_interests: Interest[] | null
 }
 
-const LEGACY_KEY = 'bx_onboarding_v1'
+const INTERESTS: Array<{ code: Interest; label: string; icon: string }> = [
+  { code: 'taxes', label: 'Налоги', icon: '🧾' },
+  { code: 'documents', label: 'Документы', icon: '📄' },
+  { code: 'payroll', label: 'Зарплата', icon: '👥' },
+  { code: 'foreign_trade', label: 'ВЭД', icon: '🌐' },
+  { code: 'onec', label: '1С', icon: '🗄️' },
+  { code: 'ecp', label: 'Сроки ЭЦП', icon: '🔐' },
+]
 
-export function canShowReminder(remindAt: string | null, now = Date.now()) {
-  return !remindAt || new Date(remindAt).getTime() <= now
+export function toggleOnboardingInterest(current: Interest[], next: Interest): Interest[] {
+  if (current.includes(next)) return current.filter(item => item !== next)
+  return current.length < 3 ? [...current, next] : current
 }
 
-export function getOnboardingSurface(state: OnboardingState | null, remindAt: string | null, now = Date.now()) {
-  if (state === null || state === 'completed') return 'hidden' as const
-  if (state === 'deferred') return canShowReminder(remindAt, now) ? 'reminder' as const : 'hidden' as const
-  return 'dialog' as const
+export function onboardingErrorMessage(message: string) {
+  if (message.includes('TRIAL_ALREADY_USED')) return 'Пробный период уже использован. Выберите бесплатный тариф.'
+  if (message.includes('TELEGRAM_VERIFICATION_REQUIRED')) return 'Для Trial сначала подтвердите вход через Telegram.'
+  if (message.includes('TRIAL_NOT_AVAILABLE')) return 'Trial сейчас недоступен для этого аккаунта. Можно продолжить бесплатно.'
+  return 'Не удалось сохранить выбор. Проверьте соединение и попробуйте ещё раз.'
 }
 
 export default function OnboardingWizard() {
-  const { companies, startCompanyCreation } = useCompany()
-  const [state, setState] = useState<OnboardingState | null>(null)
-  const [remindAt, setRemindAt] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
+  const navigate = useNavigate()
+  const { refresh } = usePlan()
+  const [visible, setVisible] = useState(false)
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
+  const [locale, setLocale] = useState<Locale>('ru')
+  const [interests, setInterests] = useState<Interest[]>([])
   const [saving, setSaving] = useState(false)
-
-  const saveState = useCallback(async (next: OnboardingState, companyId?: string) => {
-    setSaving(true)
-    try {
-      const { error } = await supabase.rpc('bx_set_company_onboarding_state', {
-        p_state: next,
-        p_company_id: companyId ?? null,
-      })
-      if (error) throw error
-      setState(next)
-      setRemindAt(next === 'deferred' ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null)
-      localStorage.setItem(LEGACY_KEY, '1')
-    } catch (error) {
-      console.error('[company-onboarding] unable to save progress:', error)
-    } finally {
-      setSaving(false)
-    }
-  }, [])
+  const [error, setError] = useState('')
 
   useEffect(() => {
     let active = true
     async function load() {
       const { data: authData } = await supabase.auth.getUser()
-      const user = authData.user
-      if (!active) return
-      if (!user) {
-        setState('completed')
-        return
-      }
-      setUserId(user.id)
-      const { data, error } = await supabase
+      if (!active || !authData.user) return
+      const { data, error: loadError } = await supabase
         .from('bx_profiles')
-        .select('company_onboarding_state, company_onboarding_remind_at')
-        .eq('user_id', user.id)
+        .select('product_onboarding_state, product_locale, product_interests')
+        .eq('user_id', authData.user.id)
         .maybeSingle()
-      if (!active) return
-      if (error || !data) {
-        setState('not_started')
-        return
-      }
+      if (!active || loadError || !data) return
       const profile = data as OnboardingProfile
-      setState(profile.company_onboarding_state)
-      setRemindAt(profile.company_onboarding_remind_at)
+      if (profile.product_locale) setLocale(profile.product_locale)
+      if (profile.product_interests) setInterests(profile.product_interests)
+      setVisible(profile.product_onboarding_state === 'not_started')
     }
     void load()
     return () => { active = false }
   }, [])
 
-  useEffect(() => {
-    if (!userId || state === null || state === 'completed') return
-    const firstOwnedCompany = companies.find(company => company.user_id === userId)
-    if (firstOwnedCompany) void saveState('completed', firstOwnedCompany.id)
-  }, [companies, saveState, state, userId])
-
-  const surface = getOnboardingSurface(state, remindAt)
-  if (surface === 'hidden') return null
-
-  const openCompanyWizard = () => {
-    // Убираем большой onboarding-диалог до открытия мастера, чтобы в интерфейсе
-    // не оставались два aria-modal одновременно. Если мастер отменят, сразу
-    // появится компактное напоминание без записи отсрочки на сервер.
-    setState('deferred')
-    setRemindAt(null)
-    startCompanyCreation()
+  const complete = async (choice: Choice) => {
+    setSaving(true)
+    setError('')
+    try {
+      const { error: saveError } = await supabase.rpc('bx_complete_product_onboarding', {
+        p_locale: locale,
+        p_interests: interests,
+        p_choice: choice,
+      })
+      if (saveError) throw saveError
+      await refresh()
+      setStep(4)
+    } catch (cause) {
+      setError(onboardingErrorMessage(cause instanceof Error ? cause.message : String(cause)))
+    } finally {
+      setSaving(false)
+    }
   }
-  if (surface === 'reminder') {
-    return (
-      <aside className="fixed bottom-5 right-5 z-[55] w-[min(420px,calc(100vw-2.5rem))] rounded-2xl border border-blue-500/25 bg-bx-surface p-4 shadow-2xl">
-        <div className="flex items-start gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-500/12 text-lg">🏢</span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-black text-bx-text">Создайте первую компанию, когда будет удобно</p>
-            <p className="mt-1 text-xs leading-5 text-bx-muted">Это включит личный календарь обязательств, задачи и корректные права доступа для команды.</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button type="button" onClick={openCompanyWizard} disabled={saving} className="min-h-10 rounded-xl bg-blue-600 px-4 text-xs font-black text-white disabled:opacity-50">Создать компанию</button>
-              <button type="button" onClick={() => void saveState('deferred')} disabled={saving} className="min-h-10 rounded-xl px-3 text-xs font-bold text-bx-muted hover:text-bx-text disabled:opacity-50">Напомнить завтра</button>
-            </div>
-          </div>
-        </div>
-      </aside>
-    )
+
+  const open = (route: string) => {
+    setVisible(false)
+    navigate(route)
   }
+
+  if (!visible) return null
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-xl">
-      <section role="dialog" aria-modal="true" aria-labelledby="company-onboarding-title" className="w-full max-w-xl overflow-hidden rounded-3xl border border-bx-border bg-bx-surface shadow-2xl">
-        <header className="border-b border-bx-border bg-gradient-to-br from-blue-600/20 via-bx-surface to-transparent px-6 py-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">Первый шаг в BX</p>
-          <h2 id="company-onboarding-title" className="mt-2 text-2xl font-black text-bx-text">Сначала создадим вашу компанию</h2>
-          <p className="mt-2 max-w-lg text-sm leading-6 text-bx-muted">BX будет показывать сроки, задачи и документы только в контексте выбранной компании — так данные не смешиваются, а команда видит только разрешённое.</p>
+      <section role="dialog" aria-modal="true" aria-labelledby="product-onboarding-title" className="w-full max-w-2xl overflow-hidden rounded-3xl border border-bx-border bg-bx-surface shadow-2xl">
+        <header className="border-b border-bx-border bg-gradient-to-br from-blue-600/20 via-bx-surface to-transparent px-6 py-5">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">Знакомство с BX · {Math.min(step, 3)}/3</p>
+            {step < 4 && <span className="text-xs font-bold text-bx-muted">Займёт около минуты</span>}
+          </div>
+          <h2 id="product-onboarding-title" className="mt-2 text-2xl font-black text-bx-text">
+            {step === 1 && 'На каком языке удобнее работать?'}
+            {step === 2 && 'Что для вас сейчас важнее?'}
+            {step === 3 && 'Выберите способ начать'}
+            {step === 4 && 'Готово — попробуйте BX в деле'}
+          </h2>
         </header>
-        <div className="grid gap-3 p-6 sm:grid-cols-3">
-          <Info icon="🗓️" title="Сроки по вашим данным" text="Календарь строится от даты начала работы в BX." />
-          <Info icon="✅" title="Только нужные правила" text="Вы выбираете налоговый режим и обязательства." />
-          <Info icon="👥" title="Команда без путаницы" text="Позже можно пригласить бухгалтера и назначать задачи." />
+
+        <div className="p-6">
+          {step === 1 && <div className="grid gap-3 sm:grid-cols-2">
+            <ChoiceCard selected={locale === 'ru'} title="Русский" text="Интерфейс и материалы на русском" onClick={() => setLocale('ru')} />
+            <ChoiceCard selected={locale === 'uz'} title="O‘zbekcha" text="O‘zbek tilidagi interfeys" onClick={() => setLocale('uz')} />
+          </div>}
+
+          {step === 2 && <>
+            <p className="mb-4 text-sm leading-6 text-bx-muted">Можно выбрать до трёх тем или пропустить шаг. Это влияет только на подсказки — все разделы останутся доступны по тарифу.</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {INTERESTS.map(item => <ChoiceCard key={item.code} selected={interests.includes(item.code)} title={`${item.icon} ${item.label}`} text={interests.includes(item.code) ? 'Выбрано' : 'Выбрать тему'} onClick={() => setInterests(value => toggleOnboardingInterest(value, item.code))} />)}
+            </div>
+            <p className="mt-3 text-xs font-bold text-bx-muted" aria-live="polite">Выбрано: {interests.length} из 3</p>
+          </>}
+
+          {step === 3 && <div className="grid gap-3 sm:grid-cols-2">
+            <ChoiceCard title="Free — бесплатно" text="Справочники, базовые инструменты и 3 AI-запроса за всё время аккаунта. Компания не требуется." onClick={() => void complete('free')} disabled={saving} />
+            <ChoiceCard title="Trial — 7 дней" text="Возможности рабочего тарифа на 7 дней. Активируется один раз после Telegram-входа." onClick={() => void complete('trial')} disabled={saving} accent />
+          </div>}
+
+          {step === 4 && <div className="grid gap-3 sm:grid-cols-3">
+            <IntroCard icon="✨" title="Спросить AI" text="Задайте рабочий вопрос и получите ответ со ссылками." onClick={() => open('/ai')} />
+            <IntroCard icon="📚" title="Открыть справочник" text="Найдите проверенный материал по налогам и учёту." onClick={() => open('/knowledge')} />
+            <IntroCard icon="🌐" title="Попробовать перевод" text="Переведите документ между русским и узбекским." onClick={() => open('/translator')} />
+          </div>}
+
+          {error && <p role="alert" className="mt-4 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-700 dark:text-red-300">{error}</p>}
         </div>
-        <footer className="flex flex-col-reverse gap-2 border-t border-bx-border px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <button type="button" onClick={() => void saveState('deferred')} disabled={saving} className="min-h-11 px-2 text-xs font-bold text-bx-muted hover:text-bx-text disabled:opacity-50">Продолжить позже</button>
-          <button type="button" onClick={openCompanyWizard} disabled={saving} className="min-h-11 rounded-xl bg-blue-600 px-5 text-xs font-black text-white shadow-lg shadow-blue-500/20 disabled:opacity-50">Создать первую компанию</button>
+
+        <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-bx-border px-6 py-4">
+          {step > 1 && step < 4 ? <button type="button" onClick={() => setStep(value => Math.max(1, value - 1) as 1 | 2 | 3)} disabled={saving} className="min-h-11 px-3 text-xs font-bold text-bx-muted disabled:opacity-50">Назад</button> : <span />}
+          {step === 1 && <button type="button" onClick={() => setStep(2)} className="min-h-11 rounded-xl bg-blue-600 px-5 text-xs font-black text-white">Продолжить</button>}
+          {step === 2 && <button type="button" onClick={() => setStep(3)} className="min-h-11 rounded-xl bg-blue-600 px-5 text-xs font-black text-white">{interests.length ? 'Продолжить' : 'Пропустить'}</button>}
+          {step === 4 && <button type="button" onClick={() => setVisible(false)} className="min-h-11 rounded-xl bg-blue-600 px-5 text-xs font-black text-white">Перейти на главную</button>}
         </footer>
       </section>
     </div>
   )
 }
 
-function Info({ icon, title, text }: { icon: string; title: string; text: string }) {
-  return <article className="rounded-2xl border border-bx-border bg-bx-bg p-4"><span className="text-lg">{icon}</span><h3 className="mt-3 text-xs font-black text-bx-text">{title}</h3><p className="mt-1.5 text-[11px] leading-5 text-bx-muted">{text}</p></article>
+function ChoiceCard({ title, text, selected = false, accent = false, disabled = false, onClick }: { title: string; text: string; selected?: boolean; accent?: boolean; disabled?: boolean; onClick: () => void }) {
+  return <button type="button" aria-pressed={selected} disabled={disabled} onClick={onClick} className={`min-h-28 rounded-2xl border p-4 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 ${selected || accent ? 'border-blue-500/55 bg-blue-500/10' : 'border-bx-border bg-bx-bg hover:border-blue-500/35'}`}><strong className="block text-sm font-black text-bx-text">{title}</strong><span className="mt-2 block text-xs leading-5 text-bx-muted">{text}</span></button>
+}
+
+function IntroCard({ icon, title, text, onClick }: { icon: string; title: string; text: string; onClick: () => void }) {
+  return <button type="button" onClick={onClick} className="min-h-36 rounded-2xl border border-bx-border bg-bx-bg p-4 text-left outline-none hover:border-blue-500/35 focus-visible:ring-2 focus-visible:ring-blue-500"><span className="text-xl">{icon}</span><strong className="mt-3 block text-sm font-black text-bx-text">{title}</strong><span className="mt-2 block text-xs leading-5 text-bx-muted">{text}</span></button>
 }

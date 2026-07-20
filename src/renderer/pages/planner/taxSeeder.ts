@@ -1,5 +1,9 @@
 import { supabase } from '../../lib/db/supabase';
-import { taxDeadlines } from '../../data/taxCalendar';
+import {
+  isTaxDeadlineCalendarEligible,
+  taxDeadlineEditorialIssues,
+  taxDeadlines,
+} from '../../data/taxCalendar';
 import type { NewEvent } from './useEvents';
 import { todayISO, toLocalISO } from '../../lib/dates';
 import type { TaxDeadline } from '../../data/taxCalendar';
@@ -32,6 +36,8 @@ export interface TaxDeadlineRuleOption {
   defaultSelected: boolean;
   recommendedDecision: ObligationRuleDecision;
   recommendationReason: string;
+  calendarEligible: boolean;
+  editorialIssues: string[];
 }
 
 export interface TaxDeadlineSyncResult {
@@ -89,15 +95,22 @@ export function buildTaxDeadlineRuleOptions(
   from = todayISO(),
   horizonDays = TAX_HORIZON_DAYS,
   traits: CompanyObligationTraits = {},
+  deadlines: TaxDeadline[] = taxDeadlines,
 ): TaxDeadlineRuleOption[] {
   const to = addDaysISO(from, Math.max(0, horizonDays));
   const notBefore = bxStartDate > from ? bxStartDate : from;
 
-  return taxDeadlines
-    .filter(deadline => deadline.verified)
+  return deadlines
     .filter(deadline => deadline.regime === 'все' || deadline.regime === companyRegime)
     .map(deadline => {
-      const recommendation = recommendationForDeadline(deadline, companyRegime, traits);
+      const editorialIssues = taxDeadlineEditorialIssues(deadline, from);
+      const calendarEligible = editorialIssues.length === 0;
+      const recommendation = calendarEligible
+        ? recommendationForDeadline(deadline, companyRegime, traits)
+        : {
+            decision: 'needs_review' as const,
+            reason: 'Карточка ожидает редакционной проверки официального источника',
+          };
       return {
         id: deadline.id,
         title: deadline.title,
@@ -108,6 +121,8 @@ export function buildTaxDeadlineRuleOptions(
         defaultSelected: recommendation.decision === 'applies',
         recommendedDecision: recommendation.decision,
         recommendationReason: recommendation.reason,
+        calendarEligible,
+        editorialIssues,
       };
     });
 }
@@ -121,14 +136,15 @@ export function buildTaxDeadlineEvents(
   profile: CompanyTaxProfile,
   from = todayISO(),
   horizonDays = TAX_HORIZON_DAYS,
+  deadlines: TaxDeadline[] = taxDeadlines,
 ): NewEvent[] {
   const to = addDaysISO(from, Math.max(0, horizonDays));
   const notBefore = profile.bxStartDate > from ? profile.bxStartDate : from;
   const enabledRules = new Set(profile.enabledObligationRules);
   const events: NewEvent[] = [];
 
-  for (const deadline of taxDeadlines) {
-    if (!deadline.verified) continue;
+  for (const deadline of deadlines) {
+    if (!isTaxDeadlineCalendarEligible(deadline, from)) continue;
     if (!enabledRules.has(deadline.id)) continue;
     if (deadline.regime !== 'все' && deadline.regime !== profile.regime) continue;
 
@@ -157,6 +173,34 @@ export function buildTaxDeadlineEvents(
   }
 
   return events;
+}
+
+/**
+ * Ключи уже созданных системных событий, которые нужно сохранить. Карточки,
+ * ожидающие новых редакционных метаданных, не создают события, но и не служат
+ * причиной удаления существующих пользовательских данных.
+ */
+export function buildPreservedTaxDeadlineSourceKeys(
+  profile: CompanyTaxProfile,
+  from = todayISO(),
+  horizonDays = TAX_HORIZON_DAYS,
+  deadlines: TaxDeadline[] = taxDeadlines,
+): Set<string> {
+  const to = addDaysISO(from, Math.max(0, horizonDays));
+  const notBefore = profile.bxStartDate > from ? profile.bxStartDate : from;
+  const enabledRules = new Set(profile.enabledObligationRules);
+  const keys = new Set<string>();
+
+  for (const deadline of deadlines) {
+    if (deadline.editorialStatus === 'archived') continue;
+    if (!enabledRules.has(deadline.id)) continue;
+    if (deadline.regime !== 'все' && deadline.regime !== profile.regime) continue;
+    for (const date of datesForDeadline(deadline, from, to, notBefore)) {
+      keys.add(`tax:${deadline.id}:${date}`);
+    }
+  }
+
+  return keys;
 }
 
 /**
@@ -189,12 +233,14 @@ export async function syncTaxDeadlines(
   const from = todayISO();
   const to = addDaysISO(from, Math.max(0, horizonDays));
   const ownerId = company.user_id;
-  const candidates = buildTaxDeadlineEvents(companyId, {
+  const profile = {
     regime: company.regime,
     bxStartDate: company.bx_start_date,
     enabledObligationRules: company.enabled_obligation_rules ?? [],
     assigneeId: ownerId,
-  }, from, horizonDays);
+  };
+  const candidates = buildTaxDeadlineEvents(companyId, profile, from, horizonDays);
+  const preservedKeys = buildPreservedTaxDeadlineSourceKeys(profile, from, horizonDays);
   const { data: existing, error: existingError } = await supabase
     .from('bx_events')
     .select('id, source_key, status')
@@ -205,10 +251,9 @@ export async function syncTaxDeadlines(
 
   if (existingError) throw existingError;
 
-  const candidateKeys = new Set(candidates.map(event => event.source_key).filter(Boolean));
   const existingKeys = new Set((existing ?? []).map(event => event.source_key).filter(Boolean));
   const obsoleteIds = (existing ?? [])
-    .filter(event => event.status !== 'done' && event.source_key && !candidateKeys.has(event.source_key))
+    .filter(event => event.status !== 'done' && event.source_key && !preservedKeys.has(event.source_key))
     .map(event => event.id);
   const missing = candidates.filter(event => event.source_key && !existingKeys.has(event.source_key));
 

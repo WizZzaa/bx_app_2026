@@ -21,6 +21,7 @@ const PATHS: Record<string, React.ReactNode> = {
   arrowL: <><path d="M19 12H5M12 19l-7-7 7-7" /></>,
   table: <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M3 15h18M9 3v18" /></>,
   calc: <><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" /></>,
+  calculator: <><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" /></>,
   wrench: <><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></>,
 };
 
@@ -35,6 +36,8 @@ export const COLOR: Record<string, { text: string; bg: string; ring: string }> =
   purple:  { text: 'text-purple-400',  bg: 'bg-purple-500/10',  ring: 'hover:border-purple-500/40' },
   amber:   { text: 'text-amber-400',   bg: 'bg-amber-500/10',   ring: 'hover:border-amber-500/40' },
   red:     { text: 'text-red-400',     bg: 'bg-red-500/10',     ring: 'hover:border-red-500/40' },
+  indigo:  { text: 'text-indigo-400',  bg: 'bg-indigo-500/10',  ring: 'hover:border-indigo-500/40' },
+  slate:   { text: 'text-slate-400',   bg: 'bg-slate-500/10',   ring: 'hover:border-slate-500/40' },
 };
 export const catColor = (cat: string) => COLOR[KB_CATEGORY_META[cat]?.color ?? 'blue'] ?? COLOR.blue;
 

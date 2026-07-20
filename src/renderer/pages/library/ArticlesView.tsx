@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { KB_CATEGORIES, KB_CATEGORY_META, KB_POPULAR_IDS, type KbArticle } from '../../data/knowledge';
+import { KB_CATEGORY_META, KB_POPULAR_IDS, type KbArticle } from '../../data/knowledge';
+import { getKnowledgeCategoriesSync, refreshKnowledgeCategories } from '../../lib/db/knowledgeRepo';
 import { Icon, catColor, readMinutes, excerpt, highlight } from './shared';
 import ArticleReader from './ArticleReader';
 
@@ -12,6 +13,7 @@ interface Props {
 export default function ArticlesView({ articles, activeId, onOpen }: Props) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [categoryNames, setCategoryNames] = useState(() => getKnowledgeCategoriesSync().map(category => category.name));
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +69,12 @@ export default function ArticlesView({ articles, activeId, onOpen }: Props) {
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }); }, [activeId]);
 
+  useEffect(() => {
+    void refreshKnowledgeCategories()
+      .then(categories => setCategoryNames(categories.map(category => category.name)))
+      .catch(() => undefined);
+  }, []);
+
   const open = (a: KbArticle) => onOpen(a.id);
 
   const toggleFolder = (catName: string) => {
@@ -76,9 +84,7 @@ export default function ArticlesView({ articles, activeId, onOpen }: Props) {
   // Group filtered articles by category (excluding 'Все' tag itself)
   const groupedByCategory = useMemo(() => {
     const groups: Record<string, KbArticle[]> = {};
-    KB_CATEGORIES.forEach(c => {
-      if (c !== 'Все') groups[c] = [];
-    });
+    categoryNames.forEach(category => { groups[category] = []; });
     filtered.forEach(a => {
       if (groups[a.category]) {
         groups[a.category].push(a);
@@ -87,7 +93,7 @@ export default function ArticlesView({ articles, activeId, onOpen }: Props) {
       }
     });
     return groups;
-  }, [filtered]);
+  }, [filtered, categoryNames]);
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -153,11 +159,9 @@ export default function ArticlesView({ articles, activeId, onOpen }: Props) {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1.5 custom-scrollbar">
-          {KB_CATEGORIES.slice(1).map(catName => {
+          {categoryNames.map(catName => {
             const catArticles = groupedByCategory[catName] || [];
             const isOpen = !!openFolders[catName];
-            const cc = catColor(catName);
-            const meta = KB_CATEGORY_META[catName];
 
             // Hide empty folders if search/filter is active
             if ((search || selectedTag) && catArticles.length === 0) return null;
@@ -280,7 +284,7 @@ export default function ArticlesView({ articles, activeId, onOpen }: Props) {
               <>
                 <h3 className="text-xs font-semibold text-bx-muted uppercase tracking-wide mb-3">Категории</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-10">
-                  {KB_CATEGORIES.slice(1).map(c => {
+                  {categoryNames.map(c => {
                     const meta = KB_CATEGORY_META[c]; 
                     const cc = catColor(c);
                     const count = articles.filter(a => a.category === c).length;

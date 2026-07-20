@@ -1,6 +1,7 @@
 import { KB_ARTICLES } from './knowledge';
-import { taxDeadlines } from './taxCalendar';
+import { isOfficialTaxSourceUrl, taxDeadlineEditorialIssues, taxDeadlines } from './taxCalendar';
 import { TEMPLATES } from './templates';
+import { semanticGapSummary } from './contentRelations';
 
 export type ContentKind = 'obligation' | 'knowledge' | 'template';
 export type ContentAuditStatus = 'ready' | 'needs_review' | 'draft' | 'archived';
@@ -25,6 +26,7 @@ export interface ContentAuditSummary {
   archived: number;
   byKind: Record<ContentKind, number>;
   pilotTargets: Record<ContentKind, number>;
+  semantic: ReturnType<typeof semanticGapSummary>;
 }
 
 export const PILOT_CONTENT_TARGETS: Record<ContentKind, number> = {
@@ -33,32 +35,9 @@ export const PILOT_CONTENT_TARGETS: Record<ContentKind, number> = {
   template: 15,
 };
 
-function isOfficialSourceUrl(value: string | undefined): boolean {
-  if (!value) return false;
-  try {
-    const host = new URL(value).hostname.toLowerCase();
-    return host === 'lex.uz'
-      || host.endsWith('.lex.uz')
-      || host === 'soliq.uz'
-      || host.endsWith('.soliq.uz')
-      || host === 'stat.uz'
-      || host.endsWith('.stat.uz')
-      || host === 'cbu.uz'
-      || host.endsWith('.cbu.uz')
-      || host.endsWith('.gov.uz');
-  } catch {
-    return false;
-  }
-}
-
 function obligationItems(): ContentAuditItem[] {
   return taxDeadlines.map(deadline => {
-    const issues: string[] = [];
-    if (!deadline.verified) issues.push('Содержание ещё не подтверждено');
-    if (!deadline.law?.trim()) issues.push('Не указано нормативное основание');
-    if (!isOfficialSourceUrl(deadline.sourceUrl)) issues.push('Нет ссылки на официальный источник');
-    if (!deadline.verifiedAt) issues.push('Нет даты редакционной проверки');
-    if (!deadline.reviewedBy?.trim()) issues.push('Не указан ответственный редактор');
+    const issues = taxDeadlineEditorialIssues(deadline);
 
     return {
       key: `obligation:${deadline.id}`,
@@ -83,7 +62,7 @@ function knowledgeItems(): ContentAuditItem[] {
   return KB_ARTICLES.map(article => {
     const issues: string[] = [];
     if (!article.source?.trim()) issues.push('Не указано нормативное основание');
-    if (!isOfficialSourceUrl(article.sourceUrl)) issues.push('Нет ссылки на официальный источник');
+    if (!isOfficialTaxSourceUrl(article.sourceUrl)) issues.push('Нет ссылки на официальный источник');
     if (!article.updated) issues.push('Нет даты актуализации');
     if (!article.reviewedBy?.trim()) issues.push('Не указан ответственный редактор');
 
@@ -149,5 +128,6 @@ export function summarizeContentAudit(items = buildContentAuditInventory()): Con
       template: items.filter(item => item.kind === 'template').length,
     },
     pilotTargets: { ...PILOT_CONTENT_TARGETS },
+    semantic: semanticGapSummary(),
   };
 }

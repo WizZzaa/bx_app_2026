@@ -213,10 +213,10 @@ export default function ListView({ events, cards, boards, onEdit, onCardClick, o
                   <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} className="accent-blue-500" />
                 </td>
                 <td className="py-2 px-2 text-base">
-                  {row.kind === 'event' ? TYPE_ICON[row.type as EventType] : boardIcon(row.cardRef!.board_id)}
+                  {row.kind === 'event' ? TYPE_ICON[row.type as EventType] : boardIcon(row.cardRef?.board_id ?? '')}
                 </td>
                 <td className="py-2 px-2 max-w-xs" onClick={() => {
-                  if (row.kind === 'event') onEdit(row.eventRef!);
+                  if (row.kind === 'event' && row.eventRef) onEdit(row.eventRef);
                   else onCardClick(row.id);
                 }}>
                   <p className={`text-bx-text truncate ${isOverdue(row) ? 'text-red-300' : ''} ${row.status === 'done' ? 'line-through text-bx-muted' : ''}`}>{row.title}</p>
@@ -227,7 +227,7 @@ export default function ListView({ events, cards, boards, onEdit, onCardClick, o
                   if (row.kind === 'event') {
                     onStatusChange(row.id, NEXT_STATUS[row.status]);
                   } else {
-                    onCardStatusChange(row.id, row.cardRef!.board_id, row.status !== 'done');
+                    if (row.cardRef) onCardStatusChange(row.id, row.cardRef.board_id, row.status !== 'done');
                   }
                 }}>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 ${STATUS_COLORS[row.status]}`}>
@@ -251,7 +251,7 @@ export default function ListView({ events, cards, boards, onEdit, onCardClick, o
                     </div>
                   ) : (
                     <span className="text-[9px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded">
-                      🗂️ {boardName(row.cardRef!.board_id)}
+                      🗂️ {boardName(row.cardRef?.board_id ?? '')}
                     </span>
                   )}
                 </td>

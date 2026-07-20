@@ -1,4 +1,4 @@
-import Dexie, { type Table } from 'dexie'
+import { Dexie, type Table } from 'dexie'
 import type { DocTemplate } from '../../data/templates'
 
 export interface BxTransaction {
@@ -16,6 +16,20 @@ export interface BxTransaction {
   status: 'paid' | 'unpaid'
   created_at: string
   updated_at: string
+}
+
+export interface BxEmployee {
+  [key: string]: unknown
+  id: string
+  company_id: string | null
+  full_name: string
+  position?: string | null
+  salary: number
+  phone?: string | null
+  employment_type?: string | null
+  status?: string | null
+  updated_at?: string | null
+  last_synced_at?: string | null
 }
 
 export interface BxCounterparty {
@@ -36,10 +50,12 @@ export interface SyncConflict {
   id: string
   entity: 'transactions' | 'employees'
   targetId: string
-  localData: any
-  serverData: any
+  localData: SyncEntityData
+  serverData: SyncEntityData
   createdAt: string
 }
+
+export type SyncEntityData = Record<string, unknown>
 
 export interface ExchangeRate {
   code: string // USD, EUR, RUB
@@ -50,7 +66,7 @@ export interface ExchangeRate {
 
 export class BusinessBxDatabase extends Dexie {
   transactions!: Table<BxTransaction & { last_synced_at?: string | null }, string>
-  employees!: Table<any & { last_synced_at?: string | null }, string> // Избегаем циклического импорта
+  employees!: Table<BxEmployee, string> // Избегаем циклического импорта
   counterparties!: Table<BxCounterparty, string>
   conflicts!: Table<SyncConflict, string>
   templates!: Table<DocTemplate, string>
@@ -70,6 +86,3 @@ export class BusinessBxDatabase extends Dexie {
 }
 
 export const db = new BusinessBxDatabase()
-
-
-

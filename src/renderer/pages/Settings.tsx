@@ -4,11 +4,13 @@ import { clearPin, isPinEnabled, setPinEnabled } from '../lib/auth/pin'
 import { APP_VERSION } from '../../shared/version'
 import { db } from '../lib/db/localDb'
 import { usePlan } from '../lib/plan'
+import { TARIFF_MATRIX } from '../../shared/tariffs'
 import { useToast } from '../lib/ui/ToastContext'
 import { loadEcpKeys, saveEcpKeys } from '../lib/ecpStorage'
 import { currentTheme, saveTheme as saveApplicationTheme, subscribeToTheme, type BxTheme } from '../lib/theme'
 import { CompanyTeamPanel } from '../components/CompanyTeamPanel'
 import { currentFontScale, FONT_SCALE_OPTIONS, saveFontScale, type FontScale } from '../lib/uiScale'
+import { currentUiDensity, saveUiDensity, type UiDensity } from '../lib/uiDensity'
 import Icon from '../lib/ui/Icon'
 import { requestNotificationPermission } from '../lib/notifications'
 import { todayISO } from '../lib/dates'
@@ -16,15 +18,23 @@ import { parseSettingsBackup, settingsBackupSummary, type SettingsBackupPayload 
 import { useCompany } from '../lib/CompanyContext'
 import { useNavigate } from 'react-router-dom'
 import type { UpdateSnapshot } from '../../main/services/updatePolicy'
+import TrustedDevicesPanel from '../components/auth/TrustedDevicesPanel'
+import PrivacyConsentPanel from '../components/PrivacyConsentPanel'
+import { initialTabForSurface, navigationForSurface, type SettingsSurface, type SettingsTab } from './settingsNavigation'
+import DataTable from '../components/ui/DataTable'
+import { formatStorageBytes, parseUsageSnapshot, usageWindowLabel, type UsageSnapshot } from '../lib/usageSnapshot'
+import { accountDisplayLabel, publicContactEmail } from '../lib/auth/accountIdentity'
 
 const NOTIFY_KEY = 'bx_notify_days'
 const IDLE_LOCK_KEY = 'bx_idle_lock'
 
 type NotifyDays = '1' | '3' | '7' | 'off'
 type IdleLock = 'off' | '5' | '10' | '30' | '60'
-type TabType = 'overview' | 'workspace' | 'notifications' | 'security' | 'ai' | 'team' | 'data' | 'integrations' | 'billing' | 'about'
-type DashboardWidgets = { weather: boolean; currency: boolean; notifications: boolean; horoscope: boolean }
+type TabType = SettingsTab
 type DataStats = { templates: number; counterparties: number; transactions: number; employees: number }
+type IdentityStatus = { telegramVerified: boolean; phoneMasked: string | null; trialUsed: boolean }
+type RecoveryStatus = { hasActiveSet: boolean; remaining: number; issuedAt: string | null }
+type PaymentOrder = { id: string; amount: number; state: 'created' | 'waiting' | 'paid' | 'cancelled'; provider: string | null; created_at: string; paid_at: string | null }
 const INITIAL_UPDATE: UpdateSnapshot = {
   status: 'idle',
   error: '',
@@ -40,49 +50,118 @@ const formatUpdateBytes = (value: number): string => {
   if (!value) return '0 МБ'
   return `${(value / (1024 * 1024)).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} МБ`
 }
-const DEFAULT_WIDGETS: DashboardWidgets = { weather: true, currency: true, notifications: true, horoscope: false }
 const THEME_CHOICES: Array<{ value: BxTheme; label: string; colors: string[] }> = [
+  { value: 'system', label: 'Как в системе', colors: ['#F4F5F7', '#0F1117', '#4F46E5', '#3B82F6'] },
   { value: 'light', label: 'Светлая', colors: ['#F4F5F7', '#FFFFFF', '#4F46E5', '#1E293B'] },
   { value: 'dark', label: 'Тёмная', colors: ['#0F1117', '#141820', '#3B82F6', '#F8FAFC'] },
-  { value: 'lime', label: 'Графит + лайм', colors: ['#111111', '#FFFFFF', '#B7F500', '#333333'] },
-  { value: 'lavender-light', label: 'Светлая + лаванда', colors: ['#F7F5F2', '#FFFFFF', '#75639A', '#17131F'] },
+  { value: 'high-contrast', label: 'Контрастная', colors: ['#000000', '#FFFFFF', '#FFE600', '#00E5FF'] },
 ]
 
-export default function Settings() {
+export default function Settings({ surface = 'settings' }: { surface?: SettingsSurface }) {
   const { plan, isPro, isTrial, trialDaysLeft, planExpiresAt, referralCode, refresh: refreshPlan } = usePlan()
   const toast = useToast()
   const navigate = useNavigate()
   const { active: activeCompany, companies, startCompanyEdit, startCompanyCreation } = useCompany()
 
-  const [activeTab, setActiveTab] = useState<TabType>('overview')
+  const [activeTab, setActiveTab] = useState<TabType>(() => initialTabForSurface(surface))
   const [billingPeriod, setBillingPeriod] = useState<'month' | 'year'>('month')
   const [promoCode, setPromoCode] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
   const [userEmail, setUserEmail] = useState('')
   const [userId, setUserId] = useState('')
+  const [identity, setIdentity] = useState<IdentityStatus>({ telegramVerified: false, phoneMasked: null, trialUsed: false })
+  const [telegramLinking, setTelegramLinking] = useState(false)
+  const [telegramChallengeId, setTelegramChallengeId] = useState<string | null>(null)
+  const [recoveryStatus, setRecoveryStatus] = useState<RecoveryStatus>({ hasActiveSet: false, remaining: 0, issuedAt: null })
+  const [recoveryLoading, setRecoveryLoading] = useState(false)
   const [notifyDays, setNotifyDays] = useState<NotifyDays>('3')
   const [signingOut, setSigningOut] = useState(false)
   const [theme, setTheme] = useState<BxTheme>(() => currentTheme())
-  const [showHoroscope, setShowHoroscope] = useState(false)
   const [payMethod, setPayMethod] = useState<'card' | 'invoice'>('card')
   const [autostartEnabled, setAutostartEnabled] = useState(false)
   const [idleLock, setIdleLock] = useState<IdleLock>('off')
   const [pinEnabled, setPinEnabledState] = useState(true)
   const [fontScale, setFontScale] = useState<FontScale>(() => currentFontScale())
+  const [density, setDensity] = useState<UiDensity>(() => currentUiDensity())
   const [aiProvider, setAiProvider] = useState<'gemini' | 'ollama'>(() => localStorage.getItem('bx_ai_provider') === 'ollama' ? 'ollama' : 'gemini')
   const [ollamaHost, setOllamaHost] = useState(() => localStorage.getItem('bx_ollama_host') || 'http://localhost:11434')
   const [ollamaModel, setOllamaModel] = useState(() => localStorage.getItem('bx_ollama_model') || 'deepseek-r1:1.5b')
-  const [widgets, setWidgets] = useState<DashboardWidgets>(DEFAULT_WIDGETS)
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(() => 'Notification' in window ? Notification.permission : 'unsupported')
   const [lastBackupAt, setLastBackupAt] = useState(() => localStorage.getItem('bx_last_backup_at') || '')
   const [dataStats, setDataStats] = useState<DataStats>({ templates: 0, counterparties: 0, transactions: 0, employees: 0 })
   const [pendingImport, setPendingImport] = useState<SettingsBackupPayload | null>(null)
   const [confirmAction, setConfirmAction] = useState<'reset-pin' | 'clear-cache' | 'sign-out' | null>(null)
   const [updateInfo, setUpdateInfo] = useState<UpdateSnapshot>(INITIAL_UPDATE)
+  const [paymentOrders, setPaymentOrders] = useState<PaymentOrder[]>([])
+  const [usageSnapshot, setUsageSnapshot] = useState<UsageSnapshot | null>(null)
+  const [usageLoading, setUsageLoading] = useState(false)
+  const [usageError, setUsageError] = useState(false)
 
   function openExternalUrl(url: string) {
     const bridge = window as Window & { bx?: { openExternal?: (target: string) => void } }
     bridge.bx?.openExternal ? bridge.bx.openExternal(url) : window.open(url, '_blank')
+  }
+
+  const loadIdentityStatus = async () => {
+    const { data } = await supabase.rpc('bx_get_my_identity_status')
+    if (data && typeof data === 'object') setIdentity(data as IdentityStatus)
+  }
+
+  const loadRecoveryStatus = async () => {
+    const { data } = await supabase.rpc('bx_get_my_recovery_status')
+    if (data && typeof data === 'object') setRecoveryStatus(data as RecoveryStatus)
+  }
+
+  const loadUsageSnapshot = async () => {
+    setUsageLoading(true)
+    const { data, error } = await supabase.rpc('bx_get_my_usage_snapshot')
+    const snapshot = error ? null : parseUsageSnapshot(data)
+    setUsageSnapshot(snapshot)
+    setUsageError(!snapshot)
+    setUsageLoading(false)
+  }
+
+  const handleSendRecoveryCodes = async () => {
+    setRecoveryLoading(true)
+    const { data, error } = await supabase.functions.invoke('recovery-codes', { body: {} })
+    setRecoveryLoading(false)
+    if (error || !data?.ok) {
+      toast.error(data?.message || 'Не удалось отправить коды в Telegram')
+      return
+    }
+    await loadRecoveryStatus()
+    toast.success('8 одноразовых кодов отправлены в Telegram')
+  }
+
+  const handleTelegramLink = async () => {
+    setTelegramLinking(true)
+    try {
+      const { data, error } = await supabase.rpc('bx_create_telegram_link_challenge')
+      if (error) throw error
+      const challenge = data as { challengeId?: string; token?: string } | null
+      if (!challenge?.challengeId || !challenge.token) throw new Error('Challenge не создан')
+      setTelegramChallengeId(challenge.challengeId)
+      openExternalUrl(`https://t.me/Tech_support_bx_bot?start=${encodeURIComponent(challenge.token)}`)
+      toast.success('В Telegram подтвердите собственный контакт')
+    } catch {
+      toast.error('Не удалось создать безопасную ссылку Telegram')
+      setTelegramLinking(false)
+    }
+  }
+
+  const handleActivateTrial = async () => {
+    if (!identity.telegramVerified) {
+      setActiveTab('integrations')
+      toast.error('Сначала подтвердите собственный контакт через Telegram')
+      return
+    }
+    const { error } = await supabase.rpc('bx_activate_trial')
+    if (error) {
+      toast.error(identity.trialUsed ? 'Trial уже использован' : 'Trial недоступен для этого аккаунта')
+      return
+    }
+    await Promise.all([loadIdentityStatus(), refreshPlan()])
+    toast.success('Trial активирован на 7 дней без автопродления')
   }
 
   const handleToggleAutostart = async (val: boolean) => {
@@ -167,19 +246,19 @@ export default function Settings() {
           <tbody>
             <tr>
               <td>1</td>
-              <td>Лицензия на использование ПО "BX Помощник Бухгалтера" (подписка Pro на 12 месяцев)</td>
+              <td>Лицензия на использование ПО "BX Помощник Бухгалтера" (тариф Premium на 12 месяцев)</td>
               <td>1</td>
               <td>шт</td>
-              <td>1 500 000</td>
-              <td>1 500 000</td>
+              <td>5 000 000</td>
+              <td>5 000 000</td>
             </tr>
             <tr class="bold">
               <td colspan="5" class="right">Итого к оплате:</td>
-              <td>1 500 000</td>
+              <td>5 000 000</td>
             </tr>
           </tbody>
         </table>
-        <p>Всего к оплате один миллион пятьсот тысяч сум 00 тийин, без НДС.</p>
+        <p>Всего к оплате пять миллионов сум 00 тийин, без НДС.</p>
         <div class="footer-section">
           <div>
             <p>Руководитель: ___________________ / Черников А. /</p>
@@ -201,9 +280,7 @@ export default function Settings() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.email) {
-        setUserEmail(data.user.email)
-      }
+      setUserEmail(publicContactEmail(data.user?.email) || '')
       if (data.user?.id) {
         setUserId(data.user.id)
       }
@@ -220,20 +297,48 @@ export default function Settings() {
 
     if (window.bx?.autostart?.get) window.bx.autostart.get().then(setAutostartEnabled)
 
-    try {
-      const stored = localStorage.getItem('bx_dashboard_widgets')
-      if (stored) {
-        const savedWidgets = { ...DEFAULT_WIDGETS, ...JSON.parse(stored) }
-        setWidgets(savedWidgets)
-        setShowHoroscope(!!savedWidgets.horoscope)
-      }
-    } catch { /* битый кэш виджетов — игнорируем */ }
     Promise.all([db.templates.count(), db.counterparties.count(), db.transactions.count(), db.employees.count()])
       .then(([templates, counterparties, transactions, employees]) => setDataStats({ templates, counterparties, transactions, employees }))
       .catch(() => undefined)
   }, [])
 
+  useEffect(() => {
+    if (surface !== 'account') return
+    supabase.from('bx_payment_orders').select('id, amount, state, provider, created_at, paid_at').order('created_at', { ascending: false }).limit(20)
+      .then(({ data }) => setPaymentOrders((data || []) as PaymentOrder[]))
+  }, [surface])
+
+  useEffect(() => {
+    if (surface !== 'account') return
+    void loadUsageSnapshot()
+  }, [surface, plan])
+
   useEffect(() => subscribeToTheme(setTheme), [])
+
+  useEffect(() => {
+    void loadIdentityStatus()
+    void loadRecoveryStatus()
+  }, [])
+
+  useEffect(() => {
+    if (!telegramChallengeId) return undefined
+    const timer = window.setInterval(async () => {
+      const { data } = await supabase.rpc('bx_get_telegram_link_status', { p_challenge_id: telegramChallengeId })
+      const status = data as { status?: string } | null
+      if (status?.status === 'verified') {
+        window.clearInterval(timer)
+        setTelegramChallengeId(null)
+        setTelegramLinking(false)
+        await loadIdentityStatus()
+        toast.success('Telegram и номер телефона подтверждены')
+      } else if (status?.status === 'expired' || status?.status === 'revoked') {
+        window.clearInterval(timer)
+        setTelegramChallengeId(null)
+        setTelegramLinking(false)
+      }
+    }, 3000)
+    return () => window.clearInterval(timer)
+  }, [telegramChallengeId, toast])
 
   useEffect(() => {
     const updater = window.bx?.updater
@@ -263,23 +368,9 @@ export default function Settings() {
     saveFontScale(value)
   }
 
-  function toggleHoroscope(visible: boolean) {
-    setShowHoroscope(visible)
-    try {
-      const stored = localStorage.getItem('bx_dashboard_widgets')
-      const parsed = stored ? JSON.parse(stored) : { weather: true, currency: true, notifications: true, horoscope: false }
-      parsed.horoscope = visible
-      localStorage.setItem('bx_dashboard_widgets', JSON.stringify(parsed))
-    } catch { /* localStorage недоступен — не критично */ }
-  }
-
-  function toggleWidget(key: keyof DashboardWidgets) {
-    setWidgets(current => {
-      const next = { ...current, [key]: !current[key] }
-      localStorage.setItem('bx_dashboard_widgets', JSON.stringify(next))
-      if (key === 'horoscope') setShowHoroscope(next.horoscope)
-      return next
-    })
+  function changeDensity(value: UiDensity) {
+    setDensity(value)
+    saveUiDensity(value)
   }
 
   const handleBackupExport = async () => {
@@ -291,6 +382,7 @@ export default function Settings() {
       const idleLock = localStorage.getItem('bx_idle_lock') || 'off'
       const pinEnabled = isPinEnabled()
       const fontScale = currentFontScale()
+      const density = currentUiDensity()
       
       const templates = await db.templates.toArray()
       const counterparties = await db.counterparties.toArray()
@@ -305,6 +397,7 @@ export default function Settings() {
         idleLock,
         pinEnabled,
         fontScale,
+        density,
         templates,
         counterparties,
       }
@@ -358,6 +451,7 @@ export default function Settings() {
       if (data.idleLock) { localStorage.setItem(IDLE_LOCK_KEY, data.idleLock); setIdleLock(data.idleLock) }
       if (data.pinEnabled !== undefined) { setPinEnabled(data.pinEnabled); setPinEnabledState(data.pinEnabled) }
       if (data.fontScale) { saveFontScale(data.fontScale); setFontScale(data.fontScale) }
+      if (data.density) { saveUiDensity(data.density); setDensity(data.density) }
       if (Array.isArray(data.templates)) { await db.templates.clear(); await db.templates.bulkPut(data.templates as Parameters<typeof db.templates.bulkPut>[0]) }
       if (Array.isArray(data.counterparties)) { await db.counterparties.clear(); await db.counterparties.bulkPut(data.counterparties as Parameters<typeof db.counterparties.bulkPut>[0]) }
       setPendingImport(null)
@@ -412,24 +506,14 @@ export default function Settings() {
     setPinEnabled(on)
   }
 
-  const navItems: Array<{ id: TabType; label: string; desc: string; icon: string }> = [
-    { id: 'overview', label: 'Обзор', desc: 'Состояние BX', icon: 'dashboard' },
-    { id: 'workspace', label: 'Интерфейс', desc: 'Тема, масштаб, виджеты', icon: 'monitor' },
-    { id: 'notifications', label: 'Уведомления', desc: 'Сроки и системные оповещения', icon: 'bell' },
-    { id: 'security', label: 'Безопасность', desc: 'PIN, блокировка и сессия', icon: 'shield' },
-    { id: 'ai', label: 'ИИ и приватность', desc: 'Облако или свой сервер', icon: 'ai' },
-    { id: 'team', label: 'Команда', desc: 'Роли и приглашения', icon: 'users' },
-    { id: 'data', label: 'Данные и копии', desc: 'Экспорт, импорт, кэш', icon: 'save' },
-    { id: 'integrations', label: 'Интеграции', desc: 'Telegram, 1С и ЭЦП', icon: 'services' },
-    { id: 'billing', label: 'Тариф', desc: 'План, оплата, промокод', icon: 'finance' },
-    { id: 'about', label: 'О программе', desc: `Версия ${APP_VERSION}`, icon: 'info' },
-  ]
+  const navItems = navigationForSurface(surface)
 
   const sectionTitle: Record<TabType, { eyebrow: string; title: string; description: string }> = {
     overview: { eyebrow: 'Центр управления', title: 'Всё под контролем', description: 'Главные параметры, защита, данные и подключённые возможности BX в одном месте.' },
     workspace: { eyebrow: 'Рабочая среда', title: 'Интерфейс под вас', description: 'Настройте читаемость и состав рабочего стола — изменения применяются сразу.' },
     notifications: { eyebrow: 'Контроль сроков', title: 'Уведомления без шума', description: 'Выберите горизонт предупреждений и разрешите системные оповещения.' },
     security: { eyebrow: 'Защита доступа', title: 'Безопасность устройства', description: 'PIN и автоблокировка защищают рабочие данные, когда вы отходите от компьютера.' },
+    privacy: { eyebrow: 'Ваш выбор', title: 'Приватность и согласия', description: 'Управляйте необязательной обработкой данных и в любой момент отзывайте согласие.' },
     ai: { eyebrow: 'BX Intelligence', title: 'ИИ и приватность', description: 'Выберите облачный режим или собственную Ollama для локальной обработки.' },
     team: { eyebrow: 'Компания', title: 'Команда и права', description: 'Управляйте приглашениями и доступом сотрудников выбранной компании.' },
     data: { eyebrow: 'Хранилище', title: 'Данные и резервные копии', description: 'Проверьте объём локальных данных, создайте копию или безопасно восстановите её.' },
@@ -462,7 +546,11 @@ export default function Settings() {
   const card = 'rounded-3xl border border-bx-border bg-bx-surface shadow-sm'
   const button = 'min-h-11 rounded-xl px-4 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500'
   const input = 'min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-sm text-bx-text focus:outline-none focus:ring-2 focus:ring-blue-500/30'
-  const currentHeader = sectionTitle[activeTab]
+  const currentHeader = activeTab === 'overview' && surface === 'account'
+    ? { eyebrow: 'Личный кабинет', title: 'Аккаунт BX', description: 'Тариф, доступные ресурсы, подтверждённый профиль и безопасность без рекламных блоков.' }
+    : activeTab === 'integrations' && surface === 'account'
+      ? { eyebrow: 'Профиль', title: 'Аккаунт и Telegram', description: 'Проверьте адрес аккаунта и состояние подтверждённого контакта.' }
+      : sectionTitle[activeTab]
   const securityScore = pinEnabled ? (idleLock === 'off' ? 75 : 100) : 35
   const backupSummary = pendingImport ? settingsBackupSummary(pendingImport) : null
   const updateStatusLabel: Record<UpdateSnapshot['status'], string> = {
@@ -477,14 +565,14 @@ export default function Settings() {
 
   return (
     <div className="flex flex-1 overflow-hidden bg-bx-bg text-bx-text">
-      <aside className="flex w-[248px] flex-shrink-0 flex-col border-r border-bx-border bg-bx-surface-2/55 2xl:w-[292px]">
+      <aside className="hidden w-[248px] flex-shrink-0 flex-col border-r border-bx-border bg-bx-surface-2/55 md:flex 2xl:w-[292px]">
         <div className="border-b border-bx-border px-5 py-5">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-bx-on-accent shadow-lg shadow-blue-600/20"><Icon name="settings" className="h-5 w-5" /></span>
-            <div><h1 className="text-sm font-black">Настройки BX</h1><p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-bx-muted">Control center · v{APP_VERSION}</p></div>
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-bx-on-accent shadow-lg shadow-blue-600/20"><Icon name={surface === 'account' ? 'user' : 'settings'} className="h-5 w-5" /></span>
+            <div><h1 className="text-sm font-black">{surface === 'account' ? 'Личный кабинет' : 'Настройки BX'}</h1><p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-bx-muted">BX · v{APP_VERSION}</p></div>
           </div>
         </div>
-        <nav className="custom-scrollbar flex-1 space-y-1 overflow-y-auto p-3" aria-label="Разделы настроек">
+        <nav className="custom-scrollbar flex-1 space-y-1 overflow-y-auto p-3" aria-label={surface === 'account' ? 'Разделы личного кабинета' : 'Разделы настроек'}>
           {navItems.map(item => (
             <button key={item.id} type="button" onClick={() => setActiveTab(item.id)} aria-current={activeTab === item.id ? 'page' : undefined}
               className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${activeTab === item.id ? 'border-blue-600 bg-blue-600 text-bx-on-accent shadow-md shadow-blue-600/15' : 'border-transparent text-bx-muted hover:border-bx-border hover:bg-bx-surface hover:text-bx-text'}`}>
@@ -493,16 +581,17 @@ export default function Settings() {
             </button>
           ))}
         </nav>
-        <div className="border-t border-bx-border p-4">
+        {surface === 'account' && <div className="border-t border-bx-border p-4">
           <div className="rounded-2xl border border-bx-border bg-bx-surface px-3 py-3">
             <p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Активная компания</p>
             <p className="mt-1 truncate text-xs font-bold text-bx-text">{activeCompany?.name || 'Не выбрана'}</p>
           </div>
-        </div>
+        </div>}
       </aside>
 
       <main className="custom-scrollbar flex-1 overflow-y-auto">
         <div className="bx-page-container px-4 py-6 sm:px-5 lg:px-6 lg:py-8">
+          <nav className="custom-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 pb-1 md:hidden" aria-label={surface === 'account' ? 'Разделы личного кабинета' : 'Разделы настроек'}>{navItems.map(item => <button key={item.id} type="button" onClick={() => setActiveTab(item.id)} aria-current={activeTab === item.id ? 'page' : undefined} className={`min-h-11 flex-none rounded-xl border px-3 text-sm font-semibold ${activeTab === item.id ? 'border-bx-accent bg-bx-accent text-bx-on-accent' : 'border-bx-border bg-bx-surface text-bx-muted'}`}>{item.label}</button>)}</nav>
           <header className="relative mb-6 overflow-hidden rounded-[28px] border border-bx-border bg-bx-surface px-6 py-6 shadow-sm">
             <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-blue-600/[0.08] to-transparent" />
             <div className="relative flex flex-wrap items-end justify-between gap-4">
@@ -511,7 +600,20 @@ export default function Settings() {
             </div>
           </header>
 
-          {activeTab === 'overview' && (
+          {activeTab === 'overview' && surface === 'account' && (
+            <div className="space-y-5">
+              <section className={`${card} p-5`}><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="text-sm font-semibold text-bx-muted">Текущий тариф</p><h3 className="mt-1 text-2xl font-black capitalize">{plan}</h3><p className="mt-1 text-sm text-bx-muted">{planExpiresAt ? `Действует до ${new Date(planExpiresAt).toLocaleDateString('ru-RU')}` : plan === 'free' ? 'Без даты окончания' : 'Дата продления уточняется'}</p></div><button type="button" onClick={() => setActiveTab('billing')} className={`${button} bg-bx-accent text-bx-on-accent`}>Тариф и оплата</button></div></section>
+              <section aria-labelledby="account-resources-title"><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 id="account-resources-title" className="text-base font-black">Остатки ресурсов</h3><button type="button" onClick={() => void loadUsageSnapshot()} disabled={usageLoading} className="rounded-xl px-3 py-2 text-xs font-bold text-bx-accent hover:bg-bx-surface-2 disabled:opacity-50">{usageLoading ? 'Обновляем…' : 'Обновить'}</button></div><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">{[
+                { label: 'AI-запросы', value: usageSnapshot ? usageSnapshot.resources.ai.remaining.toLocaleString('ru-RU') : '—', total: usageSnapshot ? `из ${(usageSnapshot.resources.ai.limit + usageSnapshot.resources.ai.addOn).toLocaleString('ru-RU')}` : '', detail: usageSnapshot ? usageWindowLabel(usageSnapshot.resources.ai.window) : 'нет серверных данных', icon: 'ai' },
+                { label: 'Переводы', value: usageSnapshot ? usageSnapshot.resources.translations.remaining.toLocaleString('ru-RU') : '—', total: usageSnapshot ? `из ${(usageSnapshot.resources.translations.limit + usageSnapshot.resources.translations.addOn).toLocaleString('ru-RU')}` : '', detail: usageSnapshot ? usageWindowLabel(usageSnapshot.resources.translations.window) : 'нет серверных данных', icon: 'languages' },
+                { label: 'Хранилище', value: usageSnapshot ? formatStorageBytes(usageSnapshot.resources.storageBytes.remaining) : '—', total: usageSnapshot ? `из ${formatStorageBytes(usageSnapshot.resources.storageBytes.limit)}` : '', detail: usageSnapshot ? `занято ${formatStorageBytes(usageSnapshot.resources.storageBytes.used)}` : 'нет серверных данных', icon: 'save' },
+                { label: 'Удалённая помощь', value: usageSnapshot ? `${usageSnapshot.resources.remoteSupportMinutes.remaining.toLocaleString('ru-RU')} мин` : '—', total: usageSnapshot ? `из ${(usageSnapshot.resources.remoteSupportMinutes.limit + usageSnapshot.resources.remoteSupportMinutes.addOn).toLocaleString('ru-RU')} мин` : '', detail: usageSnapshot ? usageWindowLabel(usageSnapshot.resources.remoteSupportMinutes.window) : 'нет серверных данных', icon: 'headset' },
+              ].map(resource => <div key={resource.label} className={`${card} p-4`}><Icon name={resource.icon} className="h-5 w-5 text-bx-accent" /><p className="mt-4 text-xl font-black tabular-nums">{resource.value} {resource.total && <span className="text-xs font-semibold text-bx-muted">{resource.total}</span>}</p><p className="mt-1 text-sm font-bold">{resource.label}</p><p className="mt-1 text-sm text-bx-muted">{resource.detail}</p></div>)}</div><p className={`mt-3 text-sm ${usageError ? 'text-red-600 dark:text-red-400' : 'text-bx-muted'}`}>{usageError ? 'Не удалось получить точные остатки. Проверьте подключение и обновите данные.' : usageSnapshot ? `Серверный снимок: ${new Date(usageSnapshot.generatedAt).toLocaleString('ru-RU')}. Резервы активных операций уже вычтены.` : 'Получаем точные остатки с сервера…'}</p></section>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2"><button type="button" onClick={() => setActiveTab('integrations')} className={`${card} min-h-28 p-5 text-left hover:border-blue-500/30`}><Icon name="user" className="h-5 w-5 text-bx-accent" /><p className="mt-3 text-sm font-black">{accountDisplayLabel(userEmail)}</p><p className="mt-1 text-sm text-bx-muted">{identity.telegramVerified ? `Telegram подтверждён · ${identity.phoneMasked || 'номер скрыт'}` : 'Telegram ещё не подтверждён'}</p></button><button type="button" onClick={() => setActiveTab('security')} className={`${card} min-h-28 p-5 text-left hover:border-blue-500/30`}><Icon name="shield" className="h-5 w-5 text-bx-accent" /><p className="mt-3 text-sm font-black">Безопасность: {securityScore}%</p><p className="mt-1 text-sm text-bx-muted">Устройства, PIN, сессии и коды восстановления</p></button></div>
+            </div>
+          )}
+
+          {activeTab === 'overview' && surface === 'settings' && (
             <div className="space-y-5">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
                 {[
@@ -545,12 +647,10 @@ export default function Settings() {
           {activeTab === 'workspace' && (
             <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[1.2fr_0.8fr]">
               <section className={card}>
-                <SettingRow wide icon="sun" label="Тема оформления" desc="Четыре готовых режима: классические светлый и тёмный, графитовый с лаймом и спокойный светлый с лавандой."><div className="grid grid-cols-1 gap-1.5 rounded-xl border border-bx-border bg-bx-bg p-1 sm:grid-cols-2 2xl:grid-cols-4" role="group" aria-label="Тема оформления">{THEME_CHOICES.map(option => <button key={option.value} type="button" onClick={() => saveTheme(option.value)} aria-pressed={theme === option.value} className={`${button} min-w-0 px-3 ${theme === option.value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}><span className="flex items-center justify-center gap-1" aria-hidden="true">{option.colors.map(color => <span key={color} className="h-2.5 w-2.5 rounded-full border border-black/10" style={{ backgroundColor: color }} />)}</span><span className="mt-1 block whitespace-nowrap text-[10px]">{option.label}</span></button>)}</div></SettingRow>
-                <SettingRow icon="monitor" label="Масштаб интерфейса" desc="От компактного 75% до крупного 130%: текст, кнопки и интервалы меняются сразу, без перезапуска."><div className="grid grid-cols-3 gap-1 rounded-xl border border-bx-border bg-bx-bg p-1 sm:grid-cols-6" role="group" aria-label="Масштаб интерфейса">{FONT_SCALE_OPTIONS.map(option => <button key={option.value} type="button" onClick={() => changeFontScale(option.value)} aria-pressed={fontScale === option.value} className={`${button} min-w-0 px-2 ${fontScale === option.value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}>{option.hint}</button>)}</div></SettingRow>
-                <SettingRow icon="dashboard" label="Погода на рабочем столе" desc="Показывать краткий прогноз рядом с рабочей сводкой."><Toggle checked={widgets.weather} onChange={() => toggleWidget('weather')} label="Показывать погоду" /></SettingRow>
-                <SettingRow icon="exchange" label="Курсы валют" desc="Показывать основные курсы ЦБ РУз на рабочем столе."><Toggle checked={widgets.currency} onChange={() => toggleWidget('currency')} label="Показывать курсы валют" /></SettingRow>
-                <SettingRow icon="bell" label="Центр уведомлений" desc="Показывать сводку событий и оповещений на рабочем столе."><Toggle checked={widgets.notifications} onChange={() => toggleWidget('notifications')} label="Показывать уведомления" /></SettingRow>
-                <SettingRow icon="ai" label="Бухо-гороскоп" desc="Оставить шуточный прогноз в составе рабочего стола."><Toggle checked={showHoroscope} onChange={() => toggleHoroscope(!showHoroscope)} label="Показывать Бухо-гороскоп" /></SettingRow>
+                <SettingRow wide icon="sun" label="Тема оформления" desc="Светлый, тёмный и контрастный режимы либо автоматическое следование настройке операционной системы."><div className="grid grid-cols-1 gap-1.5 rounded-xl border border-bx-border bg-bx-bg p-1 sm:grid-cols-2 2xl:grid-cols-4" role="group" aria-label="Тема оформления">{THEME_CHOICES.map(option => <button key={option.value} type="button" onClick={() => saveTheme(option.value)} aria-pressed={theme === option.value} className={`${button} min-h-11 min-w-0 px-3 ${theme === option.value ? 'bg-blue-600 text-bx-on-accent' : 'text-bx-muted hover:bg-bx-surface-2'}`}><span className="flex items-center justify-center gap-1" aria-hidden="true">{option.colors.map(color => <span key={color} className="h-2.5 w-2.5 rounded-full border border-black/10" style={{ backgroundColor: color }} />)}</span><span className="mt-1 block whitespace-nowrap text-[10px]">{option.label}</span></button>)}</div></SettingRow>
+                <SettingRow icon="monitor" label="Масштаб интерфейса" desc="Каноническая шкала 100%, 110% и 125%. Масштаб браузера или ОС до 200% работает дополнительно."><div className="grid grid-cols-3 gap-1 rounded-xl border border-bx-border bg-bx-bg p-1" role="group" aria-label="Масштаб интерфейса">{FONT_SCALE_OPTIONS.map(option => <button key={option.value} type="button" onClick={() => changeFontScale(option.value)} aria-pressed={fontScale === option.value} className={`${button} min-w-0 px-2 ${fontScale === option.value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}>{option.hint}</button>)}</div></SettingRow>
+                <SettingRow icon="dashboard" label="Плотность" desc="Меняет только интервалы и высоту строк, не уменьшая шрифт или цели нажатия."><div className="grid grid-cols-2 gap-1 rounded-xl border border-bx-border bg-bx-bg p-1" role="group" aria-label="Плотность интерфейса">{([['comfortable', 'Комфортная'], ['compact', 'Компактная']] as const).map(([value, label]) => <button key={value} type="button" onClick={() => changeDensity(value)} aria-pressed={density === value} className={`${button} min-w-0 px-3 ${density === value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}>{label}</button>)}</div></SettingRow>
+                <SettingRow icon="dashboard" label="Главная BX" desc="Главная использует устойчивую рабочую композицию: AI, важное изменение, избранные сервисы, ключевые показатели и проверенные материалы."><span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-xs font-black text-emerald-700 dark:text-emerald-400">Канонический вид</span></SettingRow>
               </section>
               <section className={`${card} h-fit p-5`}><p className="text-[10px] font-black uppercase tracking-[0.16em] text-bx-muted">Предпросмотр</p><div className="mt-4 rounded-2xl border border-bx-border bg-bx-bg p-4"><div className="flex items-center justify-between"><span className="text-xs font-black">Отчётность за июль</span><span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[9px] font-black text-emerald-700 dark:text-emerald-400">ГОТОВО</span></div><p className="mt-3 text-sm leading-relaxed text-bx-muted">BX сохраняет читаемость карточек при масштабе {fontScale}%. Содержимое переносится, а действия остаются доступными.</p><div className="mt-4 flex gap-2"><span className="h-8 flex-1 rounded-lg bg-blue-600" /><span className="h-8 w-20 rounded-lg border border-bx-border bg-bx-surface" /></div></div></section>
             </div>
@@ -569,11 +669,15 @@ export default function Settings() {
 
           {activeTab === 'security' && (
             <div className="space-y-5">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3"><div className={`${card} p-4`}><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Защита</p><p className={`mt-2 text-2xl font-black ${securityScore === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>{securityScore}%</p><p className="mt-1 text-xs text-bx-muted">{pinEnabled ? 'PIN включён' : 'PIN отключён'}</p></div><div className={`${card} p-4`}><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Аккаунт</p><p className="mt-2 truncate text-sm font-black">{userEmail || 'Загрузка…'}</p><p className="mt-1 text-xs text-bx-muted">Синхронизация по пользователю</p></div><div className={`${card} p-4`}><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Автоблокировка</p><p className="mt-2 text-sm font-black">{idleLock === 'off' ? 'Выключена' : idleLock === '60' ? 'Через 1 час' : `Через ${idleLock} мин.`}</p><p className="mt-1 text-xs text-bx-muted">При бездействии</p></div></div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3"><div className={`${card} p-4`}><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Защита</p><p className={`mt-2 text-2xl font-black ${securityScore === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>{securityScore}%</p><p className="mt-1 text-xs text-bx-muted">{pinEnabled ? 'PIN включён' : 'PIN отключён'}</p></div><div className={`${card} p-4`}><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Аккаунт</p><p className="mt-2 truncate text-sm font-black">{accountDisplayLabel(userEmail)}</p><p className="mt-1 text-xs text-bx-muted">Синхронизация по пользователю</p></div><div className={`${card} p-4`}><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Автоблокировка</p><p className="mt-2 text-sm font-black">{idleLock === 'off' ? 'Выключена' : idleLock === '60' ? 'Через 1 час' : `Через ${idleLock} мин.`}</p><p className="mt-1 text-xs text-bx-muted">При бездействии</p></div></div>
               <section className={card}><SettingRow icon="shield" label="Защита PIN-кодом" desc="Запрашивать локальный код при запуске и после блокировки."><Toggle checked={pinEnabled} onChange={() => togglePinEnabled(!pinEnabled)} label="Защита PIN-кодом" /></SettingRow>{pinEnabled && <><SettingRow icon="clock" label="Автоблокировка" desc="Чем короче интервал, тем меньше риск доступа к данным на оставленном компьютере."><div className="flex flex-wrap gap-1 rounded-xl border border-bx-border bg-bx-bg p-1">{(['off', '5', '10', '30', '60'] as IdleLock[]).map(value => <button key={value} type="button" onClick={() => saveIdleLock(value)} className={`${button} min-w-14 ${idleLock === value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}>{value === 'off' ? 'Выкл.' : value === '60' ? '1 ч' : `${value} м`}</button>)}</div></SettingRow><SettingRow icon="key" label="Сменить PIN" desc="Текущий локальный PIN будет удалён, новый задаётся при следующем входе."><button type="button" onClick={() => setConfirmAction('reset-pin')} className={`${button} border border-bx-border bg-bx-surface-2 hover:bg-bx-bg`}>Сбросить PIN</button></SettingRow></>}
                 <SettingRow icon="external" label="Завершить сессию" desc="Удалить авторизацию и локальный PIN на этом устройстве."><button type="button" onClick={() => setConfirmAction('sign-out')} disabled={signingOut} className={`${button} bg-red-500/10 text-red-700 hover:bg-red-500/20 dark:text-red-400 disabled:opacity-40`}>{signingOut ? 'Выход…' : 'Выйти из аккаунта'}</button></SettingRow></section>
+              <TrustedDevicesPanel />
+              <section className={`${card} p-5`}><h3 className="text-sm font-black">Коды восстановления</h3><p className="mt-1 text-xs leading-relaxed text-bx-muted">BX отправит 8 одноразовых кодов только в подтверждённый Telegram. В базе хранятся только хеши; новый набор отменяет прежний после успешной доставки.</p><div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-xs font-bold">{recoveryStatus.hasActiveSet ? `Осталось кодов: ${recoveryStatus.remaining}` : 'Активного набора пока нет'}</p><button type="button" onClick={handleSendRecoveryCodes} disabled={recoveryLoading || !identity.telegramVerified} className={`${button} bg-sky-600 text-white disabled:opacity-40`}>{recoveryLoading ? 'Отправляю…' : recoveryStatus.hasActiveSet ? 'Перевыпустить в Telegram' : 'Получить 8 кодов в Telegram'}</button></div></section>
             </div>
           )}
+
+          {activeTab === 'privacy' && <PrivacyConsentPanel />}
 
           {activeTab === 'ai' && (
             <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[1.2fr_0.8fr]">
@@ -592,16 +696,15 @@ export default function Settings() {
           )}
 
           {activeTab === 'integrations' && (
-            <div className="grid grid-cols-1 gap-4 2xl:grid-cols-3">
-              <section className={`${card} p-5 2xl:col-span-2`}><div className="flex items-start gap-4"><span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600"><Icon name="send" className="h-6 w-6" /></span><div><h3 className="text-base font-black">Telegram-помощник</h3><p className="mt-1 text-xs leading-relaxed text-bx-muted">Получайте напоминания и рабочие уведомления вне приложения.</p></div></div><div className="mt-5 rounded-2xl border border-bx-border bg-bx-bg p-4"><p className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Команда привязки</p><code className="mt-2 block break-all rounded-xl bg-bx-surface-2 px-3 py-3 text-xs text-bx-text">/start {userId || 'идентификатор появится после синхронизации'}</code></div><div className="mt-4 flex flex-wrap gap-2"><button type="button" disabled={!userId} onClick={() => openExternalUrl(`https://t.me/BX_Helper_Bot?start=${userId}`)} className={`${button} bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-40`}><span className="inline-flex items-center gap-2"><Icon name="external" className="h-4 w-4" />Открыть бота</span></button><button type="button" disabled={!userId} onClick={() => { navigator.clipboard.writeText(`/start ${userId}`); toast.success('Команда скопирована') }} className={`${button} border border-bx-border bg-bx-surface-2 disabled:opacity-40`}><span className="inline-flex items-center gap-2"><Icon name="copy" className="h-4 w-4" />Копировать команду</span></button></div></section>
-              <div className="space-y-4"><button type="button" onClick={() => { localStorage.setItem('bx_tools_last', 'eimzo'); navigate('/tools') }} className={`${card} w-full p-4 text-left transition-colors hover:border-blue-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500`}><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700"><Icon name="ecp" className="h-5 w-5" /></span><p className="mt-3 text-sm font-black">E-Imzo и ЭЦП</p><p className="mt-1 text-xs leading-relaxed text-bx-muted">Открыть диагностику плагина и локального сервиса.</p></button><button type="button" onClick={() => { localStorage.setItem('bx_tools_last', 'cache'); navigate('/tools') }} className={`${card} w-full p-4 text-left transition-colors hover:border-blue-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500`}><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600"><Icon name="tools" className="h-5 w-5" /></span><p className="mt-3 text-sm font-black">Инструменты 1С</p><p className="mt-1 text-xs leading-relaxed text-bx-muted">Кэш, резервные копии и зависшие процессы.</p></button></div>
-            </div>
+            <section className={`${card} p-5`}><div className="flex items-start gap-4"><span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600"><Icon name="send" className="h-6 w-6" /></span><div><h3 className="text-base font-black">Профиль и подтверждённый Telegram</h3><p className="mt-1 text-sm leading-relaxed text-bx-muted">{accountDisplayLabel(userEmail)}. Одноразовая ссылка действует 10 минут; BX принимает только собственный контакт отправителя.</p></div></div><div className="mt-5 rounded-2xl border border-bx-border bg-bx-bg p-4"><p className="text-sm font-semibold text-bx-muted">Статус личности</p><p className="mt-2 text-sm font-black">{identity.telegramVerified ? `Подтверждено · ${identity.phoneMasked || 'номер защищён'}` : 'Не подтверждено'}</p><p className="mt-1 text-sm text-bx-muted">UUID аккаунта, технический адрес авторизации и полный номер телефона не показываются.</p></div><div className="mt-4 flex flex-wrap gap-2"><button type="button" disabled={!userId || telegramLinking || identity.telegramVerified} onClick={handleTelegramLink} className={`${button} bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-40`}><span className="inline-flex items-center gap-2"><Icon name="external" className="h-4 w-4" />{identity.telegramVerified ? 'Telegram подтверждён' : telegramLinking ? 'Ожидаю контакт…' : 'Подтвердить в Telegram'}</span></button></div></section>
           )}
 
           {activeTab === 'billing' && (
             <div className="space-y-5">
-              <section className={`${card} overflow-hidden`}><div className="border-b border-bx-border bg-gradient-to-r from-blue-600/[0.12] to-transparent p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">Текущий план</p><h3 className="mt-1 text-2xl font-black">{plan === 'premium' ? 'Premium' : plan === 'standard' ? 'Standard' : 'Free'}</h3><p className="mt-1 text-xs text-bx-muted">{isTrial && trialDaysLeft > 0 ? `Пробный период: осталось ${trialDaysLeft} дн.${planExpiresAt ? ` · до ${new Date(planExpiresAt).toLocaleDateString('ru-RU')}` : ''}` : isPro ? 'Профессиональный доступ активен' : 'Базовый доступ с ограничениями'}</p></div><div className="flex rounded-xl border border-bx-border bg-bx-bg p-1">{(['month', 'year'] as const).map(value => <button key={value} type="button" onClick={() => setBillingPeriod(value)} className={`${button} ${billingPeriod === value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}>{value === 'month' ? 'Месяц' : 'Год −17%'}</button>)}</div></div></div><div className="grid grid-cols-1 gap-3 p-5 md:grid-cols-3">{[{ name: 'Free', price: '0 сум', desc: 'Базовые инструменты' }, { name: 'Standard', price: billingPeriod === 'year' ? '990 000 / год' : '99 000 / мес', desc: 'Для ежедневной работы' }, { name: 'Premium', price: billingPeriod === 'year' ? '1 990 000 / год' : '199 000 / мес', desc: 'Команда и максимум возможностей' }].map(item => <div key={item.name} className={`rounded-2xl border p-4 ${item.name.toLowerCase() === plan ? 'border-blue-600 bg-blue-500/[0.06]' : 'border-bx-border bg-bx-bg'}`}><p className="text-sm font-black">{item.name}</p><p className="mt-2 text-lg font-black text-blue-600 dark:text-blue-400">{item.price}</p><p className="mt-1 text-xs text-bx-muted">{item.desc}</p></div>)}</div></section>
+              {plan === 'free' && <section className={`${card} p-5`}><h3 className="text-sm font-black">Попробовать Trial</h3><p className="mt-1 text-xs leading-relaxed text-bx-muted">7 дней, без карты и автопродления. Нужен подтверждённый собственный контакт Telegram; повторная активация по тому же телефону или Telegram ID запрещена.</p><button type="button" onClick={handleActivateTrial} disabled={identity.trialUsed} className={`${button} mt-4 bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-40`}>{identity.trialUsed ? 'Trial уже использован' : identity.telegramVerified ? 'Активировать 7 дней Trial' : 'Подтвердить Telegram для Trial'}</button></section>}
+              <section className={`${card} overflow-hidden`}><div className="border-b border-bx-border bg-gradient-to-r from-blue-600/[0.12] to-transparent p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">Текущий план</p><h3 className="mt-1 text-2xl font-black">{plan === 'premium' ? 'Premium' : plan === 'standard' ? 'Standard' : plan === 'trial' ? 'Trial' : 'Free'}</h3><p className="mt-1 text-xs text-bx-muted">{isTrial && trialDaysLeft > 0 ? `Пробный период: осталось ${trialDaysLeft} дн.${planExpiresAt ? ` · до ${new Date(planExpiresAt).toLocaleDateString('ru-RU')}` : ''}` : isPro ? 'Профессиональный доступ активен' : 'Базовый доступ с ограничениями'}</p></div><div className="flex rounded-xl border border-bx-border bg-bx-bg p-1">{(['month', 'year'] as const).map(value => <button key={value} type="button" onClick={() => setBillingPeriod(value)} className={`${button} ${billingPeriod === value ? 'bg-blue-600 text-white' : 'text-bx-muted hover:bg-bx-surface-2'}`}>{value === 'month' ? 'Месяц' : 'Год −17%'}</button>)}</div></div></div><div className="grid grid-cols-1 gap-3 p-5 md:grid-cols-3">{[{ name: 'Free', price: '0 сум', desc: 'Базовые инструменты' }, { name: 'Standard', price: billingPeriod === 'year' ? `${TARIFF_MATRIX.standard.priceUzs.year?.toLocaleString('ru-RU')} / год` : `${TARIFF_MATRIX.standard.priceUzs.month?.toLocaleString('ru-RU')} / мес`, desc: 'Для ежедневной работы' }, { name: 'Premium', price: billingPeriod === 'year' ? `${TARIFF_MATRIX.premium.priceUzs.year?.toLocaleString('ru-RU')} / год` : `${TARIFF_MATRIX.premium.priceUzs.month?.toLocaleString('ru-RU')} / мес`, desc: 'Команда и максимум возможностей' }].map(item => <div key={item.name} className={`rounded-2xl border p-4 ${item.name.toLowerCase() === plan ? 'border-blue-600 bg-blue-500/[0.06]' : 'border-bx-border bg-bx-bg'}`}><p className="text-sm font-black">{item.name}</p><p className="mt-2 text-lg font-black text-blue-600 dark:text-blue-400">{item.price}</p><p className="mt-1 text-xs text-bx-muted">{item.desc}</p></div>)}</div></section>
               <div className="grid grid-cols-1 gap-5 2xl:grid-cols-2"><section className={`${card} p-5`}><h3 className="text-sm font-black">Оплата</h3><div className="mt-4 flex rounded-xl border border-bx-border bg-bx-bg p-1"><button type="button" onClick={() => setPayMethod('card')} className={`${button} flex-1 ${payMethod === 'card' ? 'bg-blue-600 text-white' : 'text-bx-muted'}`}>Payme / Click</button><button type="button" onClick={() => setPayMethod('invoice')} className={`${button} flex-1 ${payMethod === 'invoice' ? 'bg-blue-600 text-white' : 'text-bx-muted'}`}>Счёт юрлицу</button></div>{payMethod === 'card' ? <p className="mt-4 rounded-2xl border border-dashed border-bx-border bg-bx-bg p-5 text-center text-xs leading-relaxed text-bx-muted">Онлайн-оплата будет активирована после подключения платёжного провайдера. Сейчас используйте счёт для юридического лица.</p> : <button type="button" onClick={handleGenerateInvoice} className={`${button} mt-4 w-full bg-blue-600 text-white hover:bg-blue-700`}><span className="inline-flex items-center gap-2"><Icon name="receipt" className="h-4 w-4" />Открыть счёт на оплату</span></button>}</section><section className={`${card} p-5`}><h3 className="text-sm font-black">Промокод</h3><p className="mt-1 text-xs text-bx-muted">Срок активации добавится к текущему тарифу.</p><div className="mt-4 flex gap-2"><input value={promoCode} onChange={event => setPromoCode(event.target.value.toUpperCase())} onKeyDown={event => { if (event.key === 'Enter') handleRedeemPromo() }} placeholder="WELCOME30" aria-label="Промокод" className={input} /><button type="button" onClick={handleRedeemPromo} disabled={promoLoading || !promoCode.trim()} className={`${button} bg-blue-600 text-white disabled:opacity-40`}>{promoLoading ? 'Проверяю…' : 'Активировать'}</button></div>{referralCode && <div className="mt-5 border-t border-bx-border pt-4"><p className="text-xs font-black">Пригласить коллегу</p><div className="mt-2 flex gap-2"><input readOnly value={`https://bx.uz/?ref=${referralCode}`} onFocus={event => event.currentTarget.select()} aria-label="Реферальная ссылка" className={input} /><button type="button" onClick={() => { navigator.clipboard.writeText(`https://bx.uz/?ref=${referralCode}`); toast.success('Ссылка скопирована') }} className={`${button} border border-bx-border bg-bx-surface-2`}><Icon name="copy" className="h-4 w-4" /></button></div></div>}</section></div>
+              <section className={`${card} p-5`}><h3 className="text-sm font-black">История платежей</h3><p className="mt-1 text-sm text-bx-muted">Последние операции Payme и Click этого аккаунта.</p>{paymentOrders.length ? <DataTable label="История платежей" className="mt-4"><thead><tr className="border-b border-bx-border text-sm text-bx-muted"><th className="px-4 py-3 font-semibold">Дата</th><th className="px-4 py-3 font-semibold">Способ</th><th className="px-4 py-3 text-right font-semibold">Сумма</th><th className="px-4 py-3 font-semibold">Статус</th></tr></thead><tbody>{paymentOrders.map(order => <tr key={order.id} className="border-b border-bx-border last:border-0"><td className="px-4 py-3">{new Date(order.paid_at || order.created_at).toLocaleDateString('ru-RU')}</td><td className="px-4 py-3 capitalize">{order.provider || '—'}</td><td className="px-4 py-3 text-right font-semibold">{Number(order.amount).toLocaleString('ru-RU')} сум</td><td className="px-4 py-3">{order.state === 'paid' ? 'Оплачен' : order.state === 'cancelled' ? 'Отменён' : order.state === 'waiting' ? 'Ожидает оплаты' : 'Создан'}</td></tr>)}</tbody></DataTable> : <p className="mt-4 rounded-2xl border border-dashed border-bx-border bg-bx-bg p-5 text-center text-sm text-bx-muted">Платежей пока нет.</p>}</section>
             </div>
           )}
 
@@ -661,7 +764,7 @@ export default function Settings() {
 
       {backupSummary && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4" role="dialog" aria-modal="true" aria-labelledby="backup-title">
-          <div className="w-full max-w-lg rounded-3xl border border-bx-border bg-bx-surface p-6 shadow-2xl"><div className="flex items-start gap-3"><span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600"><Icon name="save" className="h-5 w-5" /></span><div><h3 id="backup-title" className="text-lg font-black">Проверка резервной копии</h3><p className="mt-1 text-xs leading-relaxed text-bx-muted">BX заменит локальные шаблоны и контрагентов данными из выбранного файла.</p></div></div><div className="mt-5 grid grid-cols-2 gap-3">{Object.entries({ 'Версия BX': backupSummary.version, 'Ключи ЭЦП': backupSummary.ecpKeys, 'Реквизиты': backupSummary.requisites, 'Шаблоны': backupSummary.templates, 'Контрагенты': backupSummary.counterparties }).map(([label, value]) => <div key={label} className="rounded-xl bg-bx-bg p-3"><p className="text-[10px] font-bold text-bx-muted">{label}</p><p className="mt-1 text-sm font-black">{value}</p></div>)}</div><p className="mt-4 text-[11px] text-bx-muted">Создана: {new Date(backupSummary.createdAt).toLocaleString('ru-RU')}</p><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setPendingImport(null)} className={`${button} border border-bx-border bg-bx-surface-2`}>Отмена</button><button type="button" onClick={confirmBackupImport} className={`${button} bg-blue-600 text-white`}>Восстановить данные</button></div></div>
+          <div className="w-full max-w-lg rounded-3xl border border-bx-border bg-bx-surface p-6 shadow-2xl"><div className="flex items-start gap-3"><span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600"><Icon name="save" className="h-5 w-5" /></span><div><h3 id="backup-title" className="text-lg font-black">Проверка резервной копии</h3><p className="mt-1 text-xs leading-relaxed text-bx-muted">BX заменит локальные шаблоны и контрагентов данными из выбранного файла.</p></div></div><div className="mt-5 grid grid-cols-2 gap-3">{Object.entries({ 'Версия BX': backupSummary.version, 'Метаданные сертификатов': backupSummary.ecpKeys, 'Реквизиты': backupSummary.requisites, 'Шаблоны': backupSummary.templates, 'Контрагенты': backupSummary.counterparties }).map(([label, value]) => <div key={label} className="rounded-xl bg-bx-bg p-3"><p className="text-[10px] font-bold text-bx-muted">{label}</p><p className="mt-1 text-sm font-black">{value}</p></div>)}</div><p className="mt-4 text-[11px] text-bx-muted">Создана: {new Date(backupSummary.createdAt).toLocaleString('ru-RU')}</p><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setPendingImport(null)} className={`${button} border border-bx-border bg-bx-surface-2`}>Отмена</button><button type="button" onClick={confirmBackupImport} className={`${button} bg-blue-600 text-white`}>Восстановить данные</button></div></div>
         </div>
       )}
 

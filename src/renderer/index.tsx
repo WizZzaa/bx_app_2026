@@ -7,10 +7,15 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './lib/ui/ToastContext';
 import { installGlobalErrorReporting } from './lib/errorReporter';
 import { applyFontScale, currentFontScale } from './lib/uiScale';
+import { applyUiDensity, currentUiDensity } from './lib/uiDensity';
+import { applyTheme, currentTheme } from './lib/theme';
+import { CalculatorRegulatoryProvider } from './lib/calculatorRegulatory';
 import './styles/globals.css';
 
 installGlobalErrorReporting();
 applyFontScale(currentFontScale());
+applyUiDensity(currentUiDensity());
+applyTheme(currentTheme());
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Не найден корневой элемент приложения');
@@ -23,7 +28,7 @@ root.render(
     <ErrorBoundary>
       <HashRouter>
         <ToastProvider>
-          {isBixWidget ? <App /> : <AuthGate><App /></AuthGate>}
+          {isBixWidget ? <App /> : <AuthGate><CalculatorRegulatoryProvider><App /></CalculatorRegulatoryProvider></AuthGate>}
         </ToastProvider>
       </HashRouter>
     </ErrorBoundary>

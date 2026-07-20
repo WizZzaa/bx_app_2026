@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import CalcResult from './CalcResult';
+import { useRegulatoryNumber } from '../../lib/calculatorRegulatory';
 
 // Утилизационный сбор РУз: Постановление Президента РУз № ПП-3292 (2017) и изменения
 // Формула: Базовая ставка × коэффициент объёма двигателя × коэффициент возраста
 // Базовая ставка: 3 300 000 UZS (2024–2026)
-
-const BASE_RATE = 3_300_000;
 
 type VehicleCategory = 'passenger' | 'commercial' | 'moto';
 
@@ -48,6 +47,7 @@ function fmt(n: number) {
 }
 
 export default function RecyclingCalc() {
+  const BASE_RATE = useRegulatoryNumber('vehicle.recycling.base');
   const [category, setCategory] = useState<VehicleCategory>('passenger');
   const [engineIdx, setEngineIdx] = useState(0);
   const [ageIdx, setAgeIdx] = useState(0);

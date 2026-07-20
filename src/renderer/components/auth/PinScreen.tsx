@@ -20,7 +20,6 @@ const PinScreen: React.FC<Props> = ({ mode, email, onSetPin, onVerifyPin, onSucc
   const [error, setError] = useState<string | null>(null)
   const [locked, setLocked] = useState(false)
   const [lockRemaining, setLockRemaining] = useState(0)
-  const [attemptsLeft, setAttemptsLeft] = useState(getAttemptsLeft())
   const [shaking, setShaking] = useState(false)
   const [successPulse, setSuccessPulse] = useState(false)
   const [lastFilledIdx, setLastFilledIdx] = useState(-1)
@@ -41,7 +40,6 @@ const PinScreen: React.FC<Props> = ({ mode, email, onSetPin, onVerifyPin, onSucc
       }
       setLocked(status.locked)
       setLockRemaining(status.remainingMs)
-      setAttemptsLeft(getAttemptsLeft())
     }
     checkLock()
     const interval = setInterval(checkLock, 1000)
@@ -129,7 +127,6 @@ const PinScreen: React.FC<Props> = ({ mode, email, onSetPin, onVerifyPin, onSucc
           setError('Слишком много попыток')
         } else {
           const left = getAttemptsLeft()
-          setAttemptsLeft(left)
           setError(`Неверный PIN. Осталось ${left} ${left === 1 ? 'попытка' : left < 5 ? 'попытки' : 'попыток'}`)
         }
         setPin('')

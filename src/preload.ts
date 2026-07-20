@@ -1,6 +1,6 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 import { IPC } from './shared/ipc-channels';
 import type {
   CacheScanResult,
@@ -8,6 +8,8 @@ import type {
   ProcessEntry,
   KillResult,
   BackupResult,
+  RestoreResult,
+  DeepCheckResult,
   WeatherData,
   CurrencyRate,
   BankExchangeRate,
@@ -17,6 +19,7 @@ import type { ParsedEcpInfo } from './main/services/ecpParser'
 import type { TraderInfo } from './main/services/innCheck'
 import type { NewsFeedItem } from './main/services/newsFeed'
 import type { UpdateSnapshot } from './main/services/updatePolicy'
+import type { BackupScheduleConfig } from './main/services/onecBackupScheduler'
 import type { SiteResetMode, SiteSessionResult } from './shared/siteSession'
 
 const api = {
@@ -30,8 +33,14 @@ const api = {
     pickBackupDir: (): Promise<string | null> => ipcRenderer.invoke(IPC.BACKUP_PICK_DIR),
     backupDatabase: (src: string, dest: string): Promise<BackupResult> =>
       ipcRenderer.invoke(IPC.BACKUP_RUN, src, dest),
-    getBackupConfig: (): Promise<any> => ipcRenderer.invoke(IPC.BACKUP_GET_CONFIG),
-    saveBackupConfig: (config: any): Promise<void> => ipcRenderer.invoke(IPC.BACKUP_SAVE_CONFIG, config)
+    restoreDatabase: (source: string, target: string): Promise<RestoreResult> =>
+      ipcRenderer.invoke(IPC.BACKUP_RESTORE, source, target),
+    pickOnecExecutable: (): Promise<string | null> => ipcRenderer.invoke(IPC.BACKUP_PICK_ONEC_EXE),
+    deepCheckBackup: (source: string, executable: string, workingDatabase: string): Promise<DeepCheckResult> =>
+      ipcRenderer.invoke(IPC.BACKUP_DEEP_CHECK, source, executable, workingDatabase),
+    getBackupConfig: (): Promise<BackupScheduleConfig> => ipcRenderer.invoke(IPC.BACKUP_GET_CONFIG),
+    saveBackupConfig: (config: BackupScheduleConfig, baseConfig: BackupScheduleConfig): Promise<void> =>
+      ipcRenderer.invoke(IPC.BACKUP_SAVE_CONFIG, config, baseConfig)
   },
   widgets: {
     getWeather: (): Promise<WeatherData> => ipcRenderer.invoke(IPC.WEATHER_GET),
@@ -53,14 +62,8 @@ const api = {
   },
   ecp: {
     pickPfx: (): Promise<string | null> => ipcRenderer.invoke(IPC.ECP_PICK_PFX),
-    parsePfx: (filePath: string, password: string): Promise<ParsedEcpInfo> =>
-      ipcRenderer.invoke(IPC.ECP_PARSE_PFX, filePath, password),
-    pickFileToSign: (): Promise<string | null> => ipcRenderer.invoke(IPC.ECP_PICK_FILE_TO_SIGN),
-    pickSigFile: (): Promise<string | null> => ipcRenderer.invoke(IPC.ECP_PICK_SIG_FILE),
-    signFile: (pfxPath: string, password: string, filePath: string): Promise<{ success: boolean; sigPath?: string; error?: string }> =>
-      ipcRenderer.invoke(IPC.ECP_SIGN_FILE, pfxPath, password, filePath),
-    verifySig: (filePath: string, sigPath: string): Promise<{ success: boolean; signer?: string; signedAt?: string; error?: string }> =>
-      ipcRenderer.invoke(IPC.ECP_VERIFY_SIG, filePath, sigPath)
+    parsePfx: (fileHandle: string, password: string): Promise<ParsedEcpInfo> =>
+      ipcRenderer.invoke(IPC.ECP_PARSE_PFX, fileHandle, password)
   },
   safe: {
     isAvailable: (): Promise<boolean> => ipcRenderer.invoke(IPC.SAFE_AVAILABLE),
@@ -93,7 +96,7 @@ const api = {
     installUpdate: (): Promise<void> =>
       ipcRenderer.invoke('app:install-update'),
     onUpdateStatus: (callback: (data: UpdateSnapshot) => void) => {
-      const handler = (_event: any, data: any) => callback(data)
+      const handler = (_event: IpcRendererEvent, data: UpdateSnapshot) => callback(data)
       ipcRenderer.on('app:update-status', handler)
       return () => ipcRenderer.removeListener('app:update-status', handler)
     }
@@ -107,7 +110,7 @@ const api = {
     showNotification: (title: string, body: string, route?: string): Promise<boolean> => ipcRenderer.invoke('tray:show-notification', title, body, route),
     openApp: (route?: string): Promise<void> => ipcRenderer.invoke('tray:open-app', route),
     onNavigate: (callback: (route: string) => void) => {
-      const handler = (_event: any, route: string) => callback(route)
+      const handler = (_event: IpcRendererEvent, route: string) => callback(route)
       ipcRenderer.on('tray:navigate', handler)
       return () => ipcRenderer.removeListener('tray:navigate', handler)
     }

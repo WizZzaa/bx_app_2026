@@ -1,11 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { createWorker } from 'tesseract.js';
-import * as pdfjsLib from 'pdfjs-dist';
-
-// eslint-disable-next-line import/no-unresolved
-import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+import { loadPdfJs, loadTesseract } from '../../lib/documentDependencyLoaders';
 
 const HTML_ENTITIES: Record<string, string> = {
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
@@ -47,6 +41,7 @@ export default function OcrTool() {
     let worker;
     try {
       // 1. Initialize Tesseract Worker
+      const { createWorker } = await loadTesseract();
       worker = await createWorker(lang, 1, {
         logger: (message) => {
           if (typeof message.progress === 'number') {
@@ -66,6 +61,7 @@ export default function OcrTool() {
       // Handle PDF vs Image
       if (file.type === 'application/pdf') {
         setStatus('Рендеринг страниц PDF...');
+        const pdfjsLib = await loadPdfJs();
         const arrayBuffer = await file.arrayBuffer();
         const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
         const pdf = await loadingTask.promise;
@@ -83,7 +79,8 @@ export default function OcrTool() {
           canvas.width = viewport.width;
           
           if (context) {
-            await page.render({ canvasContext: context, viewport } as any).promise;
+            const renderContext: Parameters<typeof page.render>[0] = { canvas, canvasContext: context, viewport };
+            await page.render(renderContext).promise;
             
             // Run OCR on the canvas
             const { data } = await worker.recognize(canvas);
@@ -101,7 +98,7 @@ export default function OcrTool() {
       }
 
       setStatus('Распознавание успешно завершено!');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err ?? 'неизвестная ошибка');
       const networkHint = /worker|fetch|network|load|content security/i.test(message)

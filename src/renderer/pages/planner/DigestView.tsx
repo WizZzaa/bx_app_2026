@@ -58,7 +58,7 @@ export default function DigestView({ events, cards, boards, onEventClick, onCard
   const [unpaid, setUnpaid] = useState<UnpaidTx[]>([]);
 
   useEffect(() => {
-    // ЭЦП: истекающие ≤ 60 дней
+    // ЭЦП: локальные метаданные сертификатов, истекающих ≤ 60 дней
     loadEcpKeys().then(keys => {
       const soon = keys.filter(k => {
         const d = Math.round((new Date(k.expiresAt).getTime() - new Date(today).getTime()) / 86400000);
@@ -140,8 +140,9 @@ export default function DigestView({ events, cards, boards, onEventClick, onCard
               const chip = dueChip(item.dueDate, today);
               return (
                 <Row key={`${item.kind}-${item.id}`} onClick={() => {
-                  if (item.kind === 'event') onEventClick(item.eventRef!);
-                  else onCardClick(item.id);
+                  if (item.kind === 'event') {
+                    if (item.eventRef) onEventClick(item.eventRef);
+                  } else onCardClick(item.id);
                 }}
                   left={
                     item.kind === 'event' ? (
@@ -153,7 +154,7 @@ export default function DigestView({ events, cards, boards, onEventClick, onCard
                   title={`${item.kind === 'event' && item.recurrence ? '🔁 ' : ''}${item.title}`}
                   badges={[
                     ...(item.priority === 'high' ? [{ text: 'важно', cls: 'bg-red-500/15 text-red-400' }] : []),
-                    ...(item.kind === 'card' ? [{ text: item.boardName!, cls: 'bg-cyan-500/10 text-cyan-400' }] : []),
+                    ...(item.kind === 'card' ? [{ text: item.boardName ?? 'Доска', cls: 'bg-cyan-500/10 text-cyan-400' }] : []),
                   ]}
                   right={chip && <span className={`text-[11px] ${chip.cls}`}>{chip.text}</span>}
                 />
@@ -165,8 +166,8 @@ export default function DigestView({ events, cards, boards, onEventClick, onCard
 
         {/* 2. ЭЦП */}
         {ecpKeys.length > 0 && (
-          <Section icon="🔑" title="ЭЦП — истекают" count={ecpKeys.length}
-            action={{ label: 'Открыть ЭЦП →', onClick: () => navigate('/ecp') }}>
+          <Section icon="🔑" title="Сертификаты ЭЦП — истекают" count={ecpKeys.length}
+            action={{ label: 'Открыть сроки →', onClick: () => navigate('/ecp') }}>
             {ecpKeys.slice(0, MAX_PER_SECTION).map(k => {
               const chip = dueChip(k.expiresAt.slice(0, 10), today);
               return (

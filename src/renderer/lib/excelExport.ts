@@ -1,6 +1,17 @@
 import * as XLSX from 'xlsx'
+import type { BxTransaction } from './db/localDb'
 
-export const exportTransactionsToExcel = (transactions: any[], fileName = 'Транзакции') => {
+interface PayrollEmployee {
+  full_name: string
+  employment_type: string
+  position?: string | null
+  salary: number
+  inn?: string | null
+  pinfl?: string | null
+  status: string
+}
+
+export const exportTransactionsToExcel = (transactions: BxTransaction[], fileName = 'Транзакции') => {
   const formatted = transactions.map(t => ({
     'Дата': new Date(t.date).toLocaleDateString('ru-RU'),
     'Тип': t.type === 'income' ? 'Доход' : 'Расход',
@@ -17,7 +28,7 @@ export const exportTransactionsToExcel = (transactions: any[], fileName = 'Тр�
   XLSX.writeFile(workbook, `${fileName}.xlsx`)
 }
 
-export const exportPayrollToExcel = (employees: any[], _brv: number, _mrot: number, fileName = 'Зарплатная_ведомость') => {
+export const exportPayrollToExcel = (employees: PayrollEmployee[], _brv: number, _mrot: number, fileName = 'Зарплатная_ведомость') => {
   const formatted = employees.map(emp => {
     // Расчет согласно payroll.ts
     const salary = emp.salary

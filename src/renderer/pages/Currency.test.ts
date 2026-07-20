@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildCurrencyCsv, convertCurrency, enumerateDates, filterBankRates, findBestBankRates } from './Currency'
+import * as XLSX from 'xlsx'
+import { buildCurrencyWorkbook, convertCurrency, enumerateDates, filterBankRates, findBestBankRates } from './Currency'
 import type { BankExchangeRate } from '../../shared/types'
 
 const rates = { USD: 12_500, EUR: 14_000, RUB: 160 }
@@ -26,10 +27,17 @@ describe('currency archive helpers', () => {
     expect(enumerateDates('2026-06-01', '2026-07-02')).toHaveLength(32)
   })
 
-  it('creates an Excel-compatible CSV with requested and activation dates', () => {
-    const csv = buildCurrencyCsv([{ requestedDate: '2026-07-12', rate: { code: 'USD', name: 'Доллар США', flag: '', value: 12_345.67, diff: -4.2, date: '11.07.2026' } }])
-    expect(csv.startsWith('\uFEFF')).toBe(true)
-    expect(csv).toContain('"2026-07-12";"11.07.2026";"USD";"Доллар США";"12345,6700";"-4,2000"')
+  it('creates a real XLSX workbook with numeric rates and source dates', () => {
+    const workbook = buildCurrencyWorkbook([{ requestedDate: '2026-07-12', rate: { code: 'USD', name: 'Доллар США', flag: '', value: 12_345.67, diff: -4.2, date: '11.07.2026' } }])
+    const sheet = workbook.Sheets['Курсы валют']
+    expect(workbook.SheetNames).toEqual(['Курсы валют'])
+    expect(sheet.A2.v).toBe('2026-07-12')
+    expect(sheet.B2.v).toBe('11.07.2026')
+    expect(sheet.E2).toMatchObject({ t: 'n', v: 12_345.67, z: '#,##0.0000' })
+    expect(sheet.F2).toMatchObject({ t: 'n', v: -4.2 })
+    expect(sheet['!autofilter']).toEqual({ ref: 'A1:F2' })
+    const bytes = XLSX.write(workbook, { type: 'array', bookType: 'xlsx', compression: true }) as ArrayBuffer
+    expect(Array.from(new Uint8Array(bytes).slice(0, 2))).toEqual([0x50, 0x4b])
   })
 })
 

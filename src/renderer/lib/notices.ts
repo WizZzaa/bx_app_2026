@@ -1,7 +1,7 @@
 import { todayISO } from './dates'
 
 // Единый источник оповещений: просрочки, налоговые дедлайны, задачи на сегодня,
-// истекающие ЭЦП. Используется дашбордным виджетом и трей-агентом.
+// истекающие сертификаты ЭЦП. Используется дашбордным виджетом и трей-агентом.
 
 export type NoticeLevel = 'critical' | 'warning' | 'info'
 
@@ -68,16 +68,16 @@ export function buildNotices(keys: EcpKeyLite[]): Notice[] {
     })
   }
 
-  // ЭЦП: истекающие ключи (30 дней)
+  // ЭЦП: сертификаты в окне контрольных точек 30/14/7/1 день.
   const expiring = keys
     .map(k => ({ k, d: daysTo(k.expiresAt.slice(0, 10), today) }))
-    .filter(x => x.d >= 0 && x.d <= 30)
+    .filter(x => x.d <= 30)
     .sort((a, b) => a.d - b.d)
   for (const { k, d } of expiring.slice(0, 3)) {
     notices.push({
       id: `ecp-${k.name}`, level: d <= 14 ? 'critical' : 'warning', to: '/ecp',
-      text: `ЭЦП «${k.name}» истекает`,
-      time: d === 0 ? 'сегодня' : `через ${d} дн.`,
+      text: d < 0 ? `Сертификат ЭЦП «${k.name}» просрочен` : `Сертификат ЭЦП «${k.name}» истекает`,
+      time: d < 0 ? `истёк ${Math.abs(d)} дн. назад` : d === 0 ? 'сегодня' : `через ${d} дн.`,
     })
   }
 

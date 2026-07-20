@@ -29,7 +29,8 @@ type SupportRequiredField = 'subject' | 'body' | 'contactName' | 'contactPhone'
 
 export default function Support() {
   const { tickets, activeId, messages, loading, openTicket, createTicket, reply, closeTicket } = useTickets()
-  const { isPro } = usePlan()
+  const { plan, isPro } = usePlan()
+  const hasSupport = plan === 'standard' || plan === 'premium' || (plan === undefined && isPro)
   const { active: activeCompany } = useCompany()
   const toast = useToast()
   const [creating, setCreating] = useState(false)
@@ -72,15 +73,15 @@ export default function Support() {
       if (!draft) return
       const parsed = JSON.parse(draft) as { subject?: string; body?: string }
       localStorage.removeItem('bx_support_draft')
-      if (!isPro) { setPaywall(true); return }
+      if (!hasSupport) { setPaywall(true); return }
       setSubject(parsed.subject ?? '')
       setBody(parsed.body ?? '')
       setCreating(true)
     } catch { /* повреждённый черновик не блокирует поддержку */ }
-  }, [isPro])
+  }, [hasSupport])
 
   const startCreate = () => {
-    if (!isPro) { setPaywall(true); return }
+    if (!hasSupport) { setPaywall(true); return }
     setCreateAttempted(false)
     setBlurredFields(new Set())
     setCreating(true)

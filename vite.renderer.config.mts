@@ -31,7 +31,7 @@ const cspPlugin = (): Plugin => ({
 const bankRatesPreviewPlugin = (): Plugin => ({
   name: 'bx-bank-rates-preview',
   configureServer(server) {
-    server.middlewares.use('/__bx/bank-rates', async (request, response) => {
+    const handleBankRates = async (request: import('node:http').IncomingMessage, response: import('node:http').ServerResponse) => {
       try {
         const url = new URL(request.url ?? '', 'http://localhost');
         const codes = (url.searchParams.get('codes') ?? 'USD,EUR,RUB').split(',').filter(Boolean);
@@ -43,7 +43,9 @@ const bankRatesPreviewPlugin = (): Plugin => ({
         response.statusCode = 502;
         response.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Bank rates unavailable' }));
       }
-    });
+    };
+    server.middlewares.use('/api/bank-rates', handleBankRates);
+    server.middlewares.use('/__bx/bank-rates', handleBankRates);
   },
 });
 
@@ -69,7 +71,7 @@ export default defineConfig({
     postcss: './postcss.config.js',
   },
   server: {
-    host: true,
+    host: '127.0.0.1',
     port: 5173,
   },
 });

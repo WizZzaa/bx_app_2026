@@ -2,12 +2,14 @@ import { supabase } from './supabase'
 import { detectAndRegisterConflict } from './syncConflictResolver'
 import { db } from './localDb'
 import { logger } from '../logger'
+import type { Table } from 'dexie'
+import type { SyncEntityData } from './localDb'
 
 export interface SyncQueueItem {
   id: string
   entity: 'transactions' | 'employees'
   action: 'insert' | 'update' | 'delete'
-  payload: any
+  payload: SyncEntityData | null
   targetId: string
   createdAt: string
   lastSyncedAt?: string | null
@@ -44,11 +46,11 @@ export const saveSyncQueue = (queue: SyncQueueItem[]) => {
   localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue))
 }
 
-export const addToSyncQueue = (
+export const addToSyncQueue = <T extends object>(
   entity: 'transactions' | 'employees',
   action: 'insert' | 'update' | 'delete',
   targetId: string,
-  payload: any,
+  payload: T | null,
   lastSyncedAt?: string | null,
   lastSyncedRev?: number | null
 ) => {
@@ -58,7 +60,7 @@ export const addToSyncQueue = (
     entity,
     action,
     targetId,
-    payload,
+    payload: payload as SyncEntityData | null,
     createdAt: new Date().toISOString(),
     lastSyncedAt,
     lastSyncedRev,
@@ -74,11 +76,11 @@ export const removeFromSyncQueue = (id: string) => {
 
 // Изменилась ли строка на сервере после базовой версии правки.
 // Предпочитаем монотонный rev; при его отсутствии — updated_at.
-const serverChangedSinceBase = (item: SyncQueueItem, serverRecord: any): boolean => {
+const serverChangedSinceBase = (item: SyncQueueItem, serverRecord: SyncEntityData): boolean => {
   if (item.lastSyncedRev != null && typeof serverRecord.rev === 'number') {
     return serverRecord.rev > item.lastSyncedRev
   }
-  if (item.lastSyncedAt && serverRecord.updated_at) {
+  if (item.lastSyncedAt && typeof serverRecord.updated_at === 'string') {
     return new Date(serverRecord.updated_at) > new Date(item.lastSyncedAt)
   }
   return false
@@ -91,12 +93,17 @@ type PushResult = 'synced' | 'conflict'
 const pushItem = async (item: SyncQueueItem): Promise<PushResult> => {
   const table = item.entity === 'transactions' ? 'bx_transactions' : 'bx_employees'
   const localTable = item.entity === 'transactions' ? db.transactions : db.employees
+  const entityTable = localTable as unknown as Table<SyncEntityData, string>
+  const payloadUpdatedAt = item.payload && typeof item.payload.updated_at === 'string'
+    ? item.payload.updated_at
+    : undefined
 
   if (item.action === 'insert') {
+    if (!item.payload) throw new Error('В очереди синхронизации отсутствуют данные для добавления')
     const { data, error } = await supabase.from(table).insert(item.payload).select('rev, updated_at').maybeSingle()
     if (error && error.code !== '23505') throw error // 23505 — уже существует, считаем синхронизированным
-    await (localTable as any).update(item.targetId, {
-      last_synced_at: item.payload.updated_at,
+    await entityTable.update(item.targetId, {
+      last_synced_at: payloadUpdatedAt,
       ...(data?.rev != null ? { rev: data.rev } : {}),
     })
     return 'synced'
@@ -112,16 +119,17 @@ const pushItem = async (item: SyncQueueItem): Promise<PushResult> => {
 
   if (serverRecord && serverChangedSinceBase(item, serverRecord)) {
     logger.warn('sync', `Конкурентное изменение ${item.entity} ${item.targetId} — регистрирую конфликт`)
-    const localRecord = await (localTable as any).get(item.targetId)
-    await detectAndRegisterConflict(item.entity, item.targetId, localRecord || item.payload, serverRecord)
+    const localRecord = await entityTable.get(item.targetId)
+    await detectAndRegisterConflict(item.entity, item.targetId, localRecord || item.payload || {}, serverRecord)
     return 'conflict'
   }
 
   if (item.action === 'update') {
+    if (!item.payload) throw new Error('В очереди синхронизации отсутствуют данные для обновления')
     const { data, error } = await supabase.from(table).update(item.payload).eq('id', item.targetId).select('rev, updated_at').maybeSingle()
     if (error) throw error
-    await (localTable as any).update(item.targetId, {
-      last_synced_at: item.payload.updated_at,
+    await entityTable.update(item.targetId, {
+      last_synced_at: payloadUpdatedAt,
       ...(data?.rev != null ? { rev: data.rev } : {}),
     })
   } else {

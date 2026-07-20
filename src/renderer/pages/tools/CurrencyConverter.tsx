@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
+import FormField from '../../components/ui/FormField';
+import Icon from '../../lib/ui/Icon';
 import { widgetsApi } from '../../lib/widgetsApi';
 import type { CurrencyRate } from '../../../shared/types';
 import { todayISO } from '../../lib/dates';
@@ -33,23 +35,16 @@ export default function CurrencyConverter() {
   const result = rate ? (parseFloat(amount || '0') * rate.value) : null;
 
   return (
-    <Card title="Конвертер валют «на дату»" icon="💱" description="Курс ЦБ РУз на любую историческую дату — для учёта ГТД.">
+    <Card title="Конвертер валют «на дату»" icon={<Icon name="exchange" className="h-5 w-5" />} description="Курс ЦБ РУз на любую историческую дату — для учёта ГТД.">
       <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className="text-xs text-bx-muted block mb-1.5">Валюта</label>
-            <select value={code} onChange={e => setCode(e.target.value)} className="w-full bg-bx-bg text-bx-text text-sm px-3 py-2 rounded-lg border border-bx-border">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <FormField label="Валюта" required>{field => (
+            <select {...field} value={code} onChange={e => setCode(e.target.value)} className="w-full rounded-xl border border-bx-border bg-bx-bg px-3 py-2 text-sm text-bx-text">
               {['USD', 'EUR', 'RUB', 'GBP', 'KZT', 'CNY'].map(c => <option key={c}>{c}</option>)}
             </select>
-          </div>
-          <div>
-            <label className="text-xs text-bx-muted block mb-1.5">Дата</label>
-            <input type="date" value={date} max={today} onChange={e => setDate(e.target.value)} className="w-full bg-bx-bg text-bx-text text-sm px-3 py-2 rounded-lg border border-bx-border" />
-          </div>
-          <div>
-            <label className="text-xs text-bx-muted block mb-1.5">Сумма</label>
-            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="w-full bg-bx-bg text-bx-text text-sm px-3 py-2 rounded-lg border border-bx-border" />
-          </div>
+          )}</FormField>
+          <FormField label="Дата" required>{field => <input {...field} type="date" value={date} max={today} onChange={e => setDate(e.target.value)} className="w-full rounded-xl border border-bx-border bg-bx-bg px-3 py-2 text-sm text-bx-text" />}</FormField>
+          <FormField label="Сумма" required error={Number(amount) < 0 ? 'Введите сумму больше нуля' : undefined}>{field => <input {...field} type="number" min="0" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} className="w-full rounded-xl border border-bx-border bg-bx-bg px-3 py-2 text-sm text-bx-text" />}</FormField>
         </div>
 
         <Button onClick={lookup} loading={loading}>Узнать курс</Button>

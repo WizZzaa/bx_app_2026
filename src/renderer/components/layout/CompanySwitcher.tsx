@@ -6,7 +6,7 @@ import PaywallModal from '../PaywallModal';
 export default function CompanySwitcher() {
   const { companies, active, setActive, startCompanyCreation, startCompanyEdit } = useCompany();
   const [open, setOpen] = useState(false);
-  const { isPro, limits } = usePlan();
+  const { limits } = usePlan();
   const [paywall, setPaywall] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -65,7 +65,7 @@ export default function CompanySwitcher() {
 
           <div className="border-t border-bx-border" />
           <button onClick={() => {
-            if (!isPro && companies.length >= limits.companies) { setPaywall(true); setOpen(false); return; }
+            if (Number.isFinite(limits.companies) && companies.length >= limits.companies) { setPaywall(true); setOpen(false); return; }
             setOpen(false);
             startCompanyCreation();
           }} className="w-full text-left px-4 py-2.5 text-sm text-blue-400 hover:bg-bx-surface-2">

@@ -1,19 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useTransactions } from '../finance/useTransactions'
 import { useCompany } from '../../lib/CompanyContext'
-import { deadlinesForMonth } from '../../data/taxCalendar'
+import { deadlinesForMonth, summarizeTaxDeadlineCatalog } from '../../data/taxCalendar'
 import { todayISO, daysFromNowISO } from '../../lib/dates';
+import { useRegulatoryNumber } from '../../lib/calculatorRegulatory'
 
-// ─── Ставки налогов РУз (2024-2025) ───────────────────────────────────────
-const REGIMES = [
-  { id: 'turnover',  label: 'Налог с оборота',  rate: 0.04,  vatRequired: false },
-  { id: 'osn',       label: 'ОСН (общий)',       rate: 0.15,  vatRequired: true  },
-] as const
-type RegimeId = typeof REGIMES[number]['id']
+const TAX_DEADLINE_CATALOG = summarizeTaxDeadlineCatalog()
 
-const SOCIAL_TAX_RATE   = 0.12  // соцналог (2024)
-const INCOME_TAX_RATE   = 0.12  // НДФЛ
-const VAT_RATE          = 0.12
+type RegimeId = 'turnover' | 'osn'
 
 function fmtNum(n: number, digits = 0) {
   return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: digits }).format(n)
@@ -28,6 +22,15 @@ function periodLabel(year: number, q: number) {
 
 // ─── Компонент ─────────────────────────────────────────────────────────────
 export default function TaxCalculator() {
+  const turnoverTaxRate = useRegulatoryNumber('tax.turnover.standard') / 100
+  const profitTaxRate = useRegulatoryNumber('tax.profit.standard') / 100
+  const SOCIAL_TAX_RATE = useRegulatoryNumber('tax.social.standard') / 100
+  const INCOME_TAX_RATE = useRegulatoryNumber('tax.ndfl.standard') / 100
+  const VAT_RATE = useRegulatoryNumber('tax.vat.standard') / 100
+  const REGIMES = useMemo(() => [
+    { id: 'turnover' as const, label: 'Налог с оборота', rate: turnoverTaxRate, vatRequired: false },
+    { id: 'osn' as const, label: 'ОСН (общий)', rate: profitTaxRate, vatRequired: true },
+  ], [profitTaxRate, turnoverTaxRate])
   const { active } = useCompany()
   const { transactions } = useTransactions(active?.id ?? null)
 
@@ -67,7 +70,7 @@ export default function TaxCalculator() {
 
   // ─── Налоговые расчёты ───
   const calc = useMemo(() => {
-    const reg = REGIMES.find(r => r.id === regime)!
+    const reg = REGIMES.find(r => r.id === regime) ?? REGIMES[0]
 
     // Налог с оборота
     const turnoverTax = revenue * reg.rate
@@ -101,7 +104,7 @@ export default function TaxCalculator() {
       totalTaxBurden,
       effectiveRate,
     }
-  }, [regime, revenue, expenses, employees, avgSalary])
+  }, [INCOME_TAX_RATE, REGIMES, SOCIAL_TAX_RATE, VAT_RATE, regime, revenue, expenses, employees, avgSalary])
 
   // ─── Дедлайны ───
   const deadlines = useMemo(() => {
@@ -229,17 +232,17 @@ export default function TaxCalculator() {
 
         <div className="space-y-2">
           {regime === 'turnover' && (
-            <TaxRow label="Налог с оборота (4%)" value={calc.turnoverTax} color="text-amber-400" />
+            <TaxRow label={`Налог с оборота (${REGIMES[0].rate * 100}%)`} value={calc.turnoverTax} color="text-amber-400" />
           )}
           {regime === 'osn' && (
             <>
-              <TaxRow label={`Налог на прибыль (15%) · прибыль: ${fmtNum(calc.profit)} сум`} value={calc.profitTax} color="text-amber-400" />
-              <TaxRow label="НДС (12%)" value={calc.vatTax} color="text-orange-400" />
+              <TaxRow label={`Налог на прибыль (${REGIMES[1].rate * 100}%) · прибыль: ${fmtNum(calc.profit)} сум`} value={calc.profitTax} color="text-amber-400" />
+              <TaxRow label={`НДС (${VAT_RATE * 100}%)`} value={calc.vatTax} color="text-orange-400" />
             </>
           )}
           <TaxRow label={`ФОТ · ${employees} чел × ${fmtNum(avgSalary)} сум`} value={calc.totalSalary} color="text-bx-muted" note="база" />
-          <TaxRow label="НДФЛ (12%)" value={calc.personalIncome} color="text-purple-400" />
-          <TaxRow label="Соцналог (12%)" value={calc.socialTax} color="text-purple-400" />
+          <TaxRow label={`НДФЛ (${INCOME_TAX_RATE * 100}%)`} value={calc.personalIncome} color="text-purple-400" />
+          <TaxRow label={`Соцналог (${SOCIAL_TAX_RATE * 100}%)`} value={calc.socialTax} color="text-purple-400" />
         </div>
 
         <div className="pt-3 border-t border-bx-border flex items-center justify-between">
@@ -281,6 +284,11 @@ export default function TaxCalculator() {
               )
             })}
           </div>
+        </div>
+      )}
+      {deadlines.length === 0 && TAX_DEADLINE_CATALOG.ready === 0 && TAX_DEADLINE_CATALOG.needsReview > 0 && (
+        <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.07] p-4 text-xs leading-relaxed text-amber-700 dark:text-amber-300">
+          Сроки не подставлены в расчёт: {TAX_DEADLINE_CATALOG.needsReview} карточек календаря ожидают проверки официальных источников. Расчёт налогов остаётся ориентировочным.
         </div>
       )}
     </div>

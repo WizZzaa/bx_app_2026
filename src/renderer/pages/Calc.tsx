@@ -20,6 +20,9 @@ import { CALCULATOR_PROPOSALS } from '../data/workbenchCatalog'
 import { ProposalWorkbench } from '../components/workspace/ProposalWorkbench'
 import { useWorkbenchFavorites } from '../lib/useWorkbenchFavorites'
 import { WorkbenchActions, WorkbenchCanvas, WorkbenchGuide, WorkbenchModeSwitch, type WorkbenchView } from '../components/workspace/WorkbenchChrome'
+import { RegulatoryRateGate } from '../components/calculators/RegulatoryRateGate'
+import { calculatorRequiresManualConfirmation } from '../data/calculatorRegulatoryValues'
+import { todayISO } from '../lib/dates'
 
 interface Tab {
   id: string
@@ -33,11 +36,11 @@ interface Tab {
 
 const READY_TABS: Tab[] = [
   // Налоги
-  { id: 'vat',      icon: 'percent',  label: 'НДС',                group: 'Налоги', desc: 'Начислить или выделить 12%', component: <VatCalc /> },
-  { id: 'ndfl',     icon: 'user',     label: 'НДФЛ',               group: 'Налоги', desc: 'Подоходный 12%, льгота БРВ', component: <NdflCalc /> },
-  { id: 'regime',   icon: 'trending', label: 'Выбор налогового режима', group: 'Налоги', desc: 'Оборот, НДС 6% или общий НДС 12%', component: <RegimeCompareCalc /> },
-  { id: 'penalty',  icon: 'clock',    label: 'Пени',               group: 'Налоги', desc: '0.033%/день или ставка ЦБ', component: <PenaltyCalc /> },
-  { id: 'dividend', icon: 'finance',  label: 'Дивиденды',          group: 'Налоги', desc: 'Резидент 5% / нерезидент', component: <DividendCalc /> },
+  { id: 'vat',      icon: 'percent',  label: 'НДС',                group: 'Налоги', desc: 'Начислить или выделить НДС', component: <VatCalc /> },
+  { id: 'ndfl',     icon: 'user',     label: 'НДФЛ',               group: 'Налоги', desc: 'Подоходный налог и льгота БРВ', component: <NdflCalc /> },
+  { id: 'regime',   icon: 'trending', label: 'Выбор налогового режима', group: 'Налоги', desc: 'Оборот, специальный или общий НДС', component: <RegimeCompareCalc /> },
+  { id: 'penalty',  icon: 'clock',    label: 'Пени',               group: 'Налоги', desc: 'Дневная пеня или ставка ЦБ', component: <PenaltyCalc /> },
+  { id: 'dividend', icon: 'finance',  label: 'Дивиденды',          group: 'Налоги', desc: 'Резидент, нерезидент и ручная ставка СИДН', component: <DividendCalc /> },
   { id: 'taxcalc',  icon: 'reference',label: 'Налоги по данным',   group: 'Налоги', desc: 'Оборот, НДС, НДФЛ из Финансов', component: <TaxCalculator /> },
   // Зарплата и кадры
   { id: 'salary',   icon: 'hr',       label: 'Зарплата',           group: 'Зарплата и кадры', desc: 'Начислено ↔ на руки', component: <SalaryCalc /> },
@@ -61,6 +64,7 @@ const PROPOSAL_TABS: Tab[] = CALCULATOR_PROPOSALS.map(proposal => ({
 }))
 
 const TABS: Tab[] = [...READY_TABS, ...PROPOSAL_TABS]
+const REGULATORY_REVIEW_COUNT = READY_TABS.filter(tab => calculatorRequiresManualConfirmation(tab.id, todayISO())).length
 
 const GROUPS = ['Налоги', 'Зарплата и кадры', 'Прочее', 'Документы и право · идеи', 'Агро · идеи', 'Строительство · идеи']
 
@@ -181,7 +185,7 @@ const Calc = () => {
       <aside className="w-[248px] flex-shrink-0 border-r border-bx-border bg-bx-surface-2/65 dark:bg-bx-surface flex flex-col z-10 overflow-hidden 2xl:w-[292px]">
         <div className="px-5 pt-5 pb-3">
           <h1 className="text-xs font-black text-bx-text uppercase tracking-wider">Калькуляторы</h1>
-          <p className="text-[10px] text-bx-muted mt-0.5">{READY_TABS.length} работают · {PROPOSAL_TABS.length} идей на согласование</p>
+          <p className="text-[10px] text-bx-muted mt-0.5">{READY_TABS.length} доступны · {REGULATORY_REVIEW_COUNT} со сверкой ставок · {PROPOSAL_TABS.length} идей</p>
         </div>
         
         <div className="px-4 pb-3 flex-shrink-0">
@@ -286,8 +290,8 @@ const Calc = () => {
                     <span className={`text-[9px] px-2 py-0.5 rounded-full border ${ACCENT[tab.group].chipBg} ${ACCENT[tab.group].text} font-bold uppercase`}>
                       {tab.group}
                     </span>
-                    <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold uppercase ${tab.status === 'proposal' ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'}`}>
-                      {tab.status === 'proposal' ? 'На согласование' : 'Работает'}
+                    <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold uppercase ${tab.status === 'proposal' || calculatorRequiresManualConfirmation(tab.id, todayISO()) ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'}`}>
+                      {tab.status === 'proposal' ? 'На согласование' : calculatorRequiresManualConfirmation(tab.id, todayISO()) ? 'Сверка ставок' : 'Работает'}
                     </span>
                   </div>
                   <p className="text-[11px] text-bx-muted mt-1">{tab.desc} · Законодательство РУз</p>
@@ -323,7 +327,9 @@ const Calc = () => {
           {/* Верстак калькулятора */}
           {showGuide && <WorkbenchGuide kind="calculator" />}
           <div id="calc-content-to-export">
-            <WorkbenchCanvas resetKey={`${tab.id}-${workspaceRevision}`}>{tab.component}</WorkbenchCanvas>
+            <WorkbenchCanvas resetKey={`${tab.id}-${workspaceRevision}`}>
+              <RegulatoryRateGate calculatorId={tab.id}>{tab.component}</RegulatoryRateGate>
+            </WorkbenchCanvas>
           </div>
 
           <CalcHistoryPanel />

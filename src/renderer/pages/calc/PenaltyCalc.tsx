@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import CalcResult from './CalcResult';
 import MoneyInput from './MoneyInput';
+import { useRegulatoryNumber } from '../../lib/calculatorRegulatory';
 
 // Пени по НК РУз: 0.033% за каждый день просрочки (ст. 120 НК РУз)
 // Также можно считать через ставку ЦБ: Долг × ставка_ЦБ / 365 × дни
-const DAILY_RATE_PERCENT = 0.033;
-
 function fmt(n: number) {
   return n.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
 }
 
 export default function PenaltyCalc() {
+  const DAILY_RATE_PERCENT = useRegulatoryNumber('tax.penalty.daily');
+  const CBU_POLICY_RATE = useRegulatoryNumber('indicator.cbu.policy_rate');
   const [mode, setMode] = useState<'fixed' | 'cbu'>('fixed');
   const [debt, setDebt] = useState('');
   const [days, setDays] = useState('');
-  const [cbuRate, setCbuRate] = useState('14'); // основная ставка ЦБ с 20.03.2025
+  const [cbuRate, setCbuRate] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -29,7 +30,7 @@ export default function PenaltyCalc() {
     }
   }
 
-  const cbu = parseFloat(cbuRate.replace(',', '.')) || 0;
+  const cbu = parseFloat(cbuRate.replace(',', '.')) || CBU_POLICY_RATE;
   const dailyRate = mode === 'fixed' ? DAILY_RATE_PERCENT / 100 : cbu / 100 / 365;
   const penaltyRaw = debtVal * dailyRate * daysVal;
   // Ст. 120 НК РУз: сумма пени не может превышать сумму задолженности
@@ -44,7 +45,7 @@ export default function PenaltyCalc() {
           onClick={() => setMode('fixed')}
           className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${mode === 'fixed' ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
         >
-          0.033%/день (НК)
+          {DAILY_RATE_PERCENT}%/день (НК)
         </button>
         <button
           onClick={() => setMode('cbu')}
@@ -63,8 +64,7 @@ export default function PenaltyCalc() {
           <div>
             <label className="block text-xs text-bx-muted mb-1.5">Ставка ЦБ (%)</label>
             <input
-              type="text" inputMode="decimal" value={cbuRate} onChange={e => setCbuRate(e.target.value)}
-              placeholder="13.5"
+              type="text" inputMode="decimal" value={cbuRate || String(CBU_POLICY_RATE)} onChange={e => setCbuRate(e.target.value)}
               className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm"
             />
           </div>
@@ -92,11 +92,11 @@ export default function PenaltyCalc() {
       </div>
 
       <CalcResult
-        title={`Пени ${mode === 'fixed' ? '0.033%/день (ст. 120 НК)' : `по ставке ЦБ ${cbu}%`}`}
+        title={`Пени ${mode === 'fixed' ? `${DAILY_RATE_PERCENT}%/день (ст. 120 НК)` : `по ставке ЦБ ${cbu}%`}`}
         rows={[
           { label: 'Сумма долга', value: `${fmt(debtVal)} UZS` },
           { label: 'Количество дней', value: `${daysVal} дн.` },
-          { label: 'Ставка в день', value: `${mode === 'fixed' ? '0.033' : (cbu / 365).toFixed(4)}%` },
+          { label: 'Ставка в день', value: `${mode === 'fixed' ? DAILY_RATE_PERCENT : (cbu / 365).toFixed(4)}%` },
           { label: capped ? 'Сумма пени (ограничена долгом)' : 'Сумма пени', value: `${fmt(penalty)} UZS`, highlight: true },
           { label: 'Итого к уплате (долг + пени)', value: `${fmt(total)} UZS` },
         ]}
@@ -108,7 +108,7 @@ export default function PenaltyCalc() {
       )}
 
       <p className="text-[11px] text-bx-muted">
-        Ст. 120 НК РУз: пени = 0.033% за каждый день просрочки. Альтернатива: ставка ЦБ / 365 × дни.
+        Ст. 120 НК РУз: пени = {DAILY_RATE_PERCENT}% за каждый день просрочки. Альтернатива: ставка ЦБ / 365 × дни.
       </p>
     </div>
   );

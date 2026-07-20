@@ -103,13 +103,14 @@ export default function AllTasksView({ events, cards, boards, onEventClick, onCa
     const map = new Map<string, Item[]>();
     for (const it of items) {
       const b = bucket(it);
-      if (!map.has(b)) map.set(b, []);
-      map.get(b)!.push(it);
+      const list = map.get(b);
+      if (list) list.push(it);
+      else map.set(b, [it]);
     }
     for (const list of map.values()) {
       list.sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999'));
     }
-    return order.filter(g => map.has(g)).map(g => ({ name: g, items: map.get(g)! }));
+    return order.filter(g => map.has(g)).map(g => ({ name: g, items: map.get(g) ?? [] }));
   }, [events, cards, boards, hideDone, search, today, weekEnd, period]);
 
   const boardName = (id: string) => boards.find(b => b.id === id)?.name ?? 'Доска';

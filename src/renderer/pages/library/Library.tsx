@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { type KbArticle, KB_CATEGORIES, KB_POPULAR_IDS } from '../../data/knowledge'
-import { getAllArticlesSync, refreshArticles } from '../../lib/db/knowledgeRepo'
+import { type KbArticle, KB_POPULAR_IDS } from '../../data/knowledge'
+import { getAllArticlesSync, getKnowledgeCategoriesSync, refreshArticles, refreshKnowledgeCategories } from '../../lib/db/knowledgeRepo'
 import { excerpt, highlight, readMinutes } from './shared'
 import Icon from '../../lib/ui/Icon'
 import ArticleReader from './ArticleReader'
@@ -19,11 +19,13 @@ import {
 
 function categoryIcon(category: string) {
   if (category === 'Налоги и взносы') return 'finance'
+  if (category === 'Учёт и бухгалтерия') return 'calc'
   if (category === 'Трудовое право') return 'users'
   if (category === 'ВЭД и таможня') return 'globe'
   if (category === 'ЭДО и E-Imzo') return 'shield'
   if (category === 'Работа с 1С') return 'monitor'
   if (category === 'Штрафы и санкции') return 'alert'
+  if (category === 'Юридические вопросы') return 'book'
   return 'book'
 }
 
@@ -55,6 +57,7 @@ export default function Library() {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Все')
   const [articles, setArticles] = useState<KbArticle[]>(() => getAllArticlesSync())
+  const [categories, setCategories] = useState(() => getKnowledgeCategoriesSync())
   const [activeId, setActiveId] = useState<string | null>(null)
   const [params, setParams] = useSearchParams()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -62,9 +65,17 @@ export default function Library() {
   useEffect(() => {
     if (plan === 'free') return
     let active = true
-    refreshArticles().then(value => { if (active) setArticles(value) }).catch(() => { /* локальные статьи остаются доступны */ })
+    void Promise.allSettled([refreshArticles(), refreshKnowledgeCategories()]).then(([articleResult, categoryResult]) => {
+      if (!active) return
+      if (articleResult.status === 'fulfilled') setArticles(articleResult.value)
+      if (categoryResult.status === 'fulfilled') setCategories(categoryResult.value)
+    })
     return () => { active = false }
   }, [plan])
+
+  useEffect(() => {
+    if (selectedCategory !== 'Все' && !categories.some(category => category.name === selectedCategory)) setSelectedCategory('Все')
+  }, [categories, selectedCategory])
 
   useEffect(() => {
     const id = params.get('article')
@@ -113,8 +124,8 @@ export default function Library() {
       footer={<div className="rounded-xl bg-bx-bg px-3 py-3 text-[10px] leading-relaxed text-bx-muted"><span className="font-black text-bx-text">Важно:</span> материалы помогают разобраться, но не заменяют проверку действующей нормы.</div>}
     >
       <ResourceNavItem icon="book" label="Все публикации" count={articles.length} active={selectedCategory === 'Все'} onClick={() => chooseCategory('Все')} />
-      {KB_CATEGORIES.slice(1).map(category => (
-        <ResourceNavItem key={category} icon={categoryIcon(category)} label={category} count={articles.filter(article => article.category === category).length} active={selectedCategory === category} onClick={() => chooseCategory(category)} />
+      {categories.map(category => (
+        <ResourceNavItem key={category.slug} icon={categoryIcon(category.name)} label={category.name} count={articles.filter(article => article.category === category.name).length} active={selectedCategory === category.name} onClick={() => chooseCategory(category.name)} />
       ))}
     </ResourceSidebar>
   )
@@ -140,7 +151,7 @@ export default function Library() {
               icon="knowledge"
               stats={[
                 { value: articles.length, label: 'материалов' },
-                { value: KB_CATEGORIES.length - 1, label: 'направлений' },
+                { value: categories.length, label: 'направлений' },
                 { value: filteredArticles.length, label: search ? 'найдено' : 'в выбранном разделе' },
               ]}
             />

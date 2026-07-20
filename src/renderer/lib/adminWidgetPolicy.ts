@@ -26,8 +26,6 @@ const defaults: RuntimeWidgetPolicy = {
     { id: 'currency-rates', enabled: true, placement: 'dashboard', audience: 'all', source: 'official-api', order: 2 },
     { id: 'notification-center', enabled: true, placement: 'dashboard', audience: 'all', source: 'internal', order: 3 },
     { id: 'quick-actions', enabled: true, placement: 'dashboard', audience: 'all', source: 'internal', order: 4 },
-    { id: 'weather', enabled: false, placement: 'dashboard', audience: 'all', source: 'official-api', order: 6 },
-    { id: 'accounting-horoscope', enabled: true, placement: 'dashboard', audience: 'all', source: 'internal', order: 7 },
   ],
 }
 

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import * as XLSX from 'xlsx'
 import type { BankExchangeRate, CurrencyRate } from '../../shared/types'
 import { applyBankDirectory, DEFAULT_BANK_DIRECTORY, loadBankDirectory } from '../lib/bankDirectory'
 import { todayISO } from '../lib/dates'
@@ -40,11 +41,24 @@ export function enumerateDates(from: string, to: string) {
   return dates
 }
 
-export function buildCurrencyCsv(rows: CurrencyExportRow[]) {
-  const quote = (value: string | number) => `"${String(value).replaceAll('"', '""')}"`
-  const lines = [['Запрошенная дата', 'Дата действия курса', 'Код', 'Наименование', 'Курс, сум', 'Изменение']]
-  rows.forEach(({ requestedDate, rate }) => lines.push([requestedDate, rate.date, rate.code, rate.name, rate.value.toFixed(4).replace('.', ','), rate.diff.toFixed(4).replace('.', ',')]))
-  return `\uFEFF${lines.map(line => line.map(quote).join(';')).join('\r\n')}`
+export function buildCurrencyWorkbook(rows: CurrencyExportRow[]): XLSX.WorkBook {
+  const values: Array<Array<string | number>> = [
+    ['Запрошенная дата', 'Дата действия курса', 'Код', 'Наименование', 'Курс, сум', 'Изменение'],
+    ...rows.map(({ requestedDate, rate }) => [requestedDate, rate.date, rate.code, rate.name, rate.value, rate.diff]),
+  ]
+  const worksheet = XLSX.utils.aoa_to_sheet(values)
+  worksheet['!cols'] = [{ wch: 18 }, { wch: 22 }, { wch: 10 }, { wch: 30 }, { wch: 16 }, { wch: 16 }]
+  worksheet['!autofilter'] = { ref: worksheet['!ref'] || 'A1:F1' }
+  for (let row = 2; row <= values.length; row += 1) {
+    const rateCell = worksheet[`E${row}`]
+    const diffCell = worksheet[`F${row}`]
+    if (rateCell) rateCell.z = '#,##0.0000'
+    if (diffCell) diffCell.z = '#,##0.0000;[Red]-#,##0.0000'
+  }
+  const workbook = XLSX.utils.book_new()
+  workbook.Props = { Title: 'Курсы валют BX', Subject: 'Архив официальных курсов ЦБ Республики Узбекистан' }
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Курсы валют')
+  return workbook
 }
 
 export function findBestBankRates(rates: BankExchangeRate[], code: string) {
@@ -167,7 +181,7 @@ export default function Currency() {
         setExportProgress({ done: Math.min(start + batch.length, dates.length), total: dates.length })
       }
       if (!rows.length) throw new Error('empty')
-      downloadCsv(buildCurrencyCsv(rows), `BX_Курсы_${rangeFrom}_${rangeTo}.csv`)
+      XLSX.writeFile(buildCurrencyWorkbook(rows), `BX_Курсы_${rangeFrom}_${rangeTo}.xlsx`, { bookType: 'xlsx', compression: true })
       setExportSuccess(true)
     } catch { setExportError('Не удалось подготовить файл. Проверьте интернет и повторите.') }
     finally { setExporting(false) }
@@ -177,7 +191,7 @@ export default function Currency() {
     <main className="z-10 flex-1 overflow-y-auto bg-bx-bg px-5 py-5 text-bx-text sm:px-6">
       <div className="bx-page-container space-y-4">
         <header className="relative overflow-hidden rounded-[28px] border border-bx-border bg-gradient-to-r from-blue-600/[0.10] via-bx-surface to-cyan-500/[0.07] p-6 shadow-sm">
-          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">Финансовый инструмент</p><h1 className="mt-2 text-3xl font-black tracking-tight text-bx-text">Курсы валют</h1><p className="mt-2 max-w-2xl text-xs leading-relaxed text-bx-muted">Курс ЦБ РУз, официальные предложения банков, архивная динамика и выгрузка периода в Excel-совместимый CSV.</p></div><button onClick={() => { load(); loadBankRates() }} className="flex min-h-11 items-center gap-2 rounded-xl border border-bx-border bg-bx-surface px-4 text-xs font-bold text-bx-text hover:border-blue-500/30"><Icon name="recycle" className="h-4 w-4" />Обновить всё</button></div>
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">Финансовый инструмент</p><h1 className="mt-2 text-3xl font-black tracking-tight text-bx-text">Курсы валют</h1><p className="mt-2 max-w-2xl text-xs leading-relaxed text-bx-muted">Курс ЦБ РУз, официальные предложения банков, архивная динамика и выгрузка периода в настоящий файл Excel XLSX.</p></div><button onClick={() => { load(); loadBankRates() }} className="flex min-h-11 items-center gap-2 rounded-xl border border-bx-border bg-bx-surface px-4 text-xs font-bold text-bx-text hover:border-blue-500/30"><Icon name="recycle" className="h-4 w-4" />Обновить всё</button></div>
         </header>
 
         <section className="rounded-[24px] border border-bx-border bg-bx-surface p-4 shadow-sm" aria-labelledby="currency-selection-title">
@@ -216,13 +230,13 @@ export default function Currency() {
           </article>
 
           <article className="rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm">
-            <ToolHeader icon="download" tone="emerald" eyebrow="Excel-совместимый CSV" title="Выгрузка курсов за период" />
+            <ToolHeader icon="download" tone="emerald" eyebrow="Книга Excel XLSX" title="Выгрузка курсов за период" />
             <div className="mt-4 grid gap-2 sm:grid-cols-2"><DateField label="С даты" value={rangeFrom} onChange={setRangeFrom} max={rangeTo || today} /><DateField label="По дату" value={rangeTo} onChange={setRangeTo} min={rangeFrom} max={today} /></div>
             <div className="mt-3 rounded-xl bg-bx-bg p-3 text-[9px] leading-relaxed text-bx-muted"><b className="text-bx-text">В файл попадут:</b> {selectedCodes.join(', ')}. Период — не более 31 дня, как в официальном архиве ЦБ РУз.</div>
             {exportError && <p role="alert" className="mt-3 rounded-xl bg-rose-500/10 p-3 text-[10px] font-bold text-rose-700 dark:text-rose-300">{exportError}</p>}
             {exportSuccess && !exporting && <p role="status" className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-500/10 p-3 text-[10px] font-bold text-emerald-700 dark:text-emerald-300"><Icon name="check" className="h-4 w-4" />Файл сформирован и передан в загрузки.</p>}
             {exporting && <div className="mt-3"><div className="flex justify-between text-[9px] font-bold text-bx-muted"><span>Подготовка архива</span><span>{exportProgress.done} / {exportProgress.total} дней</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-bx-bg"><div className="h-full rounded-full bg-emerald-500 transition-[width]" style={{ width: `${exportProgress.total ? exportProgress.done / exportProgress.total * 100 : 0}%` }} /></div></div>}
-            <button onClick={exportRange} disabled={exporting} className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-xs font-extrabold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="download" className="h-4 w-4" />{exporting ? 'Формируем файл…' : 'Выгрузить CSV'}</button>
+            <button onClick={exportRange} disabled={exporting} className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-xs font-extrabold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="download" className="h-4 w-4" />{exporting ? 'Формируем файл…' : 'Выгрузить XLSX'}</button>
           </article>
         </section>
 
@@ -235,7 +249,6 @@ export default function Currency() {
   )
 }
 
-function downloadCsv(content: string, filename: string) { const url = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8' })); const link = document.createElement('a'); link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url) }
 function formatRate(value: number) { return value.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) }
 function formatBankUpdatedAt(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }
 function BankLogo({ name, logoUrl, size = 'md' }: { name: string; logoUrl?: string | null; size?: 'sm' | 'md' }) { const box = size === 'sm' ? 'h-6 w-6 rounded-lg text-[8px]' : 'h-11 w-11 rounded-xl text-[10px]'; const initials = name.split(/\s+/).map(word => word[0]).join('').slice(0, 2).toUpperCase(); return <span className={`relative grid shrink-0 place-items-center overflow-hidden border border-bx-border bg-bx-surface font-black text-bx-muted ${box}`}><span aria-hidden="true">{initials}</span>{logoUrl && <img src={logoUrl} alt={`Логотип ${name}`} loading="lazy" onError={event => { event.currentTarget.style.display = 'none' }} className="absolute inset-0 h-full w-full bg-bx-surface object-contain p-1" />}</span> }

@@ -4,14 +4,13 @@ export default function Titlebar() {
   const [isMaximized, setIsMaximized] = useState(false)
   const isElectron = typeof window !== 'undefined' && !!window.bx
 
-  if (!isElectron) return null
-
   useEffect(() => {
-    if (!isElectron || !window.bx?.window) return
+    const windowApi = window.bx?.window
+    if (!isElectron || !windowApi) return
 
     const checkMaximized = async () => {
       try {
-        const max = await window.bx!.window!.isMaximized()
+        const max = await windowApi.isMaximized()
         setIsMaximized(max)
       } catch (e) {
         console.error(e)
@@ -25,6 +24,8 @@ export default function Titlebar() {
     return () => window.removeEventListener('resize', checkMaximized)
   }, [isElectron])
 
+  if (!isElectron) return null
+
   const handleMinimize = () => {
     if (isElectron && window.bx?.window) {
       window.bx.window.minimize().catch(() => void 0)
@@ -32,9 +33,10 @@ export default function Titlebar() {
   }
 
   const handleMaximize = () => {
-    if (isElectron && window.bx?.window) {
-      window.bx.window.maximize().then(() => {
-        window.bx!.window!.isMaximized().then(setIsMaximized).catch(() => void 0)
+    const windowApi = window.bx?.window
+    if (isElectron && windowApi) {
+      windowApi.maximize().then(() => {
+        windowApi.isMaximized().then(setIsMaximized).catch(() => void 0)
       }).catch(() => void 0)
     }
   }

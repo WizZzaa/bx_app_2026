@@ -29,11 +29,16 @@ export function buildCompanyInsert(input: CompanyProfileForm & { color?: string 
   };
 }
 
+export function buildCompanyArchiveUpdate() {
+  return { is_active: false } as const;
+}
+
 export const companiesRepo = {
   async list(): Promise<Company[]> {
     const { data, error } = await supabase
       .from('bx_companies')
       .select('*')
+      .eq('is_active', true)
       .order('created_at', { ascending: true });
     if (error) throw error;
     return data ?? [];
@@ -54,7 +59,9 @@ export const companiesRepo = {
   },
 
   async remove(id: string): Promise<void> {
-    const { error } = await supabase.from('bx_companies').delete().eq('id', id);
+    // Companies can own documents, tasks, payments and team history. Archiving
+    // keeps those relations intact and is the only safe user-facing removal.
+    const { error } = await supabase.from('bx_companies').update(buildCompanyArchiveUpdate()).eq('id', id);
     if (error) throw error;
   },
 

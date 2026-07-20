@@ -1,11 +1,12 @@
-import { db, type SyncConflict } from './localDb'
+import type { Table } from 'dexie'
+import { db, type SyncConflict, type SyncEntityData } from './localDb'
 import { supabase } from './supabase'
 
 export const detectAndRegisterConflict = async (
   entity: 'transactions' | 'employees',
   targetId: string,
-  localData: any,
-  serverData: any
+  localData: SyncEntityData,
+  serverData: SyncEntityData
 ): Promise<SyncConflict> => {
   const existing = await db.conflicts.where('targetId').equals(targetId).first()
   if (existing) {
@@ -32,7 +33,7 @@ export const getConflicts = async (): Promise<SyncConflict[]> => {
 export const resolveConflict = async (
   conflictId: string,
   resolution: 'local' | 'server' | 'merge',
-  mergedData?: any
+  mergedData?: SyncEntityData
 ): Promise<boolean> => {
   const conflict = await db.conflicts.get(conflictId)
   if (!conflict) {
@@ -41,6 +42,7 @@ export const resolveConflict = async (
 
   const table = conflict.entity === 'transactions' ? 'bx_transactions' : 'bx_employees'
   const localTable = conflict.entity === 'transactions' ? db.transactions : db.employees
+  const entityTable = localTable as unknown as Table<SyncEntityData, string>
 
   try {
     if (resolution === 'local') {
@@ -53,13 +55,13 @@ export const resolveConflict = async (
       if (error) throw error
 
       // Обновляем локально с новым штампом синхронизации
-      await (localTable as any).put({
+      await entityTable.put({
         ...updatedLocal,
         last_synced_at: updatedLocal.updated_at
       })
     } else if (resolution === 'server') {
       // Перезаписываем локальные данные серверными
-      await (localTable as any).put({
+      await entityTable.put({
         ...conflict.serverData,
         last_synced_at: conflict.serverData.updated_at
       })
@@ -72,7 +74,7 @@ export const resolveConflict = async (
       const { error } = await supabase.from(table).upsert(updatedMerged)
       if (error) throw error
 
-      await (localTable as any).put({
+      await entityTable.put({
         ...updatedMerged,
         last_synced_at: updatedMerged.updated_at
       })

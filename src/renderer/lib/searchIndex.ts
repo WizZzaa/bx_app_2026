@@ -5,6 +5,7 @@ import { LEGISLATION_NEWS } from '../data/newsItems';
 import { UTILITY_PROPOSALS } from '../data/workbenchCatalog';
 
 export interface SearchItem {
+  id?: string;
   title: string;
   subtitle: string;
   category: string;
@@ -20,7 +21,9 @@ export const UTILITY_IDEA_SEARCH_ITEMS: SearchItem[] = UTILITY_PROPOSALS.map(ite
 
 // Статичные разделы и быстрые действия
 const staticItems: SearchItem[] = [
-  { title: 'Рабочий стол', subtitle: 'Главная сводка', category: 'Раздел', route: '/' },
+  { title: 'Главная', subtitle: 'Рабочая сводка', category: 'Раздел', route: '/' },
+  { title: 'Новая задача', subtitle: 'Добавить задачу в календарь', category: 'Команда', route: '/planner?new=task' },
+  { title: 'Спросить AI', subtitle: 'Открыть AI-консультант', category: 'Команда', route: '/ai' },
   { title: 'Утилиты', subtitle: '1С, файлы, система, ЭЦП', category: 'Раздел', route: '/tools' },
   { title: 'Переводчик документов', subtitle: 'Узбекский, русский и английский', category: 'Раздел', route: '/translator' },
   { title: 'Очистка кэша 1С', subtitle: 'Утилиты', category: 'Действие', route: '/tools' },
@@ -31,9 +34,9 @@ const staticItems: SearchItem[] = [
   { title: 'Справочники', subtitle: 'Нормативная база', category: 'Раздел', route: '/reference' },
   { title: 'Сервисы', subtitle: 'Госпорталы, ЭДО, банки', category: 'Раздел', route: '/services' },
   { title: 'Калькуляторы', subtitle: 'НДС, НДФЛ, пени', category: 'Раздел', route: '/calc' },
-  { title: 'Проверка ИНН', subtitle: 'Контрагенты', category: 'Раздел', route: '/check-inn' },
+  { title: 'Проверка ИНН', subtitle: 'Контрагенты', category: 'Раздел', route: '/tools' },
   { title: 'AI-Консультант', subtitle: 'Налоговый помощник', category: 'Раздел', route: '/ai' },
-  { title: 'E-Imzo', subtitle: 'Диагностика ЭЦП', category: 'Действие', route: '/tools' },
+  { title: 'Сроки сертификатов E-Imzo', subtitle: 'Метаданные и диагностика', category: 'Действие', route: '/ecp' },
   ...UTILITY_IDEA_SEARCH_ITEMS,
 ];
 
@@ -63,5 +66,11 @@ export function search(items: SearchItem[], query: string): SearchItem[] {
   if (!q) return [];
   return items
     .filter(i => i.title.toLowerCase().includes(q) || i.subtitle.toLowerCase().includes(q) || i.category.toLowerCase().includes(q))
-    .slice(0, 12);
+    .slice(0, 24);
+}
+
+export function groupSearchResults(items: SearchItem[]): Array<{ category: string; items: SearchItem[] }> {
+  const groups = new Map<string, SearchItem[]>();
+  for (const item of items) groups.set(item.category, [...(groups.get(item.category) ?? []), item]);
+  return [...groups].map(([category, groupedItems]) => ({ category, items: groupedItems }));
 }

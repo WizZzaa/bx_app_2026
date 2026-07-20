@@ -13,6 +13,9 @@ export const IPC = {
   BACKUP_RUN: 'onec:backup:run',
   BACKUP_GET_CONFIG: 'onec:backup:getConfig',
   BACKUP_SAVE_CONFIG: 'onec:backup:saveConfig',
+  BACKUP_RESTORE: 'onec:backup:restore',
+  BACKUP_PICK_ONEC_EXE: 'onec:backup:pickOnecExe',
+  BACKUP_DEEP_CHECK: 'onec:backup:deepCheck',
   // Dashboard widgets
   WEATHER_GET: 'widget:weather:get',
   CURRENCY_GET: 'widget:currency:get',
@@ -28,10 +31,6 @@ export const IPC = {
   // ECP / E-Imzo
   ECP_PICK_PFX: 'ecp:pickPfx',
   ECP_PARSE_PFX: 'ecp:parsePfx',
-  ECP_SIGN_FILE: 'ecp:signFile',
-  ECP_VERIFY_SIG: 'ecp:verifySig',
-  ECP_PICK_FILE_TO_SIGN: 'ecp:pickFileToSign',
-  ECP_PICK_SIG_FILE: 'ecp:pickSigFile',
   // safeStorage
   SAFE_ENCRYPT: 'safe:encrypt',
   SAFE_DECRYPT: 'safe:decrypt',

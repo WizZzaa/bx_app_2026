@@ -1,5 +1,7 @@
-// Расчёт зарплаты для РУз. Ставки 2025–2026 (значения по умолчанию,
-// бухгалтер может их менять — сверяйтесь с актуальной редакцией НК РУз на soliq.uz).
+import { regulatoryNumber } from '../../data/calculatorRegulatoryValues'
+
+// Расчёт зарплаты для РУз. Числовые значения поступают из канонического
+// версионированного каталога и отображаются только через редакционный шлюз.
 
 export interface PayrollRates {
   ndfl: number     // НДФЛ, % (по умолчанию 12)
@@ -10,7 +12,13 @@ export interface PayrollRates {
 }
 
 // БРВ/МРОТ сверены 03.07.2026 (действуют с 01.08.2025, на весь 2026)
-export const DEFAULT_RATES: PayrollRates = { ndfl: 12, inps: 0.1, social: 12, brv: 412_000, mrot: 1_271_000 }
+export const DEFAULT_RATES: PayrollRates = {
+  ndfl: regulatoryNumber('tax.ndfl.standard'),
+  inps: regulatoryNumber('payroll.inps'),
+  social: regulatoryNumber('tax.social.standard'),
+  brv: regulatoryNumber('indicator.brv'),
+  mrot: regulatoryNumber('indicator.mrot'),
+}
 
 export interface PayrollResult {
   gross: number        // начислено (оклад + надбавки)

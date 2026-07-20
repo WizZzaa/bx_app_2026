@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { deadlinesForMonth, TaxDeadline } from '../../data/taxCalendar';
+import { deadlinesForMonth, summarizeTaxDeadlineCatalog, TaxDeadline } from '../../data/taxCalendar';
+
+const TAX_DEADLINE_CATALOG = summarizeTaxDeadlineCatalog();
 
 const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WEEKDAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
@@ -60,6 +62,12 @@ export default function TaxCalendar({ onPickDeadline }: Props) {
           <button onClick={next} className="w-6 h-6 rounded hover:bg-bx-surface-2 text-bx-muted text-xs">›</button>
         </div>
       </div>
+
+      {TAX_DEADLINE_CATALOG.ready === 0 && TAX_DEADLINE_CATALOG.needsReview > 0 && (
+        <p className="mb-3 rounded-lg border border-amber-500/25 bg-amber-500/[0.07] px-3 py-2 text-[10px] leading-relaxed text-amber-700 dark:text-amber-300">
+          Сроки временно скрыты: {TAX_DEADLINE_CATALOG.needsReview} карточек ожидают проверки официальных источников. Созданные ранее задачи сохранены.
+        </p>
+      )}
 
       {/* Weekdays */}
       <div className="grid grid-cols-7 gap-1 mb-1">

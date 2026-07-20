@@ -1,10 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { PDFDocument } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist';
-// eslint-disable-next-line import/no-unresolved
-import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+import { loadPdfJs, loadPdfLib } from '../../lib/documentDependencyLoaders';
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const binaryString = atob(base64);
@@ -56,6 +51,7 @@ export default function PdfCompress() {
     try {
       if (mode === 'vector') {
         setStatus('Чтение структуры PDF документа...');
+        const { PDFDocument } = await loadPdfLib();
         const srcBytes = await file.arrayBuffer();
         const pdfDoc = await PDFDocument.load(srcBytes);
 
@@ -82,6 +78,7 @@ export default function PdfCompress() {
       } else {
         // Deep Raster/Image compression (ideal for scanned PDFs)
         setStatus('Запуск глубокого анализа скана...');
+        const [{ PDFDocument }, pdfjsLib] = await Promise.all([loadPdfLib(), loadPdfJs()]);
         const srcBytes = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: srcBytes }).promise;
         const newPdfDoc = await PDFDocument.create();
@@ -98,7 +95,8 @@ export default function PdfCompress() {
 
           if (context) {
             // Render PDF page onto canvas
-            await page.render({ canvasContext: context, viewport } as any).promise;
+            const renderContext: Parameters<typeof page.render>[0] = { canvas, canvasContext: context, viewport };
+            await page.render(renderContext).promise;
             
             // Convert to low quality JPEG blob
             const imgDataUrl = canvas.toDataURL('image/jpeg', quality / 100);
@@ -132,9 +130,9 @@ export default function PdfCompress() {
           ? 'Скан сжат, готовый PDF можно скачать.'
           : 'При выбранных параметрах файл не стал меньше. Уменьшите качество или разрешение.');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setStatus('Ошибка оптимизации PDF: ' + (err.message || 'убедитесь, что файл не защищен паролем.'));
+      setStatus('Ошибка оптимизации PDF: ' + (err instanceof Error ? err.message : 'убедитесь, что файл не защищен паролем.'));
     } finally {
       setLoading(false);
     }
@@ -142,7 +140,7 @@ export default function PdfCompress() {
 
   const handleDownload = () => {
     if (!downloadBytes || !file) return;
-    const blob = new Blob([downloadBytes as any], { type: 'application/pdf' });
+    const blob = new Blob([Uint8Array.from(downloadBytes).buffer], { type: 'application/pdf' });
     const link = document.createElement('a');
     const downloadUrl = URL.createObjectURL(blob);
     link.href = downloadUrl;
