@@ -4,6 +4,7 @@ import Sidebar, { initialSidebarCollapsed } from './components/layout/Sidebar';
 import MobileNavigation from './components/layout/MobileNavigation';
 import Titlebar from './components/layout/Titlebar';
 import Topbar from './components/layout/Topbar';
+import RouteFocusManager from './components/layout/RouteFocusManager';
 import CommandPalette from './components/CommandPalette';
 import OnboardingWizard from './components/OnboardingWizard';
 import Dashboard from './pages/Dashboard';
@@ -32,6 +33,7 @@ const Counterparties = lazy(() => import('./pages/Counterparties'));
 const BixWidget = lazy(() => import('./pages/BixWidget'));
 const Documents = lazy(() => import('./pages/Documents'));
 const Translator = lazy(() => import('./pages/Translator'));
+const FunctionCatalog = lazy(() => import('./pages/FunctionCatalog'));
 
 function RouteLoadingFallback({ compact = false }: { compact?: boolean }) {
   return (
@@ -178,6 +180,9 @@ export default function App() {
     <CompanyProvider>
       <PlanProvider>
         <div className="flex flex-col h-screen w-screen overflow-hidden bg-bx-bg text-bx-text relative">
+          <a href="#bx-main-content" className="sr-only fixed left-3 top-3 z-[1000] rounded-xl bg-bx-accent px-4 py-3 font-semibold text-bx-on-accent focus:not-sr-only">
+            К основному содержимому
+          </a>
           
           {/* Background Glow Spheres for Depth */}
           <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none z-0 hidden dark:block" />
@@ -189,7 +194,8 @@ export default function App() {
             <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} webResponsive={isWebRuntime} />
             <div className="flex flex-col flex-1 overflow-hidden">
               <Topbar onOpenSearch={() => setPaletteOpen(true)} onToggleMenu={() => setSidebarCollapsed(value => !value)} menuExpanded={!sidebarCollapsed} />
-              <main className={`flex flex-1 overflow-hidden ${isWebRuntime ? 'pb-16 md:pb-0' : ''}`}>
+              <main id="bx-main-content" className={`flex flex-1 overflow-hidden ${isWebRuntime ? 'pb-16 md:pb-0' : ''}`} aria-label="Основное содержимое">
+                <RouteFocusManager />
                 <LazyRouteBoundary>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
@@ -198,6 +204,8 @@ export default function App() {
                     <Route path="/translator" element={<Translator />} />
                     <Route path="/reference" element={<ReferenceView />} />
                     <Route path="/services" element={<Services />} />
+                    <Route path="/functions" element={<FunctionCatalog />} />
+                    <Route path="/more" element={<Navigate to="/functions" replace />} />
                     <Route path="/news" element={<News />} />
                     <Route path="/news/:id" element={<NewsDetail />} />
                     <Route path="/knowledge" element={<Library />} />

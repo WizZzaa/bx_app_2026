@@ -44,7 +44,7 @@ describe('Sidebar', () => {
   it('uses the canonical seven-section information architecture', () => {
     render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
     const links = screen.getAllByRole('link').map(link => link.getAttribute('aria-label')).filter(Boolean)
-    expect(links).toEqual(['Главная', 'AI-консультант', 'База знаний', 'Справочники', 'Переводчик', 'Календарь', 'Все сервисы'])
+    expect(links).toEqual(['Главная', 'AI-консультант', 'База знаний', 'Справочники', 'Переводчик', 'Календарь', 'Все функции'])
   })
 
   it('shows the document translator as a standalone destination', () => {
@@ -55,6 +55,11 @@ describe('Sidebar', () => {
   it('does not expose the retired HR section', () => {
     render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
     expect(screen.queryByRole('link', { name: 'Сотрудники' })).toBeNull()
+  })
+
+  it('keeps former secondary destinations discoverable through a standalone catalog', () => {
+    render(<MemoryRouter initialEntries={['/dashboard']}><Sidebar /></MemoryRouter>)
+    expect(screen.getByRole('link', { name: 'Все функции' }).getAttribute('href')).toBe('/functions')
   })
 
   it('uses the canonical name for the home workspace', () => {

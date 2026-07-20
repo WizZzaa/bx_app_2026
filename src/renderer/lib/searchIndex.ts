@@ -3,6 +3,7 @@ import { loadAccounts, loadNsbu, loadTaxes, loadIndicators } from './db/referenc
 import { getAllArticlesSync } from './db/knowledgeRepo';
 import { LEGISLATION_NEWS } from '../data/newsItems';
 import { UTILITY_PROPOSALS } from '../data/workbenchCatalog';
+import { ALL_CATALOG_DESTINATIONS } from '../components/layout/navigation';
 
 export interface SearchItem {
   id?: string;
@@ -24,19 +25,18 @@ const staticItems: SearchItem[] = [
   { title: 'Главная', subtitle: 'Рабочая сводка', category: 'Раздел', route: '/' },
   { title: 'Новая задача', subtitle: 'Добавить задачу в календарь', category: 'Команда', route: '/planner?new=task' },
   { title: 'Спросить AI', subtitle: 'Открыть AI-консультант', category: 'Команда', route: '/ai' },
-  { title: 'Утилиты', subtitle: '1С, файлы, система, ЭЦП', category: 'Раздел', route: '/tools' },
-  { title: 'Переводчик документов', subtitle: 'Узбекский, русский и английский', category: 'Раздел', route: '/translator' },
   { title: 'Очистка кэша 1С', subtitle: 'Утилиты', category: 'Действие', route: '/tools' },
   { title: 'Снятие зависших процессов 1С', subtitle: 'Утилиты', category: 'Действие', route: '/tools' },
   { title: 'Бэкап базы 1С', subtitle: 'Утилиты', category: 'Действие', route: '/tools' },
   { title: 'Конвертер валют на дату', subtitle: 'Утилиты', category: 'Действие', route: '/tools' },
-  { title: 'База знаний', subtitle: 'Статьи и справочники', category: 'Раздел', route: '/knowledge' },
-  { title: 'Справочники', subtitle: 'Нормативная база', category: 'Раздел', route: '/reference' },
-  { title: 'Сервисы', subtitle: 'Госпорталы, ЭДО, банки', category: 'Раздел', route: '/services' },
-  { title: 'Калькуляторы', subtitle: 'НДС, НДФЛ, пени', category: 'Раздел', route: '/calc' },
   { title: 'Проверка ИНН', subtitle: 'Контрагенты', category: 'Раздел', route: '/tools' },
-  { title: 'AI-Консультант', subtitle: 'Налоговый помощник', category: 'Раздел', route: '/ai' },
   { title: 'Сроки сертификатов E-Imzo', subtitle: 'Метаданные и диагностика', category: 'Действие', route: '/ecp' },
+  ...ALL_CATALOG_DESTINATIONS.map(item => ({
+    title: item.label,
+    subtitle: item.description,
+    category: 'Раздел',
+    route: item.to,
+  })),
   ...UTILITY_IDEA_SEARCH_ITEMS,
 ];
 
