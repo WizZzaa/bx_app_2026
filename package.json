@@ -9,7 +9,7 @@
     "start": "electron-forge start",
     "build": "npm run build:web",
     "build:web": "vite build --config vite.renderer.config.mts --manifest && npm run budget",
-    "budget": "node ../tools/check-vite-bundle-budget.mjs --profile app",
+    "budget": "node scripts/check-vite-bundle-budget.mjs --profile app",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
