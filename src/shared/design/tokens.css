@@ -1,0 +1,230 @@
+/*
+ * BX semantic design tokens.
+ *
+ * D1-A contract only: this file is intentionally not imported by a runtime
+ * stylesheet yet. Theme integration follows after visual parity approval.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Semantic colour roles — light theme is the safe default. */
+  --bx-canvas: #f7f6fa;
+  --bx-surface: #ffffff;
+  --bx-surface-subtle: #f1eff6;
+  --bx-surface-strong: #e5dfec;
+  --bx-text-primary: #27242f;
+  --bx-text-secondary: #6e6877;
+  --bx-border: #ded9e8;
+  --bx-brand: #7568d8;
+  --bx-brand-hover: #6659c8;
+  --bx-brand-soft: #eeeafb;
+  --bx-brand-action: #6659c8;
+  --bx-contrast: #30284d;
+  --bx-on-brand: #ffffff;
+  --bx-success: #2f7d58;
+  --bx-warning: #a96914;
+  --bx-warning-text: #8a5a00;
+  --bx-danger: #b53a45;
+  --bx-info: #52677a;
+  --bx-focus: #7568d8;
+  --bx-scrim: rgb(17 16 24 / 0.56);
+
+  /* Channels support alpha composition without duplicating palette values. */
+  --bx-canvas-rgb: 247 246 250;
+  --bx-surface-rgb: 255 255 255;
+  --bx-surface-subtle-rgb: 241 239 246;
+  --bx-surface-strong-rgb: 229 223 236;
+  --bx-text-primary-rgb: 39 36 47;
+  --bx-text-secondary-rgb: 110 104 119;
+  --bx-border-rgb: 222 217 232;
+  --bx-brand-rgb: 117 104 216;
+  --bx-on-brand-rgb: 255 255 255;
+
+  /* Typography. User font scaling remains an independent runtime setting. */
+  --bx-font-sans: Geist, Inter, "Segoe UI", Roboto, Arial, sans-serif;
+  --bx-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --bx-font-size-xs: 0.75rem;
+  --bx-font-size-sm: 0.875rem;
+  --bx-font-size-md: 1rem;
+  --bx-font-size-lg: 1.125rem;
+  --bx-font-size-xl: 1.5rem;
+  --bx-font-size-2xl: 2rem;
+  --bx-font-size-3xl: 2.5rem;
+  --bx-line-height-label: 1.25;
+  --bx-line-height-heading: 1.2;
+  --bx-line-height-body: 1.5;
+  --bx-line-height-reading: 1.65;
+
+  /* 4/8 px rhythm with the approved intermediate steps. */
+  --bx-space-1: 0.25rem;
+  --bx-space-2: 0.5rem;
+  --bx-space-3: 0.75rem;
+  --bx-space-4: 1rem;
+  --bx-space-6: 1.5rem;
+  --bx-space-8: 2rem;
+  --bx-space-12: 3rem;
+  --bx-space-16: 4rem;
+
+  --bx-radius-xs: 0.5rem;
+  --bx-radius-sm: 0.75rem;
+  --bx-radius-md: 1rem;
+  --bx-radius-card: 1.25rem;
+  --bx-radius-lg: 1.5rem;
+  --bx-radius-pill: 9999px;
+
+  --bx-control-height: 2.75rem;
+  --bx-control-height-touch: 3rem;
+  --bx-target-min: 2.75rem;
+  --bx-focus-width: 3px;
+  --bx-focus-offset: 2px;
+
+  --bx-shadow-none: none;
+  --bx-shadow-sm: 0 1px 2px rgb(27 23 35 / 0.06);
+  --bx-shadow-overlay: 0 12px 32px rgb(27 23 35 / 0.12);
+
+  --bx-z-base: 0;
+  --bx-z-sticky: 10;
+  --bx-z-nav: 20;
+  --bx-z-popover: 30;
+  --bx-z-scrim: 40;
+  --bx-z-dialog: 50;
+  --bx-z-toast: 60;
+
+  --bx-content-max: 75rem;
+  --bx-reading-max: 72ch;
+
+  /* Compatibility aliases for the current renderer during later adoption. */
+  --bx-bg: var(--bx-canvas);
+  --bx-surface-soft: var(--bx-surface-subtle);
+  --bx-surface-2: var(--bx-surface-subtle);
+  --bx-border-2: var(--bx-surface-strong);
+  --bx-text: var(--bx-text-primary);
+  --bx-text-muted: var(--bx-text-secondary);
+  --bx-muted: var(--bx-text-secondary);
+  --bx-accent: var(--bx-brand);
+  --bx-accent-hover: var(--bx-brand-hover);
+  --bx-accent-soft: var(--bx-brand-soft);
+  --bx-on-accent: var(--bx-on-brand);
+  --bx-on-accent-muted: var(--bx-on-brand);
+  --bx-sidebar-text: var(--bx-text-primary);
+  --bx-radius: var(--bx-radius-sm);
+  --bx-bg-rgb: var(--bx-canvas-rgb);
+  --bx-surface-2-rgb: var(--bx-surface-subtle-rgb);
+  --bx-border-2-rgb: var(--bx-surface-strong-rgb);
+  --bx-text-rgb: var(--bx-text-primary-rgb);
+  --bx-muted-rgb: var(--bx-text-secondary-rgb);
+  --bx-accent-rgb: var(--bx-brand-rgb);
+  --bx-on-accent-rgb: var(--bx-on-brand-rgb);
+  --bx-on-accent-muted-rgb: var(--bx-on-brand-rgb);
+}
+
+:root[data-theme='dark'],
+:root.dark {
+  color-scheme: dark;
+  --bx-canvas: #111018;
+  --bx-surface: #181621;
+  --bx-surface-subtle: #211e2b;
+  --bx-surface-strong: #2a2636;
+  --bx-text-primary: #f7f4fb;
+  --bx-text-secondary: #c2bacd;
+  --bx-border: #3d374a;
+  --bx-brand: #b9a2e2;
+  --bx-brand-hover: #c7b4e9;
+  --bx-brand-soft: #2a2636;
+  --bx-brand-action: #b9a2e2;
+  --bx-contrast: #d3c1f2;
+  --bx-on-brand: #1b1329;
+  --bx-success: #57cc8a;
+  --bx-warning: #f0b45a;
+  --bx-warning-text: #f0b45a;
+  --bx-danger: #ff8a80;
+  --bx-info: #75b8ff;
+  --bx-focus: #d3c1f2;
+  --bx-scrim: rgb(0 0 0 / 0.64);
+  --bx-canvas-rgb: 17 16 24;
+  --bx-surface-rgb: 24 22 33;
+  --bx-surface-subtle-rgb: 33 30 43;
+  --bx-surface-strong-rgb: 42 38 54;
+  --bx-text-primary-rgb: 247 244 251;
+  --bx-text-secondary-rgb: 194 186 205;
+  --bx-border-rgb: 61 55 74;
+  --bx-brand-rgb: 185 162 226;
+  --bx-on-brand-rgb: 27 19 41;
+  --bx-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.24);
+  --bx-shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.42);
+}
+
+:root[data-theme='high-contrast'],
+:root.high-contrast {
+  color-scheme: dark;
+  --bx-canvas: #000000;
+  --bx-surface: #000000;
+  --bx-surface-subtle: #000000;
+  --bx-surface-strong: #111111;
+  --bx-text-primary: #ffffff;
+  --bx-text-secondary: #ffffff;
+  --bx-border: #ffffff;
+  --bx-brand: #ffeb00;
+  --bx-brand-hover: #fff176;
+  --bx-brand-soft: #111111;
+  --bx-brand-action: #ffeb00;
+  --bx-contrast: #ffffff;
+  --bx-on-brand: #000000;
+  --bx-success: #6cff9c;
+  --bx-warning: #ffeb00;
+  --bx-warning-text: #ffeb00;
+  --bx-danger: #ff8a80;
+  --bx-info: #75b8ff;
+  --bx-focus: #ffeb00;
+  --bx-scrim: #000000;
+  --bx-canvas-rgb: 0 0 0;
+  --bx-surface-rgb: 0 0 0;
+  --bx-surface-subtle-rgb: 0 0 0;
+  --bx-surface-strong-rgb: 17 17 17;
+  --bx-text-primary-rgb: 255 255 255;
+  --bx-text-secondary-rgb: 255 255 255;
+  --bx-border-rgb: 255 255 255;
+  --bx-brand-rgb: 255 235 0;
+  --bx-on-brand-rgb: 0 0 0;
+  --bx-focus-width: 4px;
+  --bx-shadow-sm: none;
+  --bx-shadow-overlay: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='system'] {
+    color-scheme: dark;
+    --bx-canvas: #111018;
+    --bx-surface: #181621;
+    --bx-surface-subtle: #211e2b;
+    --bx-surface-strong: #2a2636;
+    --bx-text-primary: #f7f4fb;
+    --bx-text-secondary: #c2bacd;
+    --bx-border: #3d374a;
+    --bx-brand: #b9a2e2;
+    --bx-brand-hover: #c7b4e9;
+    --bx-brand-soft: #2a2636;
+    --bx-brand-action: #b9a2e2;
+    --bx-contrast: #d3c1f2;
+    --bx-on-brand: #1b1329;
+    --bx-success: #57cc8a;
+    --bx-warning: #f0b45a;
+    --bx-warning-text: #f0b45a;
+    --bx-danger: #ff8a80;
+    --bx-info: #75b8ff;
+    --bx-focus: #d3c1f2;
+    --bx-scrim: rgb(0 0 0 / 0.64);
+    --bx-canvas-rgb: 17 16 24;
+    --bx-surface-rgb: 24 22 33;
+    --bx-surface-subtle-rgb: 33 30 43;
+    --bx-surface-strong-rgb: 42 38 54;
+    --bx-text-primary-rgb: 247 244 251;
+    --bx-text-secondary-rgb: 194 186 205;
+    --bx-border-rgb: 61 55 74;
+    --bx-brand-rgb: 185 162 226;
+    --bx-on-brand-rgb: 27 19 41;
+    --bx-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.24);
+    --bx-shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.42);
+  }
+}
