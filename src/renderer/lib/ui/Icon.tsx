@@ -30,6 +30,7 @@ const PATHS: Record<string, React.ReactNode> = {
   trending: <><path d="M22 7 13.5 15.5l-5-5L2 17M16 7h6v6" /></>,
   recycle: <><path d="M7 19H4.8a2 2 0 0 1-1.7-3l3-5M11 5l2.3-4 3 5M21 15l-3 6h-5M3.1 11 5 5l5 1M14 5h7l-2.3 4M16.6 19 21 15" /></>,
   exchange: <><path d="M17 3l4 4-4 4M21 7H7M7 21l-4-4 4-4M3 17h14" /></>,
+  refresh: <><path d="M20 6v6h-6M4 18v-6h6" /><path d="M18.5 9A7 7 0 0 0 6.2 5.2L4 7M5.5 15A7 7 0 0 0 17.8 18.8L20 17" /></>,
   // Утилиты
   trash: <><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" /></>,
   save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><path d="M17 21v-8H7v8M7 3v5h8" /></>,
