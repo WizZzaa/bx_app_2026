@@ -22,4 +22,15 @@ describe('Planner D1 visual contract', () => {
     expect(calendar).not.toContain('bg-purple-500')
     expect(modal).not.toContain('bg-violet-600')
   })
+
+  it('keeps the planner inside the same centered adaptive canvas as the dashboard', () => {
+    const css = read('src/renderer/pages/planner/PlannerD1.css')
+
+    expect(css).toContain('width: min(100%, var(--bx-content-max))')
+    expect(css).toContain('max-width: var(--bx-content-max)')
+    expect(css).toContain('margin-inline: auto')
+    expect(css).toContain('padding: var(--bx-space-4)')
+    expect(css).toContain('@media (min-width: 48rem)')
+    expect(css).toContain('@media (min-width: 64rem)')
+  })
 })
