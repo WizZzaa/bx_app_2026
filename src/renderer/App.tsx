@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar, { initialSidebarCollapsed } from './components/layout/Sidebar';
 import MobileNavigation from './components/layout/MobileNavigation';
@@ -159,11 +159,16 @@ export default function App({ previewPlan }: { previewPlan?: Plan } = {}) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(initialSidebarCollapsed);
   const location = useLocation();
+  const shellRef = useRef<HTMLDivElement>(null);
 
   // Инициализация темы при первом рендере (единый ключ bx_theme + классы .light/.dark)
   useEffect(() => {
     applyTheme(currentTheme());
   }, []);
+
+  useEffect(() => {
+    shellRef.current?.scrollTo?.({ top: 0, behavior: 'auto' });
+  }, [location.pathname]);
 
   // Если это режим компактного окна (Трей-вид)
   const isCompact = window.location.search.includes('compact=true') || window.location.hash.includes('/tray');
@@ -189,7 +194,7 @@ export default function App({ previewPlan }: { previewPlan?: Plan } = {}) {
   return (
     <CompanyProvider>
       <AppPlanBoundary previewPlan={previewPlan}>
-        <div className="bx-app-shell flex h-screen w-screen flex-col overflow-hidden bg-bx-bg text-bx-text relative">
+        <div ref={shellRef} className="bx-app-shell flex h-screen w-screen flex-col overflow-hidden bg-bx-bg text-bx-text relative">
           <a href="#bx-main-content" className="sr-only fixed left-3 top-3 z-[1000] rounded-xl bg-bx-accent px-4 py-3 font-semibold text-bx-on-accent focus:not-sr-only">
             К основному содержимому
           </a>

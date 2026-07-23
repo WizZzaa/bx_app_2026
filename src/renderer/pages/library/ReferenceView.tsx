@@ -11,6 +11,7 @@ import {
   ResourceNavItem,
   ResourceSidebar,
 } from '../../components/workspace/ResourceWorkspace'
+import './ReferenceA5.css'
 
 export type RefTabId = 'finance' | 'accounting' | 'gov' | 'ved' | 'law'
 
@@ -63,14 +64,14 @@ export default function ReferenceView({ initialTab }: { initialTab?: RefTabId })
 
   return (
     <ResourceLayout sidebar={sidebar}>
-      <div className="space-y-5">
+      <div className="bx-reference-a5 space-y-5">
         <ResourceHero
           eyebrow="Поиск по нормативным данным"
           title={selected.label}
           description={`${selected.short}. Сначала найдите нужный раздел, затем сверяйте значение, дату проверки и официальный источник.`}
           icon={selected.icon}
           stats={[
-            { value: '03.07.2026', label: 'последняя сверка' },
+            { value: 'У каждой записи', label: 'статус проверки' },
             { value: '3', label: 'официальных источника' },
             { value: tabs.length, label: 'разделов' },
           ]}
@@ -84,7 +85,7 @@ export default function ReferenceView({ initialTab }: { initialTab?: RefTabId })
           </div>
         </div>
 
-        <section className="rounded-[22px] border border-bx-border bg-bx-surface p-5 shadow-sm lg:p-6" aria-label={selected.label}>
+        <section className="bx-reference-a5__content rounded-[22px] border border-bx-border bg-bx-surface p-5 shadow-sm lg:p-6" aria-label={selected.label}>
           {active === 'finance' && <FinanceTab />}
           {active === 'accounting' && <AccountingTab />}
           {active === 'gov' && <GovTab />}

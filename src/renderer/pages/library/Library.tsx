@@ -7,6 +7,7 @@ import Icon from '../../lib/ui/Icon'
 import ArticleReader from './ArticleReader'
 import { usePlan } from '../../lib/plan'
 import PaywallModal from '../../components/PaywallModal'
+import './KnowledgeA5.css'
 import {
   ResourceEmpty,
   ResourceHero,
@@ -29,25 +30,46 @@ function categoryIcon(category: string) {
   return 'book'
 }
 
-function ArticleCard({ article, search, featured, onOpen }: { article: KbArticle; search: string; featured?: boolean; onOpen: () => void }) {
+const FAVORITES_KEY = 'bx_kb_favorites'
+
+function readFavorites(): string[] {
+  if (typeof localStorage === 'undefined') return []
+  try {
+    const value = JSON.parse(localStorage.getItem(FAVORITES_KEY) ?? '[]')
+    return Array.isArray(value) ? value.filter(item => typeof item === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function ArticleCard({ article, search, featured, favorite, onOpen, onToggleFavorite }: { article: KbArticle; search: string; featured?: boolean; favorite: boolean; onOpen: () => void; onToggleFavorite: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className={`group flex cursor-pointer flex-col rounded-[20px] border bg-bx-surface p-4.5 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/[0.035] focus-visible:ring-2 focus-visible:ring-blue-500 ${featured ? 'border-blue-500/20' : 'border-bx-border'}`}
+    <article
+      className={`bx-knowledge-card group flex flex-col rounded-[20px] border bg-bx-surface p-4.5 text-left shadow-sm ${featured ? 'border-blue-500/20' : 'border-bx-border'}`}
     >
       <div className="flex items-start justify-between gap-3">
         <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-300"><Icon name={categoryIcon(article.category)} className="h-4 w-4" /></span>
-        <span className="rounded-full bg-bx-bg px-2 py-1 text-[9px] font-black text-bx-muted"><Icon name="clock" className="mr-1 inline h-3 w-3 align-[-2px]" />{readMinutes(article.body)} мин</span>
+        <div className="flex items-center gap-1.5">
+          <span className="rounded-full bg-bx-bg px-2 py-1 text-[9px] font-black text-bx-muted"><Icon name="clock" className="mr-1 inline h-3 w-3 align-[-2px]" />{readMinutes(article.body)} мин</span>
+          <button
+            type="button"
+            onClick={onToggleFavorite}
+            aria-label={favorite ? `Убрать «${article.title}» из сохранённых` : `Сохранить «${article.title}»`}
+            aria-pressed={favorite}
+            className={`bx-knowledge-card__save grid h-9 w-9 place-items-center rounded-xl border outline-none ${favorite ? 'border-blue-500/25 bg-blue-500/10 text-blue-600' : 'border-bx-border bg-bx-bg text-bx-muted'}`}
+          >
+            <Icon name="bookmark" className={`h-4 w-4 ${favorite ? 'fill-current' : ''}`} />
+          </button>
+        </div>
       </div>
       <p className="mt-3 text-[9px] font-black uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300">{article.category}</p>
-      <h4 className="mt-1.5 text-[13px] font-black leading-snug text-bx-text transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-300">{search ? highlight(article.title, search) : article.title}</h4>
+      <h4 className="mt-1.5 text-[15px] font-black leading-snug text-bx-text">{search ? highlight(article.title, search) : article.title}</h4>
       <p className="mt-2 line-clamp-3 text-[11px] leading-relaxed text-bx-muted">{excerpt(article.body)}</p>
-      <div className="mt-auto flex items-center justify-between gap-3 border-t border-bx-border pt-3 text-[10px] font-bold">
+      <div className="mt-auto flex items-end justify-between gap-3 border-t border-bx-border pt-3 text-[10px] font-bold">
         <span className="min-w-0 truncate text-bx-muted">Источник: {article.source}</span>
-        <span className="flex flex-shrink-0 items-center gap-1 text-blue-600 dark:text-blue-300">Читать <Icon name="arrowR" className="h-3.5 w-3.5" /></span>
+        <button type="button" onClick={onOpen} className="bx-knowledge-card__open flex min-h-10 flex-shrink-0 items-center gap-1 rounded-xl px-3 text-blue-600 outline-none dark:text-blue-300">Читать <Icon name="arrowR" className="h-3.5 w-3.5" /></button>
       </div>
-    </button>
+    </article>
   )
 }
 
@@ -59,6 +81,7 @@ export default function Library() {
   const [articles, setArticles] = useState<KbArticle[]>(() => getAllArticlesSync())
   const [categories, setCategories] = useState(() => getKnowledgeCategoriesSync())
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [favorites, setFavorites] = useState<string[]>(readFavorites)
   const [params, setParams] = useSearchParams()
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -74,7 +97,7 @@ export default function Library() {
   }, [plan])
 
   useEffect(() => {
-    if (selectedCategory !== 'Все' && !categories.some(category => category.name === selectedCategory)) setSelectedCategory('Все')
+    if (selectedCategory !== 'Все' && selectedCategory !== 'Сохранённые' && !categories.some(category => category.name === selectedCategory)) setSelectedCategory('Все')
   }, [categories, selectedCategory])
 
   useEffect(() => {
@@ -88,15 +111,21 @@ export default function Library() {
 
   useEffect(() => {
     const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-    scrollRef.current?.scrollTo({ top: 0, behavior })
+    scrollRef.current?.closest<HTMLElement>('.bx-resource-content')?.scrollTo?.({ top: 0, behavior })
+    scrollRef.current?.closest<HTMLElement>('.bx-app-shell')?.scrollTo?.({ top: 0, behavior: 'auto' })
   }, [activeId])
 
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites))
+  }, [favorites])
+
   const filteredArticles = useMemo(() => articles.filter(article => {
-    if (selectedCategory !== 'Все' && article.category !== selectedCategory) return false
+    if (selectedCategory === 'Сохранённые' && !favorites.includes(article.id)) return false
+    if (selectedCategory !== 'Все' && selectedCategory !== 'Сохранённые' && article.category !== selectedCategory) return false
     if (!search.trim()) return true
     const q = search.toLowerCase().trim()
     return article.title.toLowerCase().includes(q) || article.body.toLowerCase().includes(q) || article.tags?.some(tag => tag.toLowerCase().includes(q))
-  }), [articles, selectedCategory, search])
+  }), [articles, favorites, selectedCategory, search])
 
   const activeArticle = useMemo(() => activeId ? articles.find(article => article.id === activeId) ?? null : null, [articles, activeId])
   const popularArticles = useMemo(() => KB_POPULAR_IDS.map(id => articles.find(article => article.id === id)).filter(Boolean).slice(0, 4) as KbArticle[], [articles])
@@ -109,6 +138,10 @@ export default function Library() {
     if (plan === 'free') { setPaywall(true); return }
     setSelectedCategory(category)
     setActiveId(null)
+  }
+  const toggleFavorite = (id: string) => {
+    if (plan === 'free') { setPaywall(true); return }
+    setFavorites(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
   }
 
   const sidebar = (
@@ -124,6 +157,7 @@ export default function Library() {
       footer={<div className="rounded-xl bg-bx-bg px-3 py-3 text-[10px] leading-relaxed text-bx-muted"><span className="font-black text-bx-text">Важно:</span> материалы помогают разобраться, но не заменяют проверку действующей нормы.</div>}
     >
       <ResourceNavItem icon="book" label="Все публикации" count={articles.length} active={selectedCategory === 'Все'} onClick={() => chooseCategory('Все')} />
+      <ResourceNavItem icon="bookmark" label="Сохранённые" count={favorites.length} active={selectedCategory === 'Сохранённые'} onClick={() => chooseCategory('Сохранённые')} />
       {categories.map(category => (
         <ResourceNavItem key={category.slug} icon={categoryIcon(category.name)} label={category.name} count={articles.filter(article => article.category === category.name).length} active={selectedCategory === category.name} onClick={() => chooseCategory(category.name)} />
       ))}
@@ -132,7 +166,7 @@ export default function Library() {
 
   return (
     <ResourceLayout sidebar={sidebar}>
-      <div ref={scrollRef}>
+      <div ref={scrollRef} className="bx-knowledge-a5">
         {activeArticle ? (
           <ArticleReader
             article={activeArticle}
@@ -141,6 +175,8 @@ export default function Library() {
             onOpen={article => openArticle(article.id)}
             onBack={() => setActiveId(null)}
             onCategory={category => { setSelectedCategory(category); setActiveId(null) }}
+            favorite={favorites.includes(activeArticle.id)}
+            onToggleFavorite={() => toggleFavorite(activeArticle.id)}
           />
         ) : (
           <div className="space-y-6">
@@ -160,7 +196,7 @@ export default function Library() {
               <section className="space-y-3.5">
                 <ResourceSectionTitle title="С чего начать" subtitle="Материалы, к которым чаще всего возвращаются в ежедневной работе" count={popularArticles.length} />
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  {popularArticles.map(article => <ArticleCard key={article.id} article={article} search="" featured onOpen={() => openArticle(article.id)} />)}
+                  {popularArticles.map(article => <ArticleCard key={article.id} article={article} search="" featured favorite={favorites.includes(article.id)} onOpen={() => openArticle(article.id)} onToggleFavorite={() => toggleFavorite(article.id)} />)}
                 </div>
               </section>
             )}
@@ -168,16 +204,16 @@ export default function Library() {
             <section className="space-y-3.5">
               <ResourceSectionTitle
                 title={search.trim() ? `Результаты по запросу «${search.trim()}»` : selectedCategory === 'Все' ? 'Все публикации' : selectedCategory}
-                subtitle={search.trim() ? 'Поиск учитывает заголовок, текст и теги' : 'Откройте материал, чтобы увидеть содержание, источники и связанные действия'}
+                subtitle={search.trim() ? 'Поиск учитывает заголовок, текст и теги' : selectedCategory === 'Сохранённые' ? 'Ваш личный список для быстрого возвращения к материалам' : 'Откройте материал, чтобы увидеть содержание, источники и связанные действия'}
                 count={filteredArticles.length}
                 action={search.trim() ? <button type="button" onClick={() => setSearch('')} className={secondaryActionClass}>Очистить поиск</button> : undefined}
               />
               {filteredArticles.length > 0 ? (
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                  {filteredArticles.map(article => <ArticleCard key={article.id} article={article} search={search} onOpen={() => openArticle(article.id)} />)}
+                  {filteredArticles.map(article => <ArticleCard key={article.id} article={article} search={search} favorite={favorites.includes(article.id)} onOpen={() => openArticle(article.id)} onToggleFavorite={() => toggleFavorite(article.id)} />)}
                 </div>
               ) : (
-                <ResourceEmpty title="Ничего не найдено" description="Попробуйте более короткий запрос, выберите другой раздел или вернитесь ко всем публикациям." action={<button type="button" onClick={() => { setSearch(''); setSelectedCategory('Все') }} className={secondaryActionClass}>Показать все материалы</button>} />
+                <ResourceEmpty icon={selectedCategory === 'Сохранённые' ? 'bookmark' : 'search'} title={selectedCategory === 'Сохранённые' ? 'Сохранённых статей пока нет' : 'Ничего не найдено'} description={selectedCategory === 'Сохранённые' ? 'Нажмите значок закладки на карточке или в статье — материал появится здесь.' : 'Попробуйте более короткий запрос, выберите другой раздел или вернитесь ко всем публикациям.'} action={<button type="button" onClick={() => { setSearch(''); setSelectedCategory('Все') }} className={secondaryActionClass}>Показать все материалы</button>} />
               )}
             </section>
           </div>
