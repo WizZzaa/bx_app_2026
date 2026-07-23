@@ -20,6 +20,7 @@ import type { Company } from '../lib/db/types'
 import { dashboardDeadlineStatus, isPermissionError, summarizeDashboardTasks } from './dashboardModel'
 import { useEvents, type BxEvent } from './planner/useEvents'
 import './DashboardD1.css'
+import './DashboardA1.css'
 
 interface AsyncResource<T> {
   value: T
@@ -139,8 +140,8 @@ function DashboardHeader({
         <h1 id="bx-d1-dashboard-title">Главное на сегодня</h1>
         <p className="bx-d1-dashboard-hero__lead">
           {activeCompany
-            ? `${activeCompany.name}: сроки, задачи и полезные сигналы — в одном рабочем поле.`
-            : 'Сроки, задачи и полезные сигналы — в одном рабочем поле.'}
+            ? `${activeCompany.name}: ближайшее дело, важные сроки и рабочие сигналы без лишнего шума.`
+            : 'Ближайшее дело, важные сроки и рабочие сигналы без лишнего шума.'}
         </p>
         <div className="bx-d1-dashboard-hero__actions">
           <button type="button" className="bx-d1-action bx-d1-action--primary" onClick={() => onNavigate('/planner', { newTask: {} })}>
@@ -155,11 +156,11 @@ function DashboardHeader({
       <aside className="bx-d1-dashboard-hero__summary" aria-label="Сводка дня">
         <div className="bx-d1-dashboard-hero__date">
           <span aria-hidden="true"><Icon name="planner" /></span>
-          <div><small>Рабочий ритм</small><strong>{summary.active.length ? 'Есть задачи в фокусе' : 'День можно спланировать'}</strong></div>
+          <div><small>Сегодня</small><strong>{summary.active.length ? 'Фокус определён' : 'День можно спланировать'}</strong></div>
         </div>
         <dl>
           <div>
-            <dt>Активные дела</dt>
+            <dt>В работе</dt>
             <dd>{eventsLoading ? '—' : summary.active.length}</dd>
           </div>
           <div>
@@ -374,7 +375,7 @@ function AiCard({ ai, question, setQuestion, onAsk, onOpen, onRetry }: {
         <>
           <form className="bx-d1-dashboard-ai-form" onSubmit={onAsk}>
             <label htmlFor="bx-d1-ai-question" className="sr-only">Вопрос для BX AI</label>
-            <input id="bx-d1-ai-question" value={question} onChange={event => setQuestion(event.target.value)} maxLength={320} placeholder="Например: какой срок уплаты НДС?" />
+            <input id="bx-d1-ai-question" value={question} onChange={event => setQuestion(event.target.value)} maxLength={320} placeholder="Спросите о сроке или налоге" />
             <button type="submit" disabled={!question.trim()} aria-label="Задать вопрос BX AI"><Icon name="arrowR" /></button>
           </form>
           <dl className="bx-d1-dashboard-ai-meta">
@@ -464,7 +465,6 @@ export function DashboardD1View(props: DashboardD1ViewProps) {
               <div className="bx-d1-dashboard__main-column">
                 {todayCard}
                 {taxCalendarCard}
-                {horoscopeCard}
               </div>
               <aside className="bx-d1-dashboard__signal-column" aria-label="Сигналы и быстрые действия">
                 {weatherCard}
@@ -472,6 +472,7 @@ export function DashboardD1View(props: DashboardD1ViewProps) {
                 {companyCard}
                 {aiCard}
               </aside>
+              {horoscopeCard && <div className="bx-d1-dashboard__pause">{horoscopeCard}</div>}
             </section>
           ) : (
             <BentoGrid as="section" className="bx-d1-dashboard__grid" aria-label="Рабочий стол">

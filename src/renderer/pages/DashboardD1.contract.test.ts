@@ -3,8 +3,10 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const css = readFileSync(resolve(process.cwd(), 'src/renderer/pages/DashboardD1.css'), 'utf8')
+const a1Css = readFileSync(resolve(process.cwd(), 'src/renderer/pages/DashboardA1.css'), 'utf8')
 const entry = readFileSync(resolve(process.cwd(), 'src/renderer/pages/Dashboard.tsx'), 'utf8')
 const view = readFileSync(resolve(process.cwd(), 'src/renderer/pages/DashboardD1.tsx'), 'utf8')
+const weather = readFileSync(resolve(process.cwd(), 'src/renderer/components/widgets/WeatherWidget.tsx'), 'utf8')
 
 describe('D1 Dashboard contracts', () => {
   it('stays lazy and guarded so the legacy dashboard remains the default rollback', () => {
@@ -44,5 +46,25 @@ describe('D1 Dashboard contracts', () => {
     expect(view).not.toContain('localStorage')
     expect(view).not.toContain('sessionStorage')
     expect(view).not.toMatch(/\.insert\(|\.update\(|\.delete\(/)
+  })
+
+  it('uses the A1 daily control center without duplicating domain state', () => {
+    expect(view).toContain("import './DashboardA1.css'")
+    expect(view).toContain('bx-d1-dashboard__pause')
+    expect(view).toContain('Ближайшее дело, важные сроки и рабочие сигналы')
+    expect(a1Css).toContain('grid-column: 1 / -1')
+    expect(a1Css).toContain('transform: scale(0.97)')
+    expect(a1Css).toContain('@media (prefers-reduced-transparency: reduce)')
+    expect(a1Css).toContain('@media (prefers-contrast: more)')
+    expect(a1Css).toContain('@media (forced-colors: active)')
+  })
+
+  it('keeps weather semantics in the shared BX design system', () => {
+    expect(weather).toContain('className="bx-weather"')
+    expect(weather).toContain('aria-label="Погода в Ташкенте"')
+    expect(weather).not.toContain('bg-gradient-to-br')
+    expect(weather).not.toContain('animate-pulse')
+    expect(a1Css).toContain('.bx-weather__metrics')
+    expect(a1Css).toContain('.bx-weather__source')
   })
 })
