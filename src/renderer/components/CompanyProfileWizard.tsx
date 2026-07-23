@@ -306,11 +306,11 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
   }
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="company-profile-title" className="w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-3xl border border-bx-border bg-bx-surface shadow-2xl flex flex-col">
+    <div className="bx-a6-wizard-overlay fixed inset-0 z-[90] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="company-profile-title" className="bx-a6-company-wizard w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-3xl border border-bx-border bg-bx-surface shadow-2xl flex flex-col">
         <div className="px-6 py-5 border-b border-bx-border flex items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">Шаг {step + 1} из 4</p>
+            <p className="bx-a6-company-wizard__progress text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">Шаг {step + 1} из 4</p>
             <h2 id="company-profile-title" className="text-lg font-black text-bx-text mt-1">
               {company ? 'Настройка компании' : 'Новая компания'}
             </h2>

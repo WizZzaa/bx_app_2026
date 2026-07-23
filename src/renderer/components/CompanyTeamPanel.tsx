@@ -68,7 +68,7 @@ export function CompanyTeamPanel({
   const isBusy = busyAction !== null;
 
   return (
-    <div className="space-y-4">
+    <div className="bx-a6-company-team space-y-4">
       <div>
         <h2 className="text-base font-bold text-bx-text">{title}</h2>
         <p className="text-xs text-bx-muted mt-1">{description}</p>

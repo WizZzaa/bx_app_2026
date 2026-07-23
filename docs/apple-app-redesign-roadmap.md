@@ -1,7 +1,7 @@
 # Apple-style редизайн BX App — маршрут от оболочки до последней формы
 
 Дата начала: 23 июля 2026 года
-Статус: A0–A5 завершены; следующий пакет — A6, организации, финансы и валюты.
+Статус: A0–A6 завершены; следующий пакет — A7, калькуляторы и утилиты.
 
 ## Неподвижные границы
 
@@ -84,12 +84,12 @@
 
 ## A6 — Организации, финансы и валюты
 
-- [ ] `/counterparties`, `/counterparties/:id`, `/companies/:id`.
-- [ ] Создание/редактирование компании и контрагента.
-- [ ] Company profile wizard, team, роли и activity.
-- [ ] `/finance`, `/finance/:id`: реестр и карточка обязательства.
-- [ ] `TxModal` и `ImportModal`.
-- [ ] `/currency`: курсы, банки, converter, history и export.
+- [x] `/counterparties`, `/counterparties/:id`, `/companies/:id`.
+- [x] Создание/редактирование компании и контрагента.
+- [x] Company profile wizard, team, роли и activity.
+- [x] `/finance`, `/finance/:id`: реестр и карточка обязательства.
+- [x] `TxModal` и `ImportModal`.
+- [x] `/currency`: курсы, банки, converter, history и export.
 
 ## A7 — Калькуляторы и утилиты
 

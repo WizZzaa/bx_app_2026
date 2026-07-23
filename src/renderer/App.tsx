@@ -17,6 +17,7 @@ import { reportError } from './lib/errorReporter';
 import Icon from './lib/ui/Icon';
 import './styles/app-shell-d1.css';
 import './styles/workspace-pages-d1.css';
+import './styles/a6-business-workspaces.css';
 
 const Tools = lazy(() => import('./pages/Tools'));
 const Library = lazy(() => import('./pages/library/Library'));

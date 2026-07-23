@@ -188,8 +188,8 @@ export default function Currency() {
   }
 
   return (
-    <main className="z-10 flex-1 overflow-y-auto bg-bx-bg px-5 py-5 text-bx-text sm:px-6">
-      <div className="bx-page-container space-y-4">
+    <main className="bx-a6-currency z-10 flex-1 overflow-y-auto bg-bx-bg px-5 py-5 text-bx-text sm:px-6">
+      <div className="bx-a6-currency__workspace bx-page-container space-y-4">
         <header className="relative overflow-hidden rounded-[28px] border border-bx-border bg-gradient-to-r from-blue-600/[0.10] via-bx-surface to-cyan-500/[0.07] p-6 shadow-sm">
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">Финансовый инструмент</p><h1 className="mt-2 text-3xl font-black tracking-tight text-bx-text">Курсы валют</h1><p className="mt-2 max-w-2xl text-xs leading-relaxed text-bx-muted">Курс ЦБ РУз, официальные предложения банков, архивная динамика и выгрузка периода в настоящий файл Excel XLSX.</p></div><button onClick={() => { load(); loadBankRates() }} className="flex min-h-11 items-center gap-2 rounded-xl border border-bx-border bg-bx-surface px-4 text-xs font-bold text-bx-text hover:border-blue-500/30"><Icon name="recycle" className="h-4 w-4" />Обновить всё</button></div>
         </header>
@@ -198,11 +198,11 @@ export default function Currency() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center"><div className="lg:w-52"><p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Валютная лента</p><h2 id="currency-selection-title" className="mt-1 text-sm font-black text-bx-text">Основные + на выбор</h2><p className="mt-1 text-[9px] text-bx-muted">USD, EUR и RUB закреплены всегда.</p></div><div className="flex flex-1 flex-wrap gap-2">{EXTRA_CURRENCIES.map(item => { const chosen = extraCodes.includes(item.code); return <button key={item.code} onClick={() => toggleExtra(item.code)} aria-pressed={chosen} title={item.name} className={`min-h-10 rounded-xl border px-3 text-[10px] font-extrabold transition-colors ${chosen ? 'border-blue-500/30 bg-blue-600 text-white' : 'border-bx-border bg-bx-bg text-bx-muted hover:border-blue-500/30 hover:text-bx-text'}`}>{item.code}<span className="ml-1.5 font-medium opacity-75">{chosen ? 'выбрана' : '+'}</span></button> })}</div></div>
         </section>
 
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Текущие курсы">
+        <section className="bx-a6-currency__rates grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Текущие курсы">
           {loading ? Array.from({ length: selectedCodes.length }).map((_, i) => <div key={i} className="h-28 animate-pulse rounded-[22px] bg-bx-surface" />) : error ? <button onClick={load} className="col-span-full rounded-[22px] border border-dashed border-bx-border bg-bx-surface py-10 text-sm font-bold text-bx-muted">Курсы не загрузились · Повторить</button> : rates.map(rate => <RateCard key={rate.code} rate={rate} />)}
         </section>
 
-        <section className="overflow-hidden rounded-[24px] border border-bx-border bg-bx-surface shadow-sm" aria-labelledby="bank-rates-title">
+        <section className="bx-a6-currency__banks overflow-hidden rounded-[24px] border border-bx-border bg-bx-surface shadow-sm" aria-labelledby="bank-rates-title">
           <div className="border-b border-bx-border bg-gradient-to-r from-emerald-500/[0.08] via-bx-surface to-blue-500/[0.06] p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div><p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">Официальные страницы банков</p><h2 id="bank-rates-title" className="mt-1 text-lg font-black text-bx-text">Где выгоднее купить или продать валюту</h2><p className="mt-1 max-w-3xl text-[10px] leading-relaxed text-bx-muted">«Покупка» — банк покупает валюту у вас: выгоднее максимальный курс. «Продажа» — вы покупаете валюту у банка: выгоднее минимальный курс.</p></div>
@@ -220,7 +220,7 @@ export default function Currency() {
           </div>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-2">
+        <section className="bx-a6-currency__archive grid gap-4 xl:grid-cols-2">
           <article className="rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm">
             <ToolHeader icon="planner" tone="blue" eyebrow="Архив ЦБ РУз" title="Курс на точную дату" />
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end"><DateField label="Дата курса" value={exactDate} onChange={setExactDate} max={today} /><button onClick={loadExactDate} disabled={exactLoading} className="min-h-11 rounded-xl bg-blue-600 px-5 text-xs font-extrabold text-white disabled:opacity-50">{exactLoading ? 'Получаем…' : 'Показать курс'}</button></div>
@@ -240,7 +240,7 @@ export default function Currency() {
           </article>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-5">
+        <section className="bx-a6-currency__tools grid gap-4 xl:grid-cols-5">
           <article className="rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm xl:col-span-2"><ToolHeader icon="exchange" tone="blue" eyebrow="Быстрый расчёт" title="Конвертер" /><label className="mt-5 block text-[9px] font-bold uppercase tracking-wide text-bx-muted">Сумма<input value={amount} onChange={event => setAmount(event.target.value)} inputMode="decimal" className="mt-2 h-12 w-full rounded-xl border border-bx-border bg-bx-bg px-4 text-lg font-black tabular-nums text-bx-text outline-none focus:border-blue-500" /></label><div className="mt-3 grid grid-cols-[1fr_42px_1fr] items-end gap-2"><CurrencySelect label="Из" value={from} codes={converterCodes} onChange={setFrom} /><button onClick={() => { setFrom(to); setTo(from) }} className="grid h-11 place-items-center rounded-xl border border-bx-border bg-bx-bg text-blue-600 dark:text-blue-300" title="Поменять валюты местами" aria-label="Поменять валюты местами"><Icon name="exchange" className="h-4 w-4" /></button><CurrencySelect label="В" value={to} codes={converterCodes} onChange={setTo} /></div><div className="mt-5 rounded-2xl bg-blue-600 p-4 text-white"><p className="text-[9px] font-bold uppercase tracking-wider text-blue-100">Результат</p><p className="mt-1 text-2xl font-black tabular-nums">{converted.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} <span className="text-sm">{to}</span></p></div></article>
           <article className="rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm xl:col-span-3"><div className="flex flex-wrap items-center gap-2"><div className="mr-auto"><p className="text-[9px] font-extrabold uppercase tracking-wide text-violet-600 dark:text-violet-300">Динамика</p><h2 className="text-sm font-black text-bx-text">История курса</h2></div>{selectedCodes.map(code => <button key={code} onClick={() => setChartCode(code)} className={`min-h-9 rounded-xl px-3 text-[10px] font-bold ${chartCode === code ? 'bg-blue-600 text-white' : 'bg-bx-bg text-bx-muted'}`}>{code}</button>)}<select aria-label="Период истории" value={period} onChange={event => setPeriod(Number(event.target.value))} className="h-9 rounded-xl border border-bx-border bg-bx-bg px-2 text-[10px] font-bold text-bx-text"><option value={7}>7 дней</option><option value={14}>14 дней</option><option value={30}>30 дней</option></select></div><div className="mt-5 min-h-[260px] rounded-2xl border border-bx-border/60 bg-bx-bg p-4">{historyLoading ? <div className="h-[220px] animate-pulse rounded-xl bg-bx-surface" /> : <RateChart values={history} />}</div><p className="mt-3 text-[9px] leading-relaxed text-bx-muted">Официальный источник: Центральный банк Республики Узбекистан. Для проводки всегда сверяйте дату активизации курса.</p></article>
         </section>
