@@ -125,12 +125,23 @@ export function useDocuments() {
     }
   }, []);
 
+  const getDocumentPreviewUrl = useCallback(async (fileUrl: string): Promise<string> => {
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(fileUrl, 300);
+
+    if (error) throw error;
+    if (!data?.signedUrl) throw new Error('Не удалось создать безопасную ссылку на документ');
+    return data.signedUrl;
+  }, []);
+
   return {
     documents,
     loading,
     loadDocuments,
     uploadDocument,
     deleteDocument,
-    downloadDocument
+    downloadDocument,
+    getDocumentPreviewUrl
   };
 }

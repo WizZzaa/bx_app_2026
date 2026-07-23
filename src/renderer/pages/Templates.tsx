@@ -8,7 +8,7 @@ import Icon from '../lib/ui/Icon'
 import DocumentsTabs from '../components/documents/DocumentsTabs'
 import { TEMPLATES, TEMPLATE_CATEGORIES, type DocTemplate, type TemplateVar } from '../data/templates'
 import { toWordsRu } from '../lib/numToWords'
-import mammoth from 'mammoth'
+import { loadMammoth } from '../lib/documentDependencyLoaders'
 import { useDocuments } from '../lib/useDocuments'
 import { usePlan } from '../lib/plan'
 import {
@@ -28,6 +28,7 @@ import {
   primaryActionClass,
   secondaryActionClass,
 } from '../components/workspace/ResourceWorkspace'
+import './documents/DocumentsA3.css'
 
 const RU_MONTHS = [
   'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -463,6 +464,7 @@ export default function Templates() {
       const arrayBuffer = evt.target?.result as ArrayBuffer
       if (!arrayBuffer) return
       try {
+        const mammoth = await loadMammoth()
         const result = await mammoth.extractRawText({ arrayBuffer })
         if (result.value) {
           setNewBody(result.value)
@@ -481,9 +483,9 @@ export default function Templates() {
   // ── Режим создания шаблона ──
   if (creatingTpl) {
     return (
-      <div className="flex flex-1 gap-4 overflow-hidden bg-bx-bg p-4 text-bx-text">
+      <div className="bx-documents-a3 bx-template-create flex flex-1 gap-4 overflow-hidden bg-bx-bg p-4 text-bx-text">
         {/* Форма слева */}
-        <div className="flex w-80 flex-shrink-0 flex-col space-y-4 rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm">
+        <div className="bx-template-create__settings flex w-80 flex-shrink-0 flex-col space-y-4 rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm">
           <div>
             <button onClick={() => setCreatingTpl(false)} className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-bx-muted hover:text-bx-text mb-3 cursor-pointer">
               <Icon name="arrowL" className="w-3 h-3" />Назад к списку
@@ -525,7 +527,7 @@ export default function Templates() {
         </div>
 
         {/* Редактор текста справа */}
-        <div className="flex min-w-0 flex-1 flex-col space-y-4 overflow-hidden rounded-[24px] border border-bx-border bg-bx-surface/40 p-5">
+        <div className="bx-template-create__editor flex min-w-0 flex-1 flex-col space-y-4 overflow-hidden rounded-[24px] border border-bx-border bg-bx-surface/40 p-5">
           <div className="flex-shrink-0 flex items-start justify-between bg-bx-surface border border-bx-border rounded-2xl p-4.5 shadow-sm">
             <div className="max-w-xl">
               <h3 className="text-xs font-black text-bx-text uppercase tracking-wider">Текст шаблона документа</h3>
@@ -564,10 +566,10 @@ export default function Templates() {
     const cc = catColor(tpl.category)
     const isCustom = tpl.id.startsWith('custom-')
     return (
-      <div className="flex flex-1 overflow-y-auto bg-bx-bg text-bx-text custom-scrollbar">
+      <div className="bx-documents-a3 bx-template-editor flex flex-1 overflow-y-auto bg-bx-bg text-bx-text custom-scrollbar">
         <div className="bx-page-container w-full space-y-5 py-5">
           <DocumentsTabs current="templates" stage={2} />
-          <header className="rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm">
+          <header className="bx-template-editor__header rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex min-w-0 items-start gap-3">
                 <span className={`grid h-11 w-11 flex-shrink-0 place-items-center rounded-2xl border ${cc.bg} ${cc.text} ${cc.border}`}><Icon name={isCustom ? 'file' : catMeta(tpl.category).icon} className="h-5 w-5" /></span>
@@ -601,8 +603,8 @@ export default function Templates() {
           </header>
 
 
-          <div className="grid items-start gap-5 xl:grid-cols-[minmax(420px,0.9fr)_minmax(560px,1.1fr)]">
-            <div className="space-y-4">
+          <div className="bx-template-editor__workspace grid items-start gap-5 xl:grid-cols-[minmax(420px,0.9fr)_minmax(560px,1.1fr)]">
+            <div className="bx-template-editor__fields space-y-4">
               {!simpleView && <section className="rounded-[20px] border border-blue-500/20 bg-blue-500/[0.055] p-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300">Что получится</p>
                 <p className="mt-1 text-xs font-bold leading-relaxed text-bx-text">{guide?.result}</p>
@@ -623,10 +625,10 @@ export default function Templates() {
               }) : <ResourceEmpty icon="file" title="В этом шаблоне нет переменных" description="Текст уже готов: проверьте его справа и выгрузите удобным способом." />}
             </div>
 
-            <div className="space-y-4 xl:sticky xl:top-5">
-              <section className="rounded-[20px] border border-bx-border bg-bx-surface p-4 shadow-sm">
+            <div className="bx-template-editor__preview-column space-y-4 xl:sticky xl:top-5">
+              <section className="bx-document-paper-shell rounded-[20px] border border-bx-border bg-bx-surface p-4 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[0.12em] text-bx-muted">Предпросмотр</p><h2 className="mt-0.5 text-sm font-black text-bx-text">Проверьте документ целиком</h2></div><span className="text-[10px] font-bold text-bx-muted">Поля в [скобках] ещё не заполнены</span></div>
-                <div className="mt-4 max-h-[620px] overflow-y-auto rounded-xl border border-bx-border bg-white p-8 text-gray-900 custom-scrollbar"><pre className="whitespace-pre-wrap break-words text-xs font-medium leading-relaxed" style={{ fontFamily: "'Times New Roman', serif" }}>{preview}</pre></div>
+                <div className="bx-document-paper mt-4 max-h-[620px] overflow-y-auto rounded-xl border border-bx-border bg-white p-8 text-gray-900 custom-scrollbar"><pre className="whitespace-pre-wrap break-words text-xs font-medium leading-relaxed" style={{ fontFamily: "'Times New Roman', serif" }}>{preview}</pre></div>
               </section>
               <section className="rounded-[20px] border border-bx-border bg-bx-surface p-4 shadow-sm">
                 <h2 className="text-sm font-black text-bx-text">Перед сохранением проверьте</h2>
@@ -660,19 +662,19 @@ export default function Templates() {
 
   return (
     <ResourceLayout sidebar={sidebar}>
-      <div className="space-y-6">
+      <div className="bx-documents-a3 bx-template-gallery space-y-6">
         <DocumentsTabs current="templates" stage={1} />
         <ResourceHero eyebrow="Шаблоны документов" title="Бланки, которые не приходится собирать заново" description="Выберите документ, подставьте реквизиты, проверьте поля и сохраните готовый результат в Мои документы." icon="templates" stats={[{ value: allTemplates.length, label: 'шаблонов' }, { value: customTpls.length, label: 'создано вами' }, { value: filtered.length, label: search ? 'найдено' : 'в категории' }]} actions={<button type="button" onClick={() => setCreatingTpl(true)} className={primaryActionClass}><Icon name="plus" className="h-4 w-4" />Создать шаблон</button>} />
         <section className="space-y-3.5">
           <ResourceSectionTitle headingLevel="h2" title={search.trim() ? `Результаты по запросу «${search.trim()}»` : category === 'Все' ? 'Все шаблоны' : category} subtitle={simpleView ? undefined : 'Откройте бланк, заполните реквизиты и проверьте предпросмотр перед выгрузкой'} count={filtered.length} action={search.trim() ? <button type="button" onClick={() => setSearch('')} className={secondaryActionClass}>Очистить поиск</button> : undefined} />
           {filtered.length > 0 ? (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="bx-template-gallery__grid grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {filtered.map(t => {
                 const cc = catColor(t.category)
                 const isCustom = t.id.startsWith('custom-')
                 const cardGuide = getTemplateGuide(t)
                 return (
-                  <button type="button" key={t.id} onClick={() => handleSelectTemplate(t)} className={`group flex cursor-pointer flex-col rounded-[20px] border border-bx-border bg-bx-surface p-4.5 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/[0.035] focus-visible:ring-2 focus-visible:ring-blue-500 ${simpleView ? 'min-h-[178px]' : 'min-h-[240px]'}`}>
+                  <button type="button" key={t.id} onClick={() => handleSelectTemplate(t)} className={`bx-template-card group flex cursor-pointer flex-col rounded-[20px] border border-bx-border bg-bx-surface p-4.5 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/[0.035] focus-visible:ring-2 focus-visible:ring-blue-500 ${simpleView ? 'min-h-[178px]' : 'min-h-[240px]'}`}>
                     <div className="flex items-start justify-between gap-3"><span className={`grid h-10 w-10 place-items-center rounded-xl border ${cc.bg} ${cc.text} ${cc.border}`}><Icon name={isCustom ? 'file' : catMeta(t.category).icon} className="h-[18px] w-[18px]" /></span><span className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] ${cc.bg} ${cc.text} ${cc.border}`}>{t.category}</span></div>
                     <h3 className="mt-4 text-[13px] font-black leading-snug text-bx-text transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-300">{t.title}</h3>
                     {!simpleView && <><p className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-bx-muted">{cardGuide.whenToUse}</p><div className="mt-3 rounded-xl border border-bx-border bg-bx-surface-2 p-2.5"><p className="text-[9px] font-black uppercase tracking-[0.1em] text-bx-muted">На выходе</p><p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-relaxed text-bx-text">{cardGuide.result}</p></div></>}
