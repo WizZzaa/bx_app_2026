@@ -34,7 +34,7 @@ export function EventActivityTimeline({ event, members }: { event: BxEvent; memb
   const { activities, loading, error } = useEventActivity(event.id)
   const memberByUserId = useMemo(() => new Map(members.map(member => [member.user_id, member])), [members])
 
-  return <section className="rounded-xl border border-bx-border bg-bx-bg p-3" aria-labelledby="event-activity-title">
+  return <section className="bx-event-activity rounded-xl border border-bx-border bg-bx-bg p-3" aria-labelledby="event-activity-title">
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-300"><Icon name="clock" className="h-3.5 w-3.5" /></span><div><h3 id="event-activity-title" className="text-xs font-black text-bx-text">Журнал задачи</h3><p className="text-[9px] text-bx-muted">Назначение, принятие, статус и срок</p></div></div>
       {loading && <span className="text-[9px] font-bold text-bx-muted animate-pulse">Обновляем…</span>}

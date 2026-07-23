@@ -14,6 +14,19 @@ export interface ChangelogEntry {
 // Новые версии — сверху.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.75.0',
+    date: '2026-07-23',
+    title: 'Apple-style Планировщик и единые формы задач',
+    changes: [
+      'Планировщик перестроен в спокойный рабочий cockpit: компактная сводка, отдельная command bar, четыре представления и единая ширина без растягивания контента.',
+      'Календарь, Фокус, Список и системная Доска используют общую мягкую лавандовую систему; фильтры и главный CTA больше не конкурируют между собой.',
+      'EventModal, DailyTasksModal, CardModal, BoardModal и ArchivePanel унифицированы как viewport-level sheets с одним поведением на desktop и mobile.',
+      'Мобильные формы монтируются вне трансформированной оболочки, поэтому верх и footer больше не обрезаются Topbar, canvas или floating dock.',
+      'Добавлены системная типографика, pointer-down feedback, reduced motion, reduced transparency, повышенный контраст и forced-colors.',
+      'Контракты Supabase, recurrence, drag/drop, налоговых сроков, event activity, localStorage, Dexie/offline queue и пользовательские записи не менялись.',
+    ],
+  },
+  {
     version: '2.74.0',
     date: '2026-07-23',
     title: 'Apple-style Главная как ежедневный рабочий центр',

@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import type { BxCard, BxComment, ChecklistItem } from './useCards';
 import type { BoardColumn } from './useBoards';
 import { uid } from '../../lib/uid';
 import { supabase } from '../../lib/db/supabase';
+import Icon from '../../lib/ui/Icon';
+import './PlannerA2.css';
 
 interface Props {
   card: BxCard;
@@ -274,26 +277,28 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
     setComments(prev => prev.filter(c => c.id !== id));
   }
 
-  const inputCls = 'w-full bg-bx-bg text-bx-text px-3 py-2 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm';
+  const inputCls = 'bx-sheet-input w-full text-sm';
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-8"
+  return createPortal(
+    <div className="bx-sheet-scrim fixed inset-0 z-[120] flex items-end justify-center overflow-y-auto sm:items-center sm:p-4"
       onClick={e => { if (e.target === e.currentTarget) save(); }}>
-      <div className="bg-bx-surface border border-bx-border-2 rounded-2xl w-[640px] max-w-[92vw] shadow-2xl my-auto">
+      <section role="dialog" aria-modal="true" aria-labelledby="card-modal-title" className="bx-sheet bx-card-sheet my-auto w-full max-w-3xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-start justify-between px-6 py-4 border-b border-bx-border gap-3">
+        <header className="bx-sheet__header flex items-start justify-between gap-3 px-6 py-5">
+          <label htmlFor="card-modal-title" className="sr-only">Название карточки</label>
           <textarea
+            id="card-modal-title"
             ref={titleRef}
             value={title}
             onChange={e => setTitle(e.target.value)}
             rows={1}
-            className="flex-1 bg-transparent text-bx-text text-lg font-semibold resize-none focus:outline-none leading-snug"
+            className="flex-1 resize-none bg-transparent text-xl font-black leading-snug text-bx-text focus:outline-none"
             placeholder="Название карточки"
           />
-          <button onClick={save} className="text-bx-muted hover:text-bx-text text-lg leading-none flex-shrink-0 mt-1">✕</button>
-        </div>
+          <button type="button" onClick={save} aria-label="Сохранить и закрыть" className="bx-sheet__close"><Icon name="crossSmall" /></button>
+        </header>
 
-        <div className="px-6 py-5 grid grid-cols-[1fr_180px] gap-5">
+        <div className="bx-sheet__body bx-card-sheet__body grid gap-6 px-6 py-5">
           {/* ── Левая колонка ── */}
           <div className="space-y-5 min-w-0">
             {/* Описание */}
@@ -490,11 +495,12 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-bx-border">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-bx-muted hover:text-bx-text">Закрыть</button>
-          <button onClick={save} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">Сохранить</button>
-        </div>
-      </div>
-    </div>
+        <footer className="bx-sheet__footer flex items-center justify-end gap-2 px-6 py-4">
+          <button type="button" onClick={onClose} className="min-h-11 rounded-xl px-4 text-sm font-bold text-bx-muted hover:text-bx-text">Закрыть</button>
+          <button type="button" onClick={save} className="bx-planner-primary min-h-11 rounded-xl px-5 text-sm font-black">Сохранить</button>
+        </footer>
+      </section>
+    </div>,
+    document.body,
   );
 }

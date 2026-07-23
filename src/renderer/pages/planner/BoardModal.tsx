@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { BOARD_ICONS, COLUMN_COLORS, type BxBoard } from './useBoards';
+import Icon from '../../lib/ui/Icon';
+import './PlannerA2.css';
 
 interface Props {
   board?: BxBoard | null;          // null = создание
@@ -25,21 +28,21 @@ export default function BoardModal({ board, onSave, onDelete, onClose }: Props) 
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-bx-surface border border-bx-border-2 rounded-2xl w-[420px] shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-bx-border">
-          <h2 className="text-base font-semibold text-bx-text">{board ? 'Настройки доски' : 'Новая доска'}</h2>
-          <button onClick={onClose} className="text-bx-muted hover:text-bx-text text-lg leading-none">✕</button>
-        </div>
+  return createPortal(
+    <div className="bx-sheet-scrim fixed inset-0 z-[120] flex items-end justify-center sm:items-center sm:p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="board-modal-title" className="bx-sheet bx-board-sheet w-full max-w-[29rem] overflow-hidden">
+        <header className="bx-sheet__header flex items-start justify-between gap-4 px-6 py-5">
+          <div><p className="bx-planner-eyebrow text-[11px] font-black">Рабочее пространство</p><h2 id="board-modal-title" className="mt-1 text-xl font-black text-bx-text">{board ? 'Настройки доски' : 'Новая доска'}</h2><p className="mt-1 text-xs leading-relaxed text-bx-muted">Название, символ и мягкий цвет помогут быстро отличить контекст.</p></div>
+          <button type="button" onClick={onClose} aria-label="Закрыть" className="bx-sheet__close"><Icon name="crossSmall" /></button>
+        </header>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="bx-sheet__body space-y-5 px-6 py-5">
           <div>
             <label className="text-xs text-bx-muted block mb-1.5">Название</label>
             <input autoFocus value={name} onChange={e => setName(e.target.value)}
               placeholder="Напр.: Клиент ООО «Восход»"
               onKeyDown={e => { if (e.key === 'Enter' && name.trim()) onSave(name.trim(), icon, color); }}
-              className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
+              className="bx-sheet-input w-full" />
           </div>
 
           <div>
@@ -47,7 +50,8 @@ export default function BoardModal({ board, onSave, onDelete, onClose }: Props) 
             <div className="flex flex-wrap gap-1.5">
               {BOARD_ICONS.map(i => (
                 <button key={i} onClick={() => setIcon(i)}
-                  className={`w-9 h-9 rounded-lg text-lg flex items-center justify-center transition-colors ${icon === i ? 'bg-blue-600/30 ring-1 ring-blue-500/50' : 'bg-bx-surface-2 hover:bg-bx-surface-2'}`}>
+                  aria-pressed={icon === i}
+                  className={`bx-board-icon ${icon === i ? 'is-active' : ''}`}>
                   {i}
                 </button>
               ))}
@@ -59,13 +63,15 @@ export default function BoardModal({ board, onSave, onDelete, onClose }: Props) 
             <div className="flex gap-2">
               {COLUMN_COLORS.map(col => (
                 <button key={col} onClick={() => setColor(col)}
-                  className={`w-7 h-7 rounded-full ${DOT[col]} ${color === col ? 'ring-2 ring-offset-2 ring-offset-bx-surface ring-white/40' : ''}`} />
+                  aria-label={`Цвет ${col}`}
+                  aria-pressed={color === col}
+                  className={`bx-board-color ${DOT[col]} ${color === col ? 'is-active' : ''}`} />
               ))}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between px-6 py-4 border-t border-bx-border">
+        <footer className="bx-sheet__footer flex flex-wrap items-center justify-between gap-3 px-6 py-4">
           <div>
             {board && onDelete && !board.is_default && (
               confirmDel ? (
@@ -83,12 +89,13 @@ export default function BoardModal({ board, onSave, onDelete, onClose }: Props) 
           <div className="flex gap-2">
             <button onClick={onClose} className="px-4 py-2 text-sm text-bx-muted hover:text-bx-text">Отмена</button>
             <button onClick={() => name.trim() && onSave(name.trim(), icon, color)} disabled={!name.trim()}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-sm font-medium rounded-lg">
+              className="bx-planner-primary min-h-11 rounded-xl px-5 text-sm font-black disabled:opacity-40">
               {board ? 'Сохранить' : 'Создать'}
             </button>
           </div>
-        </div>
-      </div>
-    </div>
+        </footer>
+      </section>
+    </div>,
+    document.body,
   );
 }

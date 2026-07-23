@@ -1,7 +1,10 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import type { BxEvent, EventStatus } from './useEvents';
 import type { CalCard } from './CalendarView';
 import type { BxBoard } from './useBoards';
+import Icon from '../../lib/ui/Icon';
+import './PlannerA2.css';
 
 interface Props {
   date: string;
@@ -57,24 +60,28 @@ export default function DailyTasksModal({
 
   const hasItems = events.length > 0 || cards.length > 0;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="bx-sheet-scrim fixed inset-0 z-[120] flex items-end justify-center sm:items-center sm:p-4"
       onClick={e => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-bx-surface border border-bx-border-2 rounded-2xl w-[440px] max-w-[92vw] shadow-2xl flex flex-col max-h-[80vh] overflow-hidden">
+      <section role="dialog" aria-modal="true" aria-labelledby="daily-tasks-title" className="bx-sheet bx-daily-sheet flex w-full max-w-[31rem] flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-bx-border flex-shrink-0">
-          <h3 className="text-sm font-semibold text-bx-text capitalize-first">{formattedDate}</h3>
-          <button onClick={onClose} className="text-bx-muted hover:text-bx-text text-lg leading-none">
-            ✕
+        <header className="bx-sheet__header flex flex-shrink-0 items-start justify-between gap-4 px-5 py-5">
+          <div>
+            <p className="bx-planner-eyebrow text-[11px] font-black">Повестка дня</p>
+            <h3 id="daily-tasks-title" className="mt-1 text-lg font-black capitalize-first text-bx-text">{formattedDate}</h3>
+            <p className="mt-1 text-xs text-bx-muted">{events.length + cards.length} {events.length + cards.length === 1 ? 'запись' : 'записей'}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Закрыть" className="bx-sheet__close">
+            <Icon name="crossSmall" />
           </button>
-        </div>
+        </header>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="bx-sheet__body flex-1 space-y-2 overflow-y-auto p-4">
           {!hasItems && (
             <div className="text-center py-10 text-bx-muted space-y-1">
               <span className="text-2xl block">🌟</span>
@@ -86,13 +93,13 @@ export default function DailyTasksModal({
           {events.map(ev => (
             <div
               key={`e-${ev.id}`}
-              className="flex items-center gap-2.5 px-3 py-2 bg-bx-surface-2/40 border border-bx-border/40 hover:border-blue-500/20 rounded-xl transition-all group"
+              className="bx-daily-row group flex items-center gap-3"
             >
               <input
                 type="checkbox"
                 checked={ev.status === 'done'}
                 onChange={() => onEventStatusChange(ev.id, ev.status === 'done' ? 'todo' : 'done')}
-                className="w-4 h-4 rounded accent-emerald-500 cursor-pointer flex-shrink-0"
+                className="h-5 w-5 flex-shrink-0 cursor-pointer rounded accent-violet-600"
               />
               <span className="text-sm flex-shrink-0">{TYPE_ICON[ev.type] || '📌'}</span>
               <button
@@ -115,10 +122,11 @@ export default function DailyTasksModal({
               )}
               <button
                 onClick={() => onDeleteEvent(ev.id)}
-                className="text-bx-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                className="bx-daily-row__delete"
                 title="Удалить задачу"
+                aria-label={`Удалить: ${ev.title}`}
               >
-                🗑️
+                <Icon name="trash" />
               </button>
             </div>
           ))}
@@ -129,13 +137,13 @@ export default function DailyTasksModal({
             return (
               <div
                 key={`c-${cd.id}`}
-                className="flex items-center gap-2.5 px-3 py-2 bg-bx-surface-2/40 border border-bx-border/40 hover:border-cyan-500/20 rounded-xl transition-all group"
+                className="bx-daily-row group flex items-center gap-3"
               >
                 <input
                   type="checkbox"
                   checked={done}
                   onChange={() => onCardStatusChange(cd.id, cd.board_id, !done)}
-                  className="w-4 h-4 rounded accent-cyan-500 cursor-pointer flex-shrink-0"
+                  className="h-5 w-5 flex-shrink-0 cursor-pointer rounded accent-violet-600"
                 />
                 <span className="text-sm flex-shrink-0">{boardIcon(cd.board_id)}</span>
                 <button
@@ -158,10 +166,11 @@ export default function DailyTasksModal({
                 </span>
                 <button
                   onClick={() => onDeleteCard(cd.id)}
-                  className="text-bx-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                  className="bx-daily-row__delete"
                   title="Удалить карточку"
+                  aria-label={`Удалить: ${cd.title}`}
                 >
-                  🗑️
+                  <Icon name="trash" />
                 </button>
               </div>
             );
@@ -169,18 +178,19 @@ export default function DailyTasksModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-bx-border bg-bx-surface flex-shrink-0">
+        <footer className="bx-sheet__footer flex-shrink-0 p-4">
           <button
             onClick={() => {
               onAddClick(date);
               onClose();
             }}
-            className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5"
+            className="bx-planner-primary flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-black"
           >
-            <span>+</span> Добавить задачу или событие
+            <Icon name="plus" className="h-4 w-4" /> Добавить задачу или событие
           </button>
-        </div>
-      </div>
-    </div>
+        </footer>
+      </section>
+    </div>,
+    document.body,
   );
 }

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { BxEvent, EventType, EventStatus, EventPriority, EventRecurrence, NewEvent } from './useEvents';
 import { COMPANY_ROLE_LABELS, type CompanyMember } from './useCompanyMembers';
 import { todayISO } from '../../lib/dates';
 import { EventActivityTimeline } from './EventActivityTimeline';
 import Icon from '../../lib/ui/Icon';
+import './PlannerA2.css';
 
 interface Props {
   event?: BxEvent | null;
@@ -124,15 +126,15 @@ export default function EventModal({ event, defaultDate, defaultType, defaultEve
     });
   }
 
-  return (
-    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <form onSubmit={e => { e.preventDefault(); save(); }} role="dialog" aria-modal="true" aria-labelledby="planner-event-title" className="flex max-h-[96vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] border border-bx-border bg-bx-surface shadow-2xl sm:max-h-[92vh] sm:rounded-[28px]">
-        <header className="flex items-start justify-between gap-4 border-b border-bx-border bg-gradient-to-br from-bx-surface to-bx-accent/[0.07] px-5 py-5 sm:px-6">
+  return createPortal(
+    <div className="bx-sheet-scrim fixed inset-0 z-[120] flex items-end justify-center p-0 sm:items-center sm:p-4" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={e => { e.preventDefault(); save(); }} role="dialog" aria-modal="true" aria-labelledby="planner-event-title" className="bx-sheet bx-event-sheet flex max-h-[96vh] w-full max-w-2xl flex-col overflow-hidden">
+        <header className="bx-sheet__header flex items-start justify-between gap-4 px-5 py-5 sm:px-6">
           <div className="flex min-w-0 items-start gap-3"><span className="bx-planner-hero__icon grid h-11 w-11 flex-shrink-0 place-items-center rounded-2xl"><Icon name={isEdit ? 'planner' : 'plus'} className="h-5 w-5" /></span><div><p className="bx-planner-eyebrow text-xs font-black">{isEdit ? 'Редактирование' : 'Быстрое добавление'}</p><h2 id="planner-event-title" className="mt-1 text-xl font-black text-bx-text">{isEdit ? 'Задача или событие' : 'Новая задача или событие'}</h2><p className="mt-1 text-sm leading-relaxed text-bx-muted">Сначала главное. Повторение, теги и напоминание — в дополнительных настройках.</p></div></div>
           <button type="button" onClick={onClose} aria-label="Закрыть" className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-xl border border-bx-border bg-bx-surface text-bx-muted hover:text-bx-text"><Icon name="crossSmall" className="h-4 w-4" /></button>
         </header>
 
-        <div className="custom-scrollbar flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
+        <div className="bx-sheet__body custom-scrollbar flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
           <fieldset><legend className="mb-2 text-sm font-black text-bx-text">Что вы добавляете</legend><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{(Object.keys(TYPE_LABELS) as EventType[]).map(t => <button type="button" key={t} onClick={() => setType(t)} aria-pressed={type === t} className={`min-h-11 rounded-xl border px-3 text-sm font-black transition-colors ${type === t ? 'border-bx-accent/30 bg-bx-accent/10 text-bx-accent' : 'border-bx-border bg-bx-bg text-bx-muted hover:border-bx-accent/30 hover:text-bx-text'}`}>{TYPE_LABELS[t]}</button>)}</div></fieldset>
 
           <label className="block text-sm font-black text-bx-text">Название *<input autoFocus required value={title} onChange={e => setTitle(e.target.value)} placeholder="Например: отправить отчёт по НДС" className="mt-2 min-h-12 w-full rounded-xl border border-bx-border bg-bx-bg px-4 text-base font-semibold text-bx-text outline-none focus:border-bx-accent" /></label>
@@ -158,11 +160,12 @@ export default function EventModal({ event, defaultDate, defaultType, defaultEve
           </details>
         </div>
 
-        <footer className="flex flex-col-reverse gap-3 border-t border-bx-border bg-bx-surface px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <footer className="bx-sheet__footer flex flex-col-reverse gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div>{isEdit && onDelete && (confirmDelete ? <div className="flex items-center gap-2"><span className="text-sm font-bold text-red-600 dark:text-red-300">Удалить без восстановления?</span><button type="button" onClick={onDelete} className="min-h-10 rounded-xl bg-red-600 px-3 text-xs font-black text-white">Удалить</button><button type="button" onClick={() => setConfirmDelete(false)} className="min-h-10 px-2 text-xs font-black text-bx-muted">Отмена</button></div> : <button type="button" onClick={() => setConfirmDelete(true)} className="min-h-11 rounded-xl px-3 text-sm font-black text-red-600 hover:bg-red-500/10 dark:text-red-300">Удалить</button>)}</div>
           <div className="grid grid-cols-2 gap-2 sm:flex"><button type="button" onClick={onClose} className="min-h-12 rounded-xl border border-bx-border px-5 text-sm font-black text-bx-text hover:bg-bx-bg">Отмена</button><button type="submit" disabled={!title.trim()} className="bx-planner-primary inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-black disabled:opacity-40"><Icon name={isEdit ? 'save' : 'plus'} className="h-4 w-4" />{isEdit ? 'Сохранить' : 'Создать'}</button></div>
         </footer>
       </form>
-    </div>
+    </div>,
+    document.body,
   );
 }
