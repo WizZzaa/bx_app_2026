@@ -11,6 +11,8 @@ import { primaryActionClass, secondaryActionClass } from '../components/workspac
 import { TARIFF_MATRIX } from '../../shared/tariffs'
 import { parseUsageSnapshot, type UsageSnapshot } from '../lib/usageSnapshot'
 import { loadMammoth, loadPdfJsWithInlineWorker, loadXlsx } from '../lib/documentDependencyLoaders'
+import { Sheet } from '../components/ui/Sheet'
+import './assistants/AssistantsA4.css'
 import {
   TRANSLATION_LANGUAGES,
   TRANSLATION_MODES,
@@ -135,15 +137,6 @@ export default function Translator() {
 
   useEffect(() => { void loadDocuments() }, [loadDocuments])
   useEffect(() => { void refreshUsage() }, [])
-  useEffect(() => {
-    if (!archiveOpen) return undefined
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !archiveSaving) setArchiveOpen(false)
-    }
-    document.addEventListener('keydown', closeOnEscape)
-    return () => document.removeEventListener('keydown', closeOnEscape)
-  }, [archiveOpen, archiveSaving])
-
   const displayedResult = activeResult === 'translation' ? resultText : plainText
   const sourceWordCount = countWords(sourceText)
   const resultWordCount = countWords(displayedResult)
@@ -335,15 +328,15 @@ export default function Translator() {
   const selectedMode = TRANSLATION_MODES.find(item => item.id === mode) ?? TRANSLATION_MODES[0]
 
   return (
-    <div className="custom-scrollbar flex-1 overflow-y-auto bg-bx-bg text-bx-text">
+    <div className="bx-translator-a4 custom-scrollbar flex-1 overflow-y-auto bg-bx-bg text-bx-text">
       <div className="bx-translator-shell space-y-4 px-4 py-4 sm:px-5 lg:px-7 lg:py-6">
         <BxMotion preset="raise" className="bx-translator-hero">
           <header className="relative overflow-hidden rounded-[28px] border border-bx-border bg-bx-surface p-5 sm:p-6">
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
               <div>
                 <p className="bx-translator-eyebrow">Переводчик документов</p>
-                <h1 className="mt-2 max-w-4xl text-3xl font-black tracking-tight sm:text-4xl">Перевод без потери структуры и чисел</h1>
-                <p className="mt-3 max-w-3xl text-sm leading-6 text-bx-muted">Вставьте текст или загрузите документ. BX сохранит абзацы, суммы и термины, а готовый результат можно сразу отредактировать и отправить в Документы.</p>
+                <h1 className="mt-2 max-w-4xl text-3xl font-black tracking-tight sm:text-4xl">Документ на другом языке — без лишних шагов</h1>
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-bx-muted">Выберите языки, добавьте текст и проверьте готовый результат. Исходный файл разбирается на устройстве; наружу уходит только текст после вашего согласия.</p>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:flex">
                 <HeroMetric icon="shield" label="Файл" value="На устройстве" />
@@ -359,7 +352,7 @@ export default function Translator() {
               <span className="bx-translator-icon"><Icon name="info" className="h-4 w-4" /></span>
               <div><p className="bx-translator-eyebrow">Первый запуск · 3 шага</p><h2 className="mt-1 text-sm font-black">Языки → текст → проверка результата</h2><p className="mt-1 text-xs leading-5 text-bx-muted">Для договора выберите юридический режим, для счёта — бухгалтерский. Перед отправкой сверьте суммы и реквизиты.</p></div>
             </div>
-            <div className="flex flex-wrap gap-2"><button type="button" onClick={() => setMode('literal')} className={secondaryActionClass}>Обычный перевод</button><button type="button" onClick={dismissTutorial} className={primaryActionClass}>Понятно</button></div>
+            <button type="button" onClick={dismissTutorial} className={primaryActionClass}>Начать перевод</button>
           </div>
         </BxMotion>}
 
@@ -419,15 +412,15 @@ export default function Translator() {
         </details>}
       </div>
 
-      {archiveOpen && <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="translator-archive-title" onMouseDown={event => { if (event.target === event.currentTarget && !archiveSaving) setArchiveOpen(false) }}>
-        <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-2xl sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex min-w-0 items-start gap-3"><span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20"><Icon name={archiveSaved ? 'check' : 'save'} className="h-5 w-5" /></span><div><p className="text-[9px] font-black uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Связь с архивом</p><h2 id="translator-archive-title" className="mt-1 text-lg font-black text-bx-text">{archiveSaved ? 'Перевод сохранён' : 'Добавить готовый файл в Документы'}</h2><p className="mt-1 text-[11px] leading-relaxed text-bx-muted">{archiveSaved ? 'Файл уже привязан к организации и доступен в едином архиве.' : 'Укажите рабочий контекст — потом перевод легко найдётся по компании, категории и меткам.'}</p></div></div>
-            <button type="button" aria-label="Закрыть" disabled={archiveSaving} onClick={() => setArchiveOpen(false)} className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl border border-bx-border bg-bx-bg text-bx-muted hover:text-bx-text disabled:opacity-40"><Icon name="crossSmall" className="h-4 w-4" /></button>
-          </div>
-
-          {archiveSaved ? <div className="mt-6 grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => setArchiveOpen(false)} className={secondaryActionClass}>Остаться в переводчике</button><button type="button" onClick={() => navigate('/documents/my')} className={primaryActionClass}><Icon name="note" className="h-4 w-4" />Открыть Документы</button></div> : <>
-            {companies.length ? <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <Sheet
+        open={archiveOpen}
+        onClose={() => { if (!archiveSaving) setArchiveOpen(false) }}
+        title={archiveSaved ? 'Перевод сохранён' : 'Добавить в Документы'}
+        description={archiveSaved ? 'Файл привязан к организации и доступен в общем архиве.' : 'Укажите организацию и имя — перевод не потеряется среди рабочих файлов.'}
+        className="bx-translator-a4__archive-sheet"
+      >
+          {archiveSaved ? <div className="grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => setArchiveOpen(false)} className={secondaryActionClass}>Остаться в переводчике</button><button type="button" onClick={() => navigate('/documents/my')} className={primaryActionClass}><Icon name="note" className="h-4 w-4" />Открыть Документы</button></div> : <>
+            {companies.length ? <div className="grid gap-4 sm:grid-cols-2">
               <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Организация<select autoFocus value={archiveCompanyId} onChange={event => setArchiveCompanyId(event.target.value)} className="mt-1.5 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-xs font-bold normal-case tracking-normal text-bx-text outline-none focus:border-blue-500"><option value="">Выберите организацию</option>{companies.map(company => <option key={company.id} value={company.id}>{company.name}</option>)}</select></label>
               <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted">Категория<select value={archiveCategory} onChange={event => setArchiveCategory(event.target.value)} className="mt-1.5 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-xs font-bold normal-case tracking-normal text-bx-text outline-none focus:border-blue-500">{DOCUMENT_CATEGORIES.map(category => <option key={category}>{category}</option>)}</select></label>
               <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted sm:col-span-2">Имя готового файла<input value={archiveName} onChange={event => setArchiveName(event.target.value)} className="mt-1.5 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-xs font-bold normal-case tracking-normal text-bx-text outline-none focus:border-blue-500" /></label>
@@ -436,8 +429,7 @@ export default function Translator() {
             {archiveError && <div role="alert" className="mt-4 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-[11px] font-bold text-red-700 dark:text-red-300">{archiveError}</div>}
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" disabled={archiveSaving} onClick={() => setArchiveOpen(false)} className={secondaryActionClass}>Отмена</button><button type="button" disabled={!companies.length || !archiveCompanyId || !archiveName.trim() || archiveSaving} onClick={() => void saveToDocuments()} className={`${primaryActionClass} disabled:cursor-not-allowed disabled:opacity-45`}><Icon name={archiveSaving ? 'clock' : 'save'} className="h-4 w-4" />{archiveSaving ? 'Сохраняю…' : 'Добавить в Документы'}</button></div>
           </>}
-        </div>
-      </div>}
+      </Sheet>
     </div>
   )
 }
@@ -455,7 +447,7 @@ function ResultTab({ active, label, icon, onClick }: { active: boolean; label: s
 }
 
 function HeroMetric({ icon, label, value }: { icon: string; label: string; value: string }) {
-  return <div className="flex min-w-[9.5rem] items-center gap-3 rounded-2xl border border-bx-border bg-bx-bg/70 p-3"><span className="bx-translator-icon"><Icon name={icon} className="h-4 w-4" /></span><span className="min-w-0"><span className="block text-[10px] font-bold text-bx-muted">{label}</span><span className="mt-0.5 block truncate text-xs font-black text-bx-text">{value}</span></span></div>
+  return <div className="bx-translator-metric flex min-w-[9.5rem] items-center gap-3 rounded-2xl border border-bx-border bg-bx-bg/70 p-3"><span className="bx-translator-icon"><Icon name={icon} className="h-4 w-4" /></span><span className="min-w-0"><span className="block text-[10px] font-bold text-bx-muted">{label}</span><span className="bx-translator-metric__value mt-0.5 block text-xs font-black text-bx-text">{value}</span></span></div>
 }
 
 function QualityItem({ label, value, ok }: { label: string; value: string; ok: boolean }) {
