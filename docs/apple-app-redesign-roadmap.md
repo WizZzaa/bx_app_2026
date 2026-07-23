@@ -1,7 +1,7 @@
 # Apple-style редизайн BX App — маршрут от оболочки до последней формы
 
 Дата начала: 23 июля 2026 года
-Статус: первая часть A0 (Sidebar + адаптивная оболочка) завершена; Topbar, Command Palette, Titlebar и auth/onboarding остаются в работе.
+Статус: A0 (единая оболочка, навигация, системные overlay и auth/onboarding) завершён; следующий пакет — A1, Главная.
 
 ## Неподвижные границы
 
@@ -32,10 +32,10 @@
 - [x] Mobile navigation подготовлена как плавающий dock с safe-area.
 - [x] Sidebar проверен на desktop `1440×1000` и mobile `390×844`: ширина `264↔80 px`, horizontal overflow `0`, mobile main padding `96 px`.
 - [x] Контракт оболочки подтверждён lint, typecheck, `359/359` тестами, production build, bundle budget и Motion Mini budget.
-- [ ] Topbar: упростить поиск, статус синхронизации, company switcher, уведомления и профиль.
-- [ ] Command Palette: Apple-style command surface, keyboard loop, empty/loading/error states.
-- [ ] Titlebar Electron: согласовать геометрию с новым shell и оконными действиями.
-- [ ] Onboarding/Auth/PIN: применить тот же визуальный и motion-контракт без изменения auth-flow.
+- [x] Topbar: поиск сведён к одному глобальному входу; статусы синхронизации, company switcher, уведомления, быстрые заметки и профиль сохранены.
+- [x] Command Palette: добавлены Apple-style material, keyboard loop, focus restoration, loading и empty states.
+- [x] Titlebar Electron: геометрия согласована с shell, оконные действия сохранены.
+- [x] Onboarding/Auth/PIN: применён общий визуальный, interaction и accessibility-контракт без изменения auth-flow.
 
 ## A1 — Главная
 

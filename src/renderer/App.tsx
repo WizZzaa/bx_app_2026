@@ -202,7 +202,12 @@ export default function App({ previewPlan }: { previewPlan?: Plan } = {}) {
             <TrayNavigateListener />
             <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} webResponsive={isWebRuntime} />
             <div className="bx-app-shell__workspace flex flex-1 flex-col overflow-hidden">
-              <Topbar onOpenSearch={() => setPaletteOpen(true)} onToggleMenu={() => setSidebarCollapsed(value => !value)} menuExpanded={!sidebarCollapsed} />
+              <Topbar
+                onOpenSearch={() => setPaletteOpen(true)}
+                onToggleMenu={() => setSidebarCollapsed(value => !value)}
+                menuExpanded={!sidebarCollapsed}
+                previewMode={Boolean(previewPlan)}
+              />
               <main id="bx-main-content" className={`bx-app-shell__content flex flex-1 overflow-hidden ${isWebRuntime ? 'pb-24 md:pb-0' : ''}`} aria-label="Основное содержимое">
                 <RouteFocusManager />
                 <div className="bx-workspace-route flex min-h-0 min-w-0 flex-1" data-bx-route={location.pathname} key={location.pathname}>

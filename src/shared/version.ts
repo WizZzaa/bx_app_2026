@@ -14,6 +14,19 @@ export interface ChangelogEntry {
 // Новые версии — сверху.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.73.0',
+    date: '2026-07-23',
+    title: 'Завершённая Apple-style оболочка и единый контур входа',
+    changes: [
+      'Topbar упрощён до одного глобального поиска; реальные статусы синхронизации, конфликты, переключатель компании, заметки, уведомления и профиль сохранены.',
+      'Command Palette получил спокойный системный material, keyboard loop, возврат фокуса, loading/empty states и мобильное представление bottom sheet.',
+      'Electron Titlebar согласован с геометрией новой оболочки без изменения minimize, maximize и close.',
+      'Login, Telegram migration, trusted-device gate, PIN и Onboarding объединены общей Apple-style системой с 44 px targets и явными состояниями.',
+      'Поддерживаются reduced motion, reduced transparency, повышенный контраст и forced colors; блокировки PIN и Telegram-first auth-flow не менялись.',
+      'Supabase, RPC, Edge Functions, Secrets, payment-контур, localStorage, Dexie/offline queue и пользовательские записи не изменялись.',
+    ],
+  },
+  {
     version: '2.72.0',
     date: '2026-07-23',
     title: 'Apple-style оболочка и новая навигация приложения',

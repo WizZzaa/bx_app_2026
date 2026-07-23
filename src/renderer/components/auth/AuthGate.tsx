@@ -59,8 +59,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-bx-bg">
-        <span className="w-6 h-6 border-2 border-bx-border-2 border-t-blue-500 rounded-full animate-spin" />
+      <div className="bx-auth-screen">
+        <span className="bx-auth-spinner" aria-label="Проверяем вход" />
       </div>
     )
   }
@@ -82,7 +82,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (deviceStatus === 'checking') {
-    return <div className="h-screen w-screen flex items-center justify-center bg-bx-bg"><span className="h-6 w-6 animate-spin rounded-full border-2 border-bx-border-2 border-t-blue-500" /></div>
+    return <div className="bx-auth-screen"><span className="bx-auth-spinner" aria-label="Проверяем устройство" /></div>
   }
 
   if (deviceStatus !== 'trusted') {

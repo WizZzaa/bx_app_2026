@@ -49,28 +49,26 @@ export default function Titlebar() {
 
   return (
     <div 
-      className="bx-app-titlebar flex h-8 w-full select-none items-center justify-between border-b border-bx-border bg-bx-surface"
+      className="bx-app-titlebar"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
-      {/* Логотип и заголовок */}
-      <div className="flex items-center gap-2 pl-3">
-        <span className="bx-app-brand-mark flex h-4 w-4 items-center justify-center rounded text-[9px] font-black text-bx-on-accent">
+      <div className="bx-app-titlebar__identity">
+        <span className="bx-app-brand-mark bx-app-titlebar__mark">
           BX
         </span>
-        <span className="text-[11px] font-semibold text-bx-text tracking-wide">
-          BX — Помощник Бухгалтера
+        <span className="bx-app-titlebar__title">
+          BX · рабочее пространство
         </span>
       </div>
 
-      {/* Кнопки управления окном */}
       <div 
-        className="flex items-center h-full"
+        className="bx-app-titlebar__controls"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
-        {/* Свернуть */}
         <button
+          type="button"
           onClick={handleMinimize}
-          className="flex items-center justify-center w-11 h-full text-bx-muted hover:bg-bx-surface hover:text-bx-text transition-colors cursor-pointer"
+          className="bx-app-titlebar__control"
           title="Свернуть"
           aria-label="Свернуть"
         >
@@ -79,10 +77,10 @@ export default function Titlebar() {
           </svg>
         </button>
 
-        {/* Развернуть / Восстановить */}
         <button
+          type="button"
           onClick={handleMaximize}
-          className="flex items-center justify-center w-11 h-full text-bx-muted hover:bg-bx-surface hover:text-bx-text transition-colors cursor-pointer"
+          className="bx-app-titlebar__control"
           title={isMaximized ? "Свернуть в окно" : "Развернуть"}
           aria-label={isMaximized ? "Свернуть в окно" : "Развернуть"}
         >
@@ -97,10 +95,10 @@ export default function Titlebar() {
           )}
         </button>
 
-        {/* Закрыть */}
         <button
+          type="button"
           onClick={handleClose}
-          className="flex items-center justify-center w-11 h-full text-bx-muted hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+          className="bx-app-titlebar__control bx-app-titlebar__control--close"
           title="Закрыть"
           aria-label="Закрыть"
         >

@@ -1,5 +1,6 @@
 :root[data-bx-design='d1'] .bx-login {
   isolation: isolate;
+  font-family: var(--bx-font-sans);
   background:
     linear-gradient(135deg, rgb(var(--bx-brand-rgb) / 0.05), transparent 38%),
     radial-gradient(circle at 90% 10%, rgb(210 184 224 / 0.14), transparent 26rem),
@@ -167,7 +168,7 @@
 }
 
 :root[data-bx-design='d1'] .bx-login__card button:not(:disabled):active {
-  transform: translateY(1px);
+  transform: scale(0.97);
 }
 
 :root[data-bx-design='d1'] .bx-login__footer,
@@ -181,8 +182,27 @@
 }
 
 :root[data-bx-design='d1'] .bx-login__changelog {
+  border-color: rgb(var(--bx-border-rgb) / 0.88);
+  background: rgb(var(--bx-surface-rgb) / 0.96);
   color: var(--bx-text-primary);
   box-shadow: var(--bx-shadow-overlay);
+}
+
+:root[data-bx-design='d1'] .bx-login__changelog h3,
+:root[data-bx-design='d1'] .bx-login__changelog strong {
+  color: var(--bx-text-primary);
+}
+
+:root[data-bx-design='d1'] .bx-login__changelog p,
+:root[data-bx-design='d1'] .bx-login__changelog li,
+:root[data-bx-design='d1'] .bx-login__changelog span {
+  color: var(--bx-text-secondary);
+}
+
+:root[data-bx-design='d1'] .bx-login__changelog button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  color: var(--bx-text-secondary);
 }
 
 @media (max-width: 1023px) {
@@ -206,5 +226,36 @@
   :root[data-bx-design='d1'] .bx-login__card input,
   :root[data-bx-design='d1'] .bx-login__card button {
     transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-bx-design='d1'] .bx-login__story,
+  :root[data-bx-design='d1'] .bx-login__card,
+  :root[data-bx-design='d1'] .bx-login__changelog {
+    background: var(--bx-surface);
+    backdrop-filter: none;
+  }
+
+  :root[data-bx-design='d1'] .bx-login__aura {
+    display: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root[data-bx-design='d1'] .bx-login__story,
+  :root[data-bx-design='d1'] .bx-login__card,
+  :root[data-bx-design='d1'] .bx-login__bento-card {
+    border-color: var(--bx-text-secondary);
+  }
+}
+
+@media (forced-colors: active) {
+  :root[data-bx-design='d1'] .bx-login__brand-mark,
+  :root[data-bx-design='d1'] .bx-login__story-dot,
+  :root[data-bx-design='d1'] .bx-login__trust span::before {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
   }
 }
