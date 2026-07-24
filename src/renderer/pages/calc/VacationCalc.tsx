@@ -36,7 +36,7 @@ export default function VacationCalc() {
   const net = vacationPay - ndfl;
 
   return (
-    <div className="space-y-5">
+    <div className="bx-a7-calc-form space-y-5">
       <div className="flex gap-2">
         <button
           onClick={() => setCalcMethod('calendar')}

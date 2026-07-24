@@ -46,8 +46,8 @@ export function RegulatoryRateGate({ calculatorId, children }: { calculatorId: s
   const pending = values.filter(value => !isRegulatoryValueEligible(value, asOf))
 
   return (
-    <div className="space-y-4">
-      <section className={`rounded-2xl border p-4 ${canCalculate ? 'border-violet-500/25 bg-violet-500/[0.06]' : 'border-amber-500/35 bg-amber-500/[0.08]'}`} aria-live="polite">
+    <div className="bx-a7-regulatory space-y-4" data-state={allEligible ? 'verified' : manuallyConfirmed ? 'confirmed' : 'blocked'}>
+      <section className={`bx-a7-regulatory__panel rounded-2xl border p-4 ${canCalculate ? 'border-violet-500/25 bg-violet-500/[0.06]' : 'border-amber-500/35 bg-amber-500/[0.08]'}`} aria-live="polite">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${canCalculate ? 'text-violet-700 dark:text-violet-300' : 'text-amber-800 dark:text-amber-200'}`}>

@@ -29,7 +29,7 @@ export default function SalaryCalc() {
   const p = calcPayroll(gross, rates);
 
   return (
-    <div className="space-y-5">
+    <div className="bx-a7-calc-form space-y-5">
       <div className="flex gap-2">
         <button
           onClick={() => setDirection('gross2net')}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import '../styles/a7-calculators-tools.css'
 import { readCalcHistory, clearCalcHistory, HISTORY_EVENT, type CalcHistoryEntry } from './calc/CalcResult'
 import { peekCalcPrefill } from './calc/prefill'
 import VatCalc from './calc/VatCalc'
@@ -155,8 +156,8 @@ const Calc = () => {
   }, [active, q])
 
   return (
-    <div className="z-10 flex min-h-0 flex-1 flex-col overflow-hidden bg-bx-bg font-sans text-bx-text lg:flex-row">
-      <aside className="z-10 flex w-full flex-shrink-0 flex-col overflow-hidden border-b border-bx-border bg-bx-surface lg:w-[280px] lg:border-b-0 lg:border-r 2xl:w-[304px]">
+    <div className="bx-a7-workbench bx-a7-workbench--calc z-10 flex min-h-0 flex-1 flex-col overflow-hidden bg-bx-bg font-sans text-bx-text lg:flex-row">
+      <aside className="bx-a7-workbench__catalog z-10 flex w-full flex-shrink-0 flex-col overflow-hidden border-b border-bx-border bg-bx-surface lg:w-[320px] lg:border-b-0 lg:border-r 2xl:w-[344px]">
         <WorkbenchCatalogNav
           ariaLabel="Категории калькуляторов"
           activeId={active}
@@ -172,10 +173,10 @@ const Calc = () => {
       </aside>
 
       {/* Правая панель — активный калькулятор */}
-      <div className="flex-1 overflow-y-auto bg-bx-bg">
-        <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 sm:py-6">
+      <main className="bx-a7-workbench__content flex-1 overflow-y-auto bg-bx-bg">
+        <div className="bx-a7-workbench__inner px-4 py-4 sm:px-6 sm:py-6">
           {/* Hero-шапка с акцентом группы */}
-          <div className={`rounded-3xl bg-gradient-to-br ${ACCENT[tab.group].grad} via-transparent to-transparent border border-bx-border px-5 py-4.5 mb-5 bg-bx-surface shadow-sm`}>
+          <header className={`bx-a7-workbench__hero rounded-3xl bg-gradient-to-br ${ACCENT[tab.group].grad} via-transparent to-transparent border border-bx-border px-5 py-4.5 mb-5 bg-bx-surface shadow-sm`}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex w-full min-w-0 items-start gap-3.5 sm:flex-1 sm:items-center">
                 <span className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${ACCENT[tab.group].iconBg} shadow-inner`}>
@@ -193,7 +194,7 @@ const Calc = () => {
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-bx-muted mt-1">{tab.desc} · Законодательство РУз</p>
+                  <p className="text-[11px] text-bx-muted mt-1">{tab.desc} · Расчёт по правилам Республики Узбекистан</p>
                 </div>
               </div>
               <div className="w-full sm:w-auto">
@@ -205,7 +206,7 @@ const Calc = () => {
                 />
               </div>
             </div>
-          </div>
+          </header>
 
           {/* Верстак калькулятора */}
           <div id="calc-content-to-export">
@@ -216,7 +217,7 @@ const Calc = () => {
 
           <CalcHistoryPanel />
         </div>
-      </div>
+      </main>
     </div>
   )
 }
@@ -248,7 +249,7 @@ const CalcHistoryPanel = () => {
   }
 
   return (
-    <div className="mt-8 pb-6">
+    <section className="bx-a7-history mt-8 pb-6" aria-labelledby="bx-a7-history-title">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="w-7 h-7 rounded-xl bg-bx-surface-2 border border-bx-border text-bx-muted flex items-center justify-center shadow-inner">
@@ -257,7 +258,7 @@ const CalcHistoryPanel = () => {
               <path d="M8 5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
             </svg>
           </span>
-          <p className="text-xs font-bold text-bx-text uppercase tracking-wider">Недавние расчёты</p>
+          <p id="bx-a7-history-title" className="text-xs font-bold text-bx-text uppercase tracking-wider">Недавние расчёты</p>
         </div>
         <button onClick={handleClearHistory} className="text-[11px] text-bx-muted hover:text-red-500 transition-colors cursor-pointer">Очистить</button>
       </div>
@@ -287,7 +288,7 @@ const CalcHistoryPanel = () => {
           </button>
         ))}
       </div>
-    </div>
+    </section>
   )
 }
 

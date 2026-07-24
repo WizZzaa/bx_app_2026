@@ -139,7 +139,7 @@ export default function RegimeCompareCalc() {
   const hasRevenue = revenue > 0
 
   return (
-    <div className="space-y-5">
+    <div className="bx-a7-calc-form bx-a7-calc-form--complex space-y-5">
       <header className="rounded-2xl border border-blue-500/20 bg-gradient-to-r from-blue-500/[0.10] via-bx-surface to-violet-500/[0.06] p-5">
         <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-blue-700 dark:text-blue-300">Налоги · ориентировочный сценарий</p>
         <h2 className="mt-1 text-xl font-black tracking-tight text-bx-text">Какой налоговый режим выгоднее</h2>

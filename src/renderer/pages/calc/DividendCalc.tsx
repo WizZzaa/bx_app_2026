@@ -26,7 +26,7 @@ export default function DividendCalc() {
   const net = val - tax;
 
   return (
-    <div className="space-y-5">
+    <div className="bx-a7-calc-form space-y-5">
       <div className="flex gap-2">
         <button
           onClick={() => setResident(true)}

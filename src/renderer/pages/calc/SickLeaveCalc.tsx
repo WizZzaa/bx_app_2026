@@ -44,7 +44,7 @@ export default function SickLeaveCalc() {
   const net = benefit - ndfl;
 
   return (
-    <div className="space-y-5">
+    <div className="bx-a7-calc-form space-y-5">
       <div>
         <label className="block text-xs text-bx-muted mb-2">Трудовой стаж</label>
         <div className="flex gap-2">

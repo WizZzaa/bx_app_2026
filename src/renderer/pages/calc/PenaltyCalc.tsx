@@ -39,7 +39,7 @@ export default function PenaltyCalc() {
   const total = debtVal + penalty;
 
   return (
-    <div className="space-y-5">
+    <div className="bx-a7-calc-form space-y-5">
       <div className="flex gap-2">
         <button
           onClick={() => setMode('fixed')}

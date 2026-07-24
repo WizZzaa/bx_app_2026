@@ -67,7 +67,7 @@ export default function RecyclingCalc() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="bx-a7-calc-form space-y-5">
       <div className="flex gap-2">
         {(['passenger', 'commercial', 'moto'] as VehicleCategory[]).map(c => (
           <button key={c} onClick={() => switchCategory(c)}

@@ -36,7 +36,7 @@ const InpsCalc = () => {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="bx-a7-calc-form space-y-5">
       {/* Направление расчета */}
       <div className="flex gap-2">
         <button
