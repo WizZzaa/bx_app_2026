@@ -50,6 +50,13 @@ beforeEach(() => {
 });
 
 describe('Support new request form', () => {
+  it('opens the short request form immediately for an eligible account', () => {
+    render(<Support />);
+
+    expect(screen.getByRole('heading', { name: 'Чем помочь?' })).toBeTruthy();
+    expect(screen.getByLabelText(/Что случилось/)).toBeTruthy();
+  });
+
   it('keeps the first request focused on one message and one contact', () => {
     render(<Support />);
 
@@ -143,5 +150,20 @@ describe('Support new request form', () => {
 
     await waitFor(() => expect(ticketMocks.createTicket).toHaveBeenCalled());
     expect(localStorage.getItem('bx_support_draft')).toBe(draft);
+  });
+
+  it('autosaves the expanded draft on the current device', async () => {
+    render(<Support />);
+
+    fireEvent.change(screen.getByLabelText(/Что случилось/), { target: { value: 'После обновления не открывается нужный раздел BX' } });
+    fireEvent.change(screen.getByLabelText('Раздел'), { target: { value: 'documents' } });
+
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem('bx_support_draft') || '{}')).toMatchObject({
+        body: 'После обновления не открывается нужный раздел BX',
+        category: 'documents',
+        impact: 'normal',
+      });
+    });
   });
 });

@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import '../styles/a8-services-support-settings.css'
 import { getSectionsSync, refreshServices } from '../lib/db/servicesRepo'
 import type { ServiceSection } from '../data/services'
 import Icon from '../lib/ui/Icon'
+import { BxMotion } from '../lib/ui/BxMotion'
 import {
   ResourceEmpty,
   ResourceHero,
@@ -11,6 +13,13 @@ import {
   ResourceSidebar,
   secondaryActionClass,
 } from '../components/workspace/ResourceWorkspace'
+
+const QUICK_TASKS = [
+  { id: 'report', label: 'Сдать отчёт', description: 'Налоговый кабинет и декларации', icon: 'government', sectionIds: ['tax'] },
+  { id: 'sign', label: 'Подписать документ', description: 'ЭЦП, ЭДО и электронные счета', icon: 'shield', sectionIds: ['edo'] },
+  { id: 'pay', label: 'Провести платёж', description: 'Банки и платёжные системы', icon: 'finance', sectionIds: ['banks', 'payments'] },
+  { id: 'check', label: 'Проверить правило', description: 'Законодательство и регуляторы', icon: 'book', sectionIds: ['gov', 'finance', 'resources'] },
+] as const
 
 export function serviceItemKey(sectionId: string, index: number, title: string, url: string): string {
   return `${sectionId}-${index}-${title}-${url}`
@@ -30,10 +39,15 @@ function sectionIcon(section: ServiceSection) {
   return 'globe'
 }
 
+function sectionTitle(section: ServiceSection): string {
+  return section.title.replace(/^[^\p{L}\p{N}]+/u, '').trim()
+}
+
 export default function Services() {
   const [sections, setSections] = useState<ServiceSection[]>(() => getSectionsSync())
   const [search, setSearch] = useState('')
   const [activeSecId, setActiveSecId] = useState('all')
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
@@ -44,12 +58,15 @@ export default function Services() {
 
   const total = useMemo(() => sections.reduce((sum, section) => sum + section.items.length, 0), [sections])
   const q = search.toLowerCase().trim()
+  const taskSections = QUICK_TASKS.find(task => task.id === activeTaskId)?.sectionIds
   const filteredSections = useMemo(() => sections
     .map(section => ({
       ...section,
       items: section.items.filter(item => !q || [item.title, item.desc, item.tag].some(value => value?.toLowerCase().includes(q))),
     }))
-    .filter(section => section.items.length > 0 && (activeSecId === 'all' || section.id === activeSecId)), [sections, q, activeSecId])
+    .filter(section => section.items.length > 0
+      && (activeSecId === 'all' || section.id === activeSecId)
+      && (!taskSections || taskSections.includes(section.id as never))), [sections, q, activeSecId, taskSections])
 
   const visibleCount = filteredSections.reduce((sum, section) => sum + section.items.length, 0)
   const handleRefresh = async () => {
@@ -58,7 +75,16 @@ export default function Services() {
     finally { setRefreshing(false) }
   }
 
-  const reset = () => { setSearch(''); setActiveSecId('all') }
+  const reset = () => { setSearch(''); setActiveSecId('all'); setActiveTaskId(null) }
+  const selectSection = (sectionId: string) => {
+    setActiveSecId(sectionId)
+    setActiveTaskId(null)
+  }
+  const selectTask = (taskId: string) => {
+    setActiveTaskId(current => current === taskId ? null : taskId)
+    setActiveSecId('all')
+    setSearch('')
+  }
 
   const sidebar = (
     <ResourceSidebar
@@ -67,7 +93,7 @@ export default function Services() {
       subtitle={`${total} проверяемых рабочих ресурсов`}
       search={search}
       searchPlaceholder="Найти портал или услугу"
-      onSearch={setSearch}
+      onSearch={value => { setSearch(value); setActiveTaskId(null) }}
       onClear={() => setSearch('')}
       label="Категории"
       footer={(
@@ -77,44 +103,72 @@ export default function Services() {
         </div>
       )}
     >
-      <ResourceNavItem icon="globe" label="Все ресурсы" count={total} active={activeSecId === 'all'} onClick={() => setActiveSecId('all')} />
+      <ResourceNavItem icon="globe" label="Все ресурсы" count={total} active={activeSecId === 'all' && !activeTaskId} onClick={() => selectSection('all')} />
       {sections.map(section => (
-        <ResourceNavItem key={section.id} icon={sectionIcon(section)} label={section.title} count={section.items.length} active={activeSecId === section.id} onClick={() => setActiveSecId(section.id)} />
+        <ResourceNavItem key={section.id} icon={sectionIcon(section)} label={sectionTitle(section)} count={section.items.length} active={activeSecId === section.id} onClick={() => selectSection(section.id)} />
       ))}
     </ResourceSidebar>
   )
 
   return (
     <ResourceLayout sidebar={sidebar}>
-      <div className="space-y-6">
-        <ResourceHero
-          eyebrow="Проверенный рабочий контур"
-          title="Официальные сервисы — без поиска по закладкам"
-          description="Единый каталог государственных порталов, банковских инструментов, ЭДО и бухгалтерских ресурсов Узбекистана. BX только открывает официальный сайт: авторизация и подписание выполняются на стороне выбранного сервиса."
-          icon="services"
-          stats={[
-            { value: total, label: 'ресурсов' },
-            { value: sections.length, label: 'категорий' },
-            { value: visibleCount, label: 'показано сейчас' },
-          ]}
-          actions={(
-            <button type="button" onClick={handleRefresh} disabled={refreshing} className={secondaryActionClass}>
-              <Icon name="recycle" className={`h-4 w-4 ${refreshing ? 'animate-spin motion-reduce:animate-none' : ''}`} />
-              {refreshing ? 'Обновляем…' : 'Обновить каталог'}
-            </button>
-          )}
-        />
+      <div className="bx-a8-services space-y-6">
+        <BxMotion preset="raise">
+          <ResourceHero
+            eyebrow="Рабочие сервисы"
+            title="Куда перейти прямо сейчас?"
+            description="Выберите задачу — BX покажет только подходящие официальные порталы. Вход, оплата и подписание всегда выполняются на стороне выбранного сервиса."
+            icon="services"
+            stats={[
+              { value: total, label: 'ресурсов' },
+              { value: sections.length, label: 'категорий' },
+              { value: visibleCount, label: 'сейчас' },
+            ]}
+            actions={(
+              <button type="button" onClick={handleRefresh} disabled={refreshing} className={secondaryActionClass}>
+                <Icon name="recycle" className={`h-4 w-4 ${refreshing ? 'animate-spin motion-reduce:animate-none' : ''}`} />
+                {refreshing ? 'Обновляем…' : 'Обновить'}
+              </button>
+            )}
+          />
+        </BxMotion>
 
+        <section className="bx-a8-services__tasks" aria-labelledby="service-tasks-title">
+          <div className="bx-a8-services__section-heading">
+            <div>
+              <p>Быстрый выбор</p>
+              <h2 id="service-tasks-title">Что нужно сделать?</h2>
+            </div>
+            {activeTaskId && <button type="button" onClick={reset}>Показать всё</button>}
+          </div>
+          <div className="bx-a8-services__task-grid">
+            {QUICK_TASKS.map(task => (
+              <button
+                key={task.id}
+                type="button"
+                aria-pressed={activeTaskId === task.id}
+                onClick={() => selectTask(task.id)}
+              >
+                <span><Icon name={task.icon} /></span>
+                <strong>{task.label}</strong>
+                <small>{task.description}</small>
+                <Icon name="arrowR" className="bx-a8-services__task-arrow" />
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <BxMotion key={`${activeTaskId ?? 'all'}-${activeSecId}-${q}`} preset="fade">
         {filteredSections.length > 0 ? filteredSections.map(section => (
-          <section key={section.id} className="space-y-3.5" aria-label={section.title}>
-            <ResourceSectionTitle title={section.title} subtitle="Откроется в безопасной внешней вкладке" count={section.items.length} />
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <section key={section.id} className="space-y-3.5" aria-label={sectionTitle(section)}>
+            <ResourceSectionTitle title={sectionTitle(section)} subtitle="Откроется в безопасной внешней вкладке" count={section.items.length} />
+            <div className="bx-a8-services__grid grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {section.items.map((item, index) => (
                 <button
                   type="button"
                   key={serviceItemKey(section.id, index, item.title, item.url)}
                   onClick={() => openLink(item.url)}
-                  className="group flex min-h-[184px] cursor-pointer flex-col rounded-[20px] border border-bx-border bg-bx-surface p-4.5 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/[0.035] focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="bx-a8-services__card group flex min-h-[184px] cursor-pointer flex-col rounded-[20px] border border-bx-border bg-bx-surface p-4.5 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/[0.035] focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <span className="grid h-10 w-10 place-items-center rounded-xl border border-bx-border bg-bx-bg text-blue-600 dark:text-blue-300">
@@ -139,6 +193,7 @@ export default function Services() {
             action={<button type="button" onClick={reset} className={secondaryActionClass}>Сбросить фильтры</button>}
           />
         )}
+        </BxMotion>
       </div>
     </ResourceLayout>
   )

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import '../styles/a8-services-support-settings.css'
 import { supabase } from '../lib/db/supabase'
 import { clearPin, isPinEnabled, setPinEnabled } from '../lib/auth/pin'
 import { APP_VERSION } from '../../shared/version'
@@ -24,6 +25,7 @@ import { initialTabForSurface, navigationForSurface, type SettingsSurface, type 
 import DataTable from '../components/ui/DataTable'
 import { formatStorageBytes, parseUsageSnapshot, usageWindowLabel, type UsageSnapshot } from '../lib/usageSnapshot'
 import { accountDisplayLabel, publicContactEmail } from '../lib/auth/accountIdentity'
+import { BxMotion } from '../lib/ui/BxMotion'
 
 const NOTIFY_KEY = 'bx_notify_days'
 const IDLE_LOCK_KEY = 'bx_idle_lock'
@@ -496,8 +498,8 @@ export default function Settings({ surface = 'settings' }: { surface?: SettingsS
   }
 
   return (
-    <div className="flex flex-1 overflow-hidden bg-bx-bg text-bx-text">
-      <aside className="hidden w-[248px] flex-shrink-0 flex-col border-r border-bx-border bg-bx-surface-2/55 md:flex 2xl:w-[292px]">
+    <div className={`bx-a8-settings bx-a8-settings--${surface} flex flex-1 overflow-hidden bg-bx-bg text-bx-text`}>
+      <aside className="bx-a8-settings__sidebar hidden w-[248px] flex-shrink-0 flex-col border-r border-bx-border bg-bx-surface-2/55 md:flex 2xl:w-[292px]">
         <div className="border-b border-bx-border px-5 py-5">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-bx-on-accent shadow-lg shadow-blue-600/20"><Icon name={surface === 'account' ? 'user' : 'settings'} className="h-5 w-5" /></span>
@@ -521,10 +523,10 @@ export default function Settings({ surface = 'settings' }: { surface?: SettingsS
         </div>}
       </aside>
 
-      <main className="custom-scrollbar flex-1 overflow-y-auto">
+      <main className="bx-a8-settings__main custom-scrollbar flex-1 overflow-y-auto">
         <div className="bx-page-container px-4 py-6 sm:px-5 lg:px-6 lg:py-8">
           <nav className="custom-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 pb-1 md:hidden" aria-label={surface === 'account' ? 'Разделы личного кабинета' : 'Разделы настроек'}>{navItems.map(item => <button key={item.id} type="button" onClick={() => setActiveTab(item.id)} aria-current={activeTab === item.id ? 'page' : undefined} className={`min-h-11 flex-none rounded-xl border px-3 text-sm font-semibold ${activeTab === item.id ? 'border-bx-accent bg-bx-accent text-bx-on-accent' : 'border-bx-border bg-bx-surface text-bx-muted'}`}>{item.label}</button>)}</nav>
-          <header className="relative mb-6 overflow-hidden rounded-[28px] border border-bx-border bg-bx-surface px-6 py-6 shadow-sm">
+          <header className="bx-a8-settings__hero relative mb-6 overflow-hidden rounded-[28px] border border-bx-border bg-bx-surface px-6 py-6 shadow-sm">
             <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-blue-600/[0.08] to-transparent" />
             <div className="relative flex flex-wrap items-end justify-between gap-4">
               <div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">{currentHeader.eyebrow}</p><h2 className="mt-2 text-2xl font-black tracking-tight">{currentHeader.title}</h2><p className="mt-2 max-w-2xl text-sm leading-relaxed text-bx-muted">{currentHeader.description}</p></div>
@@ -532,10 +534,11 @@ export default function Settings({ surface = 'settings' }: { surface?: SettingsS
             </div>
           </header>
 
+          <BxMotion key={`${surface}-${activeTab}`} preset="fade" className="bx-a8-settings__panel">
           {activeTab === 'overview' && surface === 'account' && (
             <div className="space-y-5">
               <section className={`${card} p-5`}><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="text-sm font-semibold text-bx-muted">Текущий тариф</p><h3 className="mt-1 text-2xl font-black capitalize">{plan}</h3><p className="mt-1 text-sm text-bx-muted">{planExpiresAt ? `Действует до ${new Date(planExpiresAt).toLocaleDateString('ru-RU')}` : plan === 'free' ? 'Без даты окончания' : 'Дата продления уточняется'}</p></div><button type="button" onClick={() => setActiveTab('billing')} className={`${button} bg-bx-accent text-bx-on-accent`}>Тариф и оплата</button></div></section>
-              <section aria-labelledby="account-resources-title"><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 id="account-resources-title" className="text-base font-black">Остатки ресурсов</h3><button type="button" onClick={() => void loadUsageSnapshot()} disabled={usageLoading} className="rounded-xl px-3 py-2 text-xs font-bold text-bx-accent hover:bg-bx-surface-2 disabled:opacity-50">{usageLoading ? 'Обновляем…' : 'Обновить'}</button></div><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">{[
+              <section className="bx-a8-account-resources" aria-labelledby="account-resources-title"><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 id="account-resources-title" className="text-base font-black">Остатки ресурсов</h3><button type="button" onClick={() => void loadUsageSnapshot()} disabled={usageLoading} className="rounded-xl px-3 py-2 text-xs font-bold text-bx-accent hover:bg-bx-surface-2 disabled:opacity-50">{usageLoading ? 'Обновляем…' : 'Обновить'}</button></div><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">{[
                 { label: 'AI-запросы', value: usageSnapshot ? usageSnapshot.resources.ai.remaining.toLocaleString('ru-RU') : '—', total: usageSnapshot ? `из ${(usageSnapshot.resources.ai.limit + usageSnapshot.resources.ai.addOn).toLocaleString('ru-RU')}` : '', detail: usageSnapshot ? usageWindowLabel(usageSnapshot.resources.ai.window) : 'нет серверных данных', icon: 'ai' },
                 { label: 'Переводы', value: usageSnapshot ? usageSnapshot.resources.translations.remaining.toLocaleString('ru-RU') : '—', total: usageSnapshot ? `из ${(usageSnapshot.resources.translations.limit + usageSnapshot.resources.translations.addOn).toLocaleString('ru-RU')}` : '', detail: usageSnapshot ? usageWindowLabel(usageSnapshot.resources.translations.window) : 'нет серверных данных', icon: 'languages' },
                 { label: 'Хранилище', value: usageSnapshot ? formatStorageBytes(usageSnapshot.resources.storageBytes.remaining) : '—', total: usageSnapshot ? `из ${formatStorageBytes(usageSnapshot.resources.storageBytes.limit)}` : '', detail: usageSnapshot ? `занято ${formatStorageBytes(usageSnapshot.resources.storageBytes.used)}` : 'нет серверных данных', icon: 'save' },
@@ -691,6 +694,7 @@ export default function Settings({ surface = 'settings' }: { surface?: SettingsS
               <section className={`${card} h-fit p-5`}><h3 className="text-sm font-black">Нужна помощь?</h3><p className="mt-2 text-xs leading-relaxed text-bx-muted">Опишите проблему в разделе поддержки или напишите технической команде.</p><button type="button" onClick={() => navigate('/support')} className={`${button} mt-4 w-full bg-blue-600 text-white`}><span className="inline-flex items-center gap-2"><Icon name="headset" className="h-4 w-4" />Открыть поддержку</span></button><button type="button" onClick={() => openExternalUrl('https://t.me/tech_support_bx')} className={`${button} mt-2 w-full border border-bx-border bg-bx-surface-2`}><span className="inline-flex items-center gap-2"><Icon name="send" className="h-4 w-4" />Telegram поддержки</span></button><p className="mt-4 text-center font-mono text-xs font-bold text-bx-muted">+998 90 916 04 44</p></section>
             </div>
           )}
+          </BxMotion>
         </div>
       </main>
 
