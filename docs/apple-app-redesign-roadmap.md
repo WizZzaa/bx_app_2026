@@ -116,6 +116,7 @@
 - [ ] Единые `Button`, `Field`, `Select`, `Date`, `Money`, `Upload` и inline validation.
   - [x] A9 foundation: общие native-контролы, visible labels, hint/error IDs, blur-oriented validation, 44px target и семантические disabled/invalid states.
   - [x] Первые production-сценарии: конвертер валют и загрузка документов переведены без изменения расчётного или Storage-контракта.
+  - [x] Пакет 2.84.0: `/support`, полный мастер профиля компании и приглашение команды переведены на общие `Field`, `Select`, `DateField`, `Textarea`; добавлены semantic input types, autocomplete/inputMode, inline errors и фокус на первую ошибку.
   - [ ] Оставшиеся route-local формы мигрируются пакетами; глобальный CSS override не применяется, чтобы не ломать пользовательские сценарии.
 - [x] `OverlayPanel`, modal, popover, context menu, bottom sheet и confirmation.
 - [x] `PaywallModal`, `ConflictModal`, `AboutModal`.
@@ -129,7 +130,10 @@
 - [x] A9-слои вынесены в demand-loaded chunks; лимит bundle не повышался, initial closure уменьшен с `349,7` до `346,8 KiB gzip`.
 - [x] Confirmation и Prompt загружаются только по требованию; после завершения legacy-миграции initial closure остаётся ниже лимита — `347,7 KiB gzip`.
 - [x] Browser QA 2.83.0: desktop `1280×720` и mobile `390×844`, translator confirmation `480×321` / mobile bottom sheet `390×353`, все dialog actions `44px`, horizontal overflow `0`; отмена сохраняет исходник и результат, Undo восстанавливает локальную заметку.
+- [x] Browser QA 2.84.0: `/support` и мастер компании проверены на `1280×720` и `390×844`; horizontal overflow `0`, форма поддержки `768→357 px`, мобильный мастер `358×844`, поля и действия не меньше `44px`, фокус после ошибки переходит в первое неверное поле.
+- [x] App 2.84.0: typecheck, lint, `404/404` теста, production build и все bundle budgets — PASS; demand-loading мастера компании снизил initial closure до `341,4 KiB gzip`, Motion Mini остался `3,9 KiB gzip`.
 - [x] Graphify обновлён после пакета 2.83.0: `2156` узлов, `4935` связей, `125` сообществ; результат сохранён как useful memory.
+- [x] Graphify обновлён после пакета 2.84.0: `2171` узел, `4961` связь, `133` сообщества; маршрут миграции форм сохранён как useful memory.
 - [x] Supabase schema/data, RPC/RLS, Edge Functions, Secrets, payment и пользовательские записи не менялись.
 
 ## A10 — Финальная приёмка

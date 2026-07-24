@@ -16,6 +16,7 @@ import { useToast } from '../lib/ui/ToastContext'
 import { useCompany } from '../lib/CompanyContext'
 import Icon from '../lib/ui/Icon'
 import { BxMotion } from '../lib/ui/BxMotion'
+import { Field, Select, Textarea } from '../components/ui/FormControls'
 import {
   ResourceLayout,
   ResourceSidebar,
@@ -23,8 +24,6 @@ import {
   secondaryActionClass,
 } from '../components/workspace/ResourceWorkspace'
 
-const fieldClass = 'min-h-12 w-full rounded-xl border border-bx-border-2 bg-bx-bg px-4 text-base text-bx-text outline-none transition-colors placeholder:text-bx-muted focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/15'
-const invalidFieldClass = 'border-red-500/60 focus:border-red-500 focus:ring-red-500/15'
 type SupportRequiredField = 'body' | 'contactPhone'
 
 export default function Support() {
@@ -166,15 +165,33 @@ export default function Support() {
             {tickets.length > 0 && <button type="button" onClick={() => setCreating(false)} disabled={submitting} className={secondaryActionClass}>К обращениям</button>}
           </header>
 
-          <section className="space-y-5 rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm sm:p-6">
-            <label className="block space-y-2">
-              <span className="text-sm font-black text-bx-text">Что случилось? <span className="text-red-500">*</span></span>
-              <textarea ref={bodyRef} value={body} required maxLength={4000} aria-invalid={showFieldError('body', bodyInvalid)} aria-describedby="support-body-help" onBlur={() => markFieldBlurred('body')} onChange={event => setBody(event.target.value)} rows={7} placeholder="Например: при подписании счёта E-Imzo пишет «ключ не найден». Перезапуск не помог." className={`${fieldClass} h-auto min-h-48 resize-y py-3 leading-relaxed ${showFieldError('body', bodyInvalid) ? invalidFieldClass : ''}`} />
-              <span id="support-body-help" aria-live="polite" className={`flex items-start justify-between gap-3 text-[11px] ${showFieldError('body', bodyInvalid) ? 'text-red-600 dark:text-red-300' : 'text-bx-muted'}`}><span>{showFieldError('body', bodyInvalid) ? 'Добавьте хотя бы 20 символов, чтобы специалист понял проблему.' : 'Если видите ошибку — скопируйте её текст сюда. Черновик сохраняется на устройстве.'}</span><span className="shrink-0 tabular-nums">{body.length}/4000</span></span>
-            </label>
+          <form
+            className="space-y-5 rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm sm:p-6"
+            onSubmit={event => {
+              event.preventDefault()
+              void submitCreate()
+            }}
+            noValidate
+          >
+            <Textarea
+              ref={bodyRef}
+              label="Что случилось?"
+              required
+              value={body}
+              maxLength={4000}
+              error={showFieldError('body', bodyInvalid) ? 'Добавьте хотя бы 20 символов, чтобы специалист понял проблему.' : undefined}
+              hint={showFieldError('body', bodyInvalid) ? undefined : `Если видите ошибку — скопируйте её текст сюда. Черновик сохраняется на устройстве. ${body.length}/4000`}
+              onBlur={() => markFieldBlurred('body')}
+              onChange={event => setBody(event.target.value)}
+              rows={7}
+              placeholder="Например: при подписании счёта E-Imzo пишет «ключ не найден». Перезапуск не помог."
+              className="min-h-48 leading-relaxed"
+            />
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">Раздел</span><select value={category} onChange={event => setCategory(event.target.value as SupportCategory)} className={fieldClass}>{SUPPORT_CATEGORIES.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+              <Select label="Раздел" optionalLabel="" value={category} onChange={event => setCategory(event.target.value as SupportCategory)}>
+                {SUPPORT_CATEGORIES.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
+              </Select>
               <label className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 ${impact === 'blocking' ? 'border-amber-500/35 bg-amber-500/10' : 'border-bx-border bg-bx-bg'}`}><input type="checkbox" checked={impact === 'blocking'} onChange={event => setImpact(event.target.checked ? 'blocking' : 'normal')} className="h-5 w-5 rounded border-bx-border-2 text-violet-600 focus:ring-violet-500" /><span><span className="block text-xs font-black text-bx-text">Работа остановлена</span><span className="mt-0.5 block text-[10px] text-bx-muted">Отметьте, только если нельзя продолжать работу</span></span></label>
             </div>
 
@@ -182,22 +199,41 @@ export default function Support() {
               <div className="flex items-center gap-2"><Icon name="user" className="h-4 w-4 text-violet-700 dark:text-violet-300" /><h2 className="text-sm font-black text-bx-text">Куда ответить</h2></div>
               <p className="mt-1 text-[11px] text-bx-muted">Контакты запомнятся на этом устройстве для следующих заявок.</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">Телефон <span className="text-red-500">*</span></span><input ref={contactPhoneRef} value={contactPhone} required maxLength={30} aria-invalid={showFieldError('contactPhone', contactPhoneInvalid)} aria-describedby="support-phone-error" onBlur={() => markFieldBlurred('contactPhone')} onChange={event => setContactPhone(event.target.value)} autoComplete="tel" inputMode="tel" placeholder="+998 90 123-45-67" className={`${fieldClass} ${showFieldError('contactPhone', contactPhoneInvalid) ? invalidFieldClass : ''}`} />{showFieldError('contactPhone', contactPhoneInvalid) && <span id="support-phone-error" role="alert" className="block text-[10px] text-red-600 dark:text-red-300">Оставьте номер для уточняющих вопросов.</span>}</label>
-                <label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">Как к вам обращаться <span className="font-normal text-bx-muted">· необязательно</span></span><input value={contactName} maxLength={100} onChange={event => setContactName(event.target.value)} autoComplete="name" placeholder="Имя" className={fieldClass} /></label>
+                <Field
+                  ref={contactPhoneRef}
+                  label="Телефон"
+                  required
+                  value={contactPhone}
+                  maxLength={30}
+                  error={showFieldError('contactPhone', contactPhoneInvalid) ? 'Оставьте номер для уточняющих вопросов.' : undefined}
+                  onBlur={() => markFieldBlurred('contactPhone')}
+                  onChange={event => setContactPhone(event.target.value)}
+                  autoComplete="tel"
+                  inputMode="tel"
+                  placeholder="+998 90 123-45-67"
+                />
+                <Field
+                  label="Как к вам обращаться"
+                  value={contactName}
+                  maxLength={100}
+                  onChange={event => setContactName(event.target.value)}
+                  autoComplete="name"
+                  placeholder="Имя"
+                />
               </div>
             </div>
 
             <details className="rounded-2xl border border-bx-border bg-bx-bg">
               <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 py-3 text-xs font-bold text-bx-text outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500"><Icon name="settings" className="h-4 w-4 text-bx-muted" /><span className="flex-1">Дополнительные сведения</span><span className="text-[10px] font-normal text-bx-muted">необязательно</span></summary>
               <div className="grid gap-3 border-t border-bx-border p-4 sm:grid-cols-2">
-                <label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">Своя тема заявки</span><input value={subject} maxLength={120} onChange={event => setSubject(event.target.value)} placeholder="BX сформирует автоматически" className={fieldClass} /></label>
-                <label className="block space-y-1.5"><span className="text-xs font-bold text-bx-text">ID AnyDesk / RustDesk</span><input value={remoteId} maxLength={80} onChange={event => setRemoteId(event.target.value)} placeholder="Только если уже договорились" className={`${fieldClass} font-mono tracking-wider`} /></label>
+                <Field label="Своя тема заявки" value={subject} maxLength={120} onChange={event => setSubject(event.target.value)} placeholder="BX сформирует автоматически" />
+                <Field label="ID AnyDesk / RustDesk" value={remoteId} maxLength={80} onChange={event => setRemoteId(event.target.value)} placeholder="Только если уже договорились" className="font-mono tracking-wider" />
                 <p className="text-[11px] leading-relaxed text-bx-muted sm:col-span-2">Организация: <strong className="text-bx-text">{activeCompany?.name ?? 'не выбрана'}</strong>{activeCompany?.inn ? ` · ИНН ${activeCompany.inn}` : ''}. Никогда не отправляйте пароль, PIN-код или закрытый ключ ЭЦП.</p>
               </div>
             </details>
 
-            <div className="flex flex-col gap-2 border-t border-bx-border pt-4 sm:flex-row sm:items-center"><button type="button" onClick={submitCreate} disabled={submitting} className={`${primaryActionClass} w-full sm:w-auto`}><Icon name="send" className={`h-4 w-4 ${submitting ? 'animate-pulse motion-reduce:animate-none' : ''}`} />{submitting ? 'Отправляем…' : 'Отправить заявку'}</button><button type="button" onClick={() => setCreating(false)} disabled={submitting} className={`${secondaryActionClass} w-full sm:w-auto`}>Отмена</button><p className="text-center text-[10px] text-bx-muted sm:ml-auto sm:text-right">Обычно отвечаем до 1 рабочего дня</p></div>
-          </section>
+            <div className="flex flex-col gap-2 border-t border-bx-border pt-4 sm:flex-row sm:items-center"><button type="submit" disabled={submitting} className={`${primaryActionClass} w-full sm:w-auto`}><Icon name="send" className={`h-4 w-4 ${submitting ? 'animate-pulse motion-reduce:animate-none' : ''}`} />{submitting ? 'Отправляем…' : 'Отправить заявку'}</button><button type="button" onClick={() => setCreating(false)} disabled={submitting} className={`${secondaryActionClass} w-full sm:w-auto`}>Отмена</button><p className="text-center text-[10px] text-bx-muted sm:ml-auto sm:text-right">Обычно отвечаем до 1 рабочего дня</p></div>
+          </form>
         </BxMotion>
       ) : active ? (
         <BxMotion preset="fade" className="bx-a8-support__thread mx-auto flex min-h-[calc(100vh-130px)] max-w-5xl flex-col overflow-hidden rounded-[24px] border border-bx-border bg-bx-surface">
@@ -217,7 +253,7 @@ export default function Support() {
               </div>
             ))}
           </div>
-          {active.status !== 'closed' && <div className="flex gap-2 border-t border-bx-border p-4"><label className="min-w-0 flex-1"><span className="sr-only">Дополнить обращение</span><input value={replyText} onChange={event => setReplyText(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') submitReply() }} placeholder="Дополнить обращение…" className={fieldClass} /></label><button type="button" onClick={submitReply} disabled={sendingReply || !replyText.trim()} className={primaryActionClass}><Icon name="send" className={`h-4 w-4 ${sendingReply ? 'animate-pulse motion-reduce:animate-none' : ''}`} />{sendingReply ? 'Отправляем…' : 'Отправить'}</button></div>}
+          {active.status !== 'closed' && <div className="flex gap-2 border-t border-bx-border p-4"><label className="min-w-0 flex-1"><span className="sr-only">Дополнить обращение</span><input aria-label="Дополнить обращение" value={replyText} onChange={event => setReplyText(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') submitReply() }} placeholder="Дополнить обращение…" className="bx-d1-control" /></label><button type="button" onClick={submitReply} disabled={sendingReply || !replyText.trim()} className={primaryActionClass}><Icon name="send" className={`h-4 w-4 ${sendingReply ? 'animate-pulse motion-reduce:animate-none' : ''}`} />{sendingReply ? 'Отправляем…' : 'Отправить'}</button></div>}
         </BxMotion>
       ) : (
         <BxMotion preset="raise" className="mx-auto flex min-h-[calc(100vh-190px)] max-w-3xl items-center justify-center py-8">

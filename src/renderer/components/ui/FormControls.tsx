@@ -93,6 +93,42 @@ export const DateField = React.forwardRef<HTMLInputElement, DateFieldProps>(func
   return <Field ref={ref} {...props} type="date" />
 })
 
+export type TextareaProps = SharedFieldProps & Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'required'>
+
+export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea({
+  label,
+  hint,
+  error,
+  required = false,
+  optionalLabel,
+  containerClassName,
+  className = '',
+  id,
+  ...textareaProps
+}, ref) {
+  return (
+    <FormField
+      id={id}
+      label={label}
+      hint={hint}
+      error={error}
+      required={required}
+      optionalLabel={optionalLabel}
+      className={containerClassName}
+    >
+      {control => (
+        <textarea
+          ref={ref}
+          {...textareaProps}
+          {...control}
+          required={required}
+          className={`bx-d1-control ${className}`}
+        />
+      )}
+    </FormField>
+  )
+})
+
 export interface MoneyFieldProps extends Omit<FieldProps, 'type' | 'inputMode'> {
   currency?: string
 }

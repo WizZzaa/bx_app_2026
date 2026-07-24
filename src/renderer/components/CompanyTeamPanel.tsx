@@ -10,6 +10,7 @@ import {
 } from '../lib/companyTeam';
 import { useCompanyTeam } from '../lib/useCompanyTeam';
 import { useToast } from '../lib/ui/ToastContext';
+import { Field, Select } from './ui/FormControls';
 
 interface Props {
   title?: string;
@@ -89,7 +90,7 @@ export function CompanyTeamPanel({
                     type="button"
                     disabled={isBusy}
                     onClick={() => void handleAccept(invite)}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-lg text-[10px] font-bold transition-colors"
+                    className="min-h-11 rounded-xl bg-blue-600 px-4 py-2 text-[11px] font-bold text-white transition-colors hover:bg-blue-700 disabled:opacity-40"
                   >
                     {busyAction === `accept-${invite.id}` ? 'Подключаем…' : 'Принять'}
                   </button>
@@ -101,7 +102,7 @@ export function CompanyTeamPanel({
                       () => team.rejectInvite(invite.id),
                       'Приглашение отклонено',
                     )}
-                    className="px-3 py-1.5 bg-bx-surface-2 hover:bg-bx-border-2 disabled:opacity-40 text-bx-text rounded-lg text-[10px] font-bold transition-colors"
+                    className="min-h-11 rounded-xl bg-bx-surface-2 px-4 py-2 text-[11px] font-bold text-bx-text transition-colors hover:bg-bx-border-2 disabled:opacity-40"
                   >
                     Отклонить
                   </button>
@@ -124,20 +125,22 @@ export function CompanyTeamPanel({
                 <h3 className="text-xs font-bold text-bx-text uppercase tracking-wider">Пригласить участника BX</h3>
                 <p className="text-[10px] text-bx-muted mt-1">Укажите email его учётной записи. BX не раскрывает, зарегистрирован ли этот адрес.</p>
               </div>
-              <div className="flex flex-col lg:flex-row gap-2.5">
-                <input
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem_auto] lg:items-end">
+                <Field
+                  label="Email участника"
                   type="email"
                   required
                   autoComplete="email"
                   value={inviteEmail}
                   onChange={event => setInviteEmail(event.target.value)}
                   placeholder="name@example.com"
-                  className="flex-1 bg-bx-bg text-bx-text text-xs px-3 py-2.5 rounded-xl border border-bx-border focus:outline-none placeholder:text-bx-muted focus:border-blue-500/50"
+                  hint="Используйте email его учётной записи BX."
                 />
-                <select
+                <Select
+                  label="Роль участника"
+                  optionalLabel=""
                   value={inviteRole}
                   onChange={event => setInviteRole(event.target.value as CompanyRole)}
-                  className="bg-bx-bg text-bx-text text-xs px-3 py-2.5 rounded-xl border border-bx-border focus:outline-none"
                   aria-label="Роль участника"
                 >
                   {INVITABLE_ROLES.map(role => (
@@ -145,11 +148,11 @@ export function CompanyTeamPanel({
                       {role === 'owner' ? 'Совладелец' : COMPANY_ROLE_LABELS[role]}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <button
                   type="submit"
                   disabled={isBusy || !inviteEmail.trim()}
-                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-all"
+                  className="min-h-11 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {busyAction === 'invite' ? 'Добавляем…' : 'Пригласить'}
                 </button>

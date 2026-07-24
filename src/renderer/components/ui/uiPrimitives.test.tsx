@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import Button from './Button'
 import DataTable from './DataTable'
 import FormField from './FormField'
+import { Textarea } from './FormControls'
 import ListPanel, { ListPanelItem } from './ListPanel'
 
 describe('BX accessible UI primitives', () => {
@@ -15,6 +16,15 @@ describe('BX accessible UI primitives', () => {
     expect(describedBy).toContain('-hint')
     expect(describedBy).toContain('-error')
     expect(screen.getByRole('alert').textContent).toContain('больше нуля')
+  })
+
+  it('keeps multiline form input labelled, described and invalid when needed', () => {
+    render(<Textarea label="Описание проблемы" hint="Не добавляйте пароль" error="Добавьте подробности" required />)
+    const textarea = screen.getByRole('textbox', { name: /Описание проблемы/ })
+    expect(textarea.tagName).toBe('TEXTAREA')
+    expect(textarea.getAttribute('aria-invalid')).toBe('true')
+    expect(textarea.getAttribute('aria-describedby')).toContain('-hint')
+    expect(screen.getByText('Добавьте подробности').getAttribute('role')).toBe('alert')
   })
 
   it('exposes loading state without changing the button label', () => {
