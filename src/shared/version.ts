@@ -14,6 +14,19 @@ export interface ChangelogEntry {
 // Новые версии — сверху.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.82.0',
+    date: '2026-07-24',
+    title: 'Apple-style формы, overlay и системные состояния',
+    changes: [
+      'Собран единый A9-набор Field, Select, Date, Money и Upload: видимые подписи, 44px-контролы, подсказки, inline validation и доступные error-сообщения используют общий лавандовый контракт.',
+      'OverlayPanel теперь является основой для modal, desktop/mobile sheet и confirmation; добавлен keyboard-доступный popover/context menu с Arrow/Home/End, Escape и закрытием при потере контекста.',
+      'Paywall, разрешение конфликтов и «О BX» переведены на общий focus trap, возврат фокуса, спокойный material и адаптивную bottom-sheet геометрию без изменения тарифов или данных.',
+      'Загрузка документов использует общий drag-and-drop Upload и прежний uploadDocument; безвозвратное удаление отделено от обычных действий и требует безопасного подтверждения с фокусом на отмене.',
+      'Календарное меню быстрых статусов и конвертер валют переведены на общие контракты; расчёты, события, локальные файлы, Supabase, Edge Functions и payment-контур не менялись.',
+      'Системные состояния покрывают loading, empty, offline, permission, limit, stale, error и fatal; reduced motion/transparency, contrast и forced colors встроены в базовый UI-слой.',
+    ],
+  },
+  {
     version: '2.81.0',
     date: '2026-07-24',
     title: 'Apple-style сервисы, поддержка, настройки и аккаунт',

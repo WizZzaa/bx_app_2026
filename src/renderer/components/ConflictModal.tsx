@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { getConflicts, resolveConflict } from '../lib/db/syncConflictResolver'
 import type { SyncConflict, SyncEntityData } from '../lib/db/localDb'
 import Button from './ui/Button'
+import { Dialog } from './ui/Dialog'
+import './system-modals-a9.css'
 
 interface ConflictModalProps {
   isOpen: boolean
@@ -81,51 +83,49 @@ export default function ConflictModal({ isOpen, onClose, onResolved }: ConflictM
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Разрешение конфликтов">
-      <div className="bg-bx-surface border border-bx-border-2 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
-        {/* Заголовок */}
-        <div className="px-6 py-4 border-b border-bx-border flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-bx-text">Обнаружены конфликты синхронизации</h2>
-            <p className="text-xs text-bx-muted mt-0.5">Данные были изменены и локально, и на сервере. Выберите правильную версию.</p>
-          </div>
-          <span className="bg-red-500/10 text-red-400 text-xs px-2.5 py-1 rounded-full font-semibold">
-            Конфликтов: {conflicts.length}
-          </span>
-        </div>
+    <Dialog
+      open
+      onClose={loading ? () => undefined : onClose}
+      title="Разрешить конфликты синхронизации"
+      description="Локальная и облачная версии изменились независимо. Выберите значение для каждого поля — BX ничего не перезапишет без вашего действия."
+      closeLabel="Закрыть разрешение конфликтов"
+      className="bx-a9-conflict"
+      footer={<div className="bx-a9-system-actions"><Button variant="secondary" disabled={loading} onClick={onClose}>Закрыть</Button></div>}
+    >
+      <div className="bx-a9-conflict__summary">
+        <span>Осталось конфликтов</span>
+        <strong>{conflicts.length}</strong>
+      </div>
 
-        <div className="flex-1 flex overflow-hidden">
-          {/* Левый список конфликтов */}
-          <aside className="w-56 border-r border-bx-border overflow-y-auto bg-bx-bg p-2 space-y-1">
+      <div className="bx-a9-conflict__workspace">
+          <aside className="bx-a9-conflict__list" aria-label="Конфликтующие записи">
             {conflicts.map((c, i) => (
               <button
                 key={c.id}
+                type="button"
                 onClick={() => { setActiveIdx(i); setCustomMerge(null); }}
-                className={`w-full text-left px-3 py-2.5 rounded-lg text-xs transition-colors ${
-                  activeIdx === i ? 'bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/20' : 'text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text'
-                }`}
+                aria-pressed={activeIdx === i}
+                className="bx-a9-conflict__record"
               >
-                <p className="truncate">
+                <span>
                   {c.entity === 'transactions' 
                     ? `Транзакция от ${c.localData.date}` 
                     : `Сотрудник: ${c.localData.full_name}`}
-                </p>
-                <p className="text-[10px] text-bx-muted truncate mt-0.5">ID: {c.targetId.substring(0, 8)}</p>
+                </span>
+                <small>ID: {c.targetId.substring(0, 8)}</small>
               </button>
             ))}
           </aside>
 
-          {/* Правая панель сравнения */}
-          <div className="flex-1 flex flex-col overflow-y-auto p-6 space-y-6">
-            <div className="grid grid-cols-3 gap-4 text-xs font-semibold text-bx-muted pb-2 border-b border-bx-border">
-              <div>ПОЛЕ</div>
-              <div>ЛОКАЛЬНО (ВАШИ ИЗМЕНЕНИЯ)</div>
-              <div>НА СЕРВЕРЕ (ОБЛАКО)</div>
+          <section className="bx-a9-conflict__comparison" aria-label="Сравнение версий">
+            <div className="bx-a9-conflict__columns" aria-hidden="true">
+              <span>Поле</span>
+              <span>На устройстве</span>
+              <span>В облаке</span>
             </div>
 
-            {/* Поля транзакции */}
             {isTx && (
-              <div className="space-y-4">
+              <div className="bx-a9-conflict__fields">
                 <CompareFieldRow label="Сумма" field="amount" localVal={current.localData.amount} serverVal={current.serverData.amount} onMerge={handleFieldChange} mergeVal={getMergeValue('amount')} />
                 <CompareFieldRow label="Тип" field="type" localVal={current.localData.type} serverVal={current.serverData.type} onMerge={handleFieldChange} mergeVal={getMergeValue('type')} />
                 <CompareFieldRow label="Дата" field="date" localVal={current.localData.date} serverVal={current.serverData.date} onMerge={handleFieldChange} mergeVal={getMergeValue('date')} />
@@ -135,9 +135,8 @@ export default function ConflictModal({ isOpen, onClose, onResolved }: ConflictM
               </div>
             )}
 
-            {/* Поля сотрудника */}
             {!isTx && (
-              <div className="space-y-4">
+              <div className="bx-a9-conflict__fields">
                 <CompareFieldRow label="ФИО" field="full_name" localVal={current.localData.full_name} serverVal={current.serverData.full_name} onMerge={handleFieldChange} mergeVal={getMergeValue('full_name')} />
                 <CompareFieldRow label="Должность" field="position" localVal={current.localData.position} serverVal={current.serverData.position} onMerge={handleFieldChange} mergeVal={getMergeValue('position')} />
                 <CompareFieldRow label="Оклад" field="salary" localVal={current.localData.salary} serverVal={current.serverData.salary} onMerge={handleFieldChange} mergeVal={getMergeValue('salary')} />
@@ -146,33 +145,25 @@ export default function ConflictModal({ isOpen, onClose, onResolved }: ConflictM
               </div>
             )}
 
-            <div className="pt-4 border-t border-bx-border flex items-center justify-between gap-4">
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={handleChooseLocal} loading={loading}>
-                  Использовать локальную
+            <div className="bx-a9-conflict__actions">
+              <div>
+                <Button variant="secondary" onClick={handleChooseLocal} loading={loading}>
+                  Всё с устройства
                 </Button>
-                <Button variant="ghost" onClick={handleChooseServer} loading={loading}>
-                  Использовать серверную
+                <Button variant="secondary" onClick={handleChooseServer} loading={loading}>
+                  Всё из облака
                 </Button>
               </div>
 
               {customMerge && (
                 <Button variant="primary" onClick={handleChooseMerge} loading={loading}>
-                  Применить объединенную
+                  Применить выбранные поля
                 </Button>
               )}
             </div>
-          </div>
+          </section>
         </div>
-
-        {/* Подвал */}
-        <div className="px-6 py-4 bg-bx-bg border-t border-bx-border flex justify-end gap-3 flex-shrink-0">
-          <Button variant="ghost" onClick={onClose}>
-            Закрыть
-          </Button>
-        </div>
-      </div>
-    </div>
+    </Dialog>
   )
 }
 
@@ -188,29 +179,25 @@ interface CompareFieldRowProps {
 const CompareFieldRow = ({ label, field, localVal, serverVal, mergeVal, onMerge }: CompareFieldRowProps) => {
   const isDiff = localVal !== serverVal
   return (
-    <div className={`grid grid-cols-3 gap-4 items-center py-2.5 rounded-lg px-2 text-xs transition-colors ${
-      isDiff ? 'bg-amber-500/5' : ''
-    }`}>
-      <div className="font-medium text-bx-muted">{label}</div>
+    <div className="bx-a9-conflict__field" data-different={isDiff || undefined}>
+      <div className="bx-a9-conflict__field-label">{label}</div>
       <button
+        type="button"
         onClick={() => onMerge(field, localVal)}
-        className={`text-left p-2 rounded border truncate ${
-          mergeVal === localVal 
-            ? 'bg-blue-600/10 border-blue-500/40 text-blue-400 font-medium' 
-            : 'bg-bx-surface-2 border-bx-border-2 hover:border-bx-border-2 text-bx-text'
-        }`}
+        aria-pressed={mergeVal === localVal}
+        className="bx-a9-conflict__value"
       >
-        {String(localVal ?? '—')}
+        <small>На устройстве</small>
+        <span title={String(localVal ?? '—')}>{String(localVal ?? '—')}</span>
       </button>
       <button
+        type="button"
         onClick={() => onMerge(field, serverVal)}
-        className={`text-left p-2 rounded border truncate ${
-          mergeVal === serverVal 
-            ? 'bg-blue-600/10 border-blue-500/40 text-blue-400 font-medium' 
-            : 'bg-bx-surface-2 border-bx-border-2 hover:border-bx-border-2 text-bx-text'
-        }`}
+        aria-pressed={mergeVal === serverVal}
+        className="bx-a9-conflict__value"
       >
-        {String(serverVal ?? '—')}
+        <small>В облаке</small>
+        <span title={String(serverVal ?? '—')}>{String(serverVal ?? '—')}</span>
       </button>
     </div>
   )

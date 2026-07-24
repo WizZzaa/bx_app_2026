@@ -7,6 +7,8 @@ import { TARIFF_MATRIX } from '../../shared/tariffs'
 import Icon from '../lib/ui/Icon'
 import DocumentsTabs from '../components/documents/DocumentsTabs'
 import { Sheet } from '../components/ui/Sheet'
+import { Upload } from '../components/ui/FormControls'
+import { ConfirmationDialog } from '../components/ui/ConfirmationDialog'
 import {
   ResourceEmpty,
   ResourceHero,
@@ -49,7 +51,6 @@ export default function Documents() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [uploadOpen, setUploadOpen] = useState(false)
-  const [isDragActive, setIsDragActive] = useState(false)
   const [search, setSearch] = useState('')
   const [filterCompany, setFilterCompany] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
@@ -57,7 +58,8 @@ export default function Documents() {
   const [previewUrl, setPreviewUrl] = useState('')
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [pendingDelete, setPendingDelete] = useState<BxUserDocument | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const previewRequestRef = useRef(0)
   const maxFileBytes = TARIFF_MATRIX[plan].maxFileBytes
 
@@ -95,20 +97,6 @@ export default function Documents() {
     setUploadOpen(true)
   }
 
-  const handleDrag = (event: React.DragEvent) => {
-    event.preventDefault()
-    event.stopPropagation()
-    setIsDragActive(event.type === 'dragenter' || event.type === 'dragover')
-  }
-
-  const handleDrop = (event: React.DragEvent) => {
-    event.preventDefault()
-    event.stopPropagation()
-    setIsDragActive(false)
-    const file = event.dataTransfer.files?.[0]
-    if (file) chooseFile(file)
-  }
-
   const handleUpload = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!selectedFile || !targetCompany || !customName.trim()) return
@@ -130,7 +118,6 @@ export default function Documents() {
       setTagsInput('')
       setCategory('Другое')
       setUploadSuccess(true)
-      if (fileInputRef.current) fileInputRef.current.value = ''
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Не удалось загрузить файл. Проверьте формат и размер по лимиту тарифа.')
     } finally {
@@ -138,12 +125,16 @@ export default function Documents() {
     }
   }
 
-  const handleDelete = async (document: BxUserDocument) => {
-    if (!window.confirm(`Удалить «${document.file_name}»? Восстановить файл не получится.`)) return
+  const confirmDelete = async () => {
+    if (!pendingDelete) return
+    setDeleting(true)
     try {
-      await deleteDocument(document.id, document.file_url)
+      await deleteDocument(pendingDelete.id, pendingDelete.file_url)
+      setPendingDelete(null)
     } catch (error) {
       window.alert(error instanceof Error ? error.message : 'Не удалось удалить документ')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -289,7 +280,7 @@ export default function Documents() {
                     <time className="text-[10px] font-bold tabular-nums text-bx-muted">{new Date(document.created_at).toLocaleDateString('ru-RU')}</time>
                     <div className="flex gap-1.5">
                       <button type="button" onClick={() => void openPreview(document)} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-bx-border bg-bx-bg px-3 text-[10px] font-black text-bx-text hover:text-blue-600"><Icon name="search" className="h-3.5 w-3.5" />Открыть</button>
-                      <button type="button" onClick={() => void handleDelete(document)} aria-label={`Удалить ${document.file_name}`} className="grid h-10 w-10 place-items-center rounded-lg border border-red-500/20 bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white dark:text-red-300"><Icon name="trash" className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => setPendingDelete(document)} aria-label={`Удалить ${document.file_name}`} className="grid h-10 w-10 place-items-center rounded-lg border border-red-500/20 bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white dark:text-red-300"><Icon name="trash" className="h-4 w-4" /></button>
                     </div>
                   </div>
                 </article>
@@ -311,14 +302,16 @@ export default function Documents() {
         >
           <form id="bx-document-upload-form" onSubmit={handleUpload} className="bx-documents-a3 space-y-4">
             {uploadSuccess && <div role="status" className="flex items-start gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3 text-[11px] font-bold text-emerald-700 dark:text-emerald-300"><Icon name="check" className="h-4 w-4 flex-shrink-0" />Документ сохранён. Можно загрузить следующий или закрыть окно.</div>}
-            <div className="relative">
-              <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" onChange={event => { const file = event.target.files?.[0]; if (file) chooseFile(file) }} className="sr-only" tabIndex={-1} />
-              <button type="button" onClick={() => fileInputRef.current?.click()} onDragEnter={handleDrag} onDragOver={handleDrag} onDragLeave={handleDrag} onDrop={handleDrop} className={`flex min-h-44 w-full flex-col items-center justify-center rounded-2xl border border-dashed p-5 text-center outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${isDragActive ? 'border-blue-500 bg-blue-500/10' : selectedFile ? 'border-emerald-500/40 bg-emerald-500/[0.06]' : 'border-bx-border-2 bg-bx-bg hover:border-blue-500/45'}`}>
-                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-300"><Icon name={selectedFile ? 'check' : 'download'} className={`h-5 w-5 ${selectedFile ? '' : 'rotate-180'}`} /></span>
-                <span className="mt-3 max-w-full truncate text-xs font-black text-bx-text">{selectedFile ? selectedFile.name : 'Выбрать или перетащить файл'}</span>
-                <span className="mt-1 text-[10px] text-bx-muted">{selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} МБ · нажмите, чтобы заменить` : 'PDF · DOC/DOCX · XLS/XLSX · JPG/PNG'}</span>
-              </button>
-            </div>
+            <Upload
+              label="Файл документа"
+              required
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+              disabled={uploading || maxFileBytes <= 0}
+              files={selectedFile ? [selectedFile] : []}
+              onFiles={files => { if (files[0]) chooseFile(files[0]) }}
+              chooseLabel="Выбрать документ"
+              dropLabel="или перетащите PDF, Word, Excel или изображение"
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="text-[10px] font-black uppercase tracking-wider text-bx-text">Название *<input required value={customName} onChange={event => setCustomName(event.target.value)} placeholder="Договор аренды 2026.docx" className="mt-1.5 min-h-11 w-full rounded-xl border border-bx-border bg-bx-surface-2 px-3 text-xs font-semibold text-bx-text outline-none" /></label>
               <label className="text-[10px] font-black uppercase tracking-wider text-bx-text">Организация *<select required value={targetCompany} onChange={event => setTargetCompany(event.target.value)} className="mt-1.5 min-h-11 w-full rounded-xl border border-bx-border bg-bx-surface-2 px-3 text-xs font-semibold text-bx-text outline-none"><option value="">Выберите организацию</option>{companies.map(company => <option key={company.id} value={company.id}>{company.name}{company.inn ? ` · ИНН ${company.inn}` : ''}</option>)}</select></label>
@@ -328,6 +321,17 @@ export default function Documents() {
             {uploadError && <div role="alert" className="flex items-start gap-2 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-[11px] font-bold text-red-700 dark:text-red-300"><Icon name="alert" className="h-4 w-4 flex-shrink-0" />{uploadError}</div>}
           </form>
         </Sheet>
+
+        <ConfirmationDialog
+          open={Boolean(pendingDelete)}
+          onClose={() => { if (!deleting) setPendingDelete(null) }}
+          onConfirm={() => void confirmDelete()}
+          title="Удалить документ?"
+          description={pendingDelete ? `«${pendingDelete.file_name}» будет удалён из архива. Восстановить файл не получится.` : ''}
+          confirmLabel="Удалить безвозвратно"
+          tone="destructive"
+          loading={deleting}
+        />
 
         <Sheet
           open={Boolean(previewDocument)}

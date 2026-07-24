@@ -4,8 +4,9 @@ import CompanySwitcher from './CompanySwitcher'
 import Icon from '../../lib/ui/Icon'
 import { getSyncQueue, syncOfflineData } from '../../lib/db/syncQueue'
 import { db } from '../../lib/db/localDb'
-import ConflictModal from '../ConflictModal'
 import { useNotifications, type BxNotification } from '../../lib/useNotifications'
+
+const ConflictModal = React.lazy(() => import('../ConflictModal'))
 
 interface TopbarProps {
   onOpenSearch?: () => void
@@ -244,11 +245,15 @@ export default function Topbar({
         </button>
       </div>
 
-      <ConflictModal
-        isOpen={conflictModalOpen}
-        onClose={() => setConflictModalOpen(false)}
-        onResolved={handleUpdateStatus}
-      />
+      {conflictModalOpen && (
+        <React.Suspense fallback={null}>
+          <ConflictModal
+            isOpen
+            onClose={() => setConflictModalOpen(false)}
+            onResolved={handleUpdateStatus}
+          />
+        </React.Suspense>
+      )}
     </header>
   )
 }

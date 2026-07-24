@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { APP_VERSION } from '../../../shared/version'
-import AboutModal from '../AboutModal'
 import Icon from '../../lib/ui/Icon'
 import { usePlan } from '../../lib/plan'
 import { APP_DESTINATIONS, SIDEBAR_NAVIGATION_GROUPS } from './navigation'
+
+const AboutModal = React.lazy(() => import('../AboutModal'))
 
 const STORAGE_KEY = 'bx_sidebar_collapsed'
 const SIDEBAR_WIDTH = 264
@@ -188,7 +189,11 @@ export default function Sidebar({
         </button>
       </div>
 
-      <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
+      {aboutOpen && (
+        <React.Suspense fallback={null}>
+          <AboutModal open onClose={() => setAboutOpen(false)} />
+        </React.Suspense>
+      )}
     </aside>
   )
 }

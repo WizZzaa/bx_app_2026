@@ -1,7 +1,7 @@
 # Apple-style редизайн BX App — маршрут от оболочки до последней формы
 
 Дата начала: 23 июля 2026 года
-Статус: A0–A8 UI завершены; следующий пакет — A9, общие формы и overlay. Для support-вложений отдельно требуется серверный контракт.
+Статус: A0–A8 UI завершены; A9 foundation и системные overlay завершены, продолжается поэтапная миграция оставшихся route-local форм. Для support-вложений отдельно требуется серверный контракт.
 
 ## Неподвижные границы
 
@@ -114,10 +114,20 @@
 ## A9 — Общие формы и overlay
 
 - [ ] Единые `Button`, `Field`, `Select`, `Date`, `Money`, `Upload` и inline validation.
-- [ ] `OverlayPanel`, modal, popover, context menu, bottom sheet и confirmation.
-- [ ] `PaywallModal`, `ConflictModal`, `AboutModal`.
-- [ ] Skeleton, empty, offline, permission, limit, stale и fatal error.
+  - [x] A9 foundation: общие native-контролы, visible labels, hint/error IDs, blur-oriented validation, 44px target и семантические disabled/invalid states.
+  - [x] Первые production-сценарии: конвертер валют и загрузка документов переведены без изменения расчётного или Storage-контракта.
+  - [ ] Оставшиеся route-local формы мигрируются пакетами; глобальный CSS override не применяется, чтобы не ломать пользовательские сценарии.
+- [x] `OverlayPanel`, modal, popover, context menu, bottom sheet и confirmation.
+- [x] `PaywallModal`, `ConflictModal`, `AboutModal`.
+- [x] Skeleton, empty, offline, permission, limit, stale и fatal error.
 - [ ] Одинаковые focus ring, destructive hierarchy и undo policy.
+  - [x] Общий focus ring и safe-first destructive confirmation применены к документам; календарное context menu получило единый keyboard-контракт.
+  - [ ] Осталось заменить route-local `window.confirm`/`window.alert` и зафиксировать undo там, где операция технически обратима.
+- [x] Desktop `1280×720` и mobile `390×844`: upload sheet, system dialog, 44px targets и horizontal overflow проверены в живом browser preview.
+- [x] App typecheck, lint, `397/397` тестов, production build, bundle `346,8 KiB gzip` и Motion Mini `3,9 KiB` — PASS.
+- [x] A9-слои вынесены в demand-loaded chunks; лимит bundle не повышался, initial closure уменьшен с `349,7` до `346,8 KiB gzip`.
+- [x] Graphify обновлён: `2138` узлов, `4874` связей, `120` сообществ.
+- [x] Supabase schema/data, RPC/RLS, Edge Functions, Secrets, payment и пользовательские записи не менялись.
 
 ## A10 — Финальная приёмка
 

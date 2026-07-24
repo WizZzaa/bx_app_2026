@@ -1,0 +1,28 @@
+:root[data-bx-design='d1'] .bx-d1-popover-menu {
+  position: fixed;
+  z-index: var(--bx-z-popover, 120);
+  width: min(17rem, calc(100vw - 1rem));
+  max-height: min(28rem, calc(100dvh - 1rem));
+  overflow: auto;
+  border: 1px solid var(--bx-border);
+  border-radius: var(--bx-radius-md);
+  background: color-mix(in srgb, var(--bx-surface) 92%, transparent);
+  color: var(--bx-text-primary);
+  box-shadow: var(--bx-shadow-overlay);
+  backdrop-filter: blur(20px) saturate(135%);
+  transform-origin: top left;
+  overscroll-behavior: contain;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-bx-design='d1'] .bx-d1-popover-menu {
+    background: var(--bx-surface);
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root[data-bx-design='d1'] .bx-d1-popover-menu {
+    border-width: 2px;
+  }
+}
