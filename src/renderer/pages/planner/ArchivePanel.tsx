@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { BxCard } from './useCards';
+import Icon from '../../lib/ui/Icon';
+import './PlannerA2.css';
 
 interface Props {
   boardName: string;
@@ -30,18 +33,19 @@ export default function ArchivePanel({ boardName, loadArchived, onRestore, onDel
   async function restore(id: string) { await onRestore(id); setItems(prev => prev.filter(c => c.id !== id)); }
   async function del(id: string)     { await onDelete(id);  setItems(prev => prev.filter(c => c.id !== id)); }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-bx-surface border border-bx-border-2 rounded-2xl w-[520px] max-h-[80vh] flex flex-col shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-bx-border">
+  return createPortal(
+    <div className="bx-sheet-scrim fixed inset-0 z-[120] flex items-end justify-center sm:items-center sm:p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="archive-panel-title" className="bx-sheet flex max-h-[80vh] w-full max-w-[34rem] flex-col overflow-hidden">
+        <header className="bx-sheet__header flex items-start justify-between gap-4 px-6 py-5">
           <div>
-            <h2 className="text-base font-semibold text-bx-text">🗄️ Архив</h2>
-            <p className="text-[11px] text-bx-muted mt-0.5">Доска «{boardName}»</p>
+            <p className="bx-planner-eyebrow text-[11px] font-black">Завершённая работа</p>
+            <h2 id="archive-panel-title" className="mt-1 text-xl font-black text-bx-text">Архив</h2>
+            <p className="mt-1 text-xs text-bx-muted">Доска «{boardName}»</p>
           </div>
-          <button onClick={onClose} className="text-bx-muted hover:text-bx-text text-lg leading-none">✕</button>
-        </div>
+          <button type="button" onClick={onClose} aria-label="Закрыть" className="bx-sheet__close"><Icon name="crossSmall" /></button>
+        </header>
 
-        <div className="flex-1 overflow-y-auto px-4 py-3">
+        <div className="bx-sheet__body flex-1 overflow-y-auto px-4 py-3">
           {loading ? (
             <div className="flex items-center justify-center py-10 text-bx-muted text-sm">
               <span className="w-4 h-4 border-2 border-bx-border-2 border-t-blue-500 rounded-full animate-spin mr-2" /> Загрузка...
@@ -66,7 +70,8 @@ export default function ArchivePanel({ boardName, loadArchived, onRestore, onDel
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </section>
+    </div>,
+    document.body,
   );
 }

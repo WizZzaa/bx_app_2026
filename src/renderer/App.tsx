@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar, { initialSidebarCollapsed } from './components/layout/Sidebar';
 import MobileNavigation from './components/layout/MobileNavigation';
@@ -17,6 +17,7 @@ import { reportError } from './lib/errorReporter';
 import Icon from './lib/ui/Icon';
 import './styles/app-shell-d1.css';
 import './styles/workspace-pages-d1.css';
+import './styles/a6-business-workspaces.css';
 
 const Tools = lazy(() => import('./pages/Tools'));
 const Library = lazy(() => import('./pages/library/Library'));
@@ -159,11 +160,16 @@ export default function App({ previewPlan }: { previewPlan?: Plan } = {}) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(initialSidebarCollapsed);
   const location = useLocation();
+  const shellRef = useRef<HTMLDivElement>(null);
 
   // Инициализация темы при первом рендере (единый ключ bx_theme + классы .light/.dark)
   useEffect(() => {
     applyTheme(currentTheme());
   }, []);
+
+  useEffect(() => {
+    shellRef.current?.scrollTo?.({ top: 0, behavior: 'auto' });
+  }, [location.pathname]);
 
   // Если это режим компактного окна (Трей-вид)
   const isCompact = window.location.search.includes('compact=true') || window.location.hash.includes('/tray');
@@ -189,7 +195,7 @@ export default function App({ previewPlan }: { previewPlan?: Plan } = {}) {
   return (
     <CompanyProvider>
       <AppPlanBoundary previewPlan={previewPlan}>
-        <div className="bx-app-shell flex h-screen w-screen flex-col overflow-hidden bg-bx-bg text-bx-text relative">
+        <div ref={shellRef} className="bx-app-shell flex h-screen w-screen flex-col overflow-hidden bg-bx-bg text-bx-text relative">
           <a href="#bx-main-content" className="sr-only fixed left-3 top-3 z-[1000] rounded-xl bg-bx-accent px-4 py-3 font-semibold text-bx-on-accent focus:not-sr-only">
             К основному содержимому
           </a>
@@ -202,8 +208,13 @@ export default function App({ previewPlan }: { previewPlan?: Plan } = {}) {
             <TrayNavigateListener />
             <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} webResponsive={isWebRuntime} />
             <div className="bx-app-shell__workspace flex flex-1 flex-col overflow-hidden">
-              <Topbar onOpenSearch={() => setPaletteOpen(true)} onToggleMenu={() => setSidebarCollapsed(value => !value)} menuExpanded={!sidebarCollapsed} />
-              <main id="bx-main-content" className={`bx-app-shell__content flex flex-1 overflow-hidden ${isWebRuntime ? 'pb-16 md:pb-0' : ''}`} aria-label="Основное содержимое">
+              <Topbar
+                onOpenSearch={() => setPaletteOpen(true)}
+                onToggleMenu={() => setSidebarCollapsed(value => !value)}
+                menuExpanded={!sidebarCollapsed}
+                previewMode={Boolean(previewPlan)}
+              />
+              <main id="bx-main-content" className={`bx-app-shell__content flex flex-1 overflow-hidden ${isWebRuntime ? 'pb-24 md:pb-0' : ''}`} aria-label="Основное содержимое">
                 <RouteFocusManager />
                 <div className="bx-workspace-route flex min-h-0 min-w-0 flex-1" data-bx-route={location.pathname} key={location.pathname}>
                   <LazyRouteBoundary>

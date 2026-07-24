@@ -192,6 +192,8 @@
 :root[data-bx-design='d1'] .bx-news-detail__next button svg { width: 1rem; height: 1rem; color: var(--bx-brand-action); }
 
 :root[data-bx-design='d1'] .bx-news-detail button:focus-visible { outline: var(--bx-focus-width) solid var(--bx-focus); outline-offset: var(--bx-focus-offset); }
+:root[data-bx-design='d1'] .bx-news-detail button { transition: transform var(--bx-motion-fast) var(--bx-ease-standard), background-color var(--bx-motion-fast) var(--bx-ease-standard), border-color var(--bx-motion-fast) var(--bx-ease-standard); }
+:root[data-bx-design='d1'] .bx-news-detail button:active { transform: scale(0.98); }
 
 :root[data-bx-design='d1'] .bx-news-detail--empty { display: grid; place-items: center; padding: var(--bx-space-6); }
 :root[data-bx-design='d1'] .bx-news-detail--empty > section { max-width: 30rem; padding: var(--bx-space-8); border: 1px solid var(--bx-border); border-radius: var(--bx-radius-card); background: var(--bx-surface); text-align: center; }
@@ -232,4 +234,33 @@
 
 @media (prefers-reduced-motion: reduce) {
   :root[data-bx-design='d1'] .bx-news-detail button { transition: none; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-bx-design='d1'] .bx-news-detail__hero,
+  :root[data-bx-design='d1'] .bx-news-detail__brief {
+    background: var(--bx-surface);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root[data-bx-design='d1'] .bx-news-detail__hero,
+  :root[data-bx-design='d1'] .bx-news-detail__brief,
+  :root[data-bx-design='d1'] .bx-news-detail__section,
+  :root[data-bx-design='d1'] .bx-news-detail__action-card,
+  :root[data-bx-design='d1'] .bx-news-detail__about,
+  :root[data-bx-design='d1'] .bx-news-detail__next {
+    border-color: var(--bx-text-secondary);
+  }
+}
+
+@media (forced-colors: active) {
+  :root[data-bx-design='d1'] .bx-news-detail__hero,
+  :root[data-bx-design='d1'] .bx-news-detail__brief,
+  :root[data-bx-design='d1'] .bx-news-detail__section,
+  :root[data-bx-design='d1'] .bx-news-detail__action-card,
+  :root[data-bx-design='d1'] .bx-news-detail__about,
+  :root[data-bx-design='d1'] .bx-news-detail__next {
+    border: 1px solid CanvasText;
+  }
 }

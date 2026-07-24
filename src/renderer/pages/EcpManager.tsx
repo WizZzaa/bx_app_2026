@@ -5,6 +5,7 @@ import { todayISO } from '../lib/dates';
 import { loadEcpKeys, saveEcpKeys, EcpKeyRecord } from '../lib/ecpStorage';
 import { ECP_EXPIRY_CHECKPOINTS, ECP_PRODUCT_BOUNDARY } from '../lib/ecpProductBoundary';
 import Icon from '../lib/ui/Icon';
+import { useToast } from '../lib/ui/ToastContext';
 
 type EcpKey = EcpKeyRecord;
 
@@ -42,6 +43,7 @@ const EMPTY_FORM: Omit<EcpKey, 'id' | 'addedAt'> = {
 
 export default function EcpManager() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [keys, setKeys] = useState<EcpKey[]>([]);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -170,9 +172,11 @@ export default function EcpManager() {
   }
 
   function remove(id: string) {
-    if (confirm('Удалить запись сертификата из мониторинга? Файл ключа это действие не затрагивает.')) {
-      persist(keys.filter(k => k.id !== id));
-    }
+    const key = keys.find(item => item.id === id);
+    if (!key) return;
+    const updated = keys.filter(k => k.id !== id);
+    persist(updated);
+    toast.undo('Сертификат удалён из мониторинга', () => persist([...updated, key]));
   }
 
   const expiredCount = keys.filter(k => daysUntil(k.expiresAt) < 0).length;
@@ -184,6 +188,7 @@ export default function EcpManager() {
   const sorted = [...keys].sort((a, b) => daysUntil(a.expiresAt) - daysUntil(b.expiresAt));
 
   return (
+    <>
     <div className="flex-1 overflow-y-auto p-6 bg-bx-bg text-bx-text font-sans">
       <div className="max-w-3xl mx-auto space-y-6">
         
@@ -420,5 +425,6 @@ export default function EcpManager() {
         </div>
       </div>
     </div>
+    </>
   );
 }

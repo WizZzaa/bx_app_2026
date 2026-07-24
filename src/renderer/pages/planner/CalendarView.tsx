@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Icon from '../../lib/ui/Icon'
+import { PopoverMenu } from '../../components/ui/PopoverMenu'
 import { toLocalISO } from '../../lib/dates'
 import {
   getMonthNorms,
@@ -149,7 +150,6 @@ export default function CalendarView({
   const [contextMenu, setContextMenu] = useState<{ event: BxEvent; x: number; y: number } | null>(null)
   const [updatingStatus, setUpdatingStatus] = useState<BxEvent['status'] | null>(null)
   const previewHoverTimer = useRef<number | null>(null)
-  const contextMenuRef = useRef<HTMLDivElement | null>(null)
   const todayISO = toISO(now)
 
   const memberByUserId = useMemo(
@@ -257,29 +257,7 @@ export default function CalendarView({
 
   useEffect(() => () => cancelPreviewChange(), [])
 
-  useEffect(() => {
-    if (!contextMenu) return
-    const closeOnPointerDown = (pointerEvent: PointerEvent) => {
-      if (!contextMenuRef.current?.contains(pointerEvent.target as Node)) setContextMenu(null)
-    }
-    const closeOnEscape = (keyboardEvent: KeyboardEvent) => {
-      if (keyboardEvent.key === 'Escape') setContextMenu(null)
-    }
-    const closeMenu = () => setContextMenu(null)
-
-    document.addEventListener('pointerdown', closeOnPointerDown)
-    document.addEventListener('keydown', closeOnEscape)
-    window.addEventListener('resize', closeMenu)
-    window.addEventListener('scroll', closeMenu, true)
-    window.requestAnimationFrame(() => contextMenuRef.current?.querySelector<HTMLButtonElement>('button')?.focus())
-
-    return () => {
-      document.removeEventListener('pointerdown', closeOnPointerDown)
-      document.removeEventListener('keydown', closeOnEscape)
-      window.removeEventListener('resize', closeMenu)
-      window.removeEventListener('scroll', closeMenu, true)
-    }
-  }, [contextMenu])
+  const closeContextMenu = useCallback(() => setContextMenu(null), [])
 
   const openContextMenu = (event: BxEvent, clientX: number, clientY: number) => {
     const menuWidth = 280
@@ -873,7 +851,7 @@ export default function CalendarView({
       </header>
 
       {mode === 'week' ? (
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1 pb-4">
+        <div className="bx-calendar-scroll-region min-h-0 flex-1 overflow-y-auto pr-1 pb-4">
           {visibleYear !== VERIFIED_CALENDAR_YEAR && (
             <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-800 dark:text-amber-300">
               <Icon name="alert" className="mt-0.5 h-4 w-4 flex-shrink-0" />
@@ -900,7 +878,7 @@ export default function CalendarView({
           </div>
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <div className="bx-calendar-scroll-region min-h-0 flex-1 overflow-y-auto pr-1">
           {norms && (
             <section aria-label="Норма рабочего времени" className="bx-calendar-metrics mb-3 grid grid-cols-2 gap-2 rounded-2xl border p-3 text-xs sm:grid-cols-4">
               <div><span className="block text-[10px] uppercase tracking-wide text-bx-muted">Рабочих дней · 5-дн.</span><strong className="mt-1 block text-base text-bx-text">{norms.workdays5}</strong></div>
@@ -1028,12 +1006,13 @@ export default function CalendarView({
       )}
 
       {contextMenu && (
-        <div
-          ref={contextMenuRef}
-          role="menu"
-          aria-label={`Быстрые действия: ${contextMenu.event.title}`}
-          className="fixed z-50 w-[272px] overflow-hidden rounded-2xl border border-bx-border bg-bx-surface shadow-2xl shadow-black/20 outline-none"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
+        <PopoverMenu
+          open
+          onClose={closeContextMenu}
+          label={`Быстрые действия: ${contextMenu.event.title}`}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          className="bx-calendar-context-menu"
         >
           <div className="border-b border-bx-border bg-bx-surface-2/70 px-4 py-3">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-400">Быстрый статус</p>
@@ -1082,7 +1061,7 @@ export default function CalendarView({
               <Icon name="arrowR" className="ml-auto h-4 w-4 text-bx-muted" />
             </button>
           </div>
-        </div>
+        </PopoverMenu>
       )}
     </div>
   )

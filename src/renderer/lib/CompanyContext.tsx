@@ -4,9 +4,11 @@ import { supabase } from './db/supabase';
 import { emitPlannerReload } from '../pages/planner/plannerBus';
 import { syncTaxDeadlines } from '../pages/planner/taxSeeder';
 import { todayISO } from './dates';
-import CompanyProfileWizard, { type CompanyWizardInitial } from '../components/CompanyProfileWizard';
+import type { CompanyWizardInitial } from '../components/CompanyProfileWizard';
 import { useToast } from './ui/ToastContext';
 import type { Company, CompanyProfileForm, CompanyProfileRole } from './db/types';
+
+const CompanyProfileWizard = React.lazy(() => import('../components/CompanyProfileWizard'));
 
 interface Ctx {
   companies: Company[];
@@ -192,14 +194,22 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     <CompanyCtx.Provider value={{ companies, active, setActive, reload, updateCompany, removeCompany, startCompanyCreation, startCompanyEdit }}>
       {children}
       {wizard && (
-        <CompanyProfileWizard
-          company={wizard.company}
-          initial={wizard.initial}
-          busy={wizardBusy}
-          role={wizard.role}
-          onCancel={() => setWizard(null)}
-          onConfirm={confirmCompanyProfile}
-        />
+        <React.Suspense fallback={(
+          <div className="bx-a6-wizard-overlay fixed inset-0 z-[90] grid place-items-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="rounded-2xl border border-bx-border bg-bx-surface px-6 py-5 text-sm font-semibold text-bx-text shadow-xl" role="status" aria-live="polite">
+              Открываем профиль компании…
+            </div>
+          </div>
+        )}>
+          <CompanyProfileWizard
+            company={wizard.company}
+            initial={wizard.initial}
+            busy={wizardBusy}
+            role={wizard.role}
+            onCancel={() => setWizard(null)}
+            onConfirm={confirmCompanyProfile}
+          />
+        </React.Suspense>
       )}
     </CompanyCtx.Provider>
   );

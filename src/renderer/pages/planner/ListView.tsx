@@ -147,7 +147,7 @@ export default function ListView({ events, cards, boards, onEdit, onCardClick, o
   const boardIcon = (id: string) => boards.find(b => b.id === id)?.icon ?? '🗂️';
 
   return (
-    <div className="flex flex-col h-full gap-3">
+    <div className="bx-planner-list flex h-full flex-col gap-3">
       {/* Filters */}
       <div className="flex gap-2 flex-wrap items-center flex-shrink-0">
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Поиск..."

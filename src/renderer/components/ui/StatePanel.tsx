@@ -1,5 +1,5 @@
 import React from 'react'
-import './design-system.css'
+import './state-panel-a9.css'
 
 export type StatePanelStatus =
   | 'loading'
@@ -7,8 +7,10 @@ export type StatePanelStatus =
   | 'error'
   | 'offline'
   | 'permission'
+  | 'limit'
   | 'locked'
   | 'stale'
+  | 'fatal'
   | 'success'
 
 const LABELS: Record<StatePanelStatus, string> = {
@@ -17,8 +19,10 @@ const LABELS: Record<StatePanelStatus, string> = {
   error: 'Ошибка',
   offline: 'Нет соединения',
   permission: 'Нет доступа',
+  limit: 'Лимит исчерпан',
   locked: 'Доступ ограничен',
   stale: 'Данные устарели',
+  fatal: 'Критическая ошибка',
   success: 'Готово',
 }
 
@@ -30,7 +34,7 @@ export interface StatePanelProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 export function StatePanel({ status, title, description, action, className = '', ...props }: StatePanelProps) {
-  const role = status === 'error' || status === 'offline' ? 'alert' : 'status'
+  const role = status === 'error' || status === 'offline' || status === 'fatal' ? 'alert' : 'status'
 
   return (
     <section

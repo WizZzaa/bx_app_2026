@@ -72,8 +72,8 @@ const tokenValue = (theme: Map<string, string>, token: string) => {
 }
 
 describe('BX semantic design tokens', () => {
-  it('keeps self-hosted Geist first with a system-safe fallback stack', () => {
-    expect(themes.light.get('--bx-font-sans')).toBe('"Geist Variable", Geist, Inter, "Segoe UI", Roboto, Arial, sans-serif')
+  it('uses the platform font first with self-hosted and system-safe fallbacks', () => {
+    expect(themes.light.get('--bx-font-sans')).toBe('-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Geist Variable", Geist, Inter, "Segoe UI", Roboto, Arial, sans-serif')
   })
 
   it('uses the ultrawide workspace canvas without stretching reading content', () => {
@@ -108,13 +108,13 @@ describe('BX semantic design tokens', () => {
 
   it('matches the approved light and dark palette exactly', () => {
     expect(Object.fromEntries(colourTokens.map(token => [token, themes.light.get(token)]))).toEqual({
-      '--bx-canvas': '#f7f6fa',
+      '--bx-canvas': '#f5f5f7',
       '--bx-surface': '#ffffff',
-      '--bx-surface-subtle': '#f1eff6',
-      '--bx-surface-strong': '#e5dfec',
-      '--bx-text-primary': '#27242f',
-      '--bx-text-secondary': '#6e6877',
-      '--bx-border': '#ded9e8',
+      '--bx-surface-subtle': '#f0eff4',
+      '--bx-surface-strong': '#e4e1ea',
+      '--bx-text-primary': '#1d1d1f',
+      '--bx-text-secondary': '#6e6e73',
+      '--bx-border': '#dcd8e4',
       '--bx-brand': '#7568d8',
       '--bx-brand-hover': '#6659c8',
       '--bx-brand-soft': '#eeeafb',

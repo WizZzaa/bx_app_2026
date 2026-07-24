@@ -209,9 +209,11 @@ interface Props {
   onOpen: (a: KbArticle) => void;
   onBack: () => void;
   onCategory: (cat: string) => void;
+  favorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
-export default function ArticleReader({ article, articles, search, onOpen, onBack, onCategory }: Props) {
+export default function ArticleReader({ article, articles, search, onOpen, onBack, onCategory, favorite = false, onToggleFavorite }: Props) {
   const [copied, setCopied] = useState(false);
   const [activeHeading, setActiveHeading] = useState<string | null>(null);
 
@@ -289,8 +291,8 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
   }
 
   return (
-    <div className="bx-reading-container flex items-start gap-5">
-      <article className="min-w-0 flex-1 rounded-[24px] border border-bx-border bg-bx-surface p-6 shadow-sm lg:p-8">
+    <div className="bx-knowledge-reader">
+      <article className="bx-knowledge-reader__article min-w-0 rounded-[24px] border border-bx-border bg-bx-surface p-6 shadow-sm lg:p-8">
         {/* Navigation path */}
         <div className="mb-5 flex items-center gap-1.5 text-[10px] font-semibold text-bx-muted">
           <button onClick={onBack} className="min-h-8 rounded-lg px-2 transition-colors hover:bg-bx-bg hover:text-bx-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">База знаний</button>
@@ -311,6 +313,16 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
           </span>
           
           <div className="ml-auto flex gap-1.5">
+            <button
+              type="button"
+              onClick={onToggleFavorite}
+              disabled={!onToggleFavorite}
+              aria-pressed={favorite}
+              className={`bx-knowledge-reader__save flex min-h-10 cursor-pointer items-center gap-1.5 rounded-xl border px-3 font-bold outline-none disabled:hidden ${favorite ? 'border-blue-500/25 bg-blue-500/10 text-blue-600' : 'border-bx-border bg-bx-bg text-bx-text'}`}
+            >
+              <Icon name="bookmark" className={`h-3.5 w-3.5 ${favorite ? 'fill-current' : ''}`} />
+              {favorite ? 'Сохранено' : 'Сохранить'}
+            </button>
             <button 
               onClick={handleExportPDF} 
               className="flex min-h-10 cursor-pointer items-center gap-1.5 rounded-xl border border-bx-border bg-bx-bg px-3 font-bold text-bx-text transition-colors hover:bg-bx-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -341,7 +353,7 @@ export default function ArticleReader({ article, articles, search, onOpen, onBac
         </div>
 
         {/* Content Box */}
-        <div id="article-content-to-export">
+        <div id="article-content-to-export" className="bx-knowledge-reader__prose">
           <h2 className="mb-2 text-2xl font-black leading-tight tracking-[-0.025em] text-bx-text">{article.title}</h2>
           <div className="text-[10px] text-bx-muted mb-6 border-b border-bx-border/40 pb-3">
             Категория: <span className="text-bx-text font-semibold">{article.category}</span> · Сверено: {article.updated}

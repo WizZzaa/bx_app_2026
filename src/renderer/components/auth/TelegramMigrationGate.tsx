@@ -76,7 +76,27 @@ export default function TelegramMigrationGate({ onComplete, onSignOut }: Props) 
     openTelegram(`https://t.me/Tech_support_bx_bot?start=${encodeURIComponent(challenge.token)}`)
   }
 
-  if (checking) return <div className="grid min-h-screen place-items-center bg-bx-bg"><span className="h-7 w-7 animate-spin rounded-full border-2 border-bx-border border-t-blue-500" /></div>
+  if (checking) return <div className="bx-auth-screen"><span className="bx-auth-spinner" aria-label="Проверяем Telegram" /></div>
 
-  return <div className="min-h-screen bg-bx-bg px-4 py-12 text-bx-text"><main className="mx-auto max-w-lg rounded-3xl border border-bx-border bg-bx-surface p-6 shadow-xl sm:p-8"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#229ED9]/10 text-xl">✈</span><p className="mt-5 text-[10px] font-black uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Перенос существующего аккаунта</p><h1 className="mt-2 text-2xl font-black">Подтвердите Telegram</h1><p className="mt-3 text-sm leading-relaxed text-bx-muted">Прежний email-вход уже восстановил доступ к тому же аккаунту и данным. Теперь свяжите его с собственным контактом Telegram — после этого новые входы будут без пароля BX.</p>{error && <p role="alert" className="mt-4 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-xs text-red-700 dark:text-red-300">{error}</p>}<button type="button" onClick={() => void startLink()} disabled={linking} className="mt-6 min-h-12 w-full rounded-xl bg-[#229ED9] px-4 text-sm font-black text-white hover:bg-[#1d8fc4] disabled:opacity-55">{linking ? 'Ожидаю подтверждение в Telegram…' : 'Связать с Telegram'}</button><p className="mt-3 text-center text-[10px] leading-relaxed text-bx-muted">Ссылка действует 10 минут. BX принимает только контакт владельца Telegram-профиля.</p><div className="mt-6 flex flex-wrap justify-between gap-2 border-t border-bx-border pt-4"><button type="button" onClick={() => void onSignOut()} className="min-h-11 rounded-xl px-3 text-xs font-bold text-bx-muted hover:bg-bx-bg">Выйти</button>{serverUnavailable && <button type="button" onClick={onComplete} className="min-h-11 rounded-xl border border-bx-border px-3 text-xs font-bold text-bx-text hover:bg-bx-bg">Продолжить и подтвердить в кабинете</button>}</div></main></div>
+  return (
+    <div className="bx-auth-screen">
+      <div className="bx-auth-screen__aura bx-auth-screen__aura--start" aria-hidden="true" />
+      <div className="bx-auth-screen__aura bx-auth-screen__aura--end" aria-hidden="true" />
+      <main className="bx-auth-card bx-telegram-gate">
+        <span className="bx-auth-card__icon is-telegram" aria-hidden="true">✈</span>
+        <p className="bx-auth-card__eyebrow">Перенос существующего аккаунта</p>
+        <h1>Подтвердите Telegram</h1>
+        <p className="bx-auth-card__subtitle">Прежний email-вход уже восстановил доступ к тому же аккаунту и данным. Теперь свяжите его с собственным контактом Telegram — после этого новые входы будут без пароля BX.</p>
+        {error && <p role="alert" className="bx-auth-message is-error">{error}</p>}
+        <button type="button" onClick={() => void startLink()} disabled={linking} className="bx-auth-button is-telegram">
+          {linking ? 'Ожидаю подтверждение в Telegram…' : 'Связать с Telegram'}
+        </button>
+        <p className="bx-auth-card__note">Ссылка действует 10 минут. BX принимает только контакт владельца Telegram-профиля.</p>
+        <div className="bx-auth-actions">
+          <button type="button" onClick={() => void onSignOut()} className="bx-auth-button is-secondary">Выйти</button>
+          {serverUnavailable && <button type="button" onClick={onComplete} className="bx-auth-button is-secondary">Продолжить и подтвердить в кабинете</button>}
+        </div>
+      </main>
+    </div>
+  )
 }

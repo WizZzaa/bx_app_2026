@@ -1,170 +1,152 @@
-import React, { useState, useEffect } from 'react';
-import type { BxTransaction, NewTransaction } from './useTransactions';
-import { useExchangeRates } from '../../lib/useExchangeRates';
-import { todayISO } from '../../lib/dates';
-import Icon from '../../lib/ui/Icon';
-import { useCounterparties } from '../../lib/db/useCounterparties';
+import React, { useRef, useState } from 'react'
+import { Sheet } from '../../components/ui/Sheet'
+import Button from '../../components/ui/Button'
+import { DateField, Field, MoneyField, Select, Textarea } from '../../components/ui/FormControls'
+import type { BxTransaction, NewTransaction } from './useTransactions'
+import { useExchangeRates } from '../../lib/useExchangeRates'
+import { todayISO } from '../../lib/dates'
+import Icon from '../../lib/ui/Icon'
+import { useCounterparties } from '../../lib/db/useCounterparties'
 
 interface Props {
-  tx?: BxTransaction | null;
-  defaultType?: 'income' | 'expense';
-  companyId: string | null;
-  onSave: (data: NewTransaction) => void | Promise<void>;
-  onDelete?: () => void;
-  onClose: () => void;
+  tx?: BxTransaction | null
+  defaultType?: 'income' | 'expense'
+  companyId: string | null
+  onSave: (data: NewTransaction) => void | Promise<void>
+  onDelete?: () => void
+  onClose: () => void
 }
 
-const INCOME_CATS  = ['Выручка', 'Услуги', 'Аванс от клиента', 'Проценты', 'Возврат', 'Прочее'];
-const EXPENSE_CATS = ['Зарплата', 'Аренда', 'Налоги и взносы', 'Закупка товара', 'Материалы', 'Коммуналка', 'Связь / интернет', 'Банковские услуги', 'Транспорт', 'Реклама', 'Прочее'];
-
-const field = 'min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-xs font-semibold text-bx-text outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15';
-const today = todayISO();
+const INCOME_CATS = ['Выручка', 'Услуги', 'Аванс от клиента', 'Проценты', 'Возврат', 'Прочее']
+const EXPENSE_CATS = ['Зарплата', 'Аренда', 'Налоги и взносы', 'Закупка товара', 'Материалы', 'Коммуналка', 'Связь / интернет', 'Банковские услуги', 'Транспорт', 'Реклама', 'Прочее']
+const today = todayISO()
+type TxErrors = Partial<Record<'amount' | 'exchangeRate' | 'date', string>>
 
 export default function TxModal({ tx, defaultType, companyId, onSave, onDelete, onClose }: Props) {
-  const isEdit = Boolean(tx);
-  const [type, setType]               = useState<'income' | 'expense'>(tx?.type ?? defaultType ?? 'income');
-  const [amount, setAmount]           = useState(tx?.amount ? String(tx.amount) : '');
-  const [currency, setCurrency]       = useState(tx?.currency ?? 'UZS');
-  const [exchangeRate, setExchangeRate] = useState(tx?.exchange_rate ?? 1);
-  const [date, setDate]               = useState(tx?.date ?? today);
-  const [category, setCategory]       = useState(tx?.category ?? '');
-  const [counterparty, setCounterparty] = useState(tx?.counterparty ?? '');
-  const [description, setDescription] = useState(tx?.description ?? '');
-  const [status, setStatus]           = useState<'paid' | 'unpaid'>(tx?.status ?? 'unpaid');
-  const [confirmDel, setConfirmDel]   = useState(false);
-  const [saving, setSaving]           = useState(false);
+  const isEdit = Boolean(tx)
+  const [type, setType] = useState<'income' | 'expense'>(tx?.type ?? defaultType ?? 'income')
+  const [amount, setAmount] = useState(tx?.amount ? String(tx.amount) : '')
+  const [currency, setCurrency] = useState(tx?.currency ?? 'UZS')
+  const [exchangeRate, setExchangeRate] = useState(tx?.exchange_rate ?? 1)
+  const [date, setDate] = useState(tx?.date ?? today)
+  const [category, setCategory] = useState(tx?.category ?? '')
+  const [counterparty, setCounterparty] = useState(tx?.counterparty ?? '')
+  const [description, setDescription] = useState(tx?.description ?? '')
+  const [status, setStatus] = useState<'paid' | 'unpaid'>(tx?.status ?? 'unpaid')
+  const [confirmDel, setConfirmDel] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<TxErrors>({})
+  const amountRef = useRef<HTMLInputElement>(null)
+  const exchangeRateRef = useRef<HTMLInputElement>(null)
+  const dateRef = useRef<HTMLInputElement>(null)
+  const { rates } = useExchangeRates()
+  const { counterparties } = useCounterparties(companyId)
 
-  const { rates } = useExchangeRates();
-  const { counterparties } = useCounterparties(companyId);
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  // Эффект обновления курса при смене валюты (только если не редактируем существующую транзакцию при первом рендере)
-  const handleCurrencyChange = (cur: string) => {
-    setCurrency(cur);
-    if (cur === 'UZS') {
-      setExchangeRate(1);
-    } else {
-      const liveRate = rates[cur] || 1;
-      setExchangeRate(liveRate);
-    }
-  };
-
-  const cats = type === 'income' ? INCOME_CATS : EXPENSE_CATS;
+  function handleCurrencyChange(nextCurrency: string) {
+    setCurrency(nextCurrency)
+    setExchangeRate(nextCurrency === 'UZS' ? 1 : rates[nextCurrency] || 1)
+  }
 
   async function save() {
-    const amt = parseFloat(amount);
-    if (!amt || amt <= 0 || saving) return;
-    setSaving(true);
+    const parsedAmount = Number.parseFloat(amount)
+    const nextErrors: TxErrors = {}
+    if (!parsedAmount || parsedAmount <= 0) nextErrors.amount = 'Введите сумму больше нуля.'
+    if (currency !== 'UZS' && (!Number.isFinite(exchangeRate) || exchangeRate <= 0)) nextErrors.exchangeRate = 'Введите курс к суму больше нуля.'
+    if (!date) nextErrors.date = 'Укажите срок или дату оплаты.'
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length || saving) {
+      requestAnimationFrame(() => {
+        if (nextErrors.amount) amountRef.current?.focus()
+        else if (nextErrors.exchangeRate) exchangeRateRef.current?.focus()
+        else if (nextErrors.date) dateRef.current?.focus()
+      })
+      return
+    }
+    setSaving(true)
     try {
       await onSave({
         company_id: companyId,
-        type, amount: amt, date,
+        type,
+        amount: parsedAmount,
+        date,
         currency,
         exchange_rate: currency === 'UZS' ? 1 : Number(exchangeRate),
         category: category.trim() || null,
         counterparty: counterparty.trim() || null,
         description: description.trim() || null,
         status,
-      });
+      })
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div role="dialog" aria-modal="true" aria-labelledby="transaction-dialog-title" className="max-h-[92vh] w-[min(520px,calc(100vw-32px))] overflow-y-auto rounded-[24px] border border-bx-border bg-bx-surface shadow-2xl custom-scrollbar">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-bx-border">
-          <div><p className="text-[9px] font-black uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Карточка обязательства</p><h2 id="transaction-dialog-title" className="mt-1 text-base font-black text-bx-text">{isEdit ? 'Изменить расчёт' : 'Добавить в контроль оплат'}</h2></div>
-          <button type="button" aria-label="Закрыть" onClick={onClose} className="grid h-11 w-11 place-items-center rounded-xl text-bx-muted hover:bg-bx-surface-2 hover:text-bx-text"><Icon name="crossSmall" className="h-4 w-4" /></button>
-        </div>
+  const categories = type === 'income' ? INCOME_CATS : EXPENSE_CATS
+  const deleteControl = isEdit && onDelete
+    ? confirmDel
+      ? <div className="bx-a6-sheet__delete-confirm"><span>Удалить обязательство?</span><Button type="button" variant="danger" onClick={onDelete}>Удалить</Button><Button type="button" variant="secondary" onClick={() => setConfirmDel(false)}>Оставить</Button></div>
+      : <Button type="button" variant="ghost" onClick={() => setConfirmDel(true)} className="bx-a6-sheet__destructive">Удалить</Button>
+    : null
 
-        <div className="px-6 py-5 space-y-4">
-          {/* Тип */}
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setType('income')}
-              className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-xs font-black transition-colors ${type === 'income' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-bx-border bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}><Icon name="trending" className="h-4 w-4" />Нам должны</button>
-            <button type="button" onClick={() => setType('expense')}
-              className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-xs font-black transition-colors ${type === 'expense' ? 'border-red-600 bg-red-600 text-white' : 'border-bx-border bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}><Icon name="finance" className="h-4 w-4" />Мы должны</button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted block mb-1.5">Сумма *</label>
-              <input autoFocus type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0" className={field}
-                onKeyDown={e => { if (e.key === 'Enter') void save(); }} />
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted block mb-1.5">Валюта</label>
-              <select value={currency} onChange={e => handleCurrencyChange(e.target.value)} className={field}>
-                <option value="UZS">UZS (сум)</option>
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="RUB">RUB (₽)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {currency !== 'UZS' && (
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted block mb-1.5">Курс к UZS</label>
-                <input type="number" value={exchangeRate} onChange={e => setExchangeRate(Number(e.target.value))} placeholder="1" className={field} />
-              </div>
-            )}
-            <div className={currency === 'UZS' ? 'col-span-2' : ''}>
-              <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted block mb-1.5">{status === 'unpaid' ? 'Срок оплаты' : 'Дата оплаты'}</label>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)} className={field} />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted block mb-1.5">Категория</label>
-            <input list="tx-cats" value={category} onChange={e => setCategory(e.target.value)} placeholder="Выберите или впишите" className={field} />
-            <datalist id="tx-cats">{cats.map(c => <option key={c} value={c} />)}</datalist>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted block mb-1.5">Контрагент</label>
-            <input list="transaction-counterparties" value={counterparty} onChange={e => setCounterparty(e.target.value)} placeholder="Выберите из организаций или впишите" className={field} />
-            <datalist id="transaction-counterparties">{counterparties.map(item => <option key={item.id} value={item.name}>{item.inn}</option>)}</datalist>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-bx-muted block mb-1.5">Назначение или комментарий</label>
-            <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Назначение" className={field} />
-          </div>
-
-          {/* Статус */}
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setStatus('paid')}
-              className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-xs font-black transition-colors ${status === 'paid' ? 'border-blue-500/40 bg-blue-600 text-white' : 'border-bx-border bg-bx-surface-2 text-bx-muted'}`}><Icon name="check" className="h-4 w-4" />Оплачено</button>
-            <button type="button" onClick={() => setStatus('unpaid')}
-              className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-xs font-black transition-colors ${status === 'unpaid' ? 'border-amber-500/40 bg-amber-500/15 text-amber-800 dark:text-amber-200' : 'border-bx-border bg-bx-surface-2 text-bx-muted'}`}>
-              <Icon name="clock" className="h-4 w-4" />{type === 'income' ? 'Ждём оплату' : 'К оплате'}
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between px-6 py-4 border-t border-bx-border">
-          <div>
-            {isEdit && onDelete && (
-              confirmDel
-                ? <div className="flex items-center gap-2 text-xs"><span className="text-red-500">Удалить?</span><button type="button" onClick={onDelete} className="min-h-9 rounded-lg bg-red-500 px-3 font-bold text-white">Да</button><button type="button" onClick={() => setConfirmDel(false)} className="min-h-9 px-2 text-bx-muted">Нет</button></div>
-                : <button type="button" onClick={() => setConfirmDel(true)} className="min-h-10 text-xs font-bold text-bx-muted hover:text-red-500">Удалить</button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={onClose} className="min-h-11 px-4 text-xs font-bold text-bx-muted hover:text-bx-text">Отмена</button>
-            <button type="button" onClick={() => void save()} disabled={!parseFloat(amount) || saving} className="min-h-11 rounded-xl bg-blue-600 px-5 text-xs font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40">{saving ? 'Сохраняю…' : isEdit ? 'Сохранить изменения' : 'Добавить в контроль'}</button>
-          </div>
-        </div>
-      </div>
+  const footer = (
+    <div className="bx-a6-sheet__footer">
+      <div className="bx-a6-sheet__footer-leading">{deleteControl}</div>
+      <Button type="button" variant="secondary" onClick={onClose} disabled={saving} className="bx-a6-button bx-a6-button--secondary">Отмена</Button>
+      <Button type="submit" form="bx-transaction-form" loading={saving} className="bx-a6-button bx-a6-button--primary">
+        {isEdit ? 'Сохранить изменения' : 'Добавить в контроль'}
+      </Button>
     </div>
-  );
+  )
+
+  return (
+    <Sheet
+      open
+      onClose={onClose}
+      title={isEdit ? 'Изменить обязательство' : 'Новое обязательство'}
+      description="Сумма, срок и контрагент — достаточно для начала контроля. Остальное можно уточнить позже."
+      closeLabel="Закрыть карточку обязательства"
+      className="bx-a6-sheet bx-a6-transaction-sheet"
+      footer={footer}
+    >
+      <form id="bx-transaction-form" className="bx-a6-form" onSubmit={event => { event.preventDefault(); void save() }} noValidate>
+        <div className="bx-a6-segmented" role="group" aria-label="Направление расчёта">
+          <button type="button" onClick={() => setType('income')} aria-pressed={type === 'income'}>
+            <Icon name="trending" className="h-4 w-4" />Нам должны
+          </button>
+          <button type="button" onClick={() => setType('expense')} aria-pressed={type === 'expense'}>
+            <Icon name="finance" className="h-4 w-4" />Мы должны
+          </button>
+        </div>
+
+        <section className="bx-a6-form__section" aria-labelledby="transaction-amount-title">
+          <div className="bx-a6-form__heading"><span>1</span><div><h3 id="transaction-amount-title">Сумма и срок</h3><p>Основные данные для контроля.</p></div></div>
+          <div className="grid grid-cols-2 gap-3">
+            <MoneyField ref={amountRef} label="Сумма" required error={errors.amount} currency={currency} autoFocus value={amount} onChange={event => { setAmount(event.target.value); setErrors(current => ({ ...current, amount: undefined })) }} placeholder="0" />
+            <Select label="Валюта" value={currency} onChange={event => { handleCurrencyChange(event.target.value); setErrors(current => ({ ...current, exchangeRate: undefined })) }}>
+                <option value="UZS">UZS (сум)</option><option value="USD">USD ($)</option><option value="EUR">EUR (€)</option><option value="RUB">RUB (₽)</option>
+            </Select>
+          </div>
+          <div className={`grid gap-3 ${currency === 'UZS' ? '' : 'grid-cols-2'}`}>
+            {currency !== 'UZS' && <Field ref={exchangeRateRef} label="Курс к UZS" required error={errors.exchangeRate} type="number" inputMode="decimal" min="0" step="any" value={exchangeRate} onChange={event => { setExchangeRate(Number(event.target.value)); setErrors(current => ({ ...current, exchangeRate: undefined })) }} placeholder="1" />}
+            <DateField ref={dateRef} label={status === 'unpaid' ? 'Срок оплаты' : 'Дата оплаты'} required error={errors.date} value={date} onChange={event => { setDate(event.target.value); setErrors(current => ({ ...current, date: undefined })) }} />
+          </div>
+        </section>
+
+        <section className="bx-a6-form__section" aria-labelledby="transaction-details-title">
+          <div className="bx-a6-form__heading"><span>2</span><div><h3 id="transaction-details-title">С кем и за что</h3><p>Выберите сохранённого контрагента или впишите нового.</p></div></div>
+          <Field label="Контрагент" list="transaction-counterparties" value={counterparty} onChange={event => setCounterparty(event.target.value)} placeholder="Название организации" autoComplete="organization" />
+          <datalist id="transaction-counterparties">{counterparties.map(item => <option key={item.id} value={item.name}>{item.inn}</option>)}</datalist>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Категория" list="tx-cats" value={category} onChange={event => setCategory(event.target.value)} placeholder="Выберите или впишите" />
+            <datalist id="tx-cats">{categories.map(item => <option key={item} value={item} />)}</datalist>
+            <Select label="Статус" value={status} onChange={event => setStatus(event.target.value as 'paid' | 'unpaid')}>
+                <option value="unpaid">{type === 'income' ? 'Ждём оплату' : 'К оплате'}</option>
+                <option value="paid">Оплачено</option>
+            </Select>
+          </div>
+          <Textarea label="Назначение или комментарий" optionalLabel="необязательно" value={description} onChange={event => setDescription(event.target.value)} placeholder="Что важно помнить об этой оплате" rows={3} />
+        </section>
+      </form>
+    </Sheet>
+  )
 }

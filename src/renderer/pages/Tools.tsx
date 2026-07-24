@@ -1,4 +1,5 @@
 import React, { Suspense, useState } from 'react'
+import '../styles/a7-calculators-tools.css'
 import CacheCleaner from './tools/CacheCleaner'
 import ProcessKiller from './tools/ProcessKiller'
 import DatabaseBackup from './tools/DatabaseBackup'
@@ -134,8 +135,8 @@ const Tools = () => {
   const isFullHeight = FULL_HEIGHT_TOOLS.has(tool.id)
 
   return (
-    <div className="z-10 flex min-h-0 flex-1 flex-col overflow-hidden bg-bx-bg font-sans text-bx-text lg:flex-row">
-      <aside className="z-10 flex w-full flex-shrink-0 flex-col overflow-hidden border-b border-bx-border bg-bx-surface lg:w-[280px] lg:border-b-0 lg:border-r 2xl:w-[304px]">
+    <div className="bx-a7-workbench bx-a7-workbench--tools z-10 flex min-h-0 flex-1 flex-col overflow-hidden bg-bx-bg font-sans text-bx-text lg:flex-row">
+      <aside className="bx-a7-workbench__catalog z-10 flex w-full flex-shrink-0 flex-col overflow-hidden border-b border-bx-border bg-bx-surface lg:w-[320px] lg:border-b-0 lg:border-r 2xl:w-[344px]">
         <WorkbenchCatalogNav
           ariaLabel="Категории утилит"
           activeId={active}
@@ -151,10 +152,10 @@ const Tools = () => {
       </aside>
 
       {/* Правая панель */}
-      <div className={`flex-1 ${isFullHeight ? 'flex flex-col overflow-hidden bg-bx-bg' : 'overflow-y-auto bg-bx-bg'}`}>
-        <div className={isFullHeight ? 'flex-shrink-0 px-4 pt-4 sm:px-6 sm:pt-6' : 'mx-auto max-w-5xl px-4 pt-4 sm:px-6 sm:pt-6'}>
+      <main className={`bx-a7-workbench__content flex-1 ${isFullHeight ? 'flex flex-col overflow-hidden bg-bx-bg' : 'overflow-y-auto bg-bx-bg'}`}>
+        <div className={isFullHeight ? 'bx-a7-workbench__inner flex-shrink-0 px-4 pt-4 sm:px-6 sm:pt-6' : 'bx-a7-workbench__inner px-4 pt-4 sm:px-6 sm:pt-6'}>
           {/* Hero-шапка с акцентом группы */}
-          <div className={`rounded-3xl bg-gradient-to-br ${a.grad} via-transparent to-transparent border border-bx-border px-5 py-4.5 mb-5 bg-bx-surface shadow-sm`}>
+          <header className={`bx-a7-workbench__hero rounded-3xl bg-gradient-to-br ${a.grad} via-transparent to-transparent border border-bx-border px-5 py-4.5 mb-5 bg-bx-surface shadow-sm`}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <span className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${a.iconBg} shadow-inner`}>
                 <Icon name={tool.icon} className="w-5 h-5" />
@@ -179,7 +180,7 @@ const Tools = () => {
                 />
               </div>
             </div>
-          </div>
+          </header>
 
           {!isElectron && tool.group === '1С' && (
             <div className="mb-4 text-xs text-amber-700 dark:text-amber-400 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10 dark:border-amber-500/20 rounded-xl px-4 py-2.5">
@@ -190,7 +191,7 @@ const Tools = () => {
 
         {/* Верстак инструмента */}
         {!isFullHeight ? (
-          <div className="max-w-5xl mx-auto px-6 pb-6">
+          <div className="bx-a7-workbench__canvas-wrap px-6 pb-6">
             <WorkbenchCanvas resetKey={`${tool.id}-${workspaceRevision}`}>{tool.component}</WorkbenchCanvas>
           </div>
         ) : (
@@ -198,7 +199,7 @@ const Tools = () => {
             <WorkbenchCanvas resetKey={`${tool.id}-${workspaceRevision}`} fullHeight>{tool.component}</WorkbenchCanvas>
           </div>
         )}
-      </div>
+      </main>
     </div>
   )
 }

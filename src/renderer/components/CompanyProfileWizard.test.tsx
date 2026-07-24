@@ -65,6 +65,19 @@ afterEach(cleanup);
 afterAll(() => vi.useRealTimers());
 
 describe('CompanyProfileWizard obligation decisions', () => {
+  it('shows inline field errors and focuses the first invalid company field', () => {
+    setup({ name: ' ', inn: '123', bx_start_date: '' });
+    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+
+    const companyName = screen.getByLabelText(/Ваша компания/) as HTMLInputElement;
+    expect(companyName.getAttribute('aria-invalid')).toBe('true');
+    expect(screen.getByText('Укажите название компании или ФИО владельца.')).toBeTruthy();
+    expect(screen.getByText('ИНН должен содержать ровно 9 цифр.')).toBeTruthy();
+    expect(screen.getByText('Укажите дату начала работы в BX.')).toBeTruthy();
+    expect(document.activeElement).toBe(companyName);
+  });
+
   it('supports explicit applies, not-applicable and needs-review decisions', () => {
     setup();
     continueToRules();

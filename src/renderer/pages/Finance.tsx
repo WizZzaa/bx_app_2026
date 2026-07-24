@@ -29,6 +29,7 @@ import {
   transactionUzs,
   type PaymentView,
 } from '../lib/paymentInsights'
+import { useConfirmationDialog } from '../components/ui/useConfirmationDialog'
 
 function formatMoney(value: number): string {
   return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Math.round(value))
@@ -50,6 +51,7 @@ export default function Finance() {
   const { transactions, loading, add, update, remove, syncStatus } = useTransactions(active?.id ?? null)
   const { isPro, loading: planLoading } = usePlan()
   const toast = useToast()
+  const { confirm, confirmationDialog } = useConfirmationDialog()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [view, setView] = useState<PaymentView>('all')
   const [search, setSearch] = useState('')
@@ -89,7 +91,12 @@ export default function Finance() {
   }
 
   async function deleteTransaction(transaction: BxTransaction) {
-    if (!window.confirm(`Удалить операцию «${transaction.counterparty || transaction.category || 'Без названия'}» на ${formatMoney(transactionUzs(transaction))} сум?`)) return
+    if (!await confirm({
+      title: 'Удалить обязательство?',
+      description: `«${transaction.counterparty || transaction.category || 'Без названия'}» · ${formatMoney(transactionUzs(transaction))} сум. Запись исчезнет из контроля оплат.`,
+      confirmLabel: 'Удалить обязательство',
+      tone: 'destructive',
+    })) return
     await remove(transaction.id)
     setModalOpen(false)
     setEditing(null)
@@ -166,7 +173,7 @@ export default function Finance() {
   if (routeId) {
     if (loading && !selected) return <div className="flex flex-1 items-center justify-center bg-bx-bg text-xs text-bx-muted">Загружаем карточку оплаты…</div>
     if (!selected) return <div className="flex flex-1 items-center justify-center bg-bx-bg"><ResourceEmpty icon="finance" title="Операция не найдена" description="Возможно, она была удалена или относится к другой активной компании." action={<button type="button" onClick={() => navigate('/finance')} className={primaryActionClass}>Вернуться в реестр</button>} /></div>
-    return <><PaymentDetail transaction={selected} today={today} syncStatus={syncStatus} onBack={() => navigate('/finance')} onEdit={() => openEdit(selected)} onTogglePaid={() => void togglePaid(selected)} onRemind={() => void createReminder(selected)} onDuplicate={() => void duplicateTransaction(selected)} onDelete={() => void deleteTransaction(selected)} onOpenPlanner={() => navigate('/planner')} />{modalOpen && <TxModal tx={editing} defaultType={defaultType} companyId={active?.id ?? null} onSave={saveTransaction} onDelete={editing ? () => void deleteTransaction(editing) : undefined} onClose={() => { setModalOpen(false); setEditing(null) }} />}</>
+    return <><PaymentDetail transaction={selected} today={today} syncStatus={syncStatus} onBack={() => navigate('/finance')} onEdit={() => openEdit(selected)} onTogglePaid={() => void togglePaid(selected)} onRemind={() => void createReminder(selected)} onDuplicate={() => void duplicateTransaction(selected)} onDelete={() => void deleteTransaction(selected)} onOpenPlanner={() => navigate('/planner')} />{modalOpen && <TxModal tx={editing} defaultType={defaultType} companyId={active?.id ?? null} onSave={saveTransaction} onDelete={editing ? () => void deleteTransaction(editing) : undefined} onClose={() => { setModalOpen(false); setEditing(null) }} />}{confirmationDialog}</>
   }
 
   const counts: Record<PaymentView, number> = {
@@ -181,11 +188,11 @@ export default function Finance() {
     {(Object.keys(VIEW_META) as PaymentView[]).map(item => <ResourceNavItem key={item} icon={VIEW_META[item].icon} label={VIEW_META[item].label} count={counts[item]} active={view === item} onClick={() => setView(item)} />)}
   </ResourceSidebar>
 
-  return <ResourceLayout sidebar={sidebar}>
+  return <><div className="bx-a6-finance contents"><ResourceLayout sidebar={sidebar}>
     <input ref={fileInputRef} type="file" accept=".txt,.csv" onChange={readStatement} className="sr-only" tabIndex={-1} />
     <div className="space-y-6">
       <ResourceHero eyebrow="Оперативные расчёты, не бухгалтерская система" title="Кому, сколько и когда нужно заплатить" description="BX держит в фокусе дебиторку и кредиторку, показывает просрочку, создаёт напоминания и хранит понятную карточку каждого обязательства. Проводки и полный учёт остаются в 1С." icon="finance" stats={[{ value: `${formatMoney(summary.receivable)} сум`, label: 'нам должны' }, { value: `${formatMoney(summary.payable)} сум`, label: 'мы должны' }, { value: summary.overdueCount, label: 'просрочено' }]} actions={<><button type="button" onClick={() => openNew('income')} className={primaryActionClass}><Icon name="plus" className="h-4 w-4" />Добавить оплату</button><button type="button" onClick={() => fileInputRef.current?.click()} className={secondaryActionClass}><Icon name="download" className="h-4 w-4 rotate-180" />Импорт выписки</button></>} />
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="bx-a6-finance__metrics grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Дебиторка" value={`${formatMoney(summary.receivable)} сум`} note={`${counts.receivable} активных оплат`} tone="emerald" icon="trending" />
         <MetricCard title="Кредиторка" value={`${formatMoney(summary.payable)} сум`} note={`${counts.payable} счетов к оплате`} tone="red" icon="finance" />
         <MetricCard title="Просрочено" value={`${formatMoney(summary.overdue)} сум`} note={`${summary.overdueCount} требуют действия`} tone="amber" icon="alert" />
@@ -198,7 +205,7 @@ export default function Finance() {
     </div>
     {modalOpen && <TxModal tx={editing} defaultType={defaultType} companyId={active?.id ?? null} onSave={saveTransaction} onDelete={editing ? () => void deleteTransaction(editing) : undefined} onClose={() => { setModalOpen(false); setEditing(null) }} />}
     {importOpen && <ImportModal isOpen transactions={importTransactions} onSave={saveImported} onClose={() => { setImportOpen(false); setImportTransactions([]) }} />}
-  </ResourceLayout>
+  </ResourceLayout></div>{confirmationDialog}</>
 }
 
 function MetricCard({ title, value, note, tone, icon }: { title: string; value: string; note: string; tone: 'emerald' | 'red' | 'amber' | 'blue'; icon: string }) {

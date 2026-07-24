@@ -17,6 +17,7 @@ import {
 } from '../shared/design/feature';
 import '../shared/design/tokens.css';
 import './styles/globals.css';
+import './styles/auth-shell-d1.css';
 
 installGlobalErrorReporting();
 const isD1DesignEnabled = resolveBxDesignFeatureFlag(import.meta.env.VITE_BX_D1_UI);

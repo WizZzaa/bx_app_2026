@@ -1,0 +1,522 @@
+/*
+ * A8 — services, support, settings and account.
+ * Scoped to the D1 routes so storage, Supabase contracts and legacy surfaces
+ * remain unchanged.
+ */
+
+:root[data-bx-design='d1'] {
+  --bx-a8-ink: rgb(var(--bx-text-rgb) / 0.96);
+  --bx-a8-secondary: rgb(var(--bx-muted-rgb) / 0.88);
+  --bx-a8-material: rgb(var(--bx-surface-rgb) / 0.88);
+  --bx-a8-material-heavy: rgb(var(--bx-surface-rgb) / 0.97);
+  --bx-a8-hairline: rgb(var(--bx-border-rgb) / 0.82);
+  --bx-a8-accent: #7567d9;
+  --bx-a8-accent-strong: #6556ca;
+  --bx-a8-accent-soft: rgb(117 103 217 / 0.11);
+  --bx-a8-accent-softer: rgb(117 103 217 / 0.055);
+  --bx-a8-shadow: 0 18px 54px rgb(43 38 62 / 0.07);
+  --bx-a8-shadow-soft: 0 8px 24px rgb(43 38 62 / 0.055);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route:is(
+  [data-bx-route='/services'],
+  [data-bx-route='/support']
+) .bx-resource-layout,
+:root[data-bx-design='d1'] .bx-a8-settings {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 90% 2%, rgb(132 115 224 / 0.075), transparent 25rem),
+    linear-gradient(180deg, rgb(var(--bx-bg-rgb) / 0.985), rgb(var(--bx-bg-rgb) / 1));
+  color: var(--bx-a8-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, "Segoe UI", sans-serif;
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route:is(
+  [data-bx-route='/services'],
+  [data-bx-route='/support']
+) .bx-resource-sidebar,
+:root[data-bx-design='d1'] .bx-a8-settings__sidebar {
+  border-color: var(--bx-a8-hairline);
+  background: var(--bx-a8-material);
+  box-shadow: 10px 0 34px rgb(43 38 62 / 0.035);
+  backdrop-filter: blur(26px) saturate(145%);
+  -webkit-backdrop-filter: blur(26px) saturate(145%);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route:is(
+  [data-bx-route='/services'],
+  [data-bx-route='/support']
+) .bx-resource-sidebar nav button[aria-current='page'],
+:root[data-bx-design='d1'] .bx-a8-settings__sidebar nav button[aria-current='page'] {
+  border-color: rgb(117 103 217 / 0.3);
+  background: linear-gradient(145deg, rgb(117 103 217 / 0.15), rgb(117 103 217 / 0.08));
+  color: var(--bx-a8-accent-strong);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.42);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route:is(
+  [data-bx-route='/services'],
+  [data-bx-route='/support']
+) .bx-resource-sidebar nav button[aria-current='page'] > span:first-child,
+:root[data-bx-design='d1'] .bx-a8-settings__sidebar nav button[aria-current='page'] > span:first-child {
+  background: rgb(255 255 255 / 0.66);
+  color: var(--bx-a8-accent-strong);
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route:is(
+  [data-bx-route='/services'],
+  [data-bx-route='/support']
+) .bx-resource-sidebar nav button[aria-current='page'] > span:last-child,
+:root[data-bx-design='d1'] .bx-a8-settings__sidebar nav button[aria-current='page'] span {
+  color: inherit;
+}
+
+:root[data-bx-design='d1'] .bx-workspace-route:is(
+  [data-bx-route='/services'],
+  [data-bx-route='/support']
+) .bx-resource-content > .bx-page-container,
+:root[data-bx-design='d1'] .bx-a8-settings__main > .bx-page-container {
+  max-width: 1440px;
+  padding: clamp(1rem, 1.7vw, 1.75rem);
+}
+
+:root[data-bx-design='d1'] .bx-a8-services .bx-resource-hero,
+:root[data-bx-design='d1'] .bx-a8-settings__hero {
+  border-color: var(--bx-a8-hairline);
+  border-radius: 1.65rem;
+  background:
+    radial-gradient(circle at 94% 12%, rgb(117 103 217 / 0.12), transparent 15rem),
+    linear-gradient(145deg, var(--bx-a8-material-heavy), rgb(117 103 217 / 0.04));
+  box-shadow: var(--bx-a8-shadow);
+}
+
+:root[data-bx-design='d1'] .bx-a8-services .bx-resource-hero > div > div > span {
+  background: linear-gradient(145deg, #8578df, #6d60cb);
+  box-shadow: 0 12px 30px rgb(101 86 202 / 0.2);
+}
+
+:root[data-bx-design='d1'] .bx-a8-services .bx-resource-hero h1,
+:root[data-bx-design='d1'] .bx-a8-settings__hero h2 {
+  font-size: clamp(1.65rem, 2.3vw, 2.5rem);
+  font-weight: 730;
+  letter-spacing: -0.045em;
+  line-height: 1.04;
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__tasks {
+  padding: clamp(1rem, 1.6vw, 1.35rem);
+  border: 1px solid var(--bx-a8-hairline);
+  border-radius: 1.55rem;
+  background: var(--bx-a8-material-heavy);
+  box-shadow: var(--bx-a8-shadow-soft);
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__section-heading p {
+  margin: 0 0 0.25rem;
+  color: var(--bx-a8-accent-strong);
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__section-heading h2 {
+  margin: 0;
+  color: var(--bx-a8-ink);
+  font-size: 1.05rem;
+  font-weight: 730;
+  letter-spacing: -0.025em;
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__section-heading button {
+  min-height: 2.75rem;
+  padding: 0 0.85rem;
+  border-radius: 0.9rem;
+  color: var(--bx-a8-accent-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__task-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__task-grid > button {
+  position: relative;
+  display: grid;
+  min-height: 8.5rem;
+  align-content: start;
+  gap: 0.45rem;
+  padding: 0.95rem;
+  border: 1px solid var(--bx-a8-hairline);
+  border-radius: 1.15rem;
+  background: rgb(var(--bx-bg-rgb) / 0.58);
+  color: var(--bx-a8-ink);
+  text-align: left;
+  transition: transform 120ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__task-grid > button:hover,
+:root[data-bx-design='d1'] .bx-a8-services__task-grid > button[aria-pressed='true'] {
+  border-color: rgb(117 103 217 / 0.34);
+  background: var(--bx-a8-accent-softer);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.38);
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__task-grid > button:active,
+:root[data-bx-design='d1'] .bx-a8-services__card:active,
+:root[data-bx-design='d1'] .bx-a8-support button:active,
+:root[data-bx-design='d1'] .bx-a8-settings button:active {
+  transform: scale(0.975);
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__task-grid > button > span {
+  display: grid;
+  width: 2.45rem;
+  height: 2.45rem;
+  place-items: center;
+  border-radius: 0.85rem;
+  background: var(--bx-a8-accent-soft);
+  color: var(--bx-a8-accent-strong);
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__task-grid > button > span svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__task-grid strong {
+  margin-top: 0.2rem;
+  font-size: 0.8125rem;
+  font-weight: 730;
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__task-grid small {
+  max-width: 18rem;
+  color: var(--bx-a8-secondary);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__task-arrow {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--bx-a8-secondary);
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__card {
+  min-height: 10rem;
+  border-color: var(--bx-a8-hairline);
+  border-radius: 1.15rem;
+  background: var(--bx-a8-material-heavy);
+  box-shadow: none;
+}
+
+:root[data-bx-design='d1'] .bx-a8-services__card:hover {
+  border-color: rgb(117 103 217 / 0.3);
+  background: var(--bx-a8-accent-softer);
+  box-shadow: var(--bx-a8-shadow-soft);
+}
+
+:root[data-bx-design='d1'] .bx-a8-support__composer > header,
+:root[data-bx-design='d1'] .bx-a8-support__composer > section,
+:root[data-bx-design='d1'] .bx-a8-support__thread {
+  border-color: var(--bx-a8-hairline);
+}
+
+:root[data-bx-design='d1'] .bx-a8-support__composer > section,
+:root[data-bx-design='d1'] .bx-a8-support__thread {
+  background: var(--bx-a8-material-heavy);
+  box-shadow: var(--bx-a8-shadow);
+}
+
+:root[data-bx-design='d1'] .bx-a8-support__composer h1 {
+  font-size: clamp(1.8rem, 2.4vw, 2.55rem);
+  font-weight: 730;
+  letter-spacing: -0.045em;
+}
+
+:root[data-bx-design='d1'] .bx-a8-support__composer textarea,
+:root[data-bx-design='d1'] .bx-a8-support__composer input,
+:root[data-bx-design='d1'] .bx-a8-support__composer select,
+:root[data-bx-design='d1'] .bx-a8-support__thread input {
+  border-color: var(--bx-a8-hairline);
+  border-radius: 0.95rem;
+  background: rgb(var(--bx-bg-rgb) / 0.62);
+}
+
+:root[data-bx-design='d1'] .bx-a8-support__composer textarea:focus,
+:root[data-bx-design='d1'] .bx-a8-support__composer input:focus,
+:root[data-bx-design='d1'] .bx-a8-support__composer select:focus,
+:root[data-bx-design='d1'] .bx-a8-support__thread input:focus {
+  border-color: rgb(117 103 217 / 0.5);
+  box-shadow: 0 0 0 3px rgb(117 103 217 / 0.11);
+}
+
+:root[data-bx-design='d1'] .bx-a8-support [class*='bg-violet-600'],
+:root[data-bx-design='d1'] .bx-a8-settings [class*='bg-blue-600'] {
+  background-color: var(--bx-a8-accent-strong);
+}
+
+:root[data-bx-design='d1'] .bx-a8-settings__sidebar {
+  width: 17rem;
+}
+
+:root[data-bx-design='d1'] .bx-a8-settings__sidebar > div:first-child {
+  padding: 1.35rem 1.15rem 1rem;
+}
+
+:root[data-bx-design='d1'] .bx-a8-settings__sidebar > div:first-child > div > span {
+  border: 1px solid rgb(117 103 217 / 0.18);
+  background: var(--bx-a8-accent-soft);
+  color: var(--bx-a8-accent-strong);
+  box-shadow: none;
+}
+
+:root[data-bx-design='d1'] .bx-a8-settings__sidebar nav {
+  padding: 0.7rem;
+}
+
+:root[data-bx-design='d1'] .bx-a8-settings__sidebar nav > button {
+  min-height: 3.55rem;
+  border-radius: 1rem;
+}
+
+:root[data-bx-design='d1'] .bx-a8-settings__hero {
+  padding: clamp(1.25rem, 2vw, 2rem);
+}
+
+:root[data-bx-design='d1'] .bx-a8-settings__hero > div:first-child {
+  background: linear-gradient(to left, rgb(117 103 217 / 0.11), transparent);
+}
+
+:root[data-bx-design='d1'] .bx-a8-settings__hero p:first-of-type,
+:root[data-bx-design='d1'] .bx-a8-settings__panel [class*='text-blue-6'] {
+  color: var(--bx-a8-accent-strong);
+}
+
+:root[data-bx-design='d1'] .bx-a8-settings__panel > div > section,
+:root[data-bx-design='d1'] .bx-a8-settings__panel > section,
+:root[data-bx-design='d1'] .bx-a8-settings__panel > div > div > section {
+  border-color: var(--bx-a8-hairline);
+  background-color: var(--bx-a8-material-heavy);
+  box-shadow: var(--bx-a8-shadow-soft);
+}
+
+:root[data-bx-design='d1'] .bx-a8-account-resources {
+  padding: clamp(1rem, 1.5vw, 1.35rem);
+  border: 1px solid var(--bx-a8-hairline);
+  border-radius: 1.35rem;
+}
+
+:root[data-bx-design='d1'] .bx-a8-account-resources > div:nth-child(2) > div {
+  box-shadow: none;
+}
+
+:root[data-bx-design='d1'] .bx-a8-settings__panel button,
+:root[data-bx-design='d1'] .bx-a8-settings__panel input,
+:root[data-bx-design='d1'] .bx-a8-settings__panel select {
+  min-height: 2.75rem;
+}
+
+:root[data-bx-design='d1'] .bx-a8-settings__panel button:focus-visible,
+:root[data-bx-design='d1'] .bx-a8-services button:focus-visible,
+:root[data-bx-design='d1'] .bx-a8-support button:focus-visible {
+  outline: 2px solid var(--bx-a8-accent);
+  outline-offset: 2px;
+}
+
+@media (min-width: 1536px) {
+  :root[data-bx-design='d1'] .bx-a8-services__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  :root[data-bx-design='d1'] .bx-a8-services__task-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  :root[data-bx-design='d1'] .bx-a8-services__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  :root[data-bx-design='d1'] .bx-a8-settings {
+    overflow-y: auto;
+  }
+
+  :root[data-bx-design='d1'] .bx-a8-settings__main {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 720px) {
+  :root[data-bx-design='d1'] .bx-workspace-route:is(
+    [data-bx-route='/services'],
+    [data-bx-route='/support']
+  ) .bx-resource-sidebar {
+    position: relative;
+    width: 100%;
+    max-height: none;
+    flex: none;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route:is(
+    [data-bx-route='/services'],
+    [data-bx-route='/support']
+  ) .bx-resource-sidebar > div:first-child {
+    padding: 0.8rem 0.9rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/services'] .bx-resource-sidebar > div:first-child > div:first-child,
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/support'] .bx-resource-sidebar > div:first-child {
+    display: none;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/services'] .bx-resource-sidebar > div:first-child label {
+    margin-top: 0;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route:is(
+    [data-bx-route='/services'],
+    [data-bx-route='/support']
+  ) .bx-resource-sidebar > div:nth-child(2),
+  :root[data-bx-design='d1'] .bx-workspace-route:is(
+    [data-bx-route='/services'],
+    [data-bx-route='/support']
+  ) .bx-resource-sidebar > div:last-child {
+    display: none;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route:is(
+    [data-bx-route='/services'],
+    [data-bx-route='/support']
+  ) .bx-resource-sidebar nav {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding: 0.5rem 0.8rem 0.7rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route:is(
+    [data-bx-route='/services'],
+    [data-bx-route='/support']
+  ) .bx-resource-sidebar nav:empty {
+    display: none;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route:is(
+    [data-bx-route='/services'],
+    [data-bx-route='/support']
+  ) .bx-resource-sidebar nav > button {
+    width: auto;
+    min-width: max-content;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/support'] .bx-resource-sidebar nav > div {
+    display: none;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/support'] .bx-resource-sidebar:has(nav > div:only-child) {
+    display: none;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route:is(
+    [data-bx-route='/services'],
+    [data-bx-route='/support']
+  ) .bx-resource-content > .bx-page-container,
+  :root[data-bx-design='d1'] .bx-a8-settings__main > .bx-page-container {
+    padding: 0.85rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-a8-services__task-grid,
+  :root[data-bx-design='d1'] .bx-a8-services__grid {
+    grid-template-columns: 1fr;
+  }
+
+  :root[data-bx-design='d1'] .bx-a8-services__task-grid > button {
+    min-height: 6.8rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-a8-support__composer > section {
+    padding: 1rem;
+    border-radius: 1.25rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-a8-support__thread {
+    min-height: calc(100dvh - 10rem);
+    border-radius: 1.25rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-a8-support__thread [class*='max-w-'] {
+    max-width: 90%;
+  }
+
+  :root[data-bx-design='d1'] .bx-a8-settings__hero {
+    margin-bottom: 1rem;
+    border-radius: 1.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-bx-design='d1'] .bx-a8-services *,
+  :root[data-bx-design='d1'] .bx-a8-support *,
+  :root[data-bx-design='d1'] .bx-a8-settings * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-bx-design='d1'] .bx-workspace-route:is(
+    [data-bx-route='/services'],
+    [data-bx-route='/support']
+  ) .bx-resource-sidebar,
+  :root[data-bx-design='d1'] .bx-a8-settings__sidebar {
+    background: rgb(var(--bx-surface-rgb) / 1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root[data-bx-design='d1'] .bx-a8-services__task-grid > button,
+  :root[data-bx-design='d1'] .bx-a8-services__card,
+  :root[data-bx-design='d1'] .bx-a8-support__composer > section,
+  :root[data-bx-design='d1'] .bx-a8-settings__panel section {
+    border-width: 2px;
+  }
+}
+
+@media (forced-colors: active) {
+  :root[data-bx-design='d1'] .bx-a8-services__task-grid > button[aria-pressed='true'],
+  :root[data-bx-design='d1'] .bx-workspace-route:is(
+    [data-bx-route='/services'],
+    [data-bx-route='/support']
+  ) .bx-resource-sidebar nav button[aria-current='page'],
+  :root[data-bx-design='d1'] .bx-a8-settings__sidebar nav button[aria-current='page'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}

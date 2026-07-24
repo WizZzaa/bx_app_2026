@@ -29,7 +29,7 @@ export default function SalaryCalc() {
   const p = calcPayroll(gross, rates);
 
   return (
-    <div className="space-y-5">
+    <div className="bx-a7-calc-form space-y-5">
       <div className="flex gap-2">
         <button
           onClick={() => setDirection('gross2net')}
@@ -45,12 +45,13 @@ export default function SalaryCalc() {
         </button>
       </div>
 
-      <div>
-        <label className="block text-xs text-bx-muted mb-1.5">
-          {direction === 'gross2net' ? 'Начисленная зарплата (UZS)' : 'Сумма «на руки» (UZS)'}
-        </label>
-        <MoneyInput value={amount} onChange={setAmount} big autoFocus />
-      </div>
+      <MoneyInput
+        label={direction === 'gross2net' ? 'Начисленная зарплата' : 'Сумма «на руки»'}
+        value={amount}
+        onChange={setAmount}
+        big
+        autoFocus
+      />
 
       <CalcResult
         title={`Зарплата: ${direction === 'gross2net' ? 'начислено → на руки' : 'на руки → начислено'}`}

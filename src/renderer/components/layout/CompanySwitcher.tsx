@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCompany } from '../../lib/CompanyContext';
 import { usePlan } from '../../lib/plan';
-import PaywallModal from '../PaywallModal';
+
+const PaywallModal = React.lazy(() => import('../PaywallModal'));
 
 export default function CompanySwitcher() {
   const { companies, active, setActive, startCompanyCreation, startCompanyEdit } = useCompany();
@@ -73,7 +74,11 @@ export default function CompanySwitcher() {
           </button>
         </div>
       )}
-      {paywall && <PaywallModal feature="Мультикомпания — ведение нескольких фирм" onClose={() => setPaywall(false)} />}
+      {paywall && (
+        <React.Suspense fallback={null}>
+          <PaywallModal feature="Мультикомпания — ведение нескольких фирм" onClose={() => setPaywall(false)} />
+        </React.Suspense>
+      )}
     </div>
   );
 }

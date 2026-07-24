@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { todayISO } from '../lib/dates';
+import { DateField, Field, Select } from './ui/FormControls';
 import type {
   Company,
   CompanyLegalForm,
@@ -25,7 +26,6 @@ interface Props {
   onConfirm: (profile: CompanyProfileForm) => Promise<void>;
 }
 
-const inputCls = 'w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-xl border border-bx-border focus:outline-none focus:border-blue-500/60 text-xs font-semibold';
 const WEEKDAYS = [
   [1, 'Пн'], [2, 'Вт'], [3, 'Ср'], [4, 'Чт'], [5, 'Пт'], [6, 'Сб'], [7, 'Вс'],
 ] as const;
@@ -108,8 +108,11 @@ function initialProfile(company?: Company | null, initial?: CompanyWizardInitial
 
 export default function CompanyProfileWizard({ company, initial, busy = false, role = 'owner', onCancel, onConfirm }: Props) {
   const [step, setStep] = useState(0);
-  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<'name' | 'inn' | 'bxStartDate', string>>>({});
   const [profile, setProfile] = useState<CompanyProfileForm>(() => initialProfile(company, initial));
+  const nameRef = useRef<HTMLInputElement>(null);
+  const innRef = useRef<HTMLInputElement>(null);
+  const bxStartDateRef = useRef<HTMLInputElement>(null);
 
   const ruleOptions = useMemo(
     () => buildTaxDeadlineRuleOptions(
@@ -154,6 +157,9 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
 
   function setField<K extends keyof CompanyProfileForm>(key: K, value: CompanyProfileForm[K]) {
     setProfile(current => ({ ...current, [key]: value }));
+    if (key === 'name' || key === 'inn') {
+      setFieldErrors(current => ({ ...current, [key]: undefined }));
+    }
   }
 
   function setDetail<K extends keyof CompanyProfileDetails>(key: K, value: CompanyProfileDetails[K]) {
@@ -220,6 +226,7 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
   }
 
   function changeStartDate(bxStartDate: string) {
+    setFieldErrors(current => ({ ...current, bxStartDate: undefined }));
     const options = buildTaxDeadlineRuleOptions(
       profile.regime,
       bxStartDate,
@@ -243,29 +250,31 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
   }
 
   function validateBase(): boolean {
+    const nextErrors: typeof fieldErrors = {};
     if (!profile.name.trim()) {
-      setError('Укажите название компании');
-      return false;
+      nextErrors.name = 'Укажите название компании или ФИО владельца.';
     }
     if (profile.inn && profile.inn.length !== 9) {
-      setError('ИНН должен содержать 9 цифр');
-      return false;
+      nextErrors.inn = 'ИНН должен содержать ровно 9 цифр.';
     }
     if (!profile.bx_start_date) {
-      setError('Укажите дату начала работы в BX');
-      return false;
+      nextErrors.bxStartDate = 'Укажите дату начала работы в BX.';
+    } else if (profile.registration_date && profile.bx_start_date < profile.registration_date) {
+      nextErrors.bxStartDate = 'Дата начала работы в BX не может быть раньше регистрации.';
     }
-    if (profile.registration_date && profile.bx_start_date < profile.registration_date) {
-      setError('Дата начала работы в BX не может быть раньше регистрации');
-      return false;
-    }
-    setError('');
-    return true;
+    setFieldErrors(nextErrors);
+    const firstInvalid = ([
+      ['name', nameRef],
+      ['inn', innRef],
+      ['bxStartDate', bxStartDateRef],
+    ] as const).find(([key]) => Boolean(nextErrors[key]));
+    firstInvalid?.[1].current?.focus();
+    return Object.keys(nextErrors).length === 0;
   }
 
   function next() {
     if (step === 1 && !validateBase()) return;
-    setError('');
+    setFieldErrors({});
     setStep(current => Math.min(3, current + 1));
   }
 
@@ -306,17 +315,17 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
   }
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="company-profile-title" className="w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-3xl border border-bx-border bg-bx-surface shadow-2xl flex flex-col">
+    <div className="bx-a6-wizard-overlay fixed inset-0 z-[90] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="company-profile-title" className="bx-a6-company-wizard w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-3xl border border-bx-border bg-bx-surface shadow-2xl flex flex-col">
         <div className="px-6 py-5 border-b border-bx-border flex items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">Шаг {step + 1} из 4</p>
+            <p className="bx-a6-company-wizard__progress text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">Шаг {step + 1} из 4</p>
             <h2 id="company-profile-title" className="text-lg font-black text-bx-text mt-1">
               {company ? 'Настройка компании' : 'Новая компания'}
             </h2>
             <p className="text-xs text-bx-muted mt-1">Сначала выбираем форму, затем показываем только нужные поля и календарь.</p>
           </div>
-          <button type="button" aria-label="Закрыть настройки компании" onClick={onCancel} disabled={busy} className="text-bx-muted hover:text-bx-text text-xl px-2">×</button>
+          <button type="button" aria-label="Закрыть настройки компании" onClick={onCancel} disabled={busy} className="grid min-h-11 min-w-11 place-items-center rounded-xl text-xl text-bx-muted hover:bg-bx-bg hover:text-bx-text focus-visible:ring-2 focus-visible:ring-blue-500">×</button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
@@ -341,32 +350,51 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
             <div className="space-y-5">
               <div className="rounded-2xl border border-bx-border bg-bx-bg px-4 py-3 text-xs text-bx-muted">Форма: <b className="text-bx-text">{formLabel(profile.legal_form)}</b>. Показываем только применимые поля; банковские реквизиты можно заполнить позже.</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="space-y-1.5 md:col-span-2">
-                  <span className="text-[10px] font-bold uppercase text-bx-muted">Ваша компания</span>
-                  <input value={profile.name} onChange={event => setField('name', event.target.value)} className={inputCls} placeholder={profile.legal_form === 'ip' || profile.legal_form === 'self_employed' ? 'ФИО владельца или название деятельности' : 'Название компании'} />
-                </label>
-                <label className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase text-bx-muted">ИНН вашей компании</span>
-                  <input value={profile.inn ?? ''} onChange={event => setField('inn', event.target.value.replace(/\D/g, '').slice(0, 9) || null)} className={inputCls} placeholder="9 цифр" />
-                </label>
-                {(profile.legal_form === 'ip' || profile.legal_form === 'self_employed' || profile.legal_form === 'private_enterprise' || profile.legal_form === 'family_enterprise') && <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Владелец</span><input value={profile.profile_details.owner_name ?? ''} onChange={event => setDetail('owner_name', event.target.value)} className={inputCls} placeholder="ФИО владельца" /></label>}
-                {!(profile.legal_form === 'ip' || profile.legal_form === 'self_employed') && <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Руководитель</span><input value={profile.profile_details.director_name ?? ''} onChange={event => setDetail('director_name', event.target.value)} className={inputCls} placeholder="ФИО руководителя" /></label>}
-                <label className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase text-bx-muted">Дата регистрации</span>
-                  <input type="date" value={profile.registration_date ?? ''} onChange={event => setField('registration_date', event.target.value || null)} className={inputCls} />
-                </label>
-                <label className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase text-bx-muted">Начало работы в BX</span>
-                  <input type="date" value={profile.bx_start_date} onChange={event => changeStartDate(event.target.value)} className={inputCls} />
-                </label>
-                <label className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase text-bx-muted">Налоговый режим</span>
-                  <select value={profile.regime} onChange={event => changeRegime(event.target.value)} className={inputCls}>
-                    <option value="ОСН">ОСН</option>
-                    <option value="Налог с оборота">Налог с оборота</option>
-                    <option value="Упрощенный">Упрощённый</option>
-                  </select>
-                </label>
+                <Field
+                  ref={nameRef}
+                  label="Ваша компания"
+                  required
+                  value={profile.name}
+                  error={fieldErrors.name}
+                  autoComplete="organization"
+                  onChange={event => setField('name', event.target.value)}
+                  placeholder={profile.legal_form === 'ip' || profile.legal_form === 'self_employed' ? 'ФИО владельца или название деятельности' : 'Название компании'}
+                  containerClassName="md:col-span-2"
+                />
+                <Field
+                  ref={innRef}
+                  label="ИНН вашей компании"
+                  value={profile.inn ?? ''}
+                  error={fieldErrors.inn}
+                  inputMode="numeric"
+                  pattern="[0-9]{9}"
+                  maxLength={9}
+                  hint="9 цифр. Поле можно заполнить позже."
+                  onChange={event => setField('inn', event.target.value.replace(/\D/g, '').slice(0, 9) || null)}
+                  placeholder="123456789"
+                />
+                {(profile.legal_form === 'ip' || profile.legal_form === 'self_employed' || profile.legal_form === 'private_enterprise' || profile.legal_form === 'family_enterprise') && (
+                  <Field label="Владелец" value={profile.profile_details.owner_name ?? ''} autoComplete="name" onChange={event => setDetail('owner_name', event.target.value)} placeholder="ФИО владельца" />
+                )}
+                {!(profile.legal_form === 'ip' || profile.legal_form === 'self_employed') && (
+                  <Field label="Руководитель" value={profile.profile_details.director_name ?? ''} autoComplete="name" onChange={event => setDetail('director_name', event.target.value)} placeholder="ФИО руководителя" />
+                )}
+                <DateField label="Дата регистрации" value={profile.registration_date ?? ''} onChange={event => setField('registration_date', event.target.value || null)} />
+                <DateField
+                  ref={bxStartDateRef}
+                  label="Начало работы в BX"
+                  aria-label="Начало работы в BX"
+                  required
+                  value={profile.bx_start_date}
+                  error={fieldErrors.bxStartDate}
+                  hint="С этой даты BX начнёт предлагать новые календарные обязательства."
+                  onChange={event => changeStartDate(event.target.value)}
+                />
+                <Select label="Налоговый режим" aria-label="Налоговый режим" required value={profile.regime} onChange={event => changeRegime(event.target.value)}>
+                  <option value="ОСН">ОСН</option>
+                  <option value="Налог с оборота">Налог с оборота</option>
+                  <option value="Упрощенный">Упрощённый</option>
+                </Select>
                 <label className="flex items-center gap-3 rounded-xl border border-bx-border bg-bx-bg px-4 py-3 mt-5">
                   <input type="checkbox" checked={profile.is_vat_payer} onChange={event => updateWorkTraits({}, event.target.checked)} />
                   <span className="text-xs font-bold text-bx-text">Компания является плательщиком НДС</span>
@@ -377,18 +405,19 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
                 <p className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-600 dark:text-blue-300">Рабочие признаки</p>
                 <p className="mt-1 text-[11px] leading-relaxed text-bx-muted">По этим ответам BX предложит применимые отчёты. Окончательное решение всё равно останется за бухгалтером.</p>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <label className="space-y-1.5">
-                    <span className="text-[10px] font-bold uppercase text-bx-muted">Основная деятельность</span>
-                    <select value={profile.profile_details.primary_activity ?? ''} onChange={event => updateWorkTraits({ primary_activity: event.target.value as CompanyProfileDetails['primary_activity'] })} className={inputCls}>
-                      <option value="">Нужно уточнить</option>
-                      <option value="trade">Торговля</option>
-                      <option value="services">Услуги</option>
-                      <option value="production">Производство</option>
-                      <option value="construction">Строительство</option>
-                      <option value="agriculture">Сельское хозяйство</option>
-                      <option value="other">Другое</option>
-                    </select>
-                  </label>
+                  <Select
+                    label="Основная деятельность"
+                    value={profile.profile_details.primary_activity ?? ''}
+                    onChange={event => updateWorkTraits({ primary_activity: event.target.value as CompanyProfileDetails['primary_activity'] })}
+                  >
+                    <option value="">Нужно уточнить</option>
+                    <option value="trade">Торговля</option>
+                    <option value="services">Услуги</option>
+                    <option value="production">Производство</option>
+                    <option value="construction">Строительство</option>
+                    <option value="agriculture">Сельское хозяйство</option>
+                    <option value="other">Другое</option>
+                  </Select>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:pt-5">
                     {([
                       ['has_employees', 'Есть сотрудники'],
@@ -405,16 +434,34 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-bx-border pt-5">
-                {profile.legal_form !== 'self_employed' && <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Юридический адрес</span><input value={profile.profile_details.legal_address ?? ''} onChange={event => setDetail('legal_address', event.target.value)} className={inputCls} placeholder="Город, район, улица" /></label>}
-                {(profile.legal_form === 'ip' || profile.legal_form === 'self_employed') && <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Адрес деятельности</span><input value={profile.profile_details.activity_address ?? ''} onChange={event => setDetail('activity_address', event.target.value)} className={inputCls} placeholder="Если отличается от адреса регистрации" /></label>}
-                {profile.legal_form !== 'self_employed' && <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Банк и МФО · необязательно</span><div className="grid grid-cols-2 gap-2"><input value={profile.profile_details.bank_name ?? ''} onChange={event => setDetail('bank_name', event.target.value)} className={inputCls} placeholder="Банк" /><input value={profile.profile_details.mfo ?? ''} onChange={event => setDetail('mfo', event.target.value.replace(/\D/g, '').slice(0, 5))} className={inputCls} placeholder="МФО" /></div></label>}
-                {profile.legal_form !== 'self_employed' && <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Расчётный счёт · необязательно</span><input value={profile.profile_details.bank_account ?? ''} onChange={event => setDetail('bank_account', event.target.value.replace(/\D/g, '').slice(0, 20))} className={inputCls} placeholder="20 цифр" /></label>}
-                {profile.legal_form === 'joint_venture' && <><label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Страна иностранного партнёра</span><input value={profile.profile_details.foreign_partner_country ?? ''} onChange={event => setDetail('foreign_partner_country', event.target.value)} className={inputCls} placeholder="Например, Турция" /></label><label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Доля иностранного участия, %</span><input inputMode="decimal" value={profile.profile_details.foreign_share_percent ?? ''} onChange={event => setDetail('foreign_share_percent', event.target.value.replace(/[^\d.,]/g, ''))} className={inputCls} placeholder="0–100" /></label></>}
-                {profile.legal_form === 'jsc' && <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Тип акций</span><select value={profile.profile_details.share_type ?? ''} onChange={event => setDetail('share_type', event.target.value as 'ordinary' | 'preferred' | '')} className={inputCls}><option value="">Уточнить позже</option><option value="ordinary">Обыкновенные</option><option value="preferred">Привилегированные</option></select></label>}
-                {profile.legal_form === 'other' && <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Название формы</span><input value={profile.profile_details.custom_legal_form ?? ''} onChange={event => setDetail('custom_legal_form', event.target.value)} className={inputCls} placeholder="Например, учреждение" /></label>}
+                {profile.legal_form !== 'self_employed' && <Field label="Юридический адрес" value={profile.profile_details.legal_address ?? ''} autoComplete="street-address" onChange={event => setDetail('legal_address', event.target.value)} placeholder="Город, район, улица" />}
+                {(profile.legal_form === 'ip' || profile.legal_form === 'self_employed') && <Field label="Адрес деятельности" value={profile.profile_details.activity_address ?? ''} autoComplete="street-address" onChange={event => setDetail('activity_address', event.target.value)} placeholder="Если отличается от адреса регистрации" />}
+                {profile.legal_form !== 'self_employed' && <Field label="Банк" value={profile.profile_details.bank_name ?? ''} onChange={event => setDetail('bank_name', event.target.value)} placeholder="Название банка" />}
+                {profile.legal_form !== 'self_employed' && <Field label="МФО" value={profile.profile_details.mfo ?? ''} inputMode="numeric" maxLength={5} onChange={event => setDetail('mfo', event.target.value.replace(/\D/g, '').slice(0, 5))} placeholder="5 цифр" />}
+                {profile.legal_form !== 'self_employed' && <Field label="Расчётный счёт" value={profile.profile_details.bank_account ?? ''} inputMode="numeric" maxLength={20} onChange={event => setDetail('bank_account', event.target.value.replace(/\D/g, '').slice(0, 20))} placeholder="20 цифр" />}
+                {profile.legal_form === 'joint_venture' && <Field label="Страна иностранного партнёра" value={profile.profile_details.foreign_partner_country ?? ''} autoComplete="country-name" onChange={event => setDetail('foreign_partner_country', event.target.value)} placeholder="Например, Турция" />}
+                {profile.legal_form === 'joint_venture' && <Field label="Доля иностранного участия, %" inputMode="decimal" value={profile.profile_details.foreign_share_percent ?? ''} onChange={event => setDetail('foreign_share_percent', event.target.value.replace(/[^\d.,]/g, ''))} placeholder="0–100" />}
+                {profile.legal_form === 'jsc' && (
+                  <Select label="Тип акций" value={profile.profile_details.share_type ?? ''} onChange={event => setDetail('share_type', event.target.value as 'ordinary' | 'preferred' | '')}>
+                    <option value="">Уточнить позже</option>
+                    <option value="ordinary">Обыкновенные</option>
+                    <option value="preferred">Привилегированные</option>
+                  </Select>
+                )}
+                {profile.legal_form === 'other' && <Field label="Название формы" value={profile.profile_details.custom_legal_form ?? ''} onChange={event => setDetail('custom_legal_form', event.target.value)} placeholder="Например, учреждение" />}
               </div>
 
-              {profile.legal_form === 'farm' && <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4"><p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-700 dark:text-emerald-300">Агропрофиль · необязательно</p><div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-3"><label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Район / регион</span><input value={profile.profile_details.farm_region ?? ''} onChange={event => setDetail('farm_region', event.target.value)} className={inputCls} placeholder="Регион" /></label><label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Площадь, га</span><input inputMode="decimal" value={profile.profile_details.farm_area_hectares ?? ''} onChange={event => setDetail('farm_area_hectares', event.target.value.replace(/[^\d.,]/g, ''))} className={inputCls} placeholder="0" /></label><label className="space-y-1.5"><span className="text-[10px] font-bold uppercase text-bx-muted">Направление / культура</span><input value={profile.profile_details.farm_specialization ?? ''} onChange={event => setDetail('farm_specialization', event.target.value)} className={inputCls} placeholder="Хлопок, сад, животноводство…" /></label></div><label className="mt-3 flex items-center gap-2 text-xs font-semibold text-bx-text"><input type="checkbox" checked={Boolean(profile.profile_details.seasonal)} onChange={event => setDetail('seasonal', event.target.checked)} />Сезонная деятельность</label></div>}
+              {profile.legal_form === 'farm' && (
+                <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-700 dark:text-emerald-300">Агропрофиль · необязательно</p>
+                  <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <Field label="Район / регион" value={profile.profile_details.farm_region ?? ''} onChange={event => setDetail('farm_region', event.target.value)} placeholder="Регион" />
+                    <Field label="Площадь, га" inputMode="decimal" value={profile.profile_details.farm_area_hectares ?? ''} onChange={event => setDetail('farm_area_hectares', event.target.value.replace(/[^\d.,]/g, ''))} placeholder="0" />
+                    <Field label="Направление / культура" value={profile.profile_details.farm_specialization ?? ''} onChange={event => setDetail('farm_specialization', event.target.value)} placeholder="Хлопок, сад, животноводство…" />
+                  </div>
+                  <label className="mt-3 flex min-h-11 items-center gap-2 text-xs font-semibold text-bx-text"><input type="checkbox" checked={Boolean(profile.profile_details.seasonal)} onChange={event => setDetail('seasonal', event.target.checked)} />Сезонная деятельность</label>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -427,13 +474,10 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
                     ))}
                   </div>
                 </div>
-                <label className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase text-bx-muted">Язык уведомлений</span>
-                  <select value={profile.preferred_language} onChange={event => setField('preferred_language', event.target.value as 'ru' | 'uz')} className={inputCls}>
-                    <option value="ru">Русский</option>
-                    <option value="uz">O‘zbekcha</option>
-                  </select>
-                </label>
+                <Select label="Язык уведомлений" optionalLabel="" value={profile.preferred_language} onChange={event => setField('preferred_language', event.target.value as 'ru' | 'uz')}>
+                  <option value="ru">Русский</option>
+                  <option value="uz">O‘zbekcha</option>
+                </Select>
               </div>
             </div>
           )}
@@ -519,17 +563,21 @@ export default function CompanyProfileWizard({ company, initial, busy = false, r
             </div>
           )}
 
-          {error && <p className="mt-4 text-xs font-bold text-red-500">{error}</p>}
+          {Object.keys(fieldErrors).length > 0 && (
+            <p className="mt-4 rounded-xl border border-red-500/25 bg-red-500/[0.06] px-4 py-3 text-xs font-bold text-red-700 dark:text-red-300" role="alert">
+              Проверьте отмеченные поля. Фокус перемещён к первой ошибке.
+            </p>
+          )}
         </div>
 
         <div className="px-6 py-4 border-t border-bx-border flex items-center justify-between gap-3">
-          <button onClick={step === 0 ? onCancel : () => setStep(current => current - 1)} disabled={busy} className="px-4 py-2 text-xs font-bold text-bx-muted hover:text-bx-text disabled:opacity-50">
+          <button type="button" onClick={step === 0 ? onCancel : () => setStep(current => current - 1)} disabled={busy} className="min-h-11 px-4 py-2 text-xs font-bold text-bx-muted hover:text-bx-text disabled:opacity-50">
             {step === 0 ? 'Отмена' : 'Назад'}
           </button>
           {step < 3 ? (
-            <button onClick={next} className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black">Продолжить</button>
+            <button type="button" onClick={next} className="min-h-11 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-black text-white hover:bg-blue-500">Продолжить</button>
           ) : (
-            <button onClick={confirm} disabled={busy || role === 'loading' || role === 'viewer'} className="min-h-11 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black disabled:cursor-not-allowed disabled:opacity-50">
+            <button type="button" onClick={confirm} disabled={busy || role === 'loading' || role === 'viewer'} className="min-h-11 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black disabled:cursor-not-allowed disabled:opacity-50">
               {busy ? 'Сохраняем…' : role === 'loading' ? 'Проверяем права…' : role === 'viewer' ? 'Только просмотр' : company && role === 'assistant' ? 'Отправить предложение' : company ? 'Подтвердить изменения' : 'Создать компанию и календарь'}
             </button>
           )}

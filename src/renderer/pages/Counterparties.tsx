@@ -25,6 +25,7 @@ import {
   saveCompanyDetails,
   type CompanyDetailsSnapshot,
 } from '../lib/organizationInsights'
+import { useConfirmationDialog } from '../components/ui/useConfirmationDialog'
 
 type OrganizationView = 'companies' | 'counterparties' | 'attention'
 
@@ -42,6 +43,7 @@ export default function Counterparties() {
   const { active, companies, removeCompany, setActive, startCompanyCreation, startCompanyEdit } = useCompany()
   const { counterparties, loading, add, update, remove } = useCounterparties(active?.id ?? null)
   const toast = useToast()
+  const { confirm, confirmationDialog } = useConfirmationDialog()
   const [view, setView] = useState<OrganizationView>('companies')
   const [search, setSearch] = useState('')
   const [creating, setCreating] = useState(false)
@@ -145,7 +147,11 @@ export default function Counterparties() {
 
   async function deleteSelectedCompany() {
     if (!selectedCompany) return
-    const confirmed = window.confirm(`Архивировать компанию «${selectedCompany.name}»? Связанные документы, задачи и история сохранятся.`)
+    const confirmed = await confirm({
+      title: 'Архивировать компанию?',
+      description: `«${selectedCompany.name}» исчезнет из активного списка. Связанные документы, задачи и история сохранятся.`,
+      confirmLabel: 'Перенести в архив',
+    })
     if (!confirmed) return
     await removeCompany(selectedCompany.id)
     toast.info('Компания перенесена в архив')
@@ -158,39 +164,44 @@ export default function Counterparties() {
     <ResourceNavItem icon="alert" label="Требуют внимания" count={attentionCount} active={view === 'attention'} onClick={() => { setView('attention'); navigate('/counterparties') }} />
   </ResourceSidebar>
 
-  if (selectedCompany) return <CompanyDetail company={selectedCompany} details={details} completion={companyDetailsCompletion(details)} onBack={() => navigate('/counterparties')} onEdit={() => startCompanyEdit(selectedCompany)} onChange={changeCompanyDetail} onDelete={() => void deleteSelectedCompany()} onNavigate={navigate} />
+  if (selectedCompany) return <><CompanyDetail company={selectedCompany} details={details} completion={companyDetailsCompletion(details)} onBack={() => navigate('/counterparties')} onEdit={() => startCompanyEdit(selectedCompany)} onChange={changeCompanyDetail} onDelete={() => void deleteSelectedCompany()} onNavigate={navigate} />{confirmationDialog}</>
 
-  if (selectedCounterparty || creating) return <CounterpartyDetail counterparty={selectedCounterparty} form={form} saving={saving} onBack={() => { setCreating(false); navigate('/counterparties') }} onChange={changeCounterpartyField} onSave={() => void saveCounterparty()} onDelete={selectedCounterparty ? async () => {
-    if (!window.confirm(`Удалить контрагента «${selectedCounterparty.name}»?`)) return
+  if (selectedCounterparty || creating) return <><CounterpartyDetail counterparty={selectedCounterparty} form={form} saving={saving} onBack={() => { setCreating(false); navigate('/counterparties') }} onChange={changeCounterpartyField} onSave={() => void saveCounterparty()} onDelete={selectedCounterparty ? async () => {
+    if (!await confirm({
+      title: 'Удалить контрагента?',
+      description: `«${selectedCounterparty.name}» будет удалён из справочника организаций.`,
+      confirmLabel: 'Удалить контрагента',
+      tone: 'destructive',
+    })) return
     await remove(selectedCounterparty.id)
     toast.info('Контрагент удалён')
     navigate('/counterparties')
-  } : undefined} onNavigate={navigate} />
+  } : undefined} onNavigate={navigate} />{confirmationDialog}</>
 
   const showingCompanies = view === 'companies'
-  return <ResourceLayout sidebar={sidebar}>
-    <div className="space-y-6">
+  return <div className="bx-a6-organizations contents"><ResourceLayout sidebar={sidebar}>
+    <div className="bx-a6-organizations__workspace space-y-6">
       <ResourceHero eyebrow="Единая карта бизнеса" title="Все организации, реквизиты и связи в одном месте" description="Мои компании управляют календарём и документами BX. Контрагенты используются в шаблонах, оплатах и быстрых проверках — без повторного ввода реквизитов." icon="building" stats={[{ value: companies.length, label: 'своих компаний' }, { value: counterparties.length, label: 'контрагентов' }, { value: attentionCount, label: 'нужно дополнить' }]} actions={<button type="button" onClick={showingCompanies ? () => startCompanyCreation() : startCounterpartyCreation} className={primaryActionClass}><Icon name="plus" className="h-4 w-4" />{showingCompanies ? 'Новая компания' : 'Новый контрагент'}</button>} />
       <section className="space-y-4">
         <ResourceSectionTitle title={showingCompanies ? 'Мои компании' : view === 'attention' ? 'Карточки требуют внимания' : 'Контрагенты'} subtitle={showingCompanies ? 'Откройте компанию, чтобы увидеть профиль, реквизиты, команду и связанные разделы' : 'Откройте внутреннюю карточку для проверки и изменения реквизитов'} count={showingCompanies ? visibleCompanies.length : visibleCounterparties.length} />
         {loading && !showingCompanies ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-48 animate-pulse rounded-[20px] border border-bx-border bg-bx-surface" />)}</div> : showingCompanies ? (
-          visibleCompanies.length ? <div className="space-y-2">{visibleCompanies.map(company => {
-            return <button type="button" key={company.id} onClick={() => { setActive(company); navigate(`/companies/${company.id}`) }} className="group flex min-h-16 w-full items-center gap-3 rounded-2xl border border-bx-border bg-bx-surface p-3 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 focus-visible:ring-2 focus-visible:ring-blue-500">
+          visibleCompanies.length ? <div className="bx-a6-company-list space-y-2">{visibleCompanies.map(company => {
+            return <button type="button" key={company.id} onClick={() => { setActive(company); navigate(`/companies/${company.id}`) }} className="bx-a6-company-row group flex min-h-16 w-full items-center gap-3 rounded-2xl border border-bx-border bg-bx-surface p-3 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 focus-visible:ring-2 focus-visible:ring-blue-500">
               <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-300"><Icon name="building" className="h-4 w-4" /></span>
               <span className="min-w-0 flex-1"><span className="block truncate text-sm font-black text-bx-text group-hover:text-blue-600 dark:group-hover:text-blue-300">{company.name}</span><span className="mt-1 block truncate text-xs text-bx-muted">ИНН {company.inn || 'не указан'} · {company.regime || 'режим не указан'}</span></span>
               <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${company.id === active?.id ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-bx-border bg-bx-surface-2 text-bx-muted'}`}>{company.id === active?.id ? 'Активная' : 'Рабочая'}</span><Icon name="arrowR" className="h-4 w-4 text-bx-muted" />
             </button>
           })}</div> : <ResourceEmpty icon="building" title="Компаний пока нет" description="Создайте профиль компании — BX построит для неё календарь обязательств и рабочий контур." action={<button type="button" onClick={() => startCompanyCreation()} className={primaryActionClass}>Добавить компанию</button>} />
-        ) : visibleCounterparties.length ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{visibleCounterparties.map(counterparty => {
+        ) : visibleCounterparties.length ? <div className="bx-a6-counterparty-grid grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{visibleCounterparties.map(counterparty => {
           const health = counterpartyHealth(counterparty)
-          return <button type="button" key={counterparty.id} onClick={() => navigate(`/counterparties/${counterparty.id}`)} className="group flex min-h-52 flex-col rounded-[20px] border border-bx-border bg-bx-surface p-4 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 focus-visible:ring-2 focus-visible:ring-blue-500">
+          return <button type="button" key={counterparty.id} onClick={() => navigate(`/counterparties/${counterparty.id}`)} className="bx-a6-counterparty-card group flex min-h-52 flex-col rounded-[20px] border border-bx-border bg-bx-surface p-4 text-left shadow-sm outline-none transition-colors hover:border-blue-500/35 focus-visible:ring-2 focus-visible:ring-blue-500">
             <div className="flex items-start justify-between gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-300"><Icon name="users" className="h-[18px] w-[18px]" /></span><span className={`rounded-full border px-2 py-1 text-[9px] font-black ${health.tone === 'good' ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : health.tone === 'attention' ? 'border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-red-500/25 bg-red-500/10 text-red-700 dark:text-red-300'}`}>{health.percent}% данных</span></div>
             <h2 className="mt-4 line-clamp-2 text-sm font-black text-bx-text group-hover:text-blue-600 dark:group-hover:text-blue-300">{counterparty.name}</h2><p className="mt-1 text-[11px] font-bold text-bx-muted">ИНН {counterparty.inn}</p><p className="mt-2 line-clamp-2 text-[10px] leading-relaxed text-bx-muted">{health.missing.length ? `Добавить: ${health.missing.join(', ')}` : counterparty.bank_name || 'Карточка заполнена'}</p><span className="mt-auto flex items-center gap-1 border-t border-bx-border pt-3 text-[10px] font-black text-blue-600 dark:text-blue-300">Открыть карточку <Icon name="arrowR" className="h-3.5 w-3.5" /></span>
           </button>
         })}</div> : <ResourceEmpty icon="users" title="Организации не найдены" description={search ? 'Измените поиск или очистите фильтр.' : 'Добавьте первого контрагента, чтобы использовать его в документах и оплатах.'} action={<button type="button" onClick={startCounterpartyCreation} className={primaryActionClass}>Добавить контрагента</button>} />}
       </section>
     </div>
-  </ResourceLayout>
+  </ResourceLayout></div>
 }
 
 function CompanyDetail({ company, details, completion, onBack, onEdit, onChange, onDelete, onNavigate }: {
@@ -206,7 +217,7 @@ function CompanyDetail({ company, details, completion, onBack, onEdit, onChange,
   const fields: Array<[keyof CompanyDetailsSnapshot, string, string]> = [
     ['director', 'Руководитель', 'ФИО подписанта'], ['phone', 'Телефон', '+998…'], ['address', 'Юридический адрес', 'Город, район, улица'], ['oked', 'ОКЭД', '5 цифр'], ['okpo', 'ОКПО', '8 цифр'], ['mfo', 'МФО банка', '5 цифр'], ['bank', 'Обслуживающий банк', 'Название банка'], ['account', 'Расчётный счёт', '20 цифр'],
   ]
-  return <div className="flex flex-1 overflow-y-auto bg-bx-bg text-bx-text custom-scrollbar"><div className="bx-page-container w-full space-y-5 py-5">
+  return <div className="bx-a6-organization-detail flex flex-1 overflow-y-auto bg-bx-bg text-bx-text custom-scrollbar"><div className="bx-page-container w-full space-y-5 py-5">
     <header className="rounded-[24px] border border-bx-border bg-bx-surface p-5 shadow-sm"><button type="button" onClick={onBack} className="inline-flex min-h-9 items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-bx-muted hover:text-bx-text"><Icon name="arrowL" className="h-3.5 w-3.5" />Все организации</button><div className="mt-2 flex flex-wrap items-end justify-between gap-4"><div><p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Внутренняя карточка компании</p><h1 className="mt-1 text-2xl font-black tracking-tight">{company.name}</h1><p className="mt-1 text-xs text-bx-muted">ИНН {company.inn || 'не указан'} · {company.regime || 'налоговый режим не указан'} · {company.is_vat_payer ? 'плательщик НДС' : 'без НДС'}</p></div><button type="button" onClick={onEdit} className={primaryActionClass}><Icon name="settings" className="h-4 w-4" />Изменить профиль</button></div></header>
     {!company.legal_form && <section className="flex flex-col gap-3 rounded-[20px] border border-amber-500/25 bg-amber-500/[0.08] p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-black text-bx-text">Уточните форму предприятия</p><p className="mt-1 text-[11px] leading-relaxed text-bx-muted">Профиль создан до появления выбора ООО, ЯТТ, СП и других форм. Уточнение сделает поля и календарь точнее; старые задачи не исчезнут.</p></div><button type="button" onClick={onEdit} className="min-h-11 shrink-0 rounded-xl bg-amber-500 px-4 text-xs font-black text-slate-950 hover:bg-amber-400">Уточнить форму</button></section>}
     <div className="grid gap-4 lg:grid-cols-[1fr_320px]">

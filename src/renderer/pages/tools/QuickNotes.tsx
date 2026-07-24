@@ -78,14 +78,22 @@ export default function QuickNotes() {
     persist(updated);
   }
 
-  function remove(id: string) { 
-    if (confirm('Удалить эту заметку?')) {
-      persist(notes.filter((n: Note) => n.id !== id)); 
-      if (editingId === id) {
-        setEditingId(null);
-        setText('');
-      }
+  function remove(id: string) {
+    const removed = notes.find((note: Note) => note.id === id);
+    const removedIndex = notes.findIndex((note: Note) => note.id === id);
+    if (!removed) return;
+    persist(notes.filter((n: Note) => n.id !== id));
+    if (editingId === id) {
+      setEditingId(null);
+      setText('');
     }
+    toast.undo('Заметка удалена', () => {
+      const current = loadNotes();
+      if (current.some(note => note.id === id)) return;
+      const restored = [...current];
+      restored.splice(Math.max(0, removedIndex), 0, removed);
+      persist(restored);
+    });
   }
 
   function copy(t: string) { 
@@ -139,6 +147,7 @@ export default function QuickNotes() {
   const visible = expanded ? filtered : filtered.slice(0, 3);
 
   return (
+    <>
     <div className="rounded-2xl border border-bx-border bg-bx-surface p-5 space-y-4 shadow-sm relative">
       <div className="flex items-center gap-2.5">
         <span className="text-xl">📝</span>
@@ -305,5 +314,6 @@ export default function QuickNotes() {
         <p className="text-xs text-bx-muted text-center py-4 italic">Заметок не найдено</p>
       )}
     </div>
+    </>
   );
 }

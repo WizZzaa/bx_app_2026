@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+import { Sheet } from '../../components/ui/Sheet'
+import Button from '../../components/ui/Button'
+import { Select } from '../../components/ui/FormControls'
 import type { ParsedTransaction } from '../../lib/bankStatementParser'
-import Icon from '../../lib/ui/Icon'
 
 interface ImportModalProps {
   isOpen: boolean
@@ -9,214 +11,119 @@ interface ImportModalProps {
   onSave: (selected: ParsedTransaction[]) => Promise<void>
 }
 
-function fmt(n: number): string {
-  return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Math.round(n))
+const categories = ['Аренда', 'Зарплата', 'Налоги', 'Услуги связи', 'Хозяйственные расходы', 'Оборудование', 'Маркетинг', 'Поступление от клиента', 'Прочее']
+
+function fmt(value: number): string {
+  return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Math.round(value))
+}
+
+function guessedCategory(transaction: ParsedTransaction): string {
+  if (transaction.type === 'income') return 'Поступление от клиента'
+  const description = transaction.description.toLowerCase()
+  if (description.includes('налог') || description.includes('ндс') || description.includes('бюджет')) return 'Налоги'
+  if (description.includes('аренд') || description.includes('помещен')) return 'Аренда'
+  if (description.includes('зарплат') || description.includes('начислен') || description.includes('сотр')) return 'Зарплата'
+  if (description.includes('услуг') || description.includes('связ') || description.includes('интернет')) return 'Услуги связи'
+  return 'Прочее'
 }
 
 export default function ImportModal({ isOpen, onClose, transactions, onSave }: ImportModalProps) {
   const [selectedIndices, setSelectedIndices] = useState<number[]>([])
   const [items, setItems] = useState<ParsedTransaction[]>([])
-  const categories = [
-    'Аренда', 'Зарплата', 'Налоги', 'Услуги связи', 'Хозяйственные расходы', 
-    'Оборудование', 'Маркетинг', 'Поступление от клиента', 'Прочее'
-  ]
-  const [itemCategories, setItemCategories] = useState<{ [key: number]: string }>({})
+  const [itemCategories, setItemCategories] = useState<Record<number, string>>({})
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setItems(transactions)
-    setSelectedIndices(transactions.map((_, i) => i))
-    
-    // Автоматическое сопоставление категорий по типу
-    const defaultCats: { [key: number]: string } = {}
-    transactions.forEach((tx, idx) => {
-      if (tx.type === 'income') {
-        defaultCats[idx] = 'Поступление от клиента'
-      } else {
-        // Пробуем угадать по описанию
-        const desc = tx.description.toLowerCase()
-        if (desc.includes('налог') || desc.includes('ндс') || desc.includes('бюджет')) {
-          defaultCats[idx] = 'Налоги'
-        } else if (desc.includes('аренд') || desc.includes('помещен')) {
-          defaultCats[idx] = 'Аренда'
-        } else if (desc.includes('зарплат') || desc.includes('начислен') || desc.includes('сотр')) {
-          defaultCats[idx] = 'Зарплата'
-        } else if (desc.includes('услуг') || desc.includes('связ') || desc.includes('интернет')) {
-          defaultCats[idx] = 'Услуги связи'
-        } else {
-          defaultCats[idx] = 'Прочее'
-        }
-      }
-    })
-    setItemCategories(defaultCats)
+    setSelectedIndices(transactions.map((_, index) => index))
+    setItemCategories(Object.fromEntries(transactions.map((transaction, index) => [index, guessedCategory(transaction)])))
   }, [transactions])
 
-  if (!isOpen) return null
+  const selected = new Set(selectedIndices)
+  const selectedItems = items.filter((_, index) => selected.has(index))
+  const totalIncome = selectedItems.filter(item => item.type === 'income').reduce((sum, item) => sum + item.amount, 0)
+  const totalExpense = selectedItems.filter(item => item.type === 'expense').reduce((sum, item) => sum + item.amount, 0)
 
-  const handleToggleSelect = (index: number) => {
-    setSelectedIndices(prev => 
-      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
-    )
+  function toggle(index: number) {
+    setSelectedIndices(current => current.includes(index) ? current.filter(item => item !== index) : [...current, index])
   }
 
-  const handleToggleAll = () => {
-    if (selectedIndices.length === items.length) {
-      setSelectedIndices([])
-    } else {
-      setSelectedIndices(items.map((_, i) => i))
+  function toggleAll() {
+    setSelectedIndices(current => current.length === items.length ? [] : items.map((_, index) => index))
+  }
+
+  async function save() {
+    if (!selectedIndices.length || saving) return
+    setSaving(true)
+    try {
+      await onSave(selectedIndices.map(index => ({ ...items[index], category: itemCategories[index] || undefined })))
+      onClose()
+    } finally {
+      setSaving(false)
     }
   }
 
-  const handleCategoryChange = (index: number, cat: string) => {
-    setItemCategories(prev => ({ ...prev, [index]: cat }))
-  }
-
-  const handleSaveClick = async () => {
-    if (selectedIndices.length === 0) return
-    setSaving(true)
-    
-    const toSave = selectedIndices.map(idx => ({
-      ...items[idx],
-      category: itemCategories[idx] || undefined
-    }))
-    
-    await onSave(toSave)
-    setSaving(false)
-    onClose()
-  }
-
-  const totalIncome = items
-    .filter((_, i) => selectedIndices.includes(i))
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
-
-  const totalExpense = items
-    .filter((_, i) => selectedIndices.includes(i))
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0)
+  const footer = (
+    <div className="bx-a6-sheet__footer bx-a6-import-sheet__footer">
+      <div className="bx-a6-import-summary" aria-live="polite">
+        <span><small>Поступления</small><strong>+{fmt(totalIncome)} сум</strong></span>
+        <span><small>Списания</small><strong>−{fmt(totalExpense)} сум</strong></span>
+      </div>
+      <Button type="button" variant="secondary" onClick={onClose} disabled={saving} className="bx-a6-button bx-a6-button--secondary">Отмена</Button>
+      <Button type="button" onClick={() => void save()} disabled={!selectedIndices.length} loading={saving} className="bx-a6-button bx-a6-button--primary">
+        Импортировать {selectedIndices.length}
+      </Button>
+    </div>
+  )
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="statement-import-title" className="bg-bx-surface border border-bx-border rounded-[24px] w-full max-w-5xl max-h-[88vh] flex flex-col overflow-hidden shadow-2xl">
-        {/* Шапка */}
-        <div className="px-6 py-4 border-b border-bx-border flex items-center justify-between">
-          <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Предварительная проверка</p>
-            <h3 id="statement-import-title" className="mt-1 text-base font-black text-bx-text">Импорт банковской выписки</h3>
-            <p className="text-xs text-bx-muted mt-0.5">
-              Найдено операций: {items.length}. Выбрано для импорта: {selectedIndices.length}
-            </p>
-          </div>
-          <button type="button" aria-label="Закрыть импорт" onClick={onClose} className="grid h-11 w-11 place-items-center rounded-xl text-bx-muted transition-colors hover:bg-bx-surface-2 hover:text-bx-text"><Icon name="crossSmall" className="h-4 w-4" /></button>
-        </div>
-
-        {/* Список транзакций */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-bx-border text-[11px] text-bx-muted uppercase tracking-wider">
-                  <th className="py-2 px-3 w-10">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedIndices.length === items.length && items.length > 0}
-                      onChange={handleToggleAll}
-                      className="rounded border-bx-border-2 bg-bx-bg text-blue-600 focus:ring-0 cursor-pointer"
-                    />
-                  </th>
-                  <th className="py-2 px-3 w-28">Дата</th>
-                  <th className="py-2 px-3 w-28">Тип</th>
-                  <th className="py-2 px-3">Контрагент</th>
-                  <th className="py-2 px-3 w-40">Категория</th>
-                  <th className="py-2 px-3 w-36 text-right">Сумма (сум)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-bx-border/50 text-xs text-bx-text">
-                {items.map((tx, idx) => {
-                  const isChecked = selectedIndices.includes(idx)
-                  return (
-                    <tr 
-                      key={idx} 
-                      className={`hover:bg-bx-surface-2/20 transition-colors ${!isChecked ? 'opacity-50' : ''}`}
-                    >
-                      <td className="py-3 px-3">
-                        <input 
-                          type="checkbox" 
-                          checked={isChecked}
-                          onChange={() => handleToggleSelect(idx)}
-                          className="rounded border-bx-border-2 bg-bx-bg text-blue-600 focus:ring-0 cursor-pointer"
-                        />
-                      </td>
-                      <td className="py-3 px-3 font-mono text-[11px]">
-                        {new Date(tx.date).toLocaleDateString('ru-RU')}
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                          tx.type === 'income' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'
-                        }`}>
-                          {tx.type === 'income' ? 'Нам поступило' : 'Мы оплатили'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 max-w-xs truncate" title={tx.description}>
-                        <div className="font-medium truncate">{tx.counterparty}</div>
-                        <div className="text-[10px] text-bx-muted truncate mt-0.5">{tx.description}</div>
-                      </td>
-                      <td className="py-3 px-3">
-                        <select
-                          value={itemCategories[idx] || ''}
-                          onChange={e => handleCategoryChange(idx, e.target.value)}
-                          className="w-full bg-bx-bg text-bx-text text-xs rounded border border-bx-border-2 px-2 py-1 focus:outline-none focus:border-blue-500/50"
-                        >
-                          {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className={`py-3 px-3 text-right font-semibold font-mono text-sm ${
-                        tx.type === 'income' ? 'text-emerald-400' : 'text-red-400'
-                      }`}>
-                        {tx.type === 'income' ? '+' : '−'}{fmt(tx.amount)}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Подвал / Итоги */}
-        <div className="px-6 py-4 border-t border-bx-border bg-bx-bg/50 flex items-center justify-between flex-wrap gap-4">
-          <div className="flex gap-6 text-xs">
-            <div>
-              <span className="text-bx-muted">Доходы к импорту:</span>
-              <span className="text-emerald-400 font-semibold font-mono ml-2">{fmt(totalIncome)} сум</span>
-            </div>
-            <div>
-              <span className="text-bx-muted">Расходы к импорту:</span>
-              <span className="text-red-400 font-semibold font-mono ml-2">{fmt(totalExpense)} сум</span>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={saving}
-              className="px-4 py-2 border border-bx-border-2 text-bx-text hover:text-bx-text text-xs font-medium rounded-lg hover:bg-bx-surface-2 transition-colors"
-            >
-              Отмена
-            </button>
-            <button
-              type="button"
-              onClick={handleSaveClick}
-              disabled={selectedIndices.length === 0 || saving}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-bx-surface-2 disabled:text-bx-muted text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
-            >
-              {saving ? 'Импорт...' : `Импортировать (${selectedIndices.length})`}
-            </button>
-          </div>
-        </div>
+    <Sheet
+      open={isOpen}
+      onClose={onClose}
+      title="Проверка банковской выписки"
+      description={`Найдено ${items.length} операций. Снимите выбор с лишних строк и уточните категории до импорта.`}
+      closeLabel="Закрыть проверку выписки"
+      className="bx-a6-sheet bx-a6-import-sheet"
+      footer={footer}
+    >
+      <div className="bx-a6-import-toolbar">
+        <label>
+          <input type="checkbox" checked={items.length > 0 && selectedIndices.length === items.length} onChange={toggleAll} />
+          Выбрать все
+        </label>
+        <span>{selectedIndices.length} из {items.length} попадут в контроль оплат</span>
       </div>
-    </div>
+
+      <div className="bx-a6-import-list">
+        {items.map((transaction, index) => {
+          const isChecked = selected.has(index)
+          return (
+            <article key={`${transaction.date}-${transaction.amount}-${index}`} data-selected={isChecked}>
+              <label className="bx-a6-import-list__check">
+                <input type="checkbox" checked={isChecked} onChange={() => toggle(index)} />
+                <span className="sr-only">Импортировать операцию {index + 1}</span>
+              </label>
+              <div className="bx-a6-import-list__main">
+                <div><strong>{transaction.counterparty || 'Без контрагента'}</strong><time>{new Date(transaction.date).toLocaleDateString('ru-RU')}</time></div>
+                <p title={transaction.description}>{transaction.description || 'Назначение не указано'}</p>
+                <Select
+                  label="Категория"
+                  containerClassName="bx-a6-import-category"
+                  value={itemCategories[index] || ''}
+                  onChange={event => setItemCategories(current => ({ ...current, [index]: event.target.value }))}
+                >
+                    {categories.map(category => <option key={category} value={category}>{category}</option>)}
+                </Select>
+              </div>
+              <div className="bx-a6-import-list__amount" data-type={transaction.type}>
+                <span>{transaction.type === 'income' ? 'Поступление' : 'Списание'}</span>
+                <strong>{transaction.type === 'income' ? '+' : '−'}{fmt(transaction.amount)}</strong>
+                <small>сум</small>
+              </div>
+            </article>
+          )
+        })}
+      </div>
+    </Sheet>
   )
 }

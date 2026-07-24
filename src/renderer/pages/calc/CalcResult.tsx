@@ -80,10 +80,10 @@ export default function CalcResult({ title, rows }: { title: string; rows: CalcR
   }
 
   return (
-    <div className="rounded-2xl border border-bx-border overflow-hidden" aria-live="polite">
+    <section className="bx-a7-result rounded-2xl border border-bx-border overflow-hidden" aria-live="polite" aria-label={title}>
       {/* Hero: главный результат */}
       {main && (
-        <div className="relative bg-gradient-to-br from-blue-600/15 via-bx-surface to-bx-bg px-5 py-4 border-b border-bx-border">
+        <div className="bx-a7-result__hero relative bg-gradient-to-br from-blue-600/15 via-bx-surface to-bx-bg px-5 py-4 border-b border-bx-border">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] text-blue-700 dark:text-blue-300 uppercase tracking-wider font-semibold mb-1">{main.label}</p>
@@ -126,9 +126,9 @@ export default function CalcResult({ title, rows }: { title: string; rows: CalcR
       )}
 
       {/* Вторичные строки */}
-      <div className="divide-y divide-bx-border bg-bx-bg">
+      <div className="bx-a7-result__rows divide-y divide-bx-border bg-bx-bg">
         {secondary.map((r, i) => <Row key={i} label={r.label} value={r.value} />)}
       </div>
-    </div>
+    </section>
   );
 }

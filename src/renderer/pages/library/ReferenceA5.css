@@ -1,0 +1,91 @@
+:root[data-bx-design='d1'] .bx-reference-a5 {
+  width: 100%;
+}
+
+:root[data-bx-design='d1'] .bx-reference-a5 .bx-resource-hero {
+  background:
+    radial-gradient(circle at 90% 10%, rgb(var(--bx-brand-rgb) / 0.11), transparent 32%),
+    var(--bx-surface);
+}
+
+:root[data-bx-design='d1'] .bx-reference-a5__content {
+  min-width: 0;
+}
+
+:root[data-bx-design='d1'] .bx-reference-a5__content button,
+:root[data-bx-design='d1'] .bx-reference-a5__content a {
+  transition:
+    transform var(--bx-motion-fast) var(--bx-ease-standard),
+    border-color var(--bx-motion-fast) var(--bx-ease-standard),
+    background-color var(--bx-motion-fast) var(--bx-ease-standard);
+}
+
+:root[data-bx-design='d1'] .bx-reference-a5__content button:active,
+:root[data-bx-design='d1'] .bx-reference-a5__content a:active {
+  transform: scale(0.98);
+}
+
+:root[data-bx-design='d1'] .bx-reference-a5__content button:focus-visible,
+:root[data-bx-design='d1'] .bx-reference-a5__content a:focus-visible {
+  outline: var(--bx-focus-width) solid var(--bx-focus);
+  outline-offset: var(--bx-focus-offset);
+}
+
+:root[data-bx-design='d1'] .bx-reference-a5__content table {
+  min-width: 42rem;
+}
+
+@media (max-width: 47.999rem) {
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/reference'] .bx-resource-sidebar {
+    max-height: none;
+    flex: none;
+    overflow: hidden;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/reference'] .bx-resource-sidebar > nav {
+    display: flex;
+    flex: none;
+    gap: var(--bx-space-2);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 var(--bx-space-3) var(--bx-space-3);
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/reference'] .bx-resource-sidebar > nav > button {
+    min-width: 12rem;
+    width: auto;
+  }
+
+  :root[data-bx-design='d1'] .bx-workspace-route[data-bx-route='/reference'] .bx-resource-sidebar > div:last-child {
+    display: none;
+  }
+
+  :root[data-bx-design='d1'] .bx-reference-a5__content {
+    padding: var(--bx-space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-bx-design='d1'] .bx-reference-a5__content button,
+  :root[data-bx-design='d1'] .bx-reference-a5__content a {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-bx-design='d1'] .bx-reference-a5 .bx-resource-hero {
+    background: var(--bx-surface);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root[data-bx-design='d1'] .bx-reference-a5__content {
+    border-color: var(--bx-text-secondary);
+  }
+}
+
+@media (forced-colors: active) {
+  :root[data-bx-design='d1'] .bx-reference-a5__content {
+    border: 1px solid CanvasText;
+  }
+}

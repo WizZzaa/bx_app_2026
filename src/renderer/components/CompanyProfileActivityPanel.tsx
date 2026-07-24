@@ -81,7 +81,7 @@ export function CompanyProfileActivityPanel({ company }: { company: Company }) {
     }
   }
 
-  return <section className="rounded-[20px] border border-bx-border bg-bx-surface p-5 shadow-sm">
+  return <section className="bx-a6-company-activity rounded-[20px] border border-bx-border bg-bx-surface p-5 shadow-sm">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div><h2 className="text-base font-black text-bx-text">Изменения профиля</h2><p className="mt-1 text-[11px] text-bx-muted">Кто и когда менял форму, режим и календарь компании.</p></div>
       <span className="rounded-full border border-bx-border bg-bx-bg px-2.5 py-1 text-[9px] font-black uppercase text-bx-muted">{loading ? 'Обновляем' : `${activity.length} событий`}</span>

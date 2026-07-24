@@ -9,13 +9,13 @@
   color-scheme: light;
 
   /* Semantic colour roles — light theme is the safe default. */
-  --bx-canvas: #f7f6fa;
+  --bx-canvas: #f5f5f7;
   --bx-surface: #ffffff;
-  --bx-surface-subtle: #f1eff6;
-  --bx-surface-strong: #e5dfec;
-  --bx-text-primary: #27242f;
-  --bx-text-secondary: #6e6877;
-  --bx-border: #ded9e8;
+  --bx-surface-subtle: #f0eff4;
+  --bx-surface-strong: #e4e1ea;
+  --bx-text-primary: #1d1d1f;
+  --bx-text-secondary: #6e6e73;
+  --bx-border: #dcd8e4;
   --bx-brand: #7568d8;
   --bx-brand-hover: #6659c8;
   --bx-brand-soft: #eeeafb;
@@ -31,18 +31,18 @@
   --bx-scrim: rgb(17 16 24 / 0.56);
 
   /* Channels support alpha composition without duplicating palette values. */
-  --bx-canvas-rgb: 247 246 250;
+  --bx-canvas-rgb: 245 245 247;
   --bx-surface-rgb: 255 255 255;
-  --bx-surface-subtle-rgb: 241 239 246;
-  --bx-surface-strong-rgb: 229 223 236;
-  --bx-text-primary-rgb: 39 36 47;
-  --bx-text-secondary-rgb: 110 104 119;
-  --bx-border-rgb: 222 217 232;
+  --bx-surface-subtle-rgb: 240 239 244;
+  --bx-surface-strong-rgb: 228 225 234;
+  --bx-text-primary-rgb: 29 29 31;
+  --bx-text-secondary-rgb: 110 110 115;
+  --bx-border-rgb: 220 216 228;
   --bx-brand-rgb: 117 104 216;
   --bx-on-brand-rgb: 255 255 255;
 
   /* Typography. User font scaling remains an independent runtime setting. */
-  --bx-font-sans: "Geist Variable", Geist, Inter, "Segoe UI", Roboto, Arial, sans-serif;
+  --bx-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Geist Variable", Geist, Inter, "Segoe UI", Roboto, Arial, sans-serif;
   --bx-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --bx-font-size-xs: 0.75rem;
   --bx-font-size-sm: 0.875rem;

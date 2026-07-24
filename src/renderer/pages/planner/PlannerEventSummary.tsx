@@ -33,7 +33,7 @@ export default function PlannerEventSummary({ event, assigneeLabel, showDate = f
   const priority = PRIORITY_META[event.priority];
 
   return (
-    <div className="min-w-0">
+    <div className="bx-planner-event-summary min-w-0">
       <div className="text-[13px] font-semibold leading-snug text-bx-text break-words">{event.title}</div>
       <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] text-bx-muted">
         <span className="inline-flex items-center rounded-md border border-bx-border bg-bx-surface-2 px-1.5 py-0.5 font-medium">

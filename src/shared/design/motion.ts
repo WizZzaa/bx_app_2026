@@ -97,6 +97,18 @@ export const BX_MOTION_PRESETS = {
       transition: tween(160, BX_MOTION_EASING.exit),
     },
   },
+  popover: {
+    enter: {
+      from: frame(0, 'translate3d(0, -4px, 0) scale(0.98)'),
+      to: frame(1),
+      transition: tween(180, BX_MOTION_EASING.enter),
+    },
+    exit: {
+      from: frame(1),
+      to: frame(0, 'translate3d(0, -2px, 0) scale(0.98)'),
+      transition: tween(110, BX_MOTION_EASING.exit),
+    },
+  },
   sheet: {
     enter: {
       from: frame(0, 'translate3d(0, 16px, 0)'),
@@ -152,6 +164,7 @@ export const BX_REDUCED_MOTION_PRESETS: Readonly<Record<BxMotionPresetName, BxMo
   fade: reducedPreset(),
   raise: reducedPreset(),
   dialog: reducedPreset(),
+  popover: reducedPreset(),
   sheet: reducedPreset(),
   route: reducedPreset(),
 }
