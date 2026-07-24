@@ -1119,8 +1119,23 @@
 
 @media (max-width: 52rem) {
   :root[data-bx-design='d1'] .bx-planner-a2 {
-    overflow-y: auto;
+    overflow: visible;
     padding: 0.75rem;
+  }
+
+  :root[data-bx-design='d1'] .bx-planner-a2 .bx-planner-content--a2 {
+    flex: none;
+  }
+
+  :root[data-bx-design='d1'] .bx-planner-a2 .bx-calendar {
+    height: auto;
+    overflow: visible;
+  }
+
+  :root[data-bx-design='d1'] .bx-planner-a2 .bx-calendar-scroll-region {
+    flex: none;
+    overflow: visible;
+    padding-right: 0;
   }
 
   :root[data-bx-design='d1'] .bx-planner-hero--a2 {

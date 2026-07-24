@@ -14,6 +14,28 @@ export interface ChangelogEntry {
 // Новые версии — сверху.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.86.1',
+    date: '2026-07-24',
+    title: 'Мобильная повестка Планировщика',
+    changes: [
+      'Устранено перекрытие строк мобильной повестки: прокруткой владеет маршрут приложения, а Планировщик и календарные области остаются в обычном потоке.',
+      'Нажатие на строку дня снова передаёт дату в существующий onDayClick и открывает прежний DailyTasksModal без изменения событий или пользовательских данных.',
+      'Добавлен регрессионный контракт единственного мобильного scroll-owner и интерактивный тест строки повестки.',
+      'Supabase schema/data, RPC/RLS, Edge Functions, Secrets, payment, Telegram token и пользовательские записи не менялись.',
+    ],
+  },
+  {
+    version: '2.86.0',
+    date: '2026-07-24',
+    title: 'Единые формы Планировщика',
+    changes: [
+      'EventModal, BoardModal и DailyTasksModal переведены на общие Sheet, Button и FormControls с адаптивной desktop/mobile геометрией.',
+      'Формы получили inline validation, фокус на первое неверное поле, focus trap, возврат фокуса и постоянно доступные мобильные действия.',
+      'Payload и callbacks событий, досок, статусов и удаления сохранены без изменения persistence-контрактов.',
+      'Supabase schema/data, RPC/RLS, Edge Functions, Secrets, payment, Telegram token и пользовательские записи не менялись.',
+    ],
+  },
+  {
     version: '2.85.0',
     date: '2026-07-24',
     title: 'Единые формы финансов, калькуляторов и утилит',

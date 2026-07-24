@@ -1,7 +1,7 @@
 # Apple-style редизайн BX App — маршрут от оболочки до последней формы
 
 Дата начала: 23 июля 2026 года
-Статус: A0–A8 UI завершены; A9 foundation, системные overlay и миграция browser alert/confirm/prompt завершены, продолжается поэтапная миграция оставшихся route-local форм. Для support-вложений отдельно требуется серверный контракт.
+Статус: A0–A8 UI завершены; A9 foundation, системные overlay и миграция browser alert/confirm/prompt завершены. A10 устраняет мобильные layout-регрессии по мере приёмки; продолжается поэтапная миграция оставшихся route-local форм. Для support-вложений отдельно требуется серверный контракт.
 
 ## Неподвижные границы
 
@@ -55,6 +55,7 @@
 - [x] Задачи дня: `DailyTasksModal`.
 - [x] Timeline и summary события.
 - [x] Drag/drop, keyboard, mobile sheet и reduced-motion.
+- [x] A10: мобильная повестка использует единственный scroll-owner маршрута; строка дня снова получает pointer-click и открывает `DailyTasksModal`.
 
 ## A3 — Документы
 

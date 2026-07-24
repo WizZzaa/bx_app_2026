@@ -215,10 +215,11 @@ describe('CalendarView', () => {
   })
 
   it('provides a task-first mobile month agenda without squeezing seven columns', () => {
+    const onDayClick = vi.fn()
     render(
       <CalendarView
         events={[event]}
-        onDayClick={vi.fn()}
+        onDayClick={onDayClick}
         onAddEvent={vi.fn()}
         onEventClick={vi.fn()}
         companyId="company-1"
@@ -228,7 +229,9 @@ describe('CalendarView', () => {
 
     const mobileAgenda = screen.getByLabelText('Мобильная повестка: Июль 2026')
     expect(within(mobileAgenda).getAllByRole('button', { name: /^Выбрать / })).toHaveLength(31)
-    expect(within(mobileAgenda).getByRole('button', { name: 'Открыть повестку: среда, 22 июля 2026' })).toBeTruthy()
+    const agendaButton = within(mobileAgenda).getByRole('button', { name: 'Открыть повестку: среда, 22 июля 2026' })
+    fireEvent.click(agendaButton)
+    expect(onDayClick).toHaveBeenCalledWith('2026-07-22')
     expect(within(mobileAgenda).getByText('1 задача · 0 бух. сроков')).toBeTruthy()
   })
 

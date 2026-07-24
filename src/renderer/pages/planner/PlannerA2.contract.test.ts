@@ -48,4 +48,14 @@ describe('Planner A2 Apple-style contract', () => {
     expect(planner).toContain('nextRecurrenceISO');
     expect(planner).toContain('onEventDrop={handleEventDrop}');
   });
+
+  it('keeps the mobile route as the single scroll owner for calendar hit testing', () => {
+    const calendar = read('src/renderer/pages/planner/CalendarView.tsx');
+    const css = read('src/renderer/pages/planner/PlannerA2.css');
+
+    expect(calendar.match(/bx-calendar-scroll-region/g)).toHaveLength(2);
+    expect(css).toContain('.bx-planner-a2 .bx-calendar-scroll-region');
+    expect(css).toContain('flex: none;');
+    expect(css).toContain('overflow: visible;');
+  });
 });

@@ -851,7 +851,7 @@ export default function CalendarView({
       </header>
 
       {mode === 'week' ? (
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1 pb-4">
+        <div className="bx-calendar-scroll-region min-h-0 flex-1 overflow-y-auto pr-1 pb-4">
           {visibleYear !== VERIFIED_CALENDAR_YEAR && (
             <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-800 dark:text-amber-300">
               <Icon name="alert" className="mt-0.5 h-4 w-4 flex-shrink-0" />
@@ -878,7 +878,7 @@ export default function CalendarView({
           </div>
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <div className="bx-calendar-scroll-region min-h-0 flex-1 overflow-y-auto pr-1">
           {norms && (
             <section aria-label="Норма рабочего времени" className="bx-calendar-metrics mb-3 grid grid-cols-2 gap-2 rounded-2xl border p-3 text-xs sm:grid-cols-4">
               <div><span className="block text-[10px] uppercase tracking-wide text-bx-muted">Рабочих дней · 5-дн.</span><strong className="mt-1 block text-base text-bx-text">{norms.workdays5}</strong></div>
