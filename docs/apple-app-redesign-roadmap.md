@@ -118,6 +118,7 @@
   - [x] Первые production-сценарии: конвертер валют и загрузка документов переведены без изменения расчётного или Storage-контракта.
   - [x] Пакет 2.84.0: `/support`, полный мастер профиля компании и приглашение команды переведены на общие `Field`, `Select`, `DateField`, `Textarea`; добавлены semantic input types, autocomplete/inputMode, inline errors и фокус на первую ошибку.
   - [x] Пакет 2.85.0: финансовая карточка и импорт выписки, денежные поля девяти калькуляторов, пени, сравнение режимов, банковские реквизиты, число прописью и калькулятор дат переведены на общий foundation без изменения persistence, ставок и формул.
+  - [x] Пакет 2.86.0: `EventModal`, `BoardModal` и `DailyTasksModal` переведены на общий `Sheet`, `Button` и `FormControls`; сохранены payload/callback-контракты событий, досок и статусов, добавлены inline validation, фокус на первую ошибку и постоянно видимый адаптивный footer.
   - [ ] Оставшиеся route-local формы мигрируются пакетами; глобальный CSS override не применяется, чтобы не ломать пользовательские сценарии.
 - [x] `OverlayPanel`, modal, popover, context menu, bottom sheet и confirmation.
 - [x] `PaywallModal`, `ConflictModal`, `AboutModal`.
@@ -135,9 +136,12 @@
 - [x] App 2.84.0: typecheck, lint, `404/404` теста, production build и все bundle budgets — PASS; demand-loading мастера компании снизил initial closure до `341,4 KiB gzip`, Motion Mini остался `3,9 KiB gzip`.
 - [x] Browser QA 2.85.0: `/finance`, `/calc` и `/tools` проверены на `1280×720` и `390×844`; horizontal overflow `0`, transaction sheet `390 px`, все проверенные действия и поля не меньше `44px`, inline error и перевод фокуса на сумму подтверждены.
 - [x] App 2.85.0: typecheck, lint, `116/116` suites и `411/411` тестов, production build, initial bundle `341,7 KiB gzip`, demand budgets и Motion Mini `3,9 KiB gzip` — PASS.
+- [x] Browser QA 2.86.0: форма задачи проверена на `1280×720` и `390×844`; desktop sheet `736 px`, mobile sheet `390×760`, horizontal overflow `0`, footer остаётся видимым, все видимые действия не меньше `44px`, initial/error focus подтверждён.
+- [x] App 2.86.0: typecheck, lint, `118/118` suites и `416/416` тестов, production build, initial bundle `341,5 KiB gzip`, demand budgets и Motion Mini `3,9 KiB gzip` — PASS.
 - [x] Graphify обновлён после пакета 2.83.0: `2156` узлов, `4935` связей, `125` сообществ; результат сохранён как useful memory.
 - [x] Graphify обновлён после пакета 2.84.0: `2171` узел, `4961` связь, `133` сообщества; маршрут миграции форм сохранён как useful memory.
 - [x] Graphify обновлён после пакета 2.85.0: `2182` узла, `5011` связей, `138` сообществ; безопасная граница Finance/Calc/Tools сохранена как useful memory.
+- [x] Graphify обновлён после пакета 2.86.0: `2192` узла, `5040` связей, `145` сообществ; граница Planner sheets сохранена как useful memory.
 - [x] Supabase schema/data, RPC/RLS, Edge Functions, Secrets, payment и пользовательские записи не менялись.
 
 ## A10 — Финальная приёмка
@@ -145,6 +149,7 @@
 - [ ] Все рабочие маршруты открываются напрямую и через Back/Forward.
 - [ ] Desktop: 1280, 1440, 1600 и ultrawide.
 - [ ] Mobile: 375, 390, 768 и landscape.
+- [ ] Исправить mobile-layering календарной повестки: строки дней видимы в DOM, но перекрываются контейнером `main` и не получают pointer-click; после исправления повторить route-level QA `DailyTasksModal`.
 - [ ] Нет horizontal overflow, пустых интерактивных зон и наложения fixed chrome.
 - [ ] Keyboard-only, screen reader labels и focus restoration.
 - [ ] Reduced motion/transparency, contrast и forced colors.

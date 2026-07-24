@@ -1,101 +1,121 @@
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { BOARD_ICONS, COLUMN_COLORS, type BxBoard } from './useBoards';
-import Icon from '../../lib/ui/Icon';
-import './PlannerA2.css';
+import React, { useRef, useState } from 'react'
+import Button from '../../components/ui/Button'
+import { Field } from '../../components/ui/FormControls'
+import { Sheet } from '../../components/ui/Sheet'
+import Icon from '../../lib/ui/Icon'
+import { BOARD_ICONS, COLUMN_COLORS, type BxBoard } from './useBoards'
+import './PlannerA2.css'
 
 interface Props {
-  board?: BxBoard | null;          // null = создание
-  onSave: (name: string, icon: string, color: string) => void;
-  onDelete?: () => void;
-  onClose: () => void;
+  board?: BxBoard | null
+  onSave: (name: string, icon: string, color: string) => void
+  onDelete?: () => void
+  onClose: () => void
 }
 
-const DOT: Record<string, string> = {
-  slate: 'bg-slate-500', blue: 'bg-blue-500', amber: 'bg-amber-500', emerald: 'bg-emerald-500',
-  purple: 'bg-purple-500', red: 'bg-red-500', pink: 'bg-pink-500', cyan: 'bg-cyan-500',
-};
+const COLOR_LABELS: Record<string, string> = {
+  slate: 'Графитовый',
+  blue: 'Голубой',
+  amber: 'Янтарный',
+  emerald: 'Изумрудный',
+  purple: 'Лавандовый',
+  red: 'Красный',
+  pink: 'Розовый',
+  cyan: 'Бирюзовый',
+}
 
 export default function BoardModal({ board, onSave, onDelete, onClose }: Props) {
-  const [name,  setName]  = useState(board?.name  ?? '');
-  const [icon,  setIcon]  = useState(board?.icon  ?? '📋');
-  const [color, setColor] = useState(board?.color ?? 'blue');
-  const [confirmDel, setConfirmDel] = useState(false);
+  const [name, setName] = useState(board?.name ?? '')
+  const [icon, setIcon] = useState(board?.icon ?? '📋')
+  const [color, setColor] = useState(board?.color ?? 'blue')
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [nameError, setNameError] = useState<string>()
+  const nameRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  function save() {
+    if (!name.trim()) {
+      setNameError('Введите название доски.')
+      requestAnimationFrame(() => nameRef.current?.focus())
+      return
+    }
+    onSave(name.trim(), icon, color)
+  }
 
-  return createPortal(
-    <div className="bx-sheet-scrim fixed inset-0 z-[120] flex items-end justify-center sm:items-center sm:p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <section role="dialog" aria-modal="true" aria-labelledby="board-modal-title" className="bx-sheet bx-board-sheet w-full max-w-[29rem] overflow-hidden">
-        <header className="bx-sheet__header flex items-start justify-between gap-4 px-6 py-5">
-          <div><p className="bx-planner-eyebrow text-[11px] font-black">Рабочее пространство</p><h2 id="board-modal-title" className="mt-1 text-xl font-black text-bx-text">{board ? 'Настройки доски' : 'Новая доска'}</h2><p className="mt-1 text-xs leading-relaxed text-bx-muted">Название, символ и мягкий цвет помогут быстро отличить контекст.</p></div>
-          <button type="button" onClick={onClose} aria-label="Закрыть" className="bx-sheet__close"><Icon name="crossSmall" /></button>
-        </header>
-
-        <div className="bx-sheet__body space-y-5 px-6 py-5">
-          <div>
-            <label className="text-xs text-bx-muted block mb-1.5">Название</label>
-            <input autoFocus value={name} onChange={e => setName(e.target.value)}
-              placeholder="Напр.: Клиент ООО «Восход»"
-              onKeyDown={e => { if (e.key === 'Enter' && name.trim()) onSave(name.trim(), icon, color); }}
-              className="bx-sheet-input w-full" />
+  const deleteControl = board && onDelete && !board.is_default
+    ? confirmDelete
+      ? (
+          <div className="bx-planner-sheet__delete-confirm">
+            <span>Удалить доску и все карточки?</span>
+            <Button type="button" variant="danger" onClick={onDelete}>Удалить</Button>
+            <Button type="button" variant="secondary" onClick={() => setConfirmDelete(false)}>Оставить</Button>
           </div>
+        )
+      : <Button type="button" variant="ghost" className="bx-planner-sheet__destructive" onClick={() => setConfirmDelete(true)}>Удалить доску</Button>
+    : board?.is_default
+      ? <span className="bx-planner-sheet__hint">Доску по умолчанию нельзя удалить</span>
+      : null
 
-          <div>
-            <label className="text-xs text-bx-muted block mb-1.5">Иконка</label>
-            <div className="flex flex-wrap gap-1.5">
-              {BOARD_ICONS.map(i => (
-                <button key={i} onClick={() => setIcon(i)}
-                  aria-pressed={icon === i}
-                  className={`bx-board-icon ${icon === i ? 'is-active' : ''}`}>
-                  {i}
-                </button>
-              ))}
-            </div>
-          </div>
+  const footer = (
+    <div className="bx-planner-sheet__footer">
+      <div className="bx-planner-sheet__footer-leading">{deleteControl}</div>
+      <Button type="button" variant="secondary" onClick={onClose}>Отмена</Button>
+      <Button type="submit" form="bx-planner-board-form">
+        <Icon name={board ? 'save' : 'plus'} className="h-4 w-4" />
+        {board ? 'Сохранить изменения' : 'Создать доску'}
+      </Button>
+    </div>
+  )
 
-          <div>
-            <label className="text-xs text-bx-muted block mb-1.5">Цвет</label>
-            <div className="flex gap-2">
-              {COLUMN_COLORS.map(col => (
-                <button key={col} onClick={() => setColor(col)}
-                  aria-label={`Цвет ${col}`}
-                  aria-pressed={color === col}
-                  className={`bx-board-color ${DOT[col]} ${color === col ? 'is-active' : ''}`} />
-              ))}
-            </div>
-          </div>
-        </div>
+  return (
+    <Sheet
+      open
+      onClose={onClose}
+      title={board ? 'Настройки доски' : 'Новая доска'}
+      description="Название, символ и спокойный цвет помогут быстро отличить рабочий контекст."
+      closeLabel="Закрыть настройки доски"
+      initialFocusRef={nameRef}
+      className="bx-planner-sheet bx-planner-board-sheet"
+      footer={footer}
+    >
+      <form id="bx-planner-board-form" className="bx-planner-form" onSubmit={formEvent => { formEvent.preventDefault(); save() }} noValidate>
+        <Field
+          ref={nameRef}
+          label="Название доски"
+          required
+          error={nameError}
+          value={name}
+          onChange={changeEvent => {
+            setName(changeEvent.target.value)
+            setNameError(undefined)
+          }}
+          placeholder="Например, клиент ООО «Восход»"
+          autoComplete="off"
+        />
 
-        <footer className="bx-sheet__footer flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-          <div>
-            {board && onDelete && !board.is_default && (
-              confirmDel ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-red-400">Удалить доску со всеми карточками?</span>
-                  <button onClick={onDelete} className="text-xs px-2 py-1 bg-red-500/20 text-red-400 rounded-lg">Да</button>
-                  <button onClick={() => setConfirmDel(false)} className="text-xs text-bx-muted">нет</button>
-                </div>
-              ) : (
-                <button onClick={() => setConfirmDel(true)} className="text-xs text-bx-muted hover:text-red-400">Удалить доску</button>
-              )
-            )}
-            {board?.is_default && <span className="text-[11px] text-bx-muted">Доску по умолчанию нельзя удалить</span>}
+        <fieldset className="bx-planner-choice">
+          <legend>Символ</legend>
+          <p>Используется в календаре и списке досок.</p>
+          <div className="bx-planner-choice__icons">
+            {BOARD_ICONS.map(item => (
+              <button type="button" key={item} onClick={() => setIcon(item)} aria-label={`Выбрать символ ${item}`} aria-pressed={icon === item}>
+                <span aria-hidden="true">{item}</span>
+              </button>
+            ))}
           </div>
-          <div className="flex gap-2">
-            <button onClick={onClose} className="px-4 py-2 text-sm text-bx-muted hover:text-bx-text">Отмена</button>
-            <button onClick={() => name.trim() && onSave(name.trim(), icon, color)} disabled={!name.trim()}
-              className="bx-planner-primary min-h-11 rounded-xl px-5 text-sm font-black disabled:opacity-40">
-              {board ? 'Сохранить' : 'Создать'}
-            </button>
+        </fieldset>
+
+        <fieldset className="bx-planner-choice">
+          <legend>Цвет</legend>
+          <p>Мягкий акцент не меняет данные и доступы доски.</p>
+          <div className="bx-planner-choice__colors">
+            {COLUMN_COLORS.map(item => (
+              <button type="button" key={item} onClick={() => setColor(item)} aria-label={COLOR_LABELS[item] ?? item} aria-pressed={color === item}>
+                <span className={`bx-planner-choice__swatch is-${item}`} aria-hidden="true" />
+              </button>
+            ))}
           </div>
-        </footer>
-      </section>
-    </div>,
-    document.body,
-  );
+        </fieldset>
+      </form>
+    </Sheet>
+  )
 }

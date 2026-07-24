@@ -20,7 +20,15 @@ describe('Planner A2 Apple-style contract', () => {
   });
 
   it('renders task forms as viewport-level accessible sheets', () => {
-    for (const file of ['EventModal.tsx', 'DailyTasksModal.tsx', 'CardModal.tsx', 'BoardModal.tsx', 'ArchivePanel.tsx']) {
+    for (const file of ['EventModal.tsx', 'DailyTasksModal.tsx', 'BoardModal.tsx']) {
+      const source = read(`src/renderer/pages/planner/${file}`);
+      expect(source, file).toContain("import { Sheet }");
+      expect(source, file).toContain('<Sheet');
+      expect(source, file).toContain('closeLabel=');
+      expect(source, file).toContain('bx-planner-sheet');
+    }
+
+    for (const file of ['CardModal.tsx', 'ArchivePanel.tsx']) {
       const source = read(`src/renderer/pages/planner/${file}`);
       expect(source, file).toContain('createPortal(');
       expect(source, file).toContain('document.body');
