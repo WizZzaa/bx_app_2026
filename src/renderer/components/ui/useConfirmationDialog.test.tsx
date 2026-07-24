@@ -45,7 +45,8 @@ describe('useConfirmationDialog', () => {
     render(<Harness onResult={onResult} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Открыть' }))
-    expect(await screen.findByRole('button', { name: 'Отмена' })).toBe(document.activeElement)
+    const cancel = await screen.findByRole('button', { name: 'Отмена' })
+    await vi.waitFor(() => expect(cancel).toBe(document.activeElement))
     fireEvent.click(screen.getByRole('button', { name: 'Удалить' }))
 
     await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(true))
@@ -62,6 +63,6 @@ describe('useConfirmationDialog', () => {
     fireEvent.keyDown(document, { key: 'Escape' })
 
     await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(false))
-    expect(trigger).toBe(document.activeElement)
+    await vi.waitFor(() => expect(trigger).toBe(document.activeElement))
   })
 })
