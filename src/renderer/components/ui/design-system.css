@@ -78,6 +78,7 @@
   margin: var(--bx-space-2) 0 0;
   color: var(--bx-text-secondary);
   line-height: var(--bx-line-height-body);
+  white-space: pre-line;
 }
 
 :root[data-bx-design='d1'] .bx-d1-overlay__close {

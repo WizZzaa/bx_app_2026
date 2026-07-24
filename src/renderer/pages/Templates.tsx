@@ -447,12 +447,16 @@ export default function Templates() {
   }
 
   const handleDeleteCustom = async (id: string) => {
-    if (confirm('Вы действительно хотите удалить этот шаблон?')) {
-      await db.templates.delete(id)
-      toast.info('Шаблон удален')
+    const current = allTemplates.find(template => template.id === id)
+    if (!current) return
+    await db.templates.delete(id)
+    await loadCustom()
+    setActiveId(null)
+    toast.undo('Личный шаблон удалён', async () => {
+      await db.templates.put(current)
       await loadCustom()
-      setActiveId(null)
-    }
+      setActiveId(current.id)
+    })
   }
 
   const handleDocxImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -566,6 +570,7 @@ export default function Templates() {
     const cc = catColor(tpl.category)
     const isCustom = tpl.id.startsWith('custom-')
     return (
+      <>
       <div className="bx-documents-a3 bx-template-editor flex flex-1 overflow-y-auto bg-bx-bg text-bx-text custom-scrollbar">
         <div className="bx-page-container w-full space-y-5 py-5">
           <DocumentsTabs current="templates" stage={2} />
@@ -647,6 +652,7 @@ export default function Templates() {
           </div>
         </div>
       </div>
+      </>
     )
   }
 

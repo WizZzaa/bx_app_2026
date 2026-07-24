@@ -9,6 +9,7 @@ import DocumentsTabs from '../components/documents/DocumentsTabs'
 import { Sheet } from '../components/ui/Sheet'
 import { Upload } from '../components/ui/FormControls'
 import { ConfirmationDialog } from '../components/ui/ConfirmationDialog'
+import { useToast } from '../lib/ui/ToastContext'
 import {
   ResourceEmpty,
   ResourceHero,
@@ -31,6 +32,7 @@ const canPreviewInline = (fileName: string) => INLINE_PDF_PATTERN.test(fileName)
 
 export default function Documents() {
   const navigate = useNavigate()
+  const toast = useToast()
   const { companies, active } = useCompany()
   const { limits, plan } = usePlan()
   const {
@@ -132,7 +134,7 @@ export default function Documents() {
       await deleteDocument(pendingDelete.id, pendingDelete.file_url)
       setPendingDelete(null)
     } catch (error) {
-      window.alert(error instanceof Error ? error.message : 'Не удалось удалить документ')
+      toast.error(error instanceof Error ? error.message : 'Не удалось удалить документ')
     } finally {
       setDeleting(false)
     }

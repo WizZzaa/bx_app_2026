@@ -7,6 +7,7 @@ import { useDocuments } from '../lib/useDocuments'
 import { usePlan } from '../lib/plan'
 import { useToast } from '../lib/ui/ToastContext'
 import { BxMotion } from '../lib/ui/BxMotion'
+import { useConfirmationDialog } from '../components/ui/useConfirmationDialog'
 import { primaryActionClass, secondaryActionClass } from '../components/workspace/ResourceWorkspace'
 import { TARIFF_MATRIX } from '../../shared/tariffs'
 import { parseUsageSnapshot, type UsageSnapshot } from '../lib/usageSnapshot'
@@ -88,6 +89,7 @@ async function extractFileText(file: File, maxFileBytes: number) {
 }
 
 export default function Translator() {
+  const { confirm, confirmationDialog } = useConfirmationDialog()
   const navigate = useNavigate()
   const toast = useToast()
   const { companies, active, startCompanyCreation } = useCompany()
@@ -302,8 +304,13 @@ export default function Translator() {
     }
   }
 
-  const reset = () => {
-    if (resultText.trim() && !resultExported && !window.confirm('Результат ещё не выгружен. Очистить без экспорта?')) return
+  const reset = async () => {
+    if (resultText.trim() && !resultExported && !await confirm({
+      title: 'Очистить несохранённый перевод?',
+      description: 'Результат ещё не выгружен в файл или Документы. После очистки восстановить его не получится.',
+      confirmLabel: 'Очистить результат',
+      tone: 'destructive',
+    })) return
     setSourceText(''); setResultText(''); setPlainText(''); setFileName(''); setFileSize(''); setError(''); setRetryableError(false); setActiveResult('translation'); setConsentedText(''); setResultExported(true); setMobilePane('source')
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
@@ -328,6 +335,7 @@ export default function Translator() {
   const selectedMode = TRANSLATION_MODES.find(item => item.id === mode) ?? TRANSLATION_MODES[0]
 
   return (
+    <>
     <div className="bx-translator-a4 custom-scrollbar flex-1 overflow-y-auto bg-bx-bg text-bx-text">
       <div className="bx-translator-shell space-y-4 px-4 py-4 sm:px-5 lg:px-7 lg:py-6">
         <BxMotion preset="raise" className="bx-translator-hero">
@@ -379,7 +387,7 @@ export default function Translator() {
 
         <section className="bx-translator-workbench" aria-label="Рабочая область перевода">
           <article className={`${mobilePane === 'source' ? 'flex' : 'hidden'} bx-translator-pane xl:flex`}>
-            <div className="bx-translator-pane-header"><div><p className="bx-translator-eyebrow">Исходник</p><p className="mt-1 text-xs text-bx-muted">{sourceWordCount.toLocaleString('ru-RU')} слов · {sourceText.length.toLocaleString('ru-RU')} из {MAX_TRANSLATION_CHARS.toLocaleString('ru-RU')} знаков</p></div><button type="button" onClick={reset} disabled={!sourceText && !fileName} className={`${secondaryActionClass} disabled:cursor-not-allowed disabled:opacity-40`}><Icon name="trash" className="h-4 w-4" />Очистить</button></div>
+            <div className="bx-translator-pane-header"><div><p className="bx-translator-eyebrow">Исходник</p><p className="mt-1 text-xs text-bx-muted">{sourceWordCount.toLocaleString('ru-RU')} слов · {sourceText.length.toLocaleString('ru-RU')} из {MAX_TRANSLATION_CHARS.toLocaleString('ru-RU')} знаков</p></div><button type="button" onClick={() => void reset()} disabled={!sourceText && !fileName} className={`${secondaryActionClass} disabled:cursor-not-allowed disabled:opacity-40`}><Icon name="trash" className="h-4 w-4" />Очистить</button></div>
             <div className="flex flex-1 flex-col p-4 sm:p-5">
               <label className={`bx-translator-dropzone ${extracting ? 'is-loading' : ''}`} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); const file = event.dataTransfer.files[0]; if (file) void handleFile(file) }}>
                 <input ref={fileInputRef} type="file" accept=".pdf,.docx,.xlsx,.xls,.txt,.csv,.json,.xml" className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (file) void handleFile(file) }} />
@@ -431,6 +439,8 @@ export default function Translator() {
           </>}
       </Sheet>
     </div>
+    {confirmationDialog}
+    </>
   )
 }
 

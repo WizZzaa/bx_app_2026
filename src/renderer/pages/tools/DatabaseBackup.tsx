@@ -7,6 +7,7 @@ import { usePlan } from '../../lib/plan'
 import { TARIFF_MATRIX } from '../../../shared/tariffs'
 import type { BackupResult, DeepCheckResult, RestoreResult } from '../../../shared/types'
 import type { BackupDatabaseConfig, BackupHistoryEntry, BackupScheduleConfig } from '../../../main/services/onecBackupScheduler'
+import { useConfirmationDialog } from '../../components/ui/useConfirmationDialog'
 
 const EMPTY_CONFIG: BackupScheduleConfig = { version: 2, databaseLimit: 0, databases: [] }
 
@@ -35,6 +36,7 @@ function nextExecution(database: BackupDatabaseConfig, entitled = true): string 
 
 export default function DatabaseBackup() {
   const { plan, loading: planLoading } = usePlan()
+  const { confirm, confirmationDialog } = useConfirmationDialog()
   const databaseLimit = TARIFF_MATRIX[plan].oneCBackupBases
   const [config, setConfig] = useState<BackupScheduleConfig>(EMPTY_CONFIG)
   const [selectedId, setSelectedId] = useState('')
@@ -140,7 +142,12 @@ export default function DatabaseBackup() {
 
   async function removeDatabase() {
     if (!selected) return
-    if (!window.confirm(`Убрать «${selected.name}» из BX? Сама база и все созданные копии останутся на диске.`)) return
+    if (!await confirm({
+      title: `Убрать «${selected.name}» из BX?`,
+      description: 'Запись исчезнет из BX, но сама база 1С и все созданные копии останутся на диске.',
+      confirmLabel: 'Убрать из BX',
+      tone: 'destructive',
+    })) return
     const databases = config.databases.filter(item => item.id !== selected.id)
     if (await persist({ ...config, databases })) setSelectedId(databases[0]?.id || '')
   }
@@ -209,7 +216,12 @@ export default function DatabaseBackup() {
 
   async function runRestore() {
     if (!selected || !restoreSource || !restoreTarget || !canOperate) return
-    if (!window.confirm(`Восстановить рабочую базу\n${restoreTarget}\n\nиз копии\n${restoreSource}?\n\nBX сначала создаст и проверит отдельную страховочную копию текущей базы. Закройте 1С перед продолжением.`)) return
+    if (!await confirm({
+      title: 'Восстановить рабочую базу?',
+      description: `Рабочая база:\n${restoreTarget}\n\nКопия:\n${restoreSource}\n\nBX сначала создаст и проверит страховочную копию текущей базы. Закройте 1С перед продолжением.`,
+      confirmLabel: 'Проверить и восстановить',
+      tone: 'destructive',
+    })) return
     setRestoring(true)
     let restored: RestoreResult
     try {
@@ -245,7 +257,11 @@ export default function DatabaseBackup() {
 
   async function runDeepCheck() {
     if (!selected?.sourceFile || !selected.onecExecutablePath || !deepSource || !canOperate) return
-    if (!window.confirm(`Глубоко проверить резервную копию\n${deepSource}\n\nBX создаст отдельную временную копию и запустит 1С Designer только с параметром -TestOnly. Рабочая база\n${selected.sourceFile}\nне будет передана процессу. Проверка может занять до 30 минут. Закройте все процессы 1С.`)) return
+    if (!await confirm({
+      title: 'Запустить глубокую проверку копии?',
+      description: `Проверяемая копия:\n${deepSource}\n\nBX создаст временную копию и запустит 1С Designer только с параметром -TestOnly. Рабочая база ${selected.sourceFile} не будет передана процессу. Проверка может занять до 30 минут. Закройте все процессы 1С.`,
+      confirmLabel: 'Запустить безопасный тест',
+    })) return
     setDeepRunning(true)
     let checked: DeepCheckResult
     try {
@@ -268,6 +284,7 @@ export default function DatabaseBackup() {
   const rows = useMemo(() => config.databases.map((database, index) => ({ database, index, status: databaseStatus(database, index < databaseLimit) })), [config.databases, databaseLimit])
 
   return (
+    <>
     <Card title="Резервные копии баз 1С" icon="💾" description="Локальные копии остаются только в выбранных папках и никогда не загружаются на сервер BX.">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-bx-border bg-bx-bg p-4">
@@ -315,5 +332,7 @@ export default function DatabaseBackup() {
       </div>
       {paywall && <PaywallModal feature={databaseLimit === 0 ? 'Резервные копии баз 1С — Standard или Premium' : 'Дополнительные базы 1С — до пяти в Premium'} onClose={() => setPaywall(false)} />}
     </Card>
+    {confirmationDialog}
+    </>
   )
 }

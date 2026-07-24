@@ -180,25 +180,32 @@ export default function NetworkChecker() {
   };
 
   const handleDeleteSite = (id: string) => {
-    if (confirm('Удалить этот сервис из списка проверки?')) {
-      const updated = targets.filter(t => t.id !== id);
-      setTargets(updated);
-      saveSites(updated);
-      toast.success('Сервис удален');
-    }
+    const target = targets.find(item => item.id === id);
+    if (!target) return;
+    const updated = targets.filter(t => t.id !== id);
+    setTargets(updated);
+    saveSites(updated);
+    toast.undo('Сервис удалён из мониторинга', () => {
+      const restored = [...updated, target];
+      setTargets(restored);
+      saveSites(restored);
+    });
   };
 
   const handleResetToDefault = () => {
-    if (confirm('Сбросить все настройки к исходным госсайтам? Все ваши добавленные сайты будут удалены.')) {
-      setTargets(DEFAULT_SITES);
-      saveSites(DEFAULT_SITES);
-      toast.success('Настройки сброшены к исходным');
-    }
+    const previous = targets;
+    setTargets(DEFAULT_SITES);
+    saveSites(DEFAULT_SITES);
+    toast.undo('Исходный список восстановлен', () => {
+      setTargets(previous);
+      saveSites(previous);
+    });
   };
 
   const failedCount = results.filter(r => r.urlOk === false || (r.loginUrl && r.loginOk === false)).length;
 
   return (
+    <>
     <div className="space-y-4 text-bx-text text-xs font-sans">
       
       {/* Шапка проверки сети */}
@@ -401,5 +408,6 @@ export default function NetworkChecker() {
         </div>
       )}
     </div>
+    </>
   );
 }

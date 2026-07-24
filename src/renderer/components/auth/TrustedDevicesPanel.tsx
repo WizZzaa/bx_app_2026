@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { listMyDevices, revokeDevice, type RegisteredDevice } from '../../lib/auth/device'
+import { useConfirmationDialog } from '../ui/useConfirmationDialog'
 
 export default function TrustedDevicesPanel() {
+  const { confirm, confirmationDialog } = useConfirmationDialog()
   const [devices, setDevices] = useState<RegisteredDevice[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -22,7 +24,12 @@ export default function TrustedDevicesPanel() {
   useEffect(() => { void load() }, [load])
 
   const revoke = async (device: RegisteredDevice) => {
-    if (device.current || !window.confirm(`Завершить сеанс «${device.label}»?`)) return
+    if (device.current || !await confirm({
+      title: 'Завершить сеанс?',
+      description: `Устройство «${device.label}» больше не сможет обновлять токен. Уже выданный короткий токен может действовать до истечения.`,
+      confirmLabel: 'Завершить сеанс',
+      tone: 'destructive',
+    })) return
     setBusy(device.id)
     setError(null)
     try {
@@ -36,6 +43,7 @@ export default function TrustedDevicesPanel() {
   }
 
   return (
+    <>
     <section className="rounded-2xl border border-bx-border bg-bx-surface shadow-sm">
       <div className="border-b border-bx-border p-5">
         <h3 className="text-sm font-black">Доверенные устройства</h3>
@@ -70,5 +78,7 @@ export default function TrustedDevicesPanel() {
         </div>
       )}
     </section>
+    {confirmationDialog}
+    </>
   )
 }

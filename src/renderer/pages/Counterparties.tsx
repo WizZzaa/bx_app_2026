@@ -25,6 +25,7 @@ import {
   saveCompanyDetails,
   type CompanyDetailsSnapshot,
 } from '../lib/organizationInsights'
+import { useConfirmationDialog } from '../components/ui/useConfirmationDialog'
 
 type OrganizationView = 'companies' | 'counterparties' | 'attention'
 
@@ -42,6 +43,7 @@ export default function Counterparties() {
   const { active, companies, removeCompany, setActive, startCompanyCreation, startCompanyEdit } = useCompany()
   const { counterparties, loading, add, update, remove } = useCounterparties(active?.id ?? null)
   const toast = useToast()
+  const { confirm, confirmationDialog } = useConfirmationDialog()
   const [view, setView] = useState<OrganizationView>('companies')
   const [search, setSearch] = useState('')
   const [creating, setCreating] = useState(false)
@@ -145,7 +147,11 @@ export default function Counterparties() {
 
   async function deleteSelectedCompany() {
     if (!selectedCompany) return
-    const confirmed = window.confirm(`Архивировать компанию «${selectedCompany.name}»? Связанные документы, задачи и история сохранятся.`)
+    const confirmed = await confirm({
+      title: 'Архивировать компанию?',
+      description: `«${selectedCompany.name}» исчезнет из активного списка. Связанные документы, задачи и история сохранятся.`,
+      confirmLabel: 'Перенести в архив',
+    })
     if (!confirmed) return
     await removeCompany(selectedCompany.id)
     toast.info('Компания перенесена в архив')
@@ -158,14 +164,19 @@ export default function Counterparties() {
     <ResourceNavItem icon="alert" label="Требуют внимания" count={attentionCount} active={view === 'attention'} onClick={() => { setView('attention'); navigate('/counterparties') }} />
   </ResourceSidebar>
 
-  if (selectedCompany) return <CompanyDetail company={selectedCompany} details={details} completion={companyDetailsCompletion(details)} onBack={() => navigate('/counterparties')} onEdit={() => startCompanyEdit(selectedCompany)} onChange={changeCompanyDetail} onDelete={() => void deleteSelectedCompany()} onNavigate={navigate} />
+  if (selectedCompany) return <><CompanyDetail company={selectedCompany} details={details} completion={companyDetailsCompletion(details)} onBack={() => navigate('/counterparties')} onEdit={() => startCompanyEdit(selectedCompany)} onChange={changeCompanyDetail} onDelete={() => void deleteSelectedCompany()} onNavigate={navigate} />{confirmationDialog}</>
 
-  if (selectedCounterparty || creating) return <CounterpartyDetail counterparty={selectedCounterparty} form={form} saving={saving} onBack={() => { setCreating(false); navigate('/counterparties') }} onChange={changeCounterpartyField} onSave={() => void saveCounterparty()} onDelete={selectedCounterparty ? async () => {
-    if (!window.confirm(`Удалить контрагента «${selectedCounterparty.name}»?`)) return
+  if (selectedCounterparty || creating) return <><CounterpartyDetail counterparty={selectedCounterparty} form={form} saving={saving} onBack={() => { setCreating(false); navigate('/counterparties') }} onChange={changeCounterpartyField} onSave={() => void saveCounterparty()} onDelete={selectedCounterparty ? async () => {
+    if (!await confirm({
+      title: 'Удалить контрагента?',
+      description: `«${selectedCounterparty.name}» будет удалён из справочника организаций.`,
+      confirmLabel: 'Удалить контрагента',
+      tone: 'destructive',
+    })) return
     await remove(selectedCounterparty.id)
     toast.info('Контрагент удалён')
     navigate('/counterparties')
-  } : undefined} onNavigate={navigate} />
+  } : undefined} onNavigate={navigate} />{confirmationDialog}</>
 
   const showingCompanies = view === 'companies'
   return <div className="bx-a6-organizations contents"><ResourceLayout sidebar={sidebar}>

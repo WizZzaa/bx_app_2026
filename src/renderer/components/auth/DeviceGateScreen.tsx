@@ -5,6 +5,7 @@ import {
   type DeviceRegistrationStatus,
   type RegisteredDevice,
 } from '../../lib/auth/device'
+import { useConfirmationDialog } from '../ui/useConfirmationDialog'
 
 type BlockedDeviceStatus = Exclude<DeviceRegistrationStatus, 'trusted'>
 
@@ -36,6 +37,7 @@ export default function DeviceGateScreen({
   onRetry: () => void
   onSignOut: () => void
 }) {
+  const { confirm, confirmationDialog } = useConfirmationDialog()
   const [devices, setDevices] = useState<RegisteredDevice[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -51,7 +53,12 @@ export default function DeviceGateScreen({
   }, [])
 
   const remove = async (device: RegisteredDevice) => {
-    if (device.current || !window.confirm(`Завершить сеанс «${device.label}»?`)) return
+    if (device.current || !await confirm({
+      title: 'Освободить место для этого устройства?',
+      description: `Сеанс «${device.label}» будет завершён и больше не сможет обновлять токен.`,
+      confirmLabel: 'Завершить сеанс',
+      tone: 'destructive',
+    })) return
     setBusy(device.id)
     setError(null)
     try {
@@ -70,6 +77,7 @@ export default function DeviceGateScreen({
   const activeDevices = devices.filter(device => !device.revokedAt)
 
   return (
+    <>
     <div className="bx-auth-screen">
       <div className="bx-auth-screen__aura bx-auth-screen__aura--start" aria-hidden="true" />
       <div className="bx-auth-screen__aura bx-auth-screen__aura--end" aria-hidden="true" />
@@ -108,5 +116,7 @@ export default function DeviceGateScreen({
         </div>
       </main>
     </div>
+    {confirmationDialog}
+    </>
   )
 }

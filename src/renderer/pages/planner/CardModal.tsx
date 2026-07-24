@@ -5,6 +5,8 @@ import type { BoardColumn } from './useBoards';
 import { uid } from '../../lib/uid';
 import { supabase } from '../../lib/db/supabase';
 import Icon from '../../lib/ui/Icon';
+import { useConfirmationDialog } from '../../components/ui/useConfirmationDialog';
+import { usePromptDialog } from '../../components/ui/usePromptDialog';
 import './PlannerA2.css';
 
 interface Props {
@@ -71,6 +73,8 @@ function fmtDateTime(iso: string): string {
 }
 
 export default function CardModal({ card, columns, onUpdate, onArchive, onDelete, onDuplicate, onClose, loadComments, addComment, removeComment }: Props) {
+  const { confirm, confirmationDialog } = useConfirmationDialog();
+  const { prompt, promptDialog } = usePromptDialog();
   const [title,       setTitle]       = useState(card.title);
   const [description, setDescription] = useState(card.description ?? '');
   const [priority,    setPriority]    = useState(card.priority);
@@ -97,7 +101,7 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
     }
   }, []);
 
-  const handleApplyTemplate = (val: string) => {
+  const handleApplyTemplate = async (val: string) => {
     let itemsToApply: string[] = [];
     if (val in BUILT_IN_CHECKLIST_TEMPLATES) {
       itemsToApply = BUILT_IN_CHECKLIST_TEMPLATES[val].items;
@@ -108,9 +112,12 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
 
     if (!itemsToApply.length) return;
 
-    const replace = checklist.length > 0 && window.confirm(
-      'Заменить существующие пункты чек-листа? (ОК — заменить, Отмена — добавить к текущим)'
-    );
+    const replace = checklist.length > 0 && await confirm({
+      title: 'Как добавить шаблон чек-листа?',
+      description: 'Можно заменить текущие пункты или сохранить их и добавить новые ниже.',
+      confirmLabel: 'Заменить текущие',
+      cancelLabel: 'Добавить к текущим',
+    });
 
     const newItems = itemsToApply.map(text => ({
       id: uid(),
@@ -125,9 +132,16 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
     }
   };
 
-  const handleSaveAsTemplate = () => {
+  const handleSaveAsTemplate = async () => {
     if (!checklist.length) return;
-    const name = window.prompt('Введите название для вашего шаблона:');
+    const name = await prompt({
+      title: 'Сохранить чек-лист как шаблон',
+      description: 'Шаблон останется на этом устройстве и будет доступен в списке чек-листов.',
+      label: 'Название шаблона',
+      placeholder: 'Например, закрытие недели',
+      submitLabel: 'Сохранить шаблон',
+      maxLength: 80,
+    });
     if (!name || !name.trim()) return;
 
     const newTpl = {
@@ -177,7 +191,7 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
 
   // Escape to close
   useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') save(); }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape' && !e.defaultPrevented) save(); }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
@@ -279,7 +293,9 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
 
   const inputCls = 'bx-sheet-input w-full text-sm';
 
-  return createPortal(
+  return (
+    <>
+    {createPortal(
     <div className="bx-sheet-scrim fixed inset-0 z-[120] flex items-end justify-center overflow-y-auto sm:items-center sm:p-4"
       onClick={e => { if (e.target === e.currentTarget) save(); }}>
       <section role="dialog" aria-modal="true" aria-labelledby="card-modal-title" className="bx-sheet bx-card-sheet my-auto w-full max-w-3xl overflow-hidden">
@@ -315,7 +331,7 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
                   <label className="text-xs font-medium text-bx-muted">☑️ Чек-лист</label>
                   <select
                     value=""
-                    onChange={e => handleApplyTemplate(e.target.value)}
+                    onChange={e => void handleApplyTemplate(e.target.value)}
                     className="bg-bx-surface-2 text-bx-muted hover:text-bx-text text-[10px] rounded border border-bx-border-2 px-1.5 py-0.5 focus:outline-none cursor-pointer"
                   >
                     <option value="" disabled>✨ Шаблоны...</option>
@@ -336,7 +352,7 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
                 <div className="flex items-center gap-2">
                   {checklist.length > 0 && (
                     <button
-                      onClick={handleSaveAsTemplate}
+                      onClick={() => void handleSaveAsTemplate()}
                       className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
                       title="Сохранить текущий чек-лист как шаблон"
                     >
@@ -502,5 +518,9 @@ export default function CardModal({ card, columns, onUpdate, onArchive, onDelete
       </section>
     </div>,
     document.body,
+    )}
+    {confirmationDialog}
+    {promptDialog}
+    </>
   );
 }

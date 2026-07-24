@@ -1,7 +1,7 @@
 # Apple-style редизайн BX App — маршрут от оболочки до последней формы
 
 Дата начала: 23 июля 2026 года
-Статус: A0–A8 UI завершены; A9 foundation и системные overlay завершены, продолжается поэтапная миграция оставшихся route-local форм. Для support-вложений отдельно требуется серверный контракт.
+Статус: A0–A8 UI завершены; A9 foundation, системные overlay и миграция browser alert/confirm/prompt завершены, продолжается поэтапная миграция оставшихся route-local форм. Для support-вложений отдельно требуется серверный контракт.
 
 ## Неподвижные границы
 
@@ -122,11 +122,14 @@
 - [x] Skeleton, empty, offline, permission, limit, stale и fatal error.
 - [ ] Одинаковые focus ring, destructive hierarchy и undo policy.
   - [x] Общий focus ring и safe-first destructive confirmation применены к документам; календарное context menu получило единый keyboard-контракт.
-  - [ ] Осталось заменить route-local `window.confirm`/`window.alert` и зафиксировать undo там, где операция технически обратима.
+  - [x] Все продуктовые `window.confirm`/`window.alert`/`window.prompt` заменены: необратимые операции используют общий safe-first dialog, обратимые локальные удаления — доступный Undo toast на 6 секунд.
+  - [x] Общий текстовый prompt использует visible label, native Enter-submit, focus trap, Escape и возврат фокуса; применён к шаблонам чек-листа Планировщика.
 - [x] Desktop `1280×720` и mobile `390×844`: upload sheet, system dialog, 44px targets и horizontal overflow проверены в живом browser preview.
-- [x] App typecheck, lint, `397/397` тестов, production build, bundle `346,8 KiB gzip` и Motion Mini `3,9 KiB` — PASS.
+- [x] App typecheck, lint, `401/401` тест, production build, bundle `347,7 KiB gzip` и Motion Mini `3,9 KiB` — PASS.
 - [x] A9-слои вынесены в demand-loaded chunks; лимит bundle не повышался, initial closure уменьшен с `349,7` до `346,8 KiB gzip`.
-- [x] Graphify обновлён: `2138` узлов, `4874` связей, `120` сообществ.
+- [x] Confirmation и Prompt загружаются только по требованию; после завершения legacy-миграции initial closure остаётся ниже лимита — `347,7 KiB gzip`.
+- [x] Browser QA 2.83.0: desktop `1280×720` и mobile `390×844`, translator confirmation `480×321` / mobile bottom sheet `390×353`, все dialog actions `44px`, horizontal overflow `0`; отмена сохраняет исходник и результат, Undo восстанавливает локальную заметку.
+- [x] Graphify обновлён после пакета 2.83.0: `2156` узлов, `4935` связей, `125` сообществ; результат сохранён как useful memory.
 - [x] Supabase schema/data, RPC/RLS, Edge Functions, Secrets, payment и пользовательские записи не менялись.
 
 ## A10 — Финальная приёмка

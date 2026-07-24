@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ConfirmationDialog } from './ConfirmationDialog'
 import { PopoverMenu } from './PopoverMenu'
+import { PromptDialog } from './PromptDialog'
 
 describe('A9 overlays', () => {
   beforeEach(() => {
@@ -50,5 +51,24 @@ describe('A9 overlays', () => {
     expect(screen.getByRole('menuitem', { name: 'Второе' })).toBe(document.activeElement)
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it('keeps a text prompt labelled and disables an empty submission', () => {
+    const onSubmit = vi.fn()
+    render(
+      <PromptDialog
+        open
+        title="Сохранить шаблон"
+        label="Название шаблона"
+        value=""
+        submitLabel="Сохранить"
+        onValueChange={() => undefined}
+        onSubmit={onSubmit}
+        onClose={() => undefined}
+      />,
+    )
+
+    expect(screen.getByRole('textbox', { name: /Название шаблона/ })).toBe(document.activeElement)
+    expect((screen.getByRole('button', { name: 'Сохранить' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })
