@@ -382,6 +382,7 @@
 
 :root[data-bx-design='d1'] .bx-a6-sheet {
   width: min(100%, 44rem);
+  scroll-padding-block: 9rem 5rem;
   border-color: rgb(var(--bx-brand-rgb) / 0.2);
   background: var(--bx-a6-material-heavy);
 }
@@ -659,22 +660,21 @@
   white-space: nowrap;
 }
 
-:root[data-bx-design='d1'] .bx-a6-import-list__main label {
+:root[data-bx-design='d1'] .bx-a6-import-category {
   display: grid;
   grid-template-columns: auto minmax(10rem, 16rem);
   gap: var(--bx-space-2);
   align-items: center;
+}
+
+:root[data-bx-design='d1'] .bx-a6-import-category .bx-d1-form-field__label {
   color: var(--bx-text-secondary);
   font-size: var(--bx-font-size-xs);
 }
 
-:root[data-bx-design='d1'] .bx-a6-import-list__main select {
+:root[data-bx-design='d1'] .bx-a6-import-category .bx-d1-control {
   min-height: 2.4rem;
-  border: 1px solid var(--bx-border);
-  border-radius: var(--bx-radius-sm);
   background: var(--bx-surface-subtle);
-  color: var(--bx-text-primary);
-  font: inherit;
   font-size: var(--bx-font-size-xs);
 }
 
@@ -878,7 +878,7 @@
     gap: var(--bx-space-1);
   }
 
-  :root[data-bx-design='d1'] .bx-a6-import-list__main label {
+  :root[data-bx-design='d1'] .bx-a6-import-category {
     grid-template-columns: minmax(0, 1fr);
   }
 

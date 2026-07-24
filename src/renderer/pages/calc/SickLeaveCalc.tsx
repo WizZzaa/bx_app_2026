@@ -3,6 +3,7 @@ import CalcResult from './CalcResult';
 import MoneyInput from './MoneyInput';
 import { takeCalcPrefill, toMoneyString } from './prefill';
 import { useRegulatoryNumber } from '../../lib/calculatorRegulatory';
+import { Field } from '../../components/ui/FormControls';
 
 // Больничные РУз: % от среднего заработка в зависимости от стажа
 // Ст. 284 ТК РУз + Положение о порядке назначения пособий
@@ -62,17 +63,15 @@ export default function SickLeaveCalc() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
-          <label className="block text-xs text-bx-muted mb-1.5">Совокупный доход за 12 месяцев (UZS)</label>
-          <MoneyInput value={annualIncome} onChange={setAnnualIncome} big autoFocus />
-        </div>
-        <div>
-          <label className="block text-xs text-bx-muted mb-1.5">Дней болезни (раб.)</label>
-          <input
-            type="number" value={sickDays} onChange={e => setSickDays(e.target.value)} min="1"
-            className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm"
-          />
-        </div>
+        <MoneyInput
+          label="Совокупный доход за 12 месяцев"
+          value={annualIncome}
+          onChange={setAnnualIncome}
+          big
+          autoFocus
+          containerClassName="col-span-2"
+        />
+        <Field label="Дней болезни (раб.)" type="number" value={sickDays} onChange={e => setSickDays(e.target.value)} min="1" />
         <div className="flex flex-col justify-end">
           <p className="text-xs text-bx-muted">МРОТ (версия ставки): {fmt(MROT)} UZS</p>
           <p className="text-xs text-bx-muted">Коэфф. стажа: {rule.pct}%</p>

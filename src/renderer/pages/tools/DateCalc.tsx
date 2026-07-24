@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UZ_HOLIDAYS, holidayName as isHoliday, isWorkday } from '../../data/uzHolidays';
 import { todayISO } from '../../lib/dates';
+import { DateField, Field } from '../../components/ui/FormControls';
 
 function addCalendarDays(base: Date, n: number): Date {
   const d = new Date(base);
@@ -98,10 +99,10 @@ export default function DateCalc() {
 
   return (
     <div className="space-y-5">
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Режим калькулятора дат">
         {MODES.map(m => (
-          <button key={m.id} onClick={() => setMode(m.id)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${mode === m.id ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}>
+          <button type="button" key={m.id} onClick={() => setMode(m.id)} aria-pressed={mode === m.id}
+            className={`min-h-11 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${mode === m.id ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}>
             {m.label}
           </button>
         ))}
@@ -111,20 +112,12 @@ export default function DateCalc() {
       {mode === 'diff' && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-bx-muted mb-1.5">Начальная дата</label>
-              <input type="date" value={date1} onChange={e => setDate1(e.target.value)}
-                className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-bx-muted mb-1.5">Конечная дата</label>
-              <input type="date" value={date2} onChange={e => setDate2(e.target.value)}
-                className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
-            </div>
+            <DateField label="Начальная дата" value={date1} onChange={e => setDate1(e.target.value)} />
+            <DateField label="Конечная дата" value={date2} onChange={e => setDate2(e.target.value)} />
           </div>
           <div className="flex gap-2">
-            <button onClick={() => { setDate1(today); }}
-              className="text-xs px-2.5 py-1 bg-bx-surface-2 text-bx-muted hover:text-bx-text rounded-lg transition-colors">
+            <button type="button" onClick={() => { setDate1(today); }}
+              className="min-h-11 rounded-lg bg-bx-surface-2 px-3 py-2 text-xs text-bx-muted transition-colors hover:text-bx-text">
               Сегодня →
             </button>
           </div>
@@ -145,35 +138,26 @@ export default function DateCalc() {
       {mode === 'add' && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-bx-muted mb-1.5">Начальная дата</label>
-              <input type="date" value={baseDate} onChange={e => setBaseDate(e.target.value)}
-                className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-bx-muted mb-1.5">Количество дней</label>
-              <input type="number" value={addN} onChange={e => setAddN(e.target.value)}
-                placeholder="30"
-                className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
-            </div>
+            <DateField label="Начальная дата" value={baseDate} onChange={e => setBaseDate(e.target.value)} />
+            <Field label="Количество дней" type="number" value={addN} onChange={e => setAddN(e.target.value)} placeholder="30" />
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Тип прибавляемых дней">
             <span className="text-xs text-bx-muted self-center">Тип:</span>
             {(['calendar', 'work'] as const).map(t => (
-              <button key={t} onClick={() => setAddMode(t)}
-                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${addMode === t ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}>
+              <button type="button" key={t} onClick={() => setAddMode(t)} aria-pressed={addMode === t}
+                className={`min-h-11 rounded-lg px-3 py-2 text-xs transition-colors ${addMode === t ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}>
                 {t === 'calendar' ? 'Календарные' : 'Рабочие (РУз)'}
               </button>
             ))}
-            <button onClick={() => setBaseDate(today)} className="ml-auto text-xs px-2.5 py-1 bg-bx-surface-2 text-bx-muted hover:text-bx-text rounded-lg transition-colors">
+            <button type="button" onClick={() => setBaseDate(today)} className="ml-auto min-h-11 rounded-lg bg-bx-surface-2 px-3 py-2 text-xs text-bx-muted transition-colors hover:text-bx-text">
               Сегодня
             </button>
           </div>
           {/* Быстрые шаблоны */}
           <div className="flex gap-2 flex-wrap">
             {[7, 10, 14, 30, 45, 60, 90].map(n => (
-              <button key={n} onClick={() => setAddN(String(n))}
-                className={`px-2 py-1 text-[11px] rounded transition-colors ${addN === String(n) ? 'bg-blue-600/30 text-blue-400' : 'bg-bx-bg text-bx-muted hover:text-bx-muted'}`}>
+              <button type="button" key={n} onClick={() => setAddN(String(n))}
+                className={`min-h-11 rounded-lg px-3 py-2 text-[11px] transition-colors ${addN === String(n) ? 'bg-blue-600/30 text-blue-700 dark:text-blue-300' : 'bg-bx-bg text-bx-muted hover:text-bx-muted'}`}>
                 +{n}
               </button>
             ))}
@@ -196,12 +180,8 @@ export default function DateCalc() {
       {/* ── Проверить дату ── */}
       {mode === 'check' && (
         <div className="space-y-4">
-          <div>
-            <label className="block text-xs text-bx-muted mb-1.5">Дата для проверки</label>
-            <input type="date" value={checkDate} onChange={e => setCheckDate(e.target.value)}
-              className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
-          </div>
-          <button onClick={() => setCheckDate(today)} className="text-xs px-2.5 py-1 bg-bx-surface-2 text-bx-muted hover:text-bx-text rounded-lg transition-colors">
+          <DateField label="Дата для проверки" value={checkDate} onChange={e => setCheckDate(e.target.value)} />
+          <button type="button" onClick={() => setCheckDate(today)} className="min-h-11 rounded-lg bg-bx-surface-2 px-3 py-2 text-xs text-bx-muted transition-colors hover:text-bx-text">
             Сегодня
           </button>
           {checkResult && checkDate && (

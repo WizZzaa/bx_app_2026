@@ -3,6 +3,7 @@ import CalcResult from './CalcResult'
 import MoneyInput from './MoneyInput'
 import { regulatoryNumber } from '../../data/calculatorRegulatoryValues'
 import { useRegulatoryNumber } from '../../lib/calculatorRegulatory'
+import { Select } from '../../components/ui/FormControls'
 
 export type TaxRegime = 'turnover' | 'vat6' | 'general'
 
@@ -92,11 +93,7 @@ export function calculateRegimeComparison(input: RegimeInputs, rates: RegimeRate
 }
 
 const Field = ({ label, hint, value, onChange }: { label: string; hint: string; value: string; onChange: (value: string) => void }) => (
-  <label className="block">
-    <span className="text-xs font-bold text-bx-text">{label}</span>
-    <span className="mt-1 block text-[10px] leading-relaxed text-bx-muted">{hint}</span>
-    <span className="mt-2 block"><MoneyInput value={value} onChange={onChange} /></span>
-  </label>
+  <MoneyInput label={label} hint={hint} value={value} onChange={onChange} currency="млн сум" />
 )
 
 export default function RegimeCompareCalc() {
@@ -149,10 +146,10 @@ export default function RegimeCompareCalc() {
       <section className="rounded-2xl border border-bx-border bg-bx-surface p-5" aria-labelledby="regime-profile-title">
         <div className="mb-4"><p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-blue-700 dark:text-blue-300">Шаг 1</p><h3 id="regime-profile-title" className="mt-1 text-sm font-black text-bx-text">Профиль предприятия</h3></div>
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="block"><span className="text-xs font-bold text-bx-text">Текущий режим</span><select value={current} onChange={event => setCurrent(event.target.value as TaxRegime)} className="mt-2 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-sm font-semibold text-bx-text"><option value="turnover">Налог с оборота</option><option value="vat6">Упрощённый НДС {VAT_6_PERCENT}%</option><option value="general">Общий НДС {VAT_12_PERCENT}% + налог на прибыль</option></select></label>
-          <label className="block"><span className="text-xs font-bold text-bx-text">Сфера деятельности</span><select value={activity} onChange={event => setActivity(event.target.value as 'services' | 'production')} className="mt-2 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-sm font-semibold text-bx-text"><option value="services">Торговля, общепит или услуги</option><option value="production">Производство товаров</option></select><span className="mt-1 block text-[10px] leading-relaxed text-bx-muted">Для услуг используйте сценарии с НДС {VAT_6_PERCENT}%; для производства он отмечается как недоступный.</span></label>
-          <label className="block"><span className="text-xs font-bold text-bx-text">Ставка налога с оборота</span><select value={turnoverRate} onChange={event => setTurnoverRate(event.target.value)} className="mt-2 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-sm font-semibold text-bx-text"><option value={TURNOVER_TAX_PERCENT}>{TURNOVER_TAX_PERCENT}% — базовая</option><option value="1">1% — при подтверждённом праве</option><option value="2">2% — при подтверждённом праве</option></select><span className="mt-1 block text-[10px] leading-relaxed text-bx-muted">Выберите пониженную ставку только после подтверждения права на неё.</span></label>
-          <label className="block"><span className="text-xs font-bold text-bx-text">Месяц перехода на новый режим</span><select value={transitionMonth} onChange={event => setTransitionMonth(event.target.value)} className="mt-2 min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-sm font-semibold text-bx-text">{['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'].map((month, index) => <option key={month} value={index + 1}>{month} 2026</option>)}</select><span className="mt-1 block text-[10px] leading-relaxed text-bx-muted">Остаток года в сравнении считается пропорционально месяцам.</span></label>
+          <Select label="Текущий режим" value={current} onChange={event => setCurrent(event.target.value as TaxRegime)}><option value="turnover">Налог с оборота</option><option value="vat6">Упрощённый НДС {VAT_6_PERCENT}%</option><option value="general">Общий НДС {VAT_12_PERCENT}% + налог на прибыль</option></Select>
+          <Select label="Сфера деятельности" hint={`Для услуг используйте сценарии с НДС ${VAT_6_PERCENT}%; для производства он отмечается как недоступный.`} value={activity} onChange={event => setActivity(event.target.value as 'services' | 'production')}><option value="services">Торговля, общепит или услуги</option><option value="production">Производство товаров</option></Select>
+          <Select label="Ставка налога с оборота" hint="Выберите пониженную ставку только после подтверждения права на неё." value={turnoverRate} onChange={event => setTurnoverRate(event.target.value)}><option value={TURNOVER_TAX_PERCENT}>{TURNOVER_TAX_PERCENT}% — базовая</option><option value="1">1% — при подтверждённом праве</option><option value="2">2% — при подтверждённом праве</option></Select>
+          <Select label="Месяц перехода на новый режим" hint="Остаток года в сравнении считается пропорционально месяцам." value={transitionMonth} onChange={event => setTransitionMonth(event.target.value)}>{['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'].map((month, index) => <option key={month} value={index + 1}>{month} 2026</option>)}</Select>
         </div>
         <div className="mt-5 space-y-3 border-t border-bx-border pt-4">
           <Check checked={turnoverUnavailable} onChange={setTurnoverUnavailable} title="Основной вид деятельности исключает налог с оборота" text="Производство или продажа ювелирных изделий, лекарства, подакцизные товары, нефтепродукты, алкоголь, рынки, аудит и другие ограничения — отметьте после проверки статуса." />

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { validateBankAccount, getBankNameByMfo, BANKS_MFO } from '../../lib/validation';
+import { Field } from '../../components/ui/FormControls';
 
 // Проверка банковских реквизитов: р/с (20 цифр) и определение банка по МФО.
 // Ежедневная рутина бухгалтера при сверке платёжек.
@@ -25,25 +26,18 @@ export default function BankCheck() {
     <div className="space-y-5">
       {/* Расчётный счёт */}
       <div>
-        <label className="block text-xs text-bx-muted mb-1.5">Расчётный счёт (20 цифр)</label>
-        <input
+        <Field
+          label="Расчётный счёт"
+          hint={accState ? 'Формат верный: 20 цифр.' : 'Введите 20 цифр расчётного счёта без дополнительных символов.'}
+          error={accState === false ? (accClean.length !== 20 ? `Введено ${accClean.length} из 20 цифр.` : 'Неверный формат счёта.') : undefined}
           value={account}
           onChange={e => setAccount(e.target.value.replace(/[^\d\s]/g, '').slice(0, 25))}
           placeholder="2020 8000 9001 2345 6789"
           inputMode="numeric"
+          autoComplete="off"
           autoFocus
-          className={`w-full bg-bx-bg text-bx-text text-lg px-4 py-3 rounded-lg border focus:outline-none tabular-nums tracking-wide ${
-            accState === null ? 'border-bx-border-2 focus:border-blue-500/50'
-            : accState ? 'border-emerald-500/50' : 'border-red-500/50'
-          }`}
+          className="text-lg tabular-nums tracking-wide"
         />
-        {accState !== null && (
-          <p className={`text-xs mt-1.5 ${accState ? 'text-emerald-400' : 'text-red-400'}`}>
-            {accState
-              ? '✓ Формат верный: 20 цифр'
-              : `✗ ${accClean.length !== 20 ? `Введено ${accClean.length} из 20 цифр` : 'Неверный формат счёта'}`}
-          </p>
-        )}
         {accState && (
           <p className="text-[11px] text-bx-muted mt-1">
             Балансовый счёт: <span className="text-bx-text font-mono">{accClean.slice(0, 5)}</span> ·
@@ -55,19 +49,18 @@ export default function BankCheck() {
 
       {/* МФО → банк */}
       <div>
-        <label className="block text-xs text-bx-muted mb-1.5">МФО банка (5 цифр)</label>
-        <input
+        <Field
+          label="МФО банка"
+          hint={bank ? bank : 'Введите 5 цифр; название банка появится автоматически.'}
+          error={mfo.length === 5 && !bank ? 'Банк не найден в справочнике — проверьте МФО на cbu.uz.' : undefined}
           value={mfo}
           onChange={e => setMfo(e.target.value.replace(/\D/g, '').slice(0, 5))}
           placeholder="00377"
           inputMode="numeric"
-          className="w-full bg-bx-bg text-bx-text text-lg px-4 py-3 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 tabular-nums"
+          autoComplete="off"
+          maxLength={5}
+          className="text-lg tabular-nums"
         />
-        {mfo.length === 5 && (
-          <p className={`text-xs mt-1.5 ${bank ? 'text-emerald-400' : 'text-amber-400'}`}>
-            {bank ? `✓ ${bank}` : '⚠ Банк не найден в справочнике — проверьте МФО на cbu.uz'}
-          </p>
-        )}
       </div>
 
       {/* Справочник МФО */}
@@ -77,8 +70,8 @@ export default function BankCheck() {
         </div>
         <div className="divide-y divide-bx-border/60 max-h-72 overflow-y-auto">
           {Object.entries(BANKS_MFO).map(([code, name]) => (
-            <button key={code} onClick={() => copy(code, code)}
-              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-bx-surface-2 text-left transition-colors">
+            <button type="button" key={code} onClick={() => copy(code, code)}
+              className="flex min-h-11 w-full items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-bx-surface-2">
               <span className={`text-xs font-mono w-14 flex-shrink-0 ${copied === code ? 'text-emerald-400' : 'text-blue-400'}`}>
                 {copied === code ? '✓' : code}
               </span>

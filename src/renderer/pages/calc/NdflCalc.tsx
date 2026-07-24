@@ -37,10 +37,7 @@ export default function NdflCalc() {
         </button>
       </div>
 
-      <div>
-        <label className="block text-xs text-bx-muted mb-1.5">Начисленная зарплата (UZS)</label>
-        <MoneyInput value={gross} onChange={setGross} big autoFocus />
-      </div>
+      <MoneyInput label="Начисленная зарплата" value={gross} onChange={setGross} big autoFocus />
 
       <label className="flex items-center gap-2.5 cursor-pointer select-none">
         <input

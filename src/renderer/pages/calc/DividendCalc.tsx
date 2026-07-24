@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import CalcResult from './CalcResult';
 import MoneyInput from './MoneyInput';
 import { useRegulatoryNumber } from '../../lib/calculatorRegulatory';
+import { Field } from '../../components/ui/FormControls';
 
 // Дивиденды РУз: ст. 382 НК РУз
 // Резиденты: 5%  (физ. лица РУз)
@@ -42,23 +43,17 @@ export default function DividendCalc() {
         </button>
       </div>
 
-      <div>
-        <label className="block text-xs text-bx-muted mb-1.5">Сумма дивидендов (UZS)</label>
-        <MoneyInput value={amount} onChange={setAmount} big autoFocus />
-      </div>
+      <MoneyInput label="Сумма дивидендов" value={amount} onChange={setAmount} big autoFocus />
 
       {!resident && (
-        <div>
-          <label className="block text-xs text-bx-muted mb-1.5">Ставка по проверенному СИДН или НК (%)</label>
-          <input
+        <Field
+            label="Ставка по проверенному СИДН или НК (%)"
+            hint="BX не подбирает СИДН автоматически: страна, статус получателя и право на льготу требуют отдельной проверки."
             type="text"
             inputMode="decimal"
             value={nonresidentRate || String(NONRESIDENT_RATE)}
             onChange={e => setNonresidentRate(e.target.value)}
-            className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm"
           />
-          <p className="mt-1 text-[10px] text-bx-muted">BX не подбирает СИДН автоматически: страна, статус получателя и право на льготу требуют отдельной проверки.</p>
-        </div>
       )}
 
       <CalcResult

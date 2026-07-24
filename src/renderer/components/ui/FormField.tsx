@@ -40,7 +40,7 @@ export default function FormField({
         <span>{label}</span>
         {required
           ? <span className="bx-d1-form-field__required" aria-hidden="true">обязательно</span>
-          : optionalLabel && <span className="bx-d1-form-field__optional">{optionalLabel}</span>}
+          : optionalLabel && <span className="bx-d1-form-field__optional" aria-hidden="true">{optionalLabel}</span>}
       </label>
       {children({
         id: fieldId,

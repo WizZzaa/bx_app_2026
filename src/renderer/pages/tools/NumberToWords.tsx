@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { toWordsRu, toWordsUz } from '../../lib/numToWords';
+import Button from '../../components/ui/Button';
+import { MoneyField, Select } from '../../components/ui/FormControls';
+import Icon from '../../lib/ui/Icon';
 
 // ─── UI ─────────────────────────────────────────────────────────────────────
 
 const CURRENCIES = [
-  { id: 'sum', label: 'Сум / тийин (UZS)' },
-  { id: 'usd', label: 'Доллар / цент (USD)' },
-  { id: 'eur', label: 'Евро / цент (EUR)' },
-  { id: 'rub', label: 'Рубль / копейка (RUB)' },
+  { id: 'sum', code: 'UZS', label: 'Сум / тийин (UZS)' },
+  { id: 'usd', code: 'USD', label: 'Доллар / цент (USD)' },
+  { id: 'eur', code: 'EUR', label: 'Евро / цент (EUR)' },
+  { id: 'rub', code: 'RUB', label: 'Рубль / копейка (RUB)' },
 ];
 
 export default function NumberToWords() {
@@ -39,28 +42,18 @@ export default function NumberToWords() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
-          <label className="block text-xs text-bx-muted mb-1.5">Сумма (цифрами)</label>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={raw}
-            onChange={e => setRaw(e.target.value)}
-            placeholder="1 234 567,89"
-            className="w-full bg-bx-bg text-bx-text text-xl px-4 py-3 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 font-mono"
-          />
-        </div>
-        <div className="col-span-2">
-          <label className="block text-xs text-bx-muted mb-1.5">Валюта</label>
-          <div className="flex gap-2 flex-wrap">
-            {CURRENCIES.map(c => (
-              <button key={c.id} onClick={() => setCurrency(c.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${currency === c.id ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}>
-                {c.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <MoneyField
+          label="Сумма цифрами"
+          currency={CURRENCIES.find(item => item.id === currency)?.code}
+          value={raw}
+          onChange={event => setRaw(event.target.value)}
+          placeholder="1 234 567,89"
+          containerClassName="col-span-2"
+          className="text-lg"
+        />
+        <Select label="Валюта" value={currency} onChange={event => setCurrency(event.target.value)} containerClassName="col-span-2">
+          {CURRENCIES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+        </Select>
       </div>
 
       {ruText && (
@@ -85,9 +78,9 @@ export default function NumberToWords() {
           <p className="text-[10px] text-bx-muted uppercase tracking-widest font-semibold mb-1.5">Недавние суммы</p>
           <div className="flex flex-wrap gap-1.5">
             {history.map(h => (
-              <button key={h.raw + h.currency}
+              <button type="button" key={h.raw + h.currency}
                 onClick={() => { setRaw(h.raw); setCurrency(h.currency) }}
-                className="px-2.5 py-1 text-[11px] rounded-lg bg-bx-surface-2 text-bx-muted hover:text-bx-text hover:bg-bx-surface-2 transition-colors tabular-nums">
+                className="min-h-11 rounded-lg bg-bx-surface-2 px-3 py-2 text-[11px] tabular-nums text-bx-muted transition-colors hover:bg-bx-surface-2 hover:text-bx-text">
                 {h.raw}
               </button>
             ))}
@@ -97,7 +90,7 @@ export default function NumberToWords() {
 
       {!raw && (
         <div className="text-center py-8 text-bx-muted">
-          <p className="text-3xl mb-3">🔢</p>
+          <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-xl bg-bx-surface-2 text-bx-accent"><Icon name="calc" className="h-5 w-5" /></span>
           <p className="text-sm">Введите сумму — получите прописью</p>
           <p className="text-xs mt-1">Для договоров, актов, платёжных документов</p>
         </div>
@@ -113,10 +106,10 @@ function ResultBox({ lang, text, copied, onCopy }: { lang: string; text: string;
     <div className="bg-bx-bg rounded-xl border border-bx-border p-4">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-bx-muted">{lang}</span>
-        <button onClick={onCopy}
-          className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}>
+        <Button type="button" variant="secondary" onClick={onCopy}
+          className={copied ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : ''}>
           {copied ? '✓ Скопировано' : 'Копировать'}
-        </button>
+        </Button>
       </div>
       <p className="text-sm text-bx-text leading-relaxed">{text}</p>
     </div>

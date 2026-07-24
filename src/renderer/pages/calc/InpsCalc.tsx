@@ -54,12 +54,13 @@ const InpsCalc = () => {
       </div>
 
       {/* Ввод суммы */}
-      <div>
-        <label className="block text-xs text-bx-muted mb-1.5">
-          {direction === 'gross' ? 'Начисленная зарплата (ФОТ) (UZS)' : 'Сумма к получению «на руки» (UZS)'}
-        </label>
-        <MoneyInput value={amount} onChange={setAmount} big autoFocus />
-      </div>
+      <MoneyInput
+        label={direction === 'gross' ? 'Начисленная зарплата (ФОТ)' : 'Сумма к получению «на руки»'}
+        value={amount}
+        onChange={setAmount}
+        big
+        autoFocus
+      />
 
       <CalcResult
         title={`Индивидуальный накопительный пенсионный счет (ИНПС)`}

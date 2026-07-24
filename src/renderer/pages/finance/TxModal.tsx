@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Sheet } from '../../components/ui/Sheet'
+import Button from '../../components/ui/Button'
+import { DateField, Field, MoneyField, Select, Textarea } from '../../components/ui/FormControls'
 import type { BxTransaction, NewTransaction } from './useTransactions'
 import { useExchangeRates } from '../../lib/useExchangeRates'
 import { todayISO } from '../../lib/dates'
@@ -17,9 +19,8 @@ interface Props {
 
 const INCOME_CATS = ['Выручка', 'Услуги', 'Аванс от клиента', 'Проценты', 'Возврат', 'Прочее']
 const EXPENSE_CATS = ['Зарплата', 'Аренда', 'Налоги и взносы', 'Закупка товара', 'Материалы', 'Коммуналка', 'Связь / интернет', 'Банковские услуги', 'Транспорт', 'Реклама', 'Прочее']
-const field = 'bx-a6-field min-h-11 w-full rounded-xl border border-bx-border bg-bx-bg px-3 text-xs font-semibold text-bx-text outline-none'
-const label = 'block text-[10px] font-black uppercase tracking-wider text-bx-muted'
 const today = todayISO()
+type TxErrors = Partial<Record<'amount' | 'exchangeRate' | 'date', string>>
 
 export default function TxModal({ tx, defaultType, companyId, onSave, onDelete, onClose }: Props) {
   const isEdit = Boolean(tx)
@@ -34,6 +35,10 @@ export default function TxModal({ tx, defaultType, companyId, onSave, onDelete, 
   const [status, setStatus] = useState<'paid' | 'unpaid'>(tx?.status ?? 'unpaid')
   const [confirmDel, setConfirmDel] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<TxErrors>({})
+  const amountRef = useRef<HTMLInputElement>(null)
+  const exchangeRateRef = useRef<HTMLInputElement>(null)
+  const dateRef = useRef<HTMLInputElement>(null)
   const { rates } = useExchangeRates()
   const { counterparties } = useCounterparties(companyId)
 
@@ -44,7 +49,19 @@ export default function TxModal({ tx, defaultType, companyId, onSave, onDelete, 
 
   async function save() {
     const parsedAmount = Number.parseFloat(amount)
-    if (!parsedAmount || parsedAmount <= 0 || saving) return
+    const nextErrors: TxErrors = {}
+    if (!parsedAmount || parsedAmount <= 0) nextErrors.amount = 'Введите сумму больше нуля.'
+    if (currency !== 'UZS' && (!Number.isFinite(exchangeRate) || exchangeRate <= 0)) nextErrors.exchangeRate = 'Введите курс к суму больше нуля.'
+    if (!date) nextErrors.date = 'Укажите срок или дату оплаты.'
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length || saving) {
+      requestAnimationFrame(() => {
+        if (nextErrors.amount) amountRef.current?.focus()
+        else if (nextErrors.exchangeRate) exchangeRateRef.current?.focus()
+        else if (nextErrors.date) dateRef.current?.focus()
+      })
+      return
+    }
     setSaving(true)
     try {
       await onSave({
@@ -67,17 +84,17 @@ export default function TxModal({ tx, defaultType, companyId, onSave, onDelete, 
   const categories = type === 'income' ? INCOME_CATS : EXPENSE_CATS
   const deleteControl = isEdit && onDelete
     ? confirmDel
-      ? <div className="bx-a6-sheet__delete-confirm"><span>Удалить обязательство?</span><button type="button" onClick={onDelete}>Удалить</button><button type="button" onClick={() => setConfirmDel(false)}>Оставить</button></div>
-      : <button type="button" onClick={() => setConfirmDel(true)} className="bx-a6-sheet__destructive">Удалить</button>
+      ? <div className="bx-a6-sheet__delete-confirm"><span>Удалить обязательство?</span><Button type="button" variant="danger" onClick={onDelete}>Удалить</Button><Button type="button" variant="secondary" onClick={() => setConfirmDel(false)}>Оставить</Button></div>
+      : <Button type="button" variant="ghost" onClick={() => setConfirmDel(true)} className="bx-a6-sheet__destructive">Удалить</Button>
     : null
 
   const footer = (
     <div className="bx-a6-sheet__footer">
       <div className="bx-a6-sheet__footer-leading">{deleteControl}</div>
-      <button type="button" onClick={onClose} disabled={saving} className="bx-a6-button bx-a6-button--secondary">Отмена</button>
-      <button type="button" onClick={() => void save()} disabled={!Number.parseFloat(amount) || saving} className="bx-a6-button bx-a6-button--primary">
-        {saving ? 'Сохраняю…' : isEdit ? 'Сохранить изменения' : 'Добавить в контроль'}
-      </button>
+      <Button type="button" variant="secondary" onClick={onClose} disabled={saving} className="bx-a6-button bx-a6-button--secondary">Отмена</Button>
+      <Button type="submit" form="bx-transaction-form" loading={saving} className="bx-a6-button bx-a6-button--primary">
+        {isEdit ? 'Сохранить изменения' : 'Добавить в контроль'}
+      </Button>
     </div>
   )
 
@@ -91,7 +108,7 @@ export default function TxModal({ tx, defaultType, companyId, onSave, onDelete, 
       className="bx-a6-sheet bx-a6-transaction-sheet"
       footer={footer}
     >
-      <div className="bx-a6-form">
+      <form id="bx-transaction-form" className="bx-a6-form" onSubmit={event => { event.preventDefault(); void save() }} noValidate>
         <div className="bx-a6-segmented" role="group" aria-label="Направление расчёта">
           <button type="button" onClick={() => setType('income')} aria-pressed={type === 'income'}>
             <Icon name="trending" className="h-4 w-4" />Нам должны
@@ -104,48 +121,32 @@ export default function TxModal({ tx, defaultType, companyId, onSave, onDelete, 
         <section className="bx-a6-form__section" aria-labelledby="transaction-amount-title">
           <div className="bx-a6-form__heading"><span>1</span><div><h3 id="transaction-amount-title">Сумма и срок</h3><p>Основные данные для контроля.</p></div></div>
           <div className="grid grid-cols-2 gap-3">
-            <label className={label}>Сумма *
-              <input autoFocus type="number" value={amount} onChange={event => setAmount(event.target.value)} placeholder="0" className={`${field} mt-1.5`} onKeyDown={event => { if (event.key === 'Enter') void save() }} />
-            </label>
-            <label className={label}>Валюта
-              <select value={currency} onChange={event => handleCurrencyChange(event.target.value)} className={`${field} mt-1.5`}>
+            <MoneyField ref={amountRef} label="Сумма" required error={errors.amount} currency={currency} autoFocus value={amount} onChange={event => { setAmount(event.target.value); setErrors(current => ({ ...current, amount: undefined })) }} placeholder="0" />
+            <Select label="Валюта" value={currency} onChange={event => { handleCurrencyChange(event.target.value); setErrors(current => ({ ...current, exchangeRate: undefined })) }}>
                 <option value="UZS">UZS (сум)</option><option value="USD">USD ($)</option><option value="EUR">EUR (€)</option><option value="RUB">RUB (₽)</option>
-              </select>
-            </label>
+            </Select>
           </div>
           <div className={`grid gap-3 ${currency === 'UZS' ? '' : 'grid-cols-2'}`}>
-            {currency !== 'UZS' && <label className={label}>Курс к UZS
-              <input type="number" value={exchangeRate} onChange={event => setExchangeRate(Number(event.target.value))} placeholder="1" className={`${field} mt-1.5`} />
-            </label>}
-            <label className={label}>{status === 'unpaid' ? 'Срок оплаты' : 'Дата оплаты'}
-              <input type="date" value={date} onChange={event => setDate(event.target.value)} className={`${field} mt-1.5`} />
-            </label>
+            {currency !== 'UZS' && <Field ref={exchangeRateRef} label="Курс к UZS" required error={errors.exchangeRate} type="number" inputMode="decimal" min="0" step="any" value={exchangeRate} onChange={event => { setExchangeRate(Number(event.target.value)); setErrors(current => ({ ...current, exchangeRate: undefined })) }} placeholder="1" />}
+            <DateField ref={dateRef} label={status === 'unpaid' ? 'Срок оплаты' : 'Дата оплаты'} required error={errors.date} value={date} onChange={event => { setDate(event.target.value); setErrors(current => ({ ...current, date: undefined })) }} />
           </div>
         </section>
 
         <section className="bx-a6-form__section" aria-labelledby="transaction-details-title">
           <div className="bx-a6-form__heading"><span>2</span><div><h3 id="transaction-details-title">С кем и за что</h3><p>Выберите сохранённого контрагента или впишите нового.</p></div></div>
-          <label className={label}>Контрагент
-            <input list="transaction-counterparties" value={counterparty} onChange={event => setCounterparty(event.target.value)} placeholder="Название организации" className={`${field} mt-1.5`} />
-            <datalist id="transaction-counterparties">{counterparties.map(item => <option key={item.id} value={item.name}>{item.inn}</option>)}</datalist>
-          </label>
+          <Field label="Контрагент" list="transaction-counterparties" value={counterparty} onChange={event => setCounterparty(event.target.value)} placeholder="Название организации" autoComplete="organization" />
+          <datalist id="transaction-counterparties">{counterparties.map(item => <option key={item.id} value={item.name}>{item.inn}</option>)}</datalist>
           <div className="grid grid-cols-2 gap-3">
-            <label className={label}>Категория
-              <input list="tx-cats" value={category} onChange={event => setCategory(event.target.value)} placeholder="Выберите или впишите" className={`${field} mt-1.5`} />
-              <datalist id="tx-cats">{categories.map(item => <option key={item} value={item} />)}</datalist>
-            </label>
-            <label className={label}>Статус
-              <select value={status} onChange={event => setStatus(event.target.value as 'paid' | 'unpaid')} className={`${field} mt-1.5`}>
+            <Field label="Категория" list="tx-cats" value={category} onChange={event => setCategory(event.target.value)} placeholder="Выберите или впишите" />
+            <datalist id="tx-cats">{categories.map(item => <option key={item} value={item} />)}</datalist>
+            <Select label="Статус" value={status} onChange={event => setStatus(event.target.value as 'paid' | 'unpaid')}>
                 <option value="unpaid">{type === 'income' ? 'Ждём оплату' : 'К оплате'}</option>
                 <option value="paid">Оплачено</option>
-              </select>
-            </label>
+            </Select>
           </div>
-          <label className={label}>Назначение или комментарий
-            <textarea value={description} onChange={event => setDescription(event.target.value)} placeholder="Что важно помнить об этой оплате" rows={3} className={`${field} mt-1.5 resize-y py-3`} />
-          </label>
+          <Textarea label="Назначение или комментарий" optionalLabel="необязательно" value={description} onChange={event => setDescription(event.target.value)} placeholder="Что важно помнить об этой оплате" rows={3} />
         </section>
-      </div>
+      </form>
     </Sheet>
   )
 }

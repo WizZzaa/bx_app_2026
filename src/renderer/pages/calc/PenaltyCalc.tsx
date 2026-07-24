@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import CalcResult from './CalcResult';
 import MoneyInput from './MoneyInput';
 import { useRegulatoryNumber } from '../../lib/calculatorRegulatory';
+import { DateField, Field } from '../../components/ui/FormControls';
 
 // Пени по НК РУз: 0.033% за каждый день просрочки (ст. 120 НК РУз)
 // Также можно считать через ставку ЦБ: Долг × ставка_ЦБ / 365 × дни
@@ -40,15 +41,19 @@ export default function PenaltyCalc() {
 
   return (
     <div className="bx-a7-calc-form space-y-5">
-      <div className="flex gap-2">
+      <div className="flex gap-2" role="group" aria-label="Способ расчёта пени">
         <button
+          type="button"
           onClick={() => setMode('fixed')}
+          aria-pressed={mode === 'fixed'}
           className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${mode === 'fixed' ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
         >
           {DAILY_RATE_PERCENT}%/день (НК)
         </button>
         <button
+          type="button"
           onClick={() => setMode('cbu')}
+          aria-pressed={mode === 'cbu'}
           className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${mode === 'cbu' ? 'bg-blue-600 text-white' : 'bg-bx-surface-2 text-bx-muted hover:text-bx-text'}`}
         >
           По ставке ЦБ
@@ -56,40 +61,34 @@ export default function PenaltyCalc() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs text-bx-muted mb-1.5">Сумма долга (UZS)</label>
-          <MoneyInput value={debt} onChange={setDebt} autoFocus />
-        </div>
+        <MoneyInput label="Сумма долга" value={debt} onChange={setDebt} autoFocus />
         {mode === 'cbu' && (
-          <div>
-            <label className="block text-xs text-bx-muted mb-1.5">Ставка ЦБ (%)</label>
-            <input
-              type="text" inputMode="decimal" value={cbuRate || String(CBU_POLICY_RATE)} onChange={e => setCbuRate(e.target.value)}
-              className="w-full bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm"
-            />
-          </div>
+          <Field
+            label="Ставка ЦБ (%)"
+            type="text"
+            inputMode="decimal"
+            value={cbuRate || String(CBU_POLICY_RATE)}
+            onChange={e => setCbuRate(e.target.value)}
+          />
         )}
       </div>
 
-      <div>
-        <label className="block text-xs text-bx-muted mb-1.5">Период просрочки</label>
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-semibold text-bx-text">Период просрочки</legend>
         <div className="grid grid-cols-2 gap-3">
-          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-            className="bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
-          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-            className="bg-bx-bg text-bx-text px-3 py-2.5 rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm" />
+          <DateField label="Начало просрочки" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+          <DateField label="Дата расчёта" value={dateTo} onChange={e => setDateTo(e.target.value)} />
         </div>
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-xs text-bx-muted">или укажите количество дней:</span>
-          <input
-            type="number" value={dateFrom || dateTo ? '' : days}
-            onChange={e => { setDateFrom(''); setDateTo(''); setDays(e.target.value); }}
-            placeholder="0" min="0"
-            className="w-20 bg-bx-bg text-bx-text px-2 py-1.5 rounded border border-bx-border-2 focus:outline-none focus:border-blue-500/50 text-sm"
-          />
-          <span className="text-xs text-bx-muted">дн.</span>
-        </div>
-      </div>
+        <Field
+          label="Или количество дней"
+          hint="Ввод дней очистит выбранные даты."
+          type="number"
+          value={dateFrom || dateTo ? '' : days}
+          onChange={e => { setDateFrom(''); setDateTo(''); setDays(e.target.value); }}
+          placeholder="0"
+          min="0"
+        />
+      </fieldset>
 
       <CalcResult
         title={`Пени ${mode === 'fixed' ? `${DAILY_RATE_PERCENT}%/день (ст. 120 НК)` : `по ставке ЦБ ${cbu}%`}`}

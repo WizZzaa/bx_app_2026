@@ -36,12 +36,13 @@ export default function VatCalc() {
         </button>
       </div>
 
-      <div>
-        <label className="block text-xs text-bx-muted mb-1.5">
-          {mode === 'add' ? 'Сумма без НДС (UZS)' : 'Сумма с НДС (UZS)'}
-        </label>
-        <MoneyInput value={amount} onChange={setAmount} big autoFocus />
-      </div>
+      <MoneyInput
+        label={mode === 'add' ? 'Сумма без НДС' : 'Сумма с НДС'}
+        value={amount}
+        onChange={setAmount}
+        big
+        autoFocus
+      />
 
       <CalcResult
         title={`НДС ${VAT_RATE}% — ${mode === 'add' ? 'начисление' : 'выделение'}`}

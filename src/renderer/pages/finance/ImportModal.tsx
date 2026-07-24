@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Sheet } from '../../components/ui/Sheet'
+import Button from '../../components/ui/Button'
+import { Select } from '../../components/ui/FormControls'
 import type { ParsedTransaction } from '../../lib/bankStatementParser'
 
 interface ImportModalProps {
@@ -67,10 +69,10 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
         <span><small>Поступления</small><strong>+{fmt(totalIncome)} сум</strong></span>
         <span><small>Списания</small><strong>−{fmt(totalExpense)} сум</strong></span>
       </div>
-      <button type="button" onClick={onClose} disabled={saving} className="bx-a6-button bx-a6-button--secondary">Отмена</button>
-      <button type="button" onClick={() => void save()} disabled={!selectedIndices.length || saving} className="bx-a6-button bx-a6-button--primary">
-        {saving ? 'Импортирую…' : `Импортировать ${selectedIndices.length}`}
-      </button>
+      <Button type="button" variant="secondary" onClick={onClose} disabled={saving} className="bx-a6-button bx-a6-button--secondary">Отмена</Button>
+      <Button type="button" onClick={() => void save()} disabled={!selectedIndices.length} loading={saving} className="bx-a6-button bx-a6-button--primary">
+        Импортировать {selectedIndices.length}
+      </Button>
     </div>
   )
 
@@ -104,11 +106,14 @@ export default function ImportModal({ isOpen, onClose, transactions, onSave }: I
               <div className="bx-a6-import-list__main">
                 <div><strong>{transaction.counterparty || 'Без контрагента'}</strong><time>{new Date(transaction.date).toLocaleDateString('ru-RU')}</time></div>
                 <p title={transaction.description}>{transaction.description || 'Назначение не указано'}</p>
-                <label>Категория
-                  <select value={itemCategories[index] || ''} onChange={event => setItemCategories(current => ({ ...current, [index]: event.target.value }))}>
+                <Select
+                  label="Категория"
+                  containerClassName="bx-a6-import-category"
+                  value={itemCategories[index] || ''}
+                  onChange={event => setItemCategories(current => ({ ...current, [index]: event.target.value }))}
+                >
                     {categories.map(category => <option key={category} value={category}>{category}</option>)}
-                  </select>
-                </label>
+                </Select>
               </div>
               <div className="bx-a6-import-list__amount" data-type={transaction.type}>
                 <span>{transaction.type === 'income' ? 'Поступление' : 'Списание'}</span>

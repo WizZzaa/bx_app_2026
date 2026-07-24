@@ -112,7 +112,7 @@
 
 :root[data-bx-design='d1'] .bx-a7-catalog-nav__categories button {
   display: flex;
-  min-height: 2.7rem;
+  min-height: 2.75rem;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;

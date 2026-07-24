@@ -117,6 +117,7 @@
   - [x] A9 foundation: общие native-контролы, visible labels, hint/error IDs, blur-oriented validation, 44px target и семантические disabled/invalid states.
   - [x] Первые production-сценарии: конвертер валют и загрузка документов переведены без изменения расчётного или Storage-контракта.
   - [x] Пакет 2.84.0: `/support`, полный мастер профиля компании и приглашение команды переведены на общие `Field`, `Select`, `DateField`, `Textarea`; добавлены semantic input types, autocomplete/inputMode, inline errors и фокус на первую ошибку.
+  - [x] Пакет 2.85.0: финансовая карточка и импорт выписки, денежные поля девяти калькуляторов, пени, сравнение режимов, банковские реквизиты, число прописью и калькулятор дат переведены на общий foundation без изменения persistence, ставок и формул.
   - [ ] Оставшиеся route-local формы мигрируются пакетами; глобальный CSS override не применяется, чтобы не ломать пользовательские сценарии.
 - [x] `OverlayPanel`, modal, popover, context menu, bottom sheet и confirmation.
 - [x] `PaywallModal`, `ConflictModal`, `AboutModal`.
@@ -132,8 +133,11 @@
 - [x] Browser QA 2.83.0: desktop `1280×720` и mobile `390×844`, translator confirmation `480×321` / mobile bottom sheet `390×353`, все dialog actions `44px`, horizontal overflow `0`; отмена сохраняет исходник и результат, Undo восстанавливает локальную заметку.
 - [x] Browser QA 2.84.0: `/support` и мастер компании проверены на `1280×720` и `390×844`; horizontal overflow `0`, форма поддержки `768→357 px`, мобильный мастер `358×844`, поля и действия не меньше `44px`, фокус после ошибки переходит в первое неверное поле.
 - [x] App 2.84.0: typecheck, lint, `404/404` теста, production build и все bundle budgets — PASS; demand-loading мастера компании снизил initial closure до `341,4 KiB gzip`, Motion Mini остался `3,9 KiB gzip`.
+- [x] Browser QA 2.85.0: `/finance`, `/calc` и `/tools` проверены на `1280×720` и `390×844`; horizontal overflow `0`, transaction sheet `390 px`, все проверенные действия и поля не меньше `44px`, inline error и перевод фокуса на сумму подтверждены.
+- [x] App 2.85.0: typecheck, lint, `116/116` suites и `411/411` тестов, production build, initial bundle `341,7 KiB gzip`, demand budgets и Motion Mini `3,9 KiB gzip` — PASS.
 - [x] Graphify обновлён после пакета 2.83.0: `2156` узлов, `4935` связей, `125` сообществ; результат сохранён как useful memory.
 - [x] Graphify обновлён после пакета 2.84.0: `2171` узел, `4961` связь, `133` сообщества; маршрут миграции форм сохранён как useful memory.
+- [x] Graphify обновлён после пакета 2.85.0: `2182` узла, `5011` связей, `138` сообществ; безопасная граница Finance/Calc/Tools сохранена как useful memory.
 - [x] Supabase schema/data, RPC/RLS, Edge Functions, Secrets, payment и пользовательские записи не менялись.
 
 ## A10 — Финальная приёмка

@@ -1,4 +1,5 @@
 import React from 'react';
+import { MoneyField } from '../../components/ui/FormControls';
 
 // Денежный ввод с живыми разделителями тысяч: «1000000» → «1 000 000».
 // Родитель хранит строку как есть; существующий парсинг (replace(/\s/g,'')) совместим.
@@ -15,25 +16,45 @@ function format(raw: string): string {
 }
 
 interface Props {
+  label: string;
+  hint?: string;
+  error?: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   big?: boolean;
   autoFocus?: boolean;
+  currency?: string;
+  required?: boolean;
+  containerClassName?: string;
 }
 
-export default function MoneyInput({ value, onChange, placeholder = '0', big, autoFocus }: Props) {
+export default function MoneyInput({
+  label,
+  hint,
+  error,
+  value,
+  onChange,
+  placeholder = '0',
+  big,
+  autoFocus,
+  currency = 'UZS',
+  required,
+  containerClassName,
+}: Props) {
   return (
-    <input
-      type="text"
-      inputMode="decimal"
+    <MoneyField
+      label={label}
+      hint={hint}
+      error={error}
+      required={required}
+      containerClassName={containerClassName}
+      currency={currency}
       autoFocus={autoFocus}
       value={value}
       onChange={e => onChange(format(e.target.value))}
       placeholder={placeholder}
-      className={`w-full bg-bx-bg text-bx-text rounded-lg border border-bx-border-2 focus:outline-none focus:border-blue-500/50 tabular-nums ${
-        big ? 'text-lg px-4 py-3' : 'text-sm px-3 py-2.5'
-      }`}
+      className={`tabular-nums ${big ? 'text-lg' : ''}`}
     />
   );
 }
